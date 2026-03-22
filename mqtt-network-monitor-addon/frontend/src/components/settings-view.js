@@ -140,7 +140,7 @@ class SettingsView extends LitElement {
       font-size: 13px; box-sizing: border-box;
     }
     .threshold-input:focus { outline: none; border-color: #4fc3f7; }
-    .group-footer { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; align-items: center; }
+    .group-footer { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
     .group-save-btn {
       background: #4fc3f7; border: none; color: #1a1a2e; padding: 6px 16px;
       border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
@@ -522,14 +522,16 @@ class SettingsView extends LitElement {
 
             <div class="group-footer">
               <button class="group-delete-btn" @click=${() => this._deleteGroup(g)}>Delete Group</button>
-              <button class="group-save-btn" @click=${() => this._updateGroup(g)}>Update</button>
-              ${this._groupSaveStatus[g.id] === 'saved' ? html`<span class="group-status-saved">Updated!</span>` : ''}
-              ${this._groupSaveStatus[g.id] === 'error' ? html`<span class="group-status-error">Error</span>` : ''}
-              <button class="group-save-btn" style="background: #2e7d32;"
-                @click=${() => this._deployToDevices(g)}>Deploy to Devices</button>
-              ${this._groupPushStatus[g.id] === 'Deploying...' ? html`<span class="group-status-pushing">Deploying...</span>` : ''}
-              ${this._groupPushStatus[g.id] === 'Deployed!' ? html`<span class="group-status-pushed">Deployed!</span>` : ''}
-              ${(this._groupPushStatus[g.id] || '').startsWith('Error') ? html`<span class="group-status-error">${this._groupPushStatus[g.id]}</span>` : ''}
+              <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+                ${this._groupPushStatus[g.id] === 'Deploying...' ? html`<span class="group-status-pushing">Deploying...</span>` : ''}
+                ${this._groupPushStatus[g.id] === 'Deployed!' ? html`<span class="group-status-pushed">Deployed!</span>` : ''}
+                ${this._groupSaveStatus[g.id] === 'saved' ? html`<span class="group-status-saved">Saved!</span>` : ''}
+                ${(this._groupPushStatus[g.id] || '').startsWith('Error') || this._groupSaveStatus[g.id] === 'error'
+                  ? html`<span class="group-status-error">${this._groupPushStatus[g.id] || 'Error'}</span>` : ''}
+                <button class="group-save-btn" @click=${() => this._updateGroup(g)}>Save</button>
+                <button class="group-save-btn" style="background: #2e7d32;"
+                  @click=${() => this._deployToDevices(g)}>Save &amp; Deploy</button>
+              </div>
             </div>
           </div>
         ` : ''}

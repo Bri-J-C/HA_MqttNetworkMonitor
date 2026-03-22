@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import {
-  fetchDevice, deleteDevice, deleteAttribute, unhideAttribute, sendCommand, addDeviceTags, removeDeviceTag,
+  fetchDevice, deleteDevice, deleteAttribute, unhideAttribute, hideCommand, unhideCommand, sendCommand, addDeviceTags, removeDeviceTag,
   fetchGroups, createGroup, updateGroup,
   fetchEffectiveSettings, updateDeviceSettings, pushDeviceConfig,
 } from '../services/api.js';
@@ -37,6 +37,7 @@ class DeviceDetail extends LitElement {
     _newCommandName: { type: String, state: true },
     _newCommandShell: { type: String, state: true },
     _showHidden: { type: Boolean, state: true },
+    _showHiddenCmds: { type: Boolean, state: true },
     _showAddCommand: { type: Boolean, state: true },
     _editingCommandName: { type: String, state: true },
     _editCommandForm: { type: Object, state: true },
@@ -720,19 +721,25 @@ class DeviceDetail extends LitElement {
     const serverCmds = this._serverCommands || {};
     const serverCommandNames = Object.keys(serverCmds);
     const allCommandNames = [...new Set([...clientCommands, ...serverCommandNames])];
+    const hidden = this.device.hidden_commands || [];
+    const visibleCommands = allCommandNames.filter(c => !hidden.includes(c));
+    const hiddenCommands = allCommandNames.filter(c => hidden.includes(c));
 
     return html`
       <div class="section">
         <div class="section-title">Commands</div>
 
         <!-- Run buttons -->
-        ${allCommandNames.length > 0 ? html`
+        ${visibleCommands.length > 0 ? html`
           <div class="commands" style="margin-bottom: 12px;">
-            ${allCommandNames.map(cmd => html`
-              <button class="cmd-btn ${isDangerous(cmd) ? 'danger' : ''}"
-                @click=${() => this._sendCmd(cmd)}>
-                ${cmd}
-              </button>
+            ${visibleCommands.map(cmd => html`
+              <span style="display: inline-flex; align-items: center; gap: 0;">
+                <button class="cmd-btn ${isDangerous(cmd) ? 'danger' : ''}"
+                  @click=${() => this._sendCmd(cmd)}>
+                  ${cmd}
+                </button><span class="attr-delete" style="margin-left: -4px;" title="Hide command"
+                  @click=${(e) => { e.stopPropagation(); this._hideCommand(cmd); }}>&times;</span>
+              </span>
             `)}
           </div>
         ` : ''}
@@ -784,8 +791,46 @@ class DeviceDetail extends LitElement {
           <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px; margin-top: 8px;"
             @click=${this._startAddCommand}>+ Add Command</button>
         `}
+
+        ${hiddenCommands.length > 0 ? html`
+          <div style="margin-top: 12px;">
+            <div style="font-size: 10px; color: #555; margin-bottom: 6px; cursor: pointer;"
+              @click=${() => this._showHiddenCmds = !this._showHiddenCmds}>
+              ${this._showHiddenCmds ? '\u25BE' : '\u25B8'} ${hiddenCommands.length} hidden command${hiddenCommands.length !== 1 ? 's' : ''}
+            </div>
+            ${this._showHiddenCmds ? html`
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                ${hiddenCommands.map(cmd => html`
+                  <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                    ${cmd}
+                    <span style="cursor: pointer; color: #4fc3f7; font-size: 10px;"
+                      @click=${() => this._unhideCommand(cmd)}>show</span>
+                  </span>
+                `)}
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
       </div>
     `;
+  }
+
+  async _hideCommand(cmd) {
+    try {
+      await hideCommand(this.deviceId, cmd);
+      await this._loadDevice();
+    } catch (e) {
+      console.error('Failed to hide command:', e);
+    }
+  }
+
+  async _unhideCommand(cmd) {
+    try {
+      await unhideCommand(this.deviceId, cmd);
+      await this._loadDevice();
+    } catch (e) {
+      console.error('Failed to unhide command:', e);
+    }
   }
 
   _startAddCommand() {

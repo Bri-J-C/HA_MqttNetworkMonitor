@@ -30,6 +30,16 @@ export async function unhideAttribute(deviceId, attrName) {
   return res.json();
 }
 
+export async function hideCommand(deviceId, cmdName) {
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/commands/${cmdName}`, { method: 'DELETE' });
+  return res.json();
+}
+
+export async function unhideCommand(deviceId, cmdName) {
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/commands/${cmdName}/unhide`, { method: 'POST' });
+  return res.json();
+}
+
 export async function fetchTopology() {
   const res = await fetch(`${BASE}/api/topology`);
   return res.json();

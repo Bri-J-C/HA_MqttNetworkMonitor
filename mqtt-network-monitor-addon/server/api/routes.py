@@ -125,6 +125,30 @@ def unhide_attribute(device_id: str, attr_name: str):
     return {"status": "unhidden"}
 
 
+@app.delete("/api/devices/{device_id}/commands/{cmd_name}")
+def hide_command(device_id: str, cmd_name: str):
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    hidden = device.get("hidden_commands", [])
+    if cmd_name not in hidden:
+        hidden.append(cmd_name)
+        registry.set_device_settings(device_id, {"hidden_commands": hidden})
+    return {"status": "hidden"}
+
+
+@app.post("/api/devices/{device_id}/commands/{cmd_name}/unhide")
+def unhide_command(device_id: str, cmd_name: str):
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    hidden = device.get("hidden_commands", [])
+    if cmd_name in hidden:
+        hidden.remove(cmd_name)
+        registry.set_device_settings(device_id, {"hidden_commands": hidden})
+    return {"status": "unhidden"}
+
+
 @app.get("/api/devices/{device_id}/effective-settings")
 def get_effective_settings(device_id: str):
     from server.settings_resolver import resolve_settings

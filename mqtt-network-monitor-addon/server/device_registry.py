@@ -56,6 +56,7 @@ class DeviceRegistry:
                 "allowed_commands": [],
                 "server_commands": {},
                 "hidden_attributes": [],
+                "hidden_commands": [],
             }
             logger.info(f"New device discovered: {device_id}")
 
@@ -268,7 +269,7 @@ class DeviceRegistry:
         device = self._devices.get(device_id)
         if not device:
             return None
-        allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides", "server_commands", "remote_config", "hidden_attributes"}
+        allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides", "server_commands", "remote_config", "hidden_attributes", "hidden_commands"}
         for key in allowed_keys:
             if key in settings:
                 device[key] = settings[key]
