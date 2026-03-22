@@ -54,8 +54,30 @@ def delete_device(device_id: str):
     # Remove HA entities before deleting from registry
     if ha_entity_manager:
         ha_entity_manager.remove_device_entities(device_id, device)
+    # Clear retained MQTT messages so device doesn't recreate on reconnect
+    if mqtt_handler:
+        mqtt_handler._client.publish(f"network_monitor/{device_id}/status", "", retain=True)
+        mqtt_handler._client.publish(f"network_monitor/{device_id}/system_resources", "", retain=True)
+        mqtt_handler._client.publish(f"network_monitor/{device_id}/network_info", "", retain=True)
+        mqtt_handler._client.publish(f"network_monitor/{device_id}/custom_command", "", retain=True)
+        mqtt_handler._client.publish(f"network_monitor/{device_id}/telemetry", "", retain=True)
+        mqtt_handler._client.publish(f"network_monitor/{device_id}/system", "", retain=True)
     registry.delete_device(device_id)
     return {"status": "deleted"}
+
+
+@app.delete("/api/devices")
+def delete_all_devices():
+    """Delete all devices from the registry and clean up HA entities."""
+    all_devices = registry.get_all_devices()
+    for device_id, device in list(all_devices.items()):
+        if ha_entity_manager:
+            ha_entity_manager.remove_device_entities(device_id, device)
+        if mqtt_handler:
+            for topic_suffix in ["status", "system_resources", "network_info", "custom_command", "telemetry", "system"]:
+                mqtt_handler._client.publish(f"network_monitor/{device_id}/{topic_suffix}", "", retain=True)
+        registry.delete_device(device_id)
+    return {"status": "deleted", "count": len(all_devices)}
 
 
 @app.get("/api/devices/{device_id}/effective-settings")

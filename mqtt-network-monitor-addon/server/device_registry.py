@@ -63,7 +63,11 @@ class DeviceRegistry:
         device["device_type"] = payload.get("device_type", "unknown")
         device["tags"] = payload.get("tags", [])
         device["last_seen"] = time.time()
-        device["attributes"] = payload.get("attributes", {})
+        # Merge attributes instead of replacing — each plugin publishes its own subset
+        incoming_attrs = payload.get("attributes", {})
+        existing_attrs = device.get("attributes", {})
+        existing_attrs.update(incoming_attrs)
+        device["attributes"] = existing_attrs
         if payload.get("network"):
             device["network"] = payload["network"]
         if "allowed_commands" in payload:

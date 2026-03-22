@@ -76,6 +76,8 @@ class MQTTHandler:
 
         if subtopic == "status":
             status = msg.payload.decode().strip().strip('"')
+            if not status:
+                return  # Empty payload (cleared retained message), skip
             logger.info(f"Device {device_id} status: {status}")
             self._registry.set_device_status(device_id, status)
             self._notify_update(device_id)
@@ -97,13 +99,14 @@ class MQTTHandler:
 
         else:
             # Plugin data
+            raw = msg.payload.decode().strip()
+            if not raw:
+                return  # Empty payload (cleared retained message), skip
             try:
-                payload = json.loads(msg.payload.decode())
-                # Store allowed_commands if present
-                if "allowed_commands" in payload:
-                    self._registry.update_device(device_id, payload)
-                else:
-                    self._registry.update_device(device_id, payload)
+                payload = json.loads(raw)
+                if not payload or not isinstance(payload, dict):
+                    return  # Empty or invalid payload
+                self._registry.update_device(device_id, payload)
                 self._notify_update(device_id)
                 logger.debug(f"Updated device {device_id} from plugin {subtopic}")
             except json.JSONDecodeError:

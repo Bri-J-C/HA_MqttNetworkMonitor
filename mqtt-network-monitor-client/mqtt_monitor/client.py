@@ -110,11 +110,37 @@ class MQTTMonitorClient:
                 plugin.interval = new_interval
                 logger.info(f"Updated {plugin.name} interval to {new_interval}s")
 
+        # Handle custom_command plugin — create or update with pushed sensors
+        plugins_config = remote_config.get("plugins", {})
+        cc_config = plugins_config.get("custom_command", {})
+        cc_commands = cc_config.get("commands", {})
+        if cc_commands:
+            from mqtt_monitor.plugins.custom_command import CustomCommandPlugin
+            existing = None
+            for p in self._plugins:
+                if p.name == "custom_command":
+                    existing = p
+                    break
+
+            if existing:
+                existing.commands.update(cc_commands)
+                if "interval" in cc_config:
+                    existing.interval = cc_config["interval"]
+                logger.info(f"Updated custom_command plugin: {list(cc_commands.keys())}")
+            else:
+                new_plugin = CustomCommandPlugin({
+                    "commands": cc_commands,
+                    "interval": cc_config.get("interval", remote_config.get("interval", 30)),
+                })
+                self._plugins.append(new_plugin)
+                if self._running:
+                    self._schedule_plugin(new_plugin)
+                logger.info(f"Created custom_command plugin with: {list(cc_commands.keys())}")
+
         if "commands" in remote_config:
             for name, shell_cmd in remote_config["commands"].items():
                 self._command_handler.add_command(name, shell_cmd)
                 logger.info(f"Added remote command: {name}")
-            # Keep MessageBuilder's allowed_commands in sync
             self._message_builder.allowed_commands = sorted(
                 self._command_handler.allowed_commands
             )
