@@ -1,14 +1,17 @@
 import { LitElement, html, css } from 'lit';
-import { fetchDevices } from '../services/api.js';
+import { fetchDevices, fetchGroups } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
 import './device-card.js';
+import './tag-picker.js';
 
 class DashboardView extends LitElement {
   static properties = {
     devices: { type: Object },
     filter: { type: String },
     selectedTags: { type: Array },
-    _tagDropdownOpen: { type: Boolean, state: true },
+    viewMode: { type: String },
+    _groups: { type: Object, state: true },
+    _collapsedGroups: { type: Object, state: true },
   };
 
   static styles = css`
@@ -29,42 +32,16 @@ class DashboardView extends LitElement {
     .filter-btn:hover { background: #3a3a5a; color: #ccc; }
     .filter-btn.active { background: #4fc3f7; color: #1a1a2e; }
 
-    .tag-selector {
-      position: relative;
-      margin-left: 8px;
+    .view-toggle {
+      margin-left: auto; display: flex; gap: 4px;
+      background: #2a2a4a; border-radius: 16px; padding: 3px;
     }
-    .tag-trigger {
-      background: #2a2a4a; border: 1px solid #3a3a5a; color: #aaa; padding: 6px 14px;
-      border-radius: 16px; cursor: pointer; font-size: 13px; transition: all 0.2s;
-      display: flex; align-items: center; gap: 6px;
+    .view-btn {
+      background: none; border: none; color: #888; padding: 4px 14px;
+      border-radius: 13px; cursor: pointer; font-size: 13px; transition: all 0.2s;
     }
-    .tag-trigger:hover { background: #3a3a5a; color: #ccc; border-color: #4a4a6a; }
-    .tag-trigger.has-selected { border-color: #4fc3f7; color: #4fc3f7; }
-    .tag-trigger .arrow { font-size: 10px; }
-
-    .tag-dropdown {
-      position: absolute; top: calc(100% + 4px); left: 0;
-      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 8px;
-      min-width: 200px; max-height: 240px; overflow-y: auto;
-      z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    }
-    .tag-dropdown-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 14px; cursor: pointer; font-size: 13px; color: #ccc;
-      transition: background 0.15s;
-    }
-    .tag-dropdown-item:hover { background: #3a3a5a; }
-    .tag-dropdown-item .checkbox {
-      width: 16px; height: 16px; border: 1.5px solid #555; border-radius: 3px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; color: #1a1a2e; transition: all 0.15s;
-    }
-    .tag-dropdown-item.checked .checkbox {
-      background: #4fc3f7; border-color: #4fc3f7;
-    }
-    .tag-dropdown-empty {
-      padding: 12px 14px; color: #666; font-size: 12px; text-align: center;
-    }
+    .view-btn.active { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
+    .view-btn:not(.active):hover { color: #ccc; }
 
     .active-tags {
       display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
@@ -94,6 +71,30 @@ class DashboardView extends LitElement {
     .empty {
       text-align: center; padding: 60px; color: #666;
     }
+
+    /* By Group view */
+    .group-section { margin-bottom: 16px; }
+    .group-section-header {
+      display: flex; align-items: center; gap: 10px;
+      background: #2a2a4a; border-radius: 8px; padding: 10px 16px;
+      cursor: pointer; user-select: none; margin-bottom: 8px;
+      transition: background 0.15s;
+    }
+    .group-section-header:hover { background: #323258; }
+    .group-chevron { font-size: 10px; color: #555; transition: transform 0.2s; }
+    .group-chevron.open { transform: rotate(90deg); }
+    .group-section-name { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+    .group-health {
+      margin-left: auto; font-size: 12px; color: #888;
+      display: flex; gap: 10px;
+    }
+    .health-dot { display: flex; align-items: center; gap: 4px; }
+    .group-device-count { font-size: 11px; color: #666; }
+    .group-body { padding: 0; }
+    .ungrouped-header {
+      font-size: 11px; color: #555; text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 8px; margin-top: 4px;
+    }
   `;
 
   constructor() {
@@ -101,15 +102,17 @@ class DashboardView extends LitElement {
     this.devices = {};
     this.filter = 'all';
     this.selectedTags = [];
-    this._tagDropdownOpen = false;
-    this._onDocClick = this._onDocClick.bind(this);
+    this.viewMode = 'all';
+    this._groups = {};
+    this._collapsedGroups = {};
+    this._wsUnsub = null;
   }
 
   connectedCallback() {
     super.connectedCallback();
     this._loadDevices();
-    document.addEventListener('click', this._onDocClick);
-    wsService.onMessage((data) => {
+    this._loadGroups();
+    this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update') {
         this.devices = { ...this.devices, [data.device_id]: data.device };
         this.requestUpdate();
@@ -119,17 +122,6 @@ class DashboardView extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    document.removeEventListener('click', this._onDocClick);
-  }
-
-  _onDocClick(e) {
-    if (this._tagDropdownOpen) {
-      const path = e.composedPath();
-      const selector = this.shadowRoot?.querySelector('.tag-selector');
-      if (selector && !path.includes(selector)) {
-        this._tagDropdownOpen = false;
-      }
-    }
   }
 
   async _loadDevices() {
@@ -137,6 +129,14 @@ class DashboardView extends LitElement {
       this.devices = await fetchDevices();
     } catch (e) {
       console.error('Failed to load devices:', e);
+    }
+  }
+
+  async _loadGroups() {
+    try {
+      this._groups = await fetchGroups();
+    } catch (e) {
+      console.error('Failed to load groups:', e);
     }
   }
 
@@ -154,15 +154,6 @@ class DashboardView extends LitElement {
     return entries;
   }
 
-  get _allTags() {
-    const tags = new Set();
-    Object.values(this.devices).forEach(d => {
-      (d.tags || []).forEach(t => tags.add(t));
-      (d.server_tags || []).forEach(t => tags.add(t));
-    });
-    return [...tags].sort();
-  }
-
   get _counts() {
     const all = Object.values(this.devices);
     return {
@@ -173,10 +164,19 @@ class DashboardView extends LitElement {
     };
   }
 
+  _onTagAdd(e) {
+    const tag = e.detail.tag;
+    if (!this.selectedTags.includes(tag)) {
+      this.selectedTags = [...this.selectedTags, tag];
+    }
+  }
+
+  _onTagRemove(e) {
+    this.selectedTags = this.selectedTags.filter(t => t !== e.detail.tag);
+  }
+
   render() {
-    const filtered = this._filteredDevices;
     const counts = this._counts;
-    const tags = this._allTags;
 
     return html`
       <div class="filter-bar">
@@ -191,26 +191,17 @@ class DashboardView extends LitElement {
             @click=${() => this.filter = 'warning'}>Warning (${counts.warning})</button>
         </div>
 
-        <div class="tag-selector">
-          <button class="tag-trigger ${this.selectedTags.length > 0 ? 'has-selected' : ''}"
-            @click=${(e) => { e.stopPropagation(); this._tagDropdownOpen = !this._tagDropdownOpen; }}>
-            Tags ${this.selectedTags.length > 0 ? `(${this.selectedTags.length})` : ''}
-            <span class="arrow">${this._tagDropdownOpen ? '\u25B2' : '\u25BC'}</span>
-          </button>
-          ${this._tagDropdownOpen ? html`
-            <div class="tag-dropdown">
-              ${tags.length === 0
-                ? html`<div class="tag-dropdown-empty">No tags found</div>`
-                : tags.map(tag => html`
-                  <div class="tag-dropdown-item ${this.selectedTags.includes(tag) ? 'checked' : ''}"
-                    @click=${() => this._toggleTag(tag)}>
-                    <span class="checkbox">${this.selectedTags.includes(tag) ? '\u2713' : ''}</span>
-                    ${tag}
-                  </div>
-                `)
-              }
-            </div>
-          ` : ''}
+        <tag-picker
+          .selectedTags=${this.selectedTags}
+          @tag-add=${this._onTagAdd}
+          @tag-remove=${this._onTagRemove}
+        ></tag-picker>
+
+        <div class="view-toggle">
+          <button class="view-btn ${this.viewMode === 'all' ? 'active' : ''}"
+            @click=${() => this.viewMode = 'all'}>All</button>
+          <button class="view-btn ${this.viewMode === 'group' ? 'active' : ''}"
+            @click=${() => this.viewMode = 'group'}>By Group</button>
         </div>
       </div>
 
@@ -219,45 +210,113 @@ class DashboardView extends LitElement {
           ${this.selectedTags.map(tag => html`
             <span class="active-tag">
               #${tag}
-              <span class="remove" @click=${() => this._removeTag(tag)}>&times;</span>
+              <span class="remove" @click=${() => this.selectedTags = this.selectedTags.filter(t => t !== tag)}>&times;</span>
             </span>
           `)}
-          <button class="clear-all" @click=${this._clearTags}>Clear all</button>
+          <button class="clear-all" @click=${() => { this.selectedTags = []; this.filter = 'all'; }}>Clear all</button>
         </div>
       ` : ''}
 
-      ${filtered.length === 0
-        ? html`<div class="empty">No devices found</div>`
-        : html`
-          <div class="grid">
-            ${filtered.map(([id, device]) => html`
-              <device-card
-                .device=${device}
-                .deviceId=${id}
-                @click=${() => this._selectDevice(id)}
-              ></device-card>
-            `)}
-          </div>
-        `
-      }
+      ${this.viewMode === 'group' ? this._renderByGroup() : this._renderAll()}
     `;
   }
 
-  _toggleTag(tag) {
-    if (this.selectedTags.includes(tag)) {
-      this.selectedTags = this.selectedTags.filter(t => t !== tag);
-    } else {
-      this.selectedTags = [...this.selectedTags, tag];
+  _renderAll() {
+    const filtered = this._filteredDevices;
+    if (filtered.length === 0) {
+      return html`<div class="empty">No devices found</div>`;
     }
+    return html`
+      <div class="grid">
+        ${filtered.map(([id, device]) => html`
+          <device-card
+            .device=${device}
+            .deviceId=${id}
+            @click=${() => this._selectDevice(id)}
+          ></device-card>
+        `)}
+      </div>
+    `;
   }
 
-  _removeTag(tag) {
-    this.selectedTags = this.selectedTags.filter(t => t !== tag);
+  _renderByGroup() {
+    const filtered = this._filteredDevices;
+    const groups = Object.values(this._groups);
+
+    // Build a map: groupId → filtered devices in that group
+    const groupDevices = {};
+    const groupedIds = new Set();
+
+    groups.forEach(g => {
+      const members = filtered.filter(([id]) => (g.device_ids || []).includes(id));
+      groupDevices[g.id] = members;
+      members.forEach(([id]) => groupedIds.add(id));
+    });
+
+    const ungrouped = filtered.filter(([id]) => !groupedIds.has(id));
+
+    return html`
+      ${groups.map(g => this._renderGroupSection(g, groupDevices[g.id] || []))}
+      ${ungrouped.length > 0 ? html`
+        <div class="group-section">
+          <div class="ungrouped-header">Ungrouped (${ungrouped.length})</div>
+          <div class="grid">
+            ${ungrouped.map(([id, device]) => html`
+              <device-card .device=${device} .deviceId=${id}
+                @click=${() => this._selectDevice(id)}></device-card>
+            `)}
+          </div>
+        </div>
+      ` : ''}
+      ${filtered.length === 0 ? html`<div class="empty">No devices found</div>` : ''}
+    `;
   }
 
-  _clearTags() {
-    this.selectedTags = [];
-    this.filter = 'all';
+  _renderGroupSection(g, devices) {
+    const isCollapsed = !!this._collapsedGroups[g.id];
+    const allInGroup = Object.entries(this.devices)
+      .filter(([id]) => (g.device_ids || []).includes(id))
+      .map(([, d]) => d);
+
+    const onlineCount = allInGroup.filter(d => d.status === 'online').length;
+    const total = allInGroup.length;
+
+    return html`
+      <div class="group-section">
+        <div class="group-section-header"
+          @click=${() => this._toggleGroupCollapse(g.id)}>
+          <span class="group-chevron ${isCollapsed ? '' : 'open'}">&#9658;</span>
+          <span class="group-section-name">${g.name}</span>
+          <span class="group-device-count">${devices.length} device${devices.length !== 1 ? 's' : ''}</span>
+          <div class="group-health">
+            <span class="health-dot" style="color: #81c784">
+              ${onlineCount}/${total} online
+            </span>
+          </div>
+        </div>
+        ${!isCollapsed ? html`
+          <div class="group-body">
+            ${devices.length === 0
+              ? html`<div style="color: #555; font-size: 13px; padding: 8px 4px;">No devices match current filters</div>`
+              : html`
+                <div class="grid">
+                  ${devices.map(([id, device]) => html`
+                    <device-card .device=${device} .deviceId=${id}
+                      @click=${() => this._selectDevice(id)}></device-card>
+                  `)}
+                </div>
+              `}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  _toggleGroupCollapse(groupId) {
+    this._collapsedGroups = {
+      ...this._collapsedGroups,
+      [groupId]: !this._collapsedGroups[groupId],
+    };
   }
 
   _selectDevice(id) {

@@ -643,10 +643,22 @@ class TopologyView extends LitElement {
 
         <div class="device-section">
           <div class="device-section-title">Commands</div>
-          <div class="commands-row">
-            <button class="cmd-btn" @click=${() => this._sendCmd('reboot')}>Reboot</button>
-            <button class="cmd-btn danger" @click=${() => this._sendCmd('shutdown')}>Shutdown</button>
-          </div>
+          ${d.allowed_commands && d.allowed_commands.length > 0 ? html`
+            <div class="commands-row">
+              ${d.allowed_commands.map(cmd => {
+                const DANGEROUS = ['shutdown', 'halt', 'poweroff', 'destroy'];
+                const danger = DANGEROUS.some(x => cmd.toLowerCase().includes(x));
+                return html`
+                  <button class="cmd-btn ${danger ? 'danger' : ''}"
+                    @click=${() => this._sendCmd(cmd)}>${cmd}</button>
+                `;
+              })}
+            </div>
+          ` : html`
+            <div style="font-size: 12px; color: #666; font-style: italic;">
+              No commands available — configure allowed_commands in the client's config.yaml
+            </div>
+          `}
           ${this._commandResult ? html`<div class="cmd-result">${this._commandResult}</div>` : ''}
         </div>
       </div>

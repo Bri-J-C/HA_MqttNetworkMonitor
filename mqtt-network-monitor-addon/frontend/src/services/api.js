@@ -99,3 +99,89 @@ export async function removeDeviceTag(deviceId, tag) {
   });
   return res.json();
 }
+
+// Tags
+export async function fetchTags() {
+  const res = await fetch(`${BASE}/api/tags`);
+  return res.json();
+}
+
+export async function createTag(tag) {
+  const res = await fetch(`${BASE}/api/tags`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tag }),
+  });
+  return res.json();
+}
+
+export async function renameTag(oldTag, newName) {
+  const res = await fetch(`${BASE}/api/tags/${encodeURIComponent(oldTag)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: newName }),
+  });
+  return res.json();
+}
+
+export async function deleteTag(tag) {
+  await fetch(`${BASE}/api/tags/${encodeURIComponent(tag)}`, { method: 'DELETE' });
+}
+
+// Settings
+export async function fetchSettings() {
+  const res = await fetch(`${BASE}/api/settings`);
+  return res.json();
+}
+
+export async function updateSettings(data) {
+  const res = await fetch(`${BASE}/api/settings`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+// Device settings
+export async function fetchEffectiveSettings(deviceId) {
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/effective-settings`);
+  return res.json();
+}
+
+export async function updateDeviceSettings(deviceId, settings) {
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/settings`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  });
+  return res.json();
+}
+
+export async function pushDeviceConfig(deviceId, config) {
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/push-config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  return res.json();
+}
+
+// Group operations
+export async function sendGroupCommand(groupId, command, params = {}) {
+  const res = await fetch(`${BASE}/api/groups/${groupId}/command`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ command, params }),
+  });
+  return res.json();
+}
+
+export async function pushGroupConfig(groupId, config) {
+  const res = await fetch(`${BASE}/api/groups/${groupId}/push-config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  return res.json();
+}

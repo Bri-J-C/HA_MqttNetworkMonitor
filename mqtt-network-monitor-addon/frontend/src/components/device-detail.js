@@ -1,57 +1,144 @@
 import { LitElement, html, css } from 'lit';
-import { fetchDevice, sendCommand, addDeviceTags, removeDeviceTag, fetchGroups, createGroup, updateGroup, deleteGroup } from '../services/api.js';
+import {
+  fetchDevice, sendCommand, addDeviceTags, removeDeviceTag,
+  fetchGroups, createGroup, updateGroup,
+  fetchEffectiveSettings, updateDeviceSettings, pushDeviceConfig,
+} from '../services/api.js';
 import { wsService } from '../services/websocket.js';
+import './tag-picker.js';
+
+const DANGEROUS_COMMANDS = ['shutdown', 'halt', 'poweroff', 'destroy'];
+
+function isDangerous(cmd) {
+  const lower = cmd.toLowerCase();
+  return DANGEROUS_COMMANDS.some(d => lower.includes(d));
+}
 
 class DeviceDetail extends LitElement {
   static properties = {
     deviceId: { type: String },
     device: { type: Object },
     commandResult: { type: String },
-    _newTag: { type: String, state: true },
     _groups: { type: Object, state: true },
+    _effectiveSettings: { type: Object, state: true },
+    _haOverrides: { type: Object, state: true },
+    _configInterval: { type: Number, state: true },
+    _customSensors: { type: Object, state: true },
+    _showAddSensor: { type: Boolean, state: true },
+    _editSensorKey: { type: String, state: true },
+    _sensorForm: { type: Object, state: true },
+    _pushing: { type: Boolean, state: true },
+    _pushStatus: { type: String, state: true },
+    _lastPushed: { type: String, state: true },
+    _localChanges: { type: Boolean, state: true },
     _showGroupDialog: { type: Boolean, state: true },
     _newGroupName: { type: String, state: true },
   };
 
   static styles = css`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
+
     .back {
       background: none; border: none; color: #4fc3f7; cursor: pointer;
       font-size: 14px; margin-bottom: 16px; padding: 0;
     }
     .back:hover { text-decoration: underline; }
+
     .header {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 20px;
     }
+    .header-left { display: flex; flex-direction: column; gap: 2px; }
     .title { font-size: 24px; font-weight: 700; }
+    .device-type { font-size: 12px; color: #666; }
     .status-badge {
       padding: 4px 12px; border-radius: 12px; font-size: 13px;
     }
+
     .section {
       background: #2a2a4a; border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
     }
     .section-title {
       font-size: 12px; color: #666; text-transform: uppercase;
-      letter-spacing: 1px; margin-bottom: 12px;
+      letter-spacing: 1px; margin-bottom: 12px; font-weight: 600;
     }
+
+    /* Tags */
+    .tags-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .tag {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 11px; padding: 3px 10px; border-radius: 4px;
+    }
+    .tag.client { background: #1e3a5f; color: #4fc3f7; }
+    .tag.server { background: #3a1e5f; color: #ce93d8; }
+    .tag .remove { cursor: pointer; font-size: 13px; line-height: 1; opacity: 0.6; }
+    .tag .remove:hover { opacity: 1; }
+    .tag-hint { font-size: 10px; color: #555; margin-top: 8px; }
+
+    /* Group policy */
+    .group-policy-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .group-select {
+      background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 6px;
+      color: #e0e0e0; padding: 6px 12px; font-size: 13px; min-width: 200px;
+    }
+    .group-select:focus { outline: none; border-color: #4fc3f7; }
+    .group-threshold-summary {
+      font-size: 11px; color: #666; display: flex; gap: 12px; flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .group-hint { font-size: 10px; color: #555; margin-top: 8px; }
+
+    /* Attributes + HA exposure */
     .attr-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 12px;
     }
-    .attr-item {
-      background: #1a1a2e; border-radius: 6px; padding: 12px; text-align: center;
+    .attr-tile {
+      background: #1a1a2e; border-radius: 8px; padding: 12px;
+      position: relative; transition: opacity 0.2s;
     }
-    .attr-label { font-size: 10px; color: #666; text-transform: uppercase; }
-    .attr-val { font-size: 20px; font-weight: 700; color: #4fc3f7; margin-top: 4px; }
-    .attr-unit { font-size: 12px; color: #888; }
+    .attr-tile.dimmed { opacity: 0.45; }
+    .attr-tile-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .attr-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .attr-val {
+      font-size: 22px; font-weight: 700; margin-top: 4px; color: #4fc3f7;
+      transition: color 0.2s;
+    }
+    .attr-val.dimmed-val { color: #555; }
+    .attr-unit { font-size: 12px; color: #888; font-weight: 400; }
+    .attr-ha-status {
+      font-size: 10px; color: #555; margin-top: 4px;
+    }
+    .attr-ha-status.exposed { color: #4fc3f7; }
+
+    /* Toggle switch */
+    .toggle-wrap { cursor: pointer; flex-shrink: 0; }
+    .toggle {
+      width: 32px; height: 18px; border-radius: 9px; position: relative;
+      transition: background 0.2s;
+    }
+    .toggle.on { background: #4fc3f7; }
+    .toggle.off { background: #444; }
+    .toggle-knob {
+      width: 14px; height: 14px; border-radius: 50%; background: #fff;
+      position: absolute; top: 2px; transition: left 0.2s;
+    }
+    .toggle.on .toggle-knob { left: 16px; }
+    .toggle.off .toggle-knob { left: 2px; }
+
+    /* Network */
     .network-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 8px;
     }
     .net-item { font-size: 13px; color: #aaa; }
     .net-label { color: #666; margin-right: 8px; }
+
+    /* Commands */
     .commands { display: flex; gap: 8px; flex-wrap: wrap; }
     .cmd-btn {
       background: #3a3a5a; border: none; color: #ccc; padding: 8px 16px;
@@ -64,51 +151,77 @@ class DeviceDetail extends LitElement {
       margin-top: 8px; padding: 8px 12px; background: #1a1a2e;
       border-radius: 4px; font-size: 12px; color: #aaa; font-family: monospace;
     }
+    .no-commands { font-size: 13px; color: #666; font-style: italic; }
 
-    /* Tags */
-    .tags-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-    .tag {
-      display: flex; align-items: center; gap: 4px;
-      font-size: 11px; padding: 3px 10px; border-radius: 4px;
-      background: #1e3a5f; color: #4fc3f7;
-    }
-    .tag.client { background: #1e3a5f; color: #4fc3f7; }
-    .tag.server { background: #3a1e5f; color: #ce93d8; }
-    .tag .remove {
-      cursor: pointer; font-size: 13px; line-height: 1; opacity: 0.6;
-    }
-    .tag .remove:hover { opacity: 1; }
-    .tag-add {
-      display: flex; gap: 4px; align-items: center; margin-top: 8px;
-    }
-    .tag-input {
+    /* Agent configuration */
+    .config-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .config-label { font-size: 12px; color: #888; min-width: 120px; }
+    .config-input {
       background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 4px;
-      color: #e0e0e0; padding: 4px 10px; font-size: 12px; width: 140px;
+      color: #e0e0e0; padding: 5px 10px; font-size: 13px; width: 100px;
     }
-    .tag-input:focus { outline: none; border-color: #4fc3f7; }
-    .tag-input::placeholder { color: #555; }
-    .add-btn {
-      background: #4fc3f7; border: none; color: #1a1a2e; padding: 4px 12px;
-      border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;
+    .config-input:focus { outline: none; border-color: #4fc3f7; }
+    .plugins-list {
+      display: flex; gap: 6px; flex-wrap: wrap;
     }
-    .add-btn:hover { background: #81d4fa; }
-    .tag-hint { font-size: 10px; color: #555; margin-top: 4px; }
+    .plugin-badge {
+      background: #1a1a2e; color: #888; padding: 3px 10px;
+      border-radius: 4px; font-size: 11px;
+    }
 
-    /* Groups */
-    .group-list { display: flex; flex-direction: column; gap: 8px; }
-    .group-item {
-      display: flex; justify-content: space-between; align-items: center;
-      background: #1a1a2e; border-radius: 6px; padding: 10px 14px;
+    /* Custom sensors table */
+    .sensor-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .sensor-table th {
+      text-align: left; font-size: 10px; color: #666; text-transform: uppercase;
+      letter-spacing: 0.5px; padding: 6px 8px; border-bottom: 1px solid #3a3a5a;
     }
-    .group-name { font-size: 13px; color: #ccc; }
-    .group-actions { display: flex; gap: 6px; }
-    .group-btn {
-      background: none; border: none; color: #888; font-size: 11px;
-      cursor: pointer; padding: 2px 6px;
+    .sensor-table td {
+      font-size: 12px; color: #ccc; padding: 7px 8px; border-bottom: 1px solid #2a2a4a;
+      font-family: monospace;
     }
-    .group-btn:hover { color: #ccc; }
-    .group-btn.remove { color: #ef5350; }
-    .group-add { display: flex; gap: 4px; align-items: center; margin-top: 8px; }
+    .sensor-table tr:last-child td { border-bottom: none; }
+    .sensor-actions { display: flex; gap: 4px; }
+    .sensor-btn {
+      background: none; border: none; cursor: pointer; font-size: 11px;
+      padding: 2px 6px; border-radius: 3px; transition: all 0.15s;
+    }
+    .sensor-btn.edit { color: #4fc3f7; }
+    .sensor-btn.edit:hover { background: rgba(79,195,247,0.1); }
+    .sensor-btn.remove { color: #666; }
+    .sensor-btn.remove:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
+
+    /* Sensor form */
+    .sensor-form {
+      background: #1a1a2e; border-radius: 6px; padding: 14px; margin-bottom: 12px;
+    }
+    .sensor-form-grid {
+      display: grid; grid-template-columns: 1fr 2fr 80px 80px; gap: 8px; margin-bottom: 10px;
+    }
+    .sensor-form-grid input {
+      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 4px;
+      color: #e0e0e0; padding: 5px 8px; font-size: 12px;
+    }
+    .sensor-form-grid input:focus { outline: none; border-color: #4fc3f7; }
+    .sensor-form-grid input::placeholder { color: #555; }
+    .sensor-form-actions { display: flex; gap: 6px; }
+    .form-btn {
+      border: none; padding: 5px 14px; border-radius: 4px; cursor: pointer; font-size: 12px;
+    }
+    .form-btn.save { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
+    .form-btn.cancel { background: #3a3a5a; color: #aaa; }
+
+    /* Push config button */
+    .push-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    .push-btn {
+      background: #2e7d32; border: none; color: #fff; padding: 8px 20px;
+      border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+      transition: all 0.2s;
+    }
+    .push-btn:hover { background: #388e3c; }
+    .push-btn:disabled { opacity: 0.5; cursor: default; }
+    .push-status { font-size: 12px; color: #888; }
+    .push-status.synced { color: #81c784; }
+    .push-status.pending { color: #ffb74d; }
 
     /* Dialog overlay */
     .overlay {
@@ -120,7 +233,7 @@ class DeviceDetail extends LitElement {
       background: #2a2a4a; border-radius: 12px; padding: 24px;
       min-width: 320px; border: 1px solid #3a3a5a;
     }
-    .dialog h3 { color: #e0e0e0; margin-bottom: 12px; font-size: 16px; }
+    .dialog h3 { color: #e0e0e0; margin-bottom: 12px; font-size: 16px; margin-top: 0; }
     .dialog-field { margin-bottom: 12px; }
     .dialog-field label { display: block; font-size: 11px; color: #888; margin-bottom: 4px; }
     .dialog-field input {
@@ -141,8 +254,18 @@ class DeviceDetail extends LitElement {
     super();
     this.device = null;
     this.commandResult = '';
-    this._newTag = '';
     this._groups = {};
+    this._effectiveSettings = null;
+    this._haOverrides = {};
+    this._configInterval = 30;
+    this._customSensors = {};
+    this._showAddSensor = false;
+    this._editSensorKey = null;
+    this._sensorForm = { name: '', command: '', interval: 30, unit: '' };
+    this._pushing = false;
+    this._pushStatus = '';
+    this._lastPushed = '';
+    this._localChanges = false;
     this._showGroupDialog = false;
     this._newGroupName = '';
   }
@@ -161,6 +284,18 @@ class DeviceDetail extends LitElement {
   async _loadDevice() {
     try {
       this.device = await fetchDevice(this.deviceId);
+      // Seed local HA overrides from device
+      this._haOverrides = { ...(this.device.ha_exposure_overrides || {}) };
+      // Seed config state from device remote_config if available
+      if (this.device.remote_config) {
+        this._configInterval = this.device.remote_config.interval || 30;
+        const cc = this.device.remote_config.plugins?.custom_command?.commands || {};
+        this._customSensors = { ...cc };
+      }
+      // Load effective settings to know what the group policy provides
+      try {
+        this._effectiveSettings = await fetchEffectiveSettings(this.deviceId);
+      } catch (_) {}
     } catch (e) {
       console.error('Failed to load device:', e);
     }
@@ -175,138 +310,416 @@ class DeviceDetail extends LitElement {
   }
 
   render() {
-    if (!this.device) return html`<div>Loading...</div>`;
+    if (!this.device) return html`<div style="padding: 40px; text-align: center; color: #888;">Loading...</div>`;
     const d = this.device;
     const statusColor = d.status === 'online' ? '#81c784' : d.status === 'offline' ? '#ef5350' : '#ffb74d';
-    const attrs = Object.entries(d.attributes || {});
-    const network = d.network || {};
-    const clientTags = d.tags || [];
-    const serverTags = d.server_tags || [];
-    const deviceGroups = Object.values(this._groups).filter(g =>
-      g.device_ids && g.device_ids.includes(this.deviceId)
-    );
 
     return html`
       <button class="back" @click=${() => this.dispatchEvent(new CustomEvent('back'))}>
-        Back
+        &#8592; Back
       </button>
+
+      <!-- 1. Header -->
       <div class="header">
-        <span class="title">${d.device_name || this.deviceId}</span>
+        <div class="header-left">
+          <span class="title">${d.device_name || this.deviceId}</span>
+          <span class="device-type">${d.device_type || ''}</span>
+        </div>
         <span class="status-badge" style="background: ${statusColor}20; color: ${statusColor}">
           ${d.status}
         </span>
       </div>
 
-      <!-- Tags Section -->
+      <!-- 2. Tags -->
+      ${this._renderTagsSection()}
+
+      <!-- 3. Group Policy -->
+      ${this._renderGroupPolicy()}
+
+      <!-- 4. Attributes + HA Exposure -->
+      ${this._renderAttributesSection()}
+
+      <!-- 5. Network -->
+      ${this._renderNetwork()}
+
+      <!-- 6. Commands -->
+      ${this._renderCommands()}
+
+      <!-- 7. Agent Configuration -->
+      ${this._renderAgentConfig()}
+
+      ${this._showGroupDialog ? this._renderGroupDialog() : ''}
+    `;
+  }
+
+  // ── Section 2: Tags ────────────────────────────────────────────────────────
+
+  _renderTagsSection() {
+    const clientTags = this.device.tags || [];
+    const serverTags = this.device.server_tags || [];
+
+    return html`
       <div class="section">
         <div class="section-title">Tags</div>
         <div class="tags-row">
-          ${clientTags.map(t => html`
-            <span class="tag client">${t}</span>
-          `)}
+          ${clientTags.map(t => html`<span class="tag client">${t}</span>`)}
           ${serverTags.map(t => html`
             <span class="tag server">
               ${t}
               <span class="remove" @click=${() => this._removeTag(t)}>&times;</span>
             </span>
           `)}
-        </div>
-        <div class="tag-add">
-          <input class="tag-input" type="text" placeholder="Add tag..."
-            .value=${this._newTag}
-            @input=${(e) => this._newTag = e.target.value}
-            @keydown=${(e) => e.key === 'Enter' && this._addTag()}>
-          <button class="add-btn" @click=${this._addTag}>Add</button>
+          <tag-picker
+            .selectedTags=${serverTags}
+            @tag-add=${(e) => this._addTag(e.detail.tag)}
+            @tag-remove=${(e) => this._removeTag(e.detail.tag)}
+          ></tag-picker>
         </div>
         <div class="tag-hint">
           Client tags (blue) come from the device config. Server tags (purple) are managed here.
         </div>
       </div>
-
-      <!-- Groups Section -->
-      <div class="section">
-        <div class="section-title">Groups</div>
-        ${deviceGroups.length > 0 ? html`
-          <div class="group-list">
-            ${deviceGroups.map(g => html`
-              <div class="group-item">
-                <span class="group-name">${g.name}</span>
-                <div class="group-actions">
-                  <button class="group-btn remove" @click=${() => this._removeFromGroup(g.id)}>Remove</button>
-                </div>
-              </div>
-            `)}
-          </div>
-        ` : html`<div style="color: #666; font-size: 13px;">Not in any groups</div>`}
-        <div class="group-add">
-          ${this._renderGroupSelector(deviceGroups)}
-          <button class="add-btn" @click=${() => this._showGroupDialog = true}>New Group</button>
-        </div>
-      </div>
-
-      <!-- Attributes -->
-      ${attrs.length > 0 ? html`
-        <div class="section">
-          <div class="section-title">Attributes</div>
-          <div class="attr-grid">
-            ${attrs.map(([name, data]) => html`
-              <div class="attr-item">
-                <div class="attr-label">${name.replace(/_/g, ' ')}</div>
-                <div class="attr-val">
-                  ${data.value != null ? data.value : '\u2014'}
-                  <span class="attr-unit">${data.unit}</span>
-                </div>
-              </div>
-            `)}
-          </div>
-        </div>
-      ` : ''}
-
-      <!-- Network -->
-      ${Object.keys(network).length > 0 ? html`
-        <div class="section">
-          <div class="section-title">Network</div>
-          <div class="network-grid">
-            ${Object.entries(network).map(([key, val]) => html`
-              <div class="net-item">
-                <span class="net-label">${key}:</span>${val}
-              </div>
-            `)}
-          </div>
-        </div>
-      ` : ''}
-
-      <!-- Commands -->
-      <div class="section">
-        <div class="section-title">Commands</div>
-        <div class="commands">
-          <button class="cmd-btn" @click=${() => this._sendCmd('reboot')}>Reboot</button>
-          <button class="cmd-btn danger" @click=${() => this._sendCmd('shutdown')}>Shutdown</button>
-          <button class="cmd-btn" @click=${() => this._sendCmd('restart_service', { service: 'default' })}>Restart Service</button>
-        </div>
-        ${this.commandResult ? html`<div class="cmd-result">${this.commandResult}</div>` : ''}
-      </div>
-
-      ${this._showGroupDialog ? this._renderGroupDialog() : ''}
     `;
   }
 
-  _renderGroupSelector(deviceGroups) {
-    const availableGroups = Object.values(this._groups).filter(g =>
-      !g.device_ids || !g.device_ids.includes(this.deviceId)
-    );
-    if (availableGroups.length === 0) return html``;
+  // ── Section 3: Group Policy ────────────────────────────────────────────────
+
+  _renderGroupPolicy() {
+    const groups = Object.values(this._groups);
+    const currentGroupId = this.device.group_policy || '';
+    const currentGroup = currentGroupId ? this._groups[currentGroupId] : null;
+    const groupThresholds = currentGroup?.thresholds || {};
 
     return html`
-      <select class="tag-input" style="width: auto;"
-        @change=${(e) => { if (e.target.value) this._addToGroup(e.target.value); e.target.value = ''; }}>
-        <option value="">Add to group...</option>
-        ${availableGroups.map(g => html`
-          <option value=${g.id}>${g.name}</option>
-        `)}
-      </select>
+      <div class="section">
+        <div class="section-title">Group Policy</div>
+        <div class="group-policy-row">
+          <select class="group-select"
+            .value=${currentGroupId}
+            @change=${this._onGroupPolicyChange}>
+            <option value="">None — use global defaults</option>
+            ${groups.map(g => html`
+              <option value=${g.id} ?selected=${g.id === currentGroupId}>${g.name}</option>
+            `)}
+          </select>
+          <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
+            @click=${() => this._showGroupDialog = true}>New Group</button>
+        </div>
+
+        ${currentGroup && Object.keys(groupThresholds).length > 0 ? html`
+          <div class="group-threshold-summary">
+            ${Object.entries(groupThresholds).map(([k, v]) => html`
+              <span><span style="color: #888;">${k.replace(/_/g, ' ')}:</span> ${v}</span>
+            `)}
+          </div>
+        ` : ''}
+
+        <div class="group-hint">
+          Group policy sets default thresholds and HA entity settings. Device-level overrides take priority.
+        </div>
+      </div>
     `;
   }
+
+  async _onGroupPolicyChange(e) {
+    const groupId = e.target.value || null;
+    try {
+      await updateDeviceSettings(this.deviceId, { group_policy: groupId });
+      await this._loadDevice();
+    } catch (err) {
+      console.error('Failed to update group policy:', err);
+    }
+  }
+
+  // ── Section 4: Attributes + HA Exposure ───────────────────────────────────
+
+  _renderAttributesSection() {
+    const attrs = Object.entries(this.device.attributes || {});
+    if (attrs.length === 0) return html``;
+
+    return html`
+      <div class="section">
+        <div class="section-title">Attributes &amp; HA Exposure</div>
+        <div class="attr-grid">
+          ${attrs.map(([name, data]) => this._renderAttrTile(name, data))}
+        </div>
+      </div>
+    `;
+  }
+
+  _isExposed(name) {
+    // Device override takes priority, then group, then expose all by default
+    if (this._haOverrides[name] !== undefined) return this._haOverrides[name];
+    const es = this._effectiveSettings;
+    if (es?.ha_exposure_overrides?.[name] !== undefined) return es.ha_exposure_overrides[name];
+    // Default: exposed
+    return true;
+  }
+
+  _fromGroup(name) {
+    if (this._haOverrides[name] !== undefined) return false;
+    const es = this._effectiveSettings;
+    return es?.ha_exposure_overrides?.[name] !== undefined;
+  }
+
+  _renderAttrTile(name, data) {
+    const exposed = this._isExposed(name);
+    const fromGroup = this._fromGroup(name);
+
+    return html`
+      <div class="attr-tile ${exposed ? '' : 'dimmed'}">
+        <div class="attr-tile-top">
+          <span class="attr-label">${name.replace(/_/g, ' ')}</span>
+          <span class="toggle-wrap" @click=${() => this._toggleHaExposure(name)}>
+            <div class="toggle ${exposed ? 'on' : 'off'}">
+              <div class="toggle-knob"></div>
+            </div>
+          </span>
+        </div>
+        <div class="attr-val ${exposed ? '' : 'dimmed-val'}">
+          ${data.value != null ? data.value : '\u2014'}
+          <span class="attr-unit">${data.unit || ''}</span>
+        </div>
+        <div class="attr-ha-status ${exposed ? 'exposed' : ''}">
+          ${exposed ? 'HA sensor active' : 'Not exposed to HA'}
+          ${fromGroup ? html` <span style="color: #666;">&#8592; from group</span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  async _toggleHaExposure(name) {
+    const current = this._isExposed(name);
+    this._haOverrides = { ...this._haOverrides, [name]: !current };
+    this._localChanges = true;
+    try {
+      await updateDeviceSettings(this.deviceId, { ha_exposure_overrides: this._haOverrides });
+    } catch (e) {
+      console.error('Failed to update HA exposure:', e);
+    }
+  }
+
+  // ── Section 5: Network ────────────────────────────────────────────────────
+
+  _renderNetwork() {
+    const network = this.device.network || {};
+    if (Object.keys(network).length === 0) return html``;
+
+    return html`
+      <div class="section">
+        <div class="section-title">Network</div>
+        <div class="network-grid">
+          ${Object.entries(network).map(([key, val]) => html`
+            <div class="net-item">
+              <span class="net-label">${key}:</span>${val}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Section 6: Commands ───────────────────────────────────────────────────
+
+  _renderCommands() {
+    const allowedCommands = this.device.allowed_commands;
+
+    return html`
+      <div class="section">
+        <div class="section-title">Commands</div>
+        ${!allowedCommands || allowedCommands.length === 0 ? html`
+          <div class="no-commands">
+            No commands available — configure <code>allowed_commands</code> in the client's config.yaml
+          </div>
+        ` : html`
+          <div class="commands">
+            ${allowedCommands.map(cmd => html`
+              <button class="cmd-btn ${isDangerous(cmd) ? 'danger' : ''}"
+                @click=${() => this._sendCmd(cmd)}>
+                ${cmd}
+              </button>
+            `)}
+          </div>
+        `}
+        ${this.commandResult ? html`<div class="cmd-result">${this.commandResult}</div>` : ''}
+      </div>
+    `;
+  }
+
+  // ── Section 7: Agent Configuration ───────────────────────────────────────
+
+  _renderAgentConfig() {
+    const rc = this.device.remote_config || {};
+    const plugins = rc.plugins ? Object.keys(rc.plugins) : [];
+    const sensors = this._customSensors;
+
+    return html`
+      <div class="section">
+        <div class="section-title">Agent Configuration</div>
+
+        <div class="config-row">
+          <span class="config-label">Collection interval</span>
+          <input class="config-input" type="number" min="5"
+            .value=${String(this._configInterval)}
+            @input=${(e) => { this._configInterval = Number(e.target.value); this._localChanges = true; }}>
+          <span style="font-size: 12px; color: #666; margin-left: 4px;">seconds</span>
+        </div>
+
+        ${plugins.length > 0 ? html`
+          <div class="config-row">
+            <span class="config-label">Active plugins</span>
+            <div class="plugins-list">
+              ${plugins.map(p => html`<span class="plugin-badge">${p}</span>`)}
+            </div>
+          </div>
+        ` : ''}
+
+        <div style="margin-bottom: 10px;">
+          <div class="section-title" style="margin-bottom: 8px;">Custom Sensors</div>
+          ${Object.keys(sensors).length > 0 ? html`
+            <table class="sensor-table">
+              <thead>
+                <tr>
+                  <th>Name</th><th>Command</th><th>Interval</th><th>Unit</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.entries(sensors).map(([key, s]) => html`
+                  <tr>
+                    <td>${key}</td>
+                    <td>${s.command}</td>
+                    <td>${s.interval}s</td>
+                    <td>${s.unit || '—'}</td>
+                    <td>
+                      <div class="sensor-actions">
+                        <button class="sensor-btn edit" @click=${() => this._editSensor(key, s)}>Edit</button>
+                        <button class="sensor-btn remove" @click=${() => this._removeSensor(key)}>Remove</button>
+                      </div>
+                    </td>
+                  </tr>
+                `)}
+              </tbody>
+            </table>
+          ` : html`<div style="font-size: 13px; color: #555; margin-bottom: 10px;">No custom sensors</div>`}
+
+          ${this._showAddSensor || this._editSensorKey ? this._renderSensorForm() : html`
+            <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
+              @click=${this._startAddSensor}>+ Add Sensor</button>
+          `}
+        </div>
+
+        ${this.device.allowed_commands && this.device.allowed_commands.length > 0 ? html`
+          <div class="config-row" style="margin-bottom: 0;">
+            <span class="config-label" style="color: #666;">Allowed commands</span>
+            <div style="font-size: 12px; color: #666;">${(this.device.allowed_commands || []).join(', ')}</div>
+          </div>
+        ` : ''}
+
+        <div class="push-row">
+          <button class="push-btn" ?disabled=${this._pushing} @click=${this._pushConfig}>
+            ${this._pushing ? 'Pushing...' : 'Push Config'}
+          </button>
+          ${this._lastPushed ? html`
+            <span class="push-status">Last pushed: ${this._lastPushed}</span>
+          ` : ''}
+          ${this._pushStatus ? html`
+            <span class="push-status ${this._pushStatus === 'Config synced' ? 'synced' : 'pending'}">
+              ${this._pushStatus}
+            </span>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  _renderSensorForm() {
+    const f = this._sensorForm;
+    return html`
+      <div class="sensor-form">
+        <div class="sensor-form-grid">
+          <input type="text" placeholder="Name (e.g. ping_gw)"
+            .value=${f.name}
+            @input=${(e) => this._sensorForm = { ...f, name: e.target.value }}>
+          <input type="text" placeholder="Command (e.g. ping -c1 10.0.0.1)"
+            .value=${f.command}
+            @input=${(e) => this._sensorForm = { ...f, command: e.target.value }}>
+          <input type="number" placeholder="60"
+            .value=${String(f.interval)}
+            @input=${(e) => this._sensorForm = { ...f, interval: Number(e.target.value) }}>
+          <input type="text" placeholder="Unit"
+            .value=${f.unit}
+            @input=${(e) => this._sensorForm = { ...f, unit: e.target.value }}>
+        </div>
+        <div class="sensor-form-actions">
+          <button class="form-btn save" @click=${this._saveSensor}>Save</button>
+          <button class="form-btn cancel" @click=${this._cancelSensorForm}>Cancel</button>
+        </div>
+      </div>
+    `;
+  }
+
+  _startAddSensor() {
+    this._showAddSensor = true;
+    this._editSensorKey = null;
+    this._sensorForm = { name: '', command: '', interval: 30, unit: '' };
+  }
+
+  _editSensor(key, s) {
+    this._editSensorKey = key;
+    this._showAddSensor = false;
+    this._sensorForm = { name: key, command: s.command, interval: s.interval || 30, unit: s.unit || '' };
+  }
+
+  _removeSensor(key) {
+    const updated = { ...this._customSensors };
+    delete updated[key];
+    this._customSensors = updated;
+    this._localChanges = true;
+  }
+
+  _saveSensor() {
+    const { name, command, interval, unit } = this._sensorForm;
+    if (!name.trim() || !command.trim()) return;
+
+    const updated = { ...this._customSensors };
+    // If editing and key changed, remove old
+    if (this._editSensorKey && this._editSensorKey !== name) {
+      delete updated[this._editSensorKey];
+    }
+    updated[name.trim()] = { command, interval: interval || 30, unit };
+    this._customSensors = updated;
+    this._localChanges = true;
+    this._cancelSensorForm();
+  }
+
+  _cancelSensorForm() {
+    this._showAddSensor = false;
+    this._editSensorKey = null;
+    this._sensorForm = { name: '', command: '', interval: 30, unit: '' };
+  }
+
+  async _pushConfig() {
+    this._pushing = true;
+    this._pushStatus = '';
+    try {
+      const config = {
+        interval: this._configInterval,
+        plugins: {
+          custom_command: { commands: this._customSensors },
+        },
+      };
+      await pushDeviceConfig(this.deviceId, config);
+      this._lastPushed = new Date().toLocaleTimeString();
+      this._localChanges = false;
+      this._pushStatus = 'Config synced';
+    } catch (e) {
+      this._pushStatus = `Push failed: ${e.message}`;
+    } finally {
+      this._pushing = false;
+    }
+  }
+
+  // ── Dialog ────────────────────────────────────────────────────────────────
 
   _renderGroupDialog() {
     return html`
@@ -315,7 +728,7 @@ class DeviceDetail extends LitElement {
           <h3>Create Group</h3>
           <div class="dialog-field">
             <label>Group Name</label>
-            <input type="text" placeholder="e.g., Infrastructure, IoT Sensors"
+            <input type="text" placeholder="e.g. Infrastructure, IoT Sensors"
               .value=${this._newGroupName}
               @input=${(e) => this._newGroupName = e.target.value}
               @keydown=${(e) => e.key === 'Enter' && this._createGroup()}>
@@ -329,35 +742,6 @@ class DeviceDetail extends LitElement {
     `;
   }
 
-  async _addTag() {
-    const tag = this._newTag.trim();
-    if (!tag) return;
-    await addDeviceTags(this.deviceId, [tag]);
-    this._newTag = '';
-    await this._loadDevice();
-  }
-
-  async _removeTag(tag) {
-    await removeDeviceTag(this.deviceId, tag);
-    await this._loadDevice();
-  }
-
-  async _addToGroup(groupId) {
-    const group = this._groups[groupId];
-    if (!group) return;
-    const deviceIds = [...(group.device_ids || []), this.deviceId];
-    await updateGroup(groupId, { device_ids: deviceIds });
-    await this._loadGroups();
-  }
-
-  async _removeFromGroup(groupId) {
-    const group = this._groups[groupId];
-    if (!group) return;
-    const deviceIds = (group.device_ids || []).filter(id => id !== this.deviceId);
-    await updateGroup(groupId, { device_ids: deviceIds });
-    await this._loadGroups();
-  }
-
   async _createGroup() {
     const name = this._newGroupName.trim();
     if (!name) return;
@@ -366,7 +750,23 @@ class DeviceDetail extends LitElement {
     this._newGroupName = '';
     this._showGroupDialog = false;
     await this._loadGroups();
+    await this._loadDevice();
   }
+
+  // ── Tag helpers ───────────────────────────────────────────────────────────
+
+  async _addTag(tag) {
+    if (!tag) return;
+    await addDeviceTags(this.deviceId, [tag]);
+    await this._loadDevice();
+  }
+
+  async _removeTag(tag) {
+    await removeDeviceTag(this.deviceId, tag);
+    await this._loadDevice();
+  }
+
+  // ── Command ───────────────────────────────────────────────────────────────
 
   async _sendCmd(command, params = {}) {
     try {

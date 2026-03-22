@@ -4,6 +4,7 @@ import './components/nav-bar.js';
 import './components/topology-view.js';
 import './components/dashboard-view.js';
 import './components/device-detail.js';
+import './components/settings-view.js';
 
 class NetworkMonitorApp extends LitElement {
   static properties = {
@@ -57,6 +58,8 @@ class NetworkMonitorApp extends LitElement {
     switch (this.currentView) {
       case 'topology':
         return html`<topology-view @device-select=${this._onDeviceSelect}></topology-view>`;
+      case 'settings':
+        return html`<settings-view></settings-view>`;
       case 'dashboard':
       default:
         return html`<dashboard-view @device-select=${this._onDeviceSelect}></dashboard-view>`;
