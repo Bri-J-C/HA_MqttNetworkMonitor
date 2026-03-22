@@ -62,7 +62,7 @@ class NavBar extends LitElement {
           <button
             class=${this.currentView === 'dashboard' ? 'active' : ''}
             @click=${() => this._navigate('dashboard')}
-          >Dashboard</button>
+          >Devices</button>
           <button
             class=${this.currentView === 'topology' ? 'active' : ''}
             @click=${() => this._navigate('topology')}
