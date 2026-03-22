@@ -71,22 +71,21 @@ class TagRegistry:
         return True
 
     def get_tag_count(self, tag: str, devices: dict[str, Any] | None = None) -> int:
-        """Count devices that use this tag (across client tags and server tags)."""
+        """Count devices that use this server-side tag."""
         if devices is None:
             return 0
         count = 0
         for device in devices.values():
-            client_tags = device.get("tags", [])
             server_tags = device.get("server_tags", [])
-            if tag in client_tags or tag in server_tags:
+            if tag in server_tags:
                 count += 1
         return count
 
     def auto_populate(self, devices: dict[str, Any]) -> None:
-        """Add any tags from device payloads that are not already registered."""
+        """Add any server-side tags that are not already registered."""
         changed = False
         for device in devices.values():
-            for tag in device.get("tags", []) + device.get("server_tags", []):
+            for tag in device.get("server_tags", []):
                 if tag and tag not in self._tags:
                     self._tags.append(tag)
                     changed = True

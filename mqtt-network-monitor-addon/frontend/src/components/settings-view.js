@@ -33,6 +33,7 @@ class SettingsView extends LitElement {
     _editingGroupName: { type: String, state: true },
     _savingSettings: { type: Boolean, state: true },
     _settingsSaved: { type: Boolean, state: true },
+    _selectedTags: { type: Object, state: true },
     _groupSaveStatus: { type: Object, state: true },
     _groupPushStatus: { type: Object, state: true },
     // Command editing state
@@ -60,16 +61,21 @@ class SettingsView extends LitElement {
     }
 
     /* Tag registry */
-    .tag-list { display: flex; flex-direction: column; gap: 6px; }
-    .tag-row {
-      display: flex; align-items: center; justify-content: space-between;
-      background: #1a1a2e; border-radius: 6px; padding: 8px 14px;
+    .tag-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px; margin-bottom: 8px;
     }
-    .tag-row-left { display: flex; align-items: center; gap: 10px; }
-    .tag-name { font-size: 13px; color: #ccc; cursor: pointer; }
-    .tag-name:hover { color: #4fc3f7; text-decoration: underline; }
-    .tag-count { font-size: 11px; color: #666; }
-    .tag-row-actions { display: flex; gap: 6px; }
+    .tag-card {
+      background: #1a1a2e; border-radius: 8px; padding: 12px;
+      border: 1px solid #2a2a4a; cursor: pointer; transition: all 0.15s;
+    }
+    .tag-card:hover { border-color: #3a3a5a; background: #1a1a30; }
+    .tag-card.selected { border-color: #4fc3f7; background: #1a2a3e; }
+    .tag-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .tag-card-top input[type="checkbox"] { margin: 0; cursor: pointer; }
+    .tag-card-name { font-size: 14px; color: #ccc; font-weight: 600; }
+    .tag-card-count { font-size: 11px; color: #666; margin-bottom: 8px; }
+    .tag-card-actions { display: flex; gap: 4px; }
     .icon-btn {
       background: none; border: none; cursor: pointer; font-size: 12px;
       padding: 2px 8px; border-radius: 4px; transition: all 0.15s;
@@ -254,6 +260,7 @@ class SettingsView extends LitElement {
     this._editingGroupName = null;
     this._savingSettings = false;
     this._settingsSaved = false;
+    this._selectedTags = new Set();
     this._groupSaveStatus = {};
     this._groupPushStatus = {};
     // Command editing
@@ -305,49 +312,93 @@ class SettingsView extends LitElement {
   // ── Tag Registry ──────────────────────────────────────────────────────────
 
   _renderTagRegistry() {
+    const selectedCount = this._selectedTags ? this._selectedTags.size : 0;
+
     return html`
       <div class="section">
-        <div class="section-title">Tag Registry</div>
-        <div class="tag-list">
-          ${this._tags.map(item => this._renderTagRow(item))}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div class="section-title" style="margin-bottom: 0;">Tag Registry</div>
+          <span style="font-size: 10px; color: #555;">Server-managed tags only</span>
         </div>
-        <div class="add-row">
+
+        ${selectedCount > 0 ? html`
+          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; padding: 8px 12px; background: #12122a; border-radius: 6px;">
+            <span style="font-size: 12px; color: #ccc;">${selectedCount} selected</span>
+            <button class="small-btn cancel" style="font-size: 11px; padding: 3px 10px;"
+              @click=${this._deleteSelectedTags}>Delete Selected</button>
+            <button class="small-btn cancel" style="font-size: 11px; padding: 3px 10px;"
+              @click=${() => this._selectedTags = new Set()}>Deselect All</button>
+          </div>
+        ` : ''}
+
+        ${this._tags.length > 0 ? html`
+          <div class="tag-grid">
+            ${this._tags.map(item => this._renderTagCard(item))}
+          </div>
+        ` : html`<div style="color: #555; font-size: 13px; margin-bottom: 12px;">No tags created yet</div>`}
+
+        ${this._renamingTag ? html`
+          <div class="sensor-form" style="margin-top: 12px;">
+            <div style="font-size: 11px; color: #888; margin-bottom: 6px;">Rename "${this._renamingTag}"</div>
+            <div class="sensor-form-grid" style="grid-template-columns: 1fr;">
+              <input type="text" .value=${this._renameValue}
+                @input=${(e) => this._renameValue = e.target.value}
+                @keydown=${(e) => { if (e.key === 'Enter') this._saveRename(this._renamingTag); if (e.key === 'Escape') this._cancelRename(); }}>
+            </div>
+            <div class="sensor-form-actions">
+              <button class="form-btn save" @click=${() => this._saveRename(this._renamingTag)}>Rename</button>
+              <button class="form-btn cancel" @click=${this._cancelRename}>Cancel</button>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="add-row" style="margin-top: 12px;">
           <input class="small-input" type="text" placeholder="New tag name..."
             .value=${this._newTagName}
             @input=${(e) => this._newTagName = e.target.value}
             @keydown=${(e) => e.key === 'Enter' && this._createTag()}>
-          <button class="small-btn" @click=${this._createTag}>New Tag</button>
+          <button class="small-btn" @click=${this._createTag}>Create Tag</button>
         </div>
       </div>
     `;
   }
 
-  _renderTagRow(item) {
-    const isRenaming = this._renamingTag === item.tag;
+  _renderTagCard(item) {
+    const isSelected = this._selectedTags && this._selectedTags.has(item.tag);
+    const count = item.device_count || item.count || 0;
+
     return html`
-      <div class="tag-row">
-        <div class="tag-row-left">
-          ${isRenaming ? html`
-            <div class="rename-row">
-              <input class="small-input" type="text" .value=${this._renameValue}
-                @input=${(e) => this._renameValue = e.target.value}
-                @keydown=${(e) => { if (e.key === 'Enter') this._saveRename(item.tag); if (e.key === 'Escape') this._cancelRename(); }}>
-              <button class="small-btn" @click=${() => this._saveRename(item.tag)}>Save</button>
-              <button class="small-btn cancel" @click=${this._cancelRename}>Cancel</button>
-            </div>
-          ` : html`
-            <span class="tag-name" @click=${() => this._startRename(item.tag)}>${item.tag}</span>
-            <span class="tag-count">${item.count} device${item.count !== 1 ? 's' : ''}</span>
-          `}
+      <div class="tag-card ${isSelected ? 'selected' : ''}" @click=${() => this._toggleTagSelection(item.tag)}>
+        <div class="tag-card-top">
+          <input type="checkbox" .checked=${isSelected}
+            @click=${(e) => e.stopPropagation()}
+            @change=${() => this._toggleTagSelection(item.tag)}>
+          <span class="tag-card-name">${item.tag}</span>
         </div>
-        ${!isRenaming ? html`
-          <div class="tag-row-actions">
-            <button class="icon-btn delete" title="Delete tag"
-              @click=${() => this._deleteTag(item.tag)}>Delete</button>
-          </div>
-        ` : ''}
+        <div class="tag-card-count">${count} device${count !== 1 ? 's' : ''}</div>
+        <div class="tag-card-actions">
+          <button class="sensor-btn edit" @click=${(e) => { e.stopPropagation(); this._startRename(item.tag); }}>Rename</button>
+          <button class="sensor-btn remove" @click=${(e) => { e.stopPropagation(); this._deleteTag(item.tag); }}>Delete</button>
+        </div>
       </div>
     `;
+  }
+
+  _toggleTagSelection(tag) {
+    const next = new Set(this._selectedTags);
+    if (next.has(tag)) next.delete(tag);
+    else next.add(tag);
+    this._selectedTags = next;
+  }
+
+  async _deleteSelectedTags() {
+    const tags = [...this._selectedTags];
+    if (!confirm(`Delete ${tags.length} tag${tags.length !== 1 ? 's' : ''}?`)) return;
+    for (const tag of tags) {
+      try { await deleteTag(tag); } catch (e) { console.error(e); }
+    }
+    this._selectedTags = new Set();
+    await this._loadAll();
   }
 
   _startRename(tag) {
@@ -978,21 +1029,25 @@ class SettingsView extends LitElement {
   }
 
   async _updateGroup(g) {
-    const name = this._editingGroupName === g.id ? this._editGroupName.trim() : g.name;
+    // Get the latest group state from this._groups (not the stale g parameter)
+    const latest = this._groups[g.id] || g;
+    const name = this._editingGroupName === g.id ? this._editGroupName.trim() : latest.name;
     // Filter out thresholds where value is null or NaN
     const cleanThresholds = {};
-    for (const [k, v] of Object.entries(g.thresholds || {})) {
+    for (const [k, v] of Object.entries(latest.thresholds || {})) {
       if (v != null && !isNaN(v)) cleanThresholds[k] = v;
     }
-    const savedName = name || g.name;
+    const savedName = name || latest.name;
+    const payload = {
+      name: savedName,
+      device_ids: latest.device_ids || [],
+      custom_commands: latest.custom_commands || {},
+      custom_sensors: latest.custom_sensors || {},
+      thresholds: cleanThresholds,
+    };
+    console.log('Saving group:', g.id, payload);
     try {
-      await updateGroup(g.id, {
-        name: savedName,
-        device_ids: g.device_ids || [],
-        custom_commands: g.custom_commands || {},
-        custom_sensors: g.custom_sensors || {},
-        thresholds: cleanThresholds,
-      });
+      await updateGroup(g.id, payload);
       // Update local state without full reload
       this._groups = {
         ...this._groups,
@@ -1045,11 +1100,13 @@ class SettingsView extends LitElement {
     // Auto-save (update) first so server has latest data
     await this._updateGroup(g);
 
+    // Use latest state after save
+    const latest = this._groups[g.id] || g;
     const config = {
-      commands: g.custom_commands || {},
+      commands: latest.custom_commands || {},
       plugins: {
         custom_command: {
-          commands: g.custom_sensors || {},
+          commands: latest.custom_sensors || {},
         },
       },
     };
