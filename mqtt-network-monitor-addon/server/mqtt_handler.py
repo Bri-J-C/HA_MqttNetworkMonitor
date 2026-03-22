@@ -86,6 +86,7 @@ class MQTTHandler:
             try:
                 response = json.loads(msg.payload.decode())
                 logger.info(f"Command response from {device_id}: {response}")
+                self._registry.add_command_response(device_id, response)
             except json.JSONDecodeError:
                 logger.error(f"Invalid command response from {device_id}")
 

@@ -317,6 +317,36 @@ class DeviceRegistry:
     def set_warning_thresholds(self, thresholds: dict[str, float]) -> None:
         self._warning_thresholds.update(thresholds)
 
+    def add_command_response(self, device_id: str, response: dict) -> None:
+        """Store a command response in the device's command_history (last 20 kept)."""
+        device = self._devices.get(device_id)
+        if device:
+            if "command_history" not in device:
+                device["command_history"] = []
+            device["command_history"].append({
+                **response,
+                "received_at": time.time(),
+            })
+            # Keep only the last 20 responses
+            device["command_history"] = device["command_history"][-20:]
+            self._save_devices()
+
+    def check_stale_devices(self, timeout_seconds: int = 300) -> None:
+        """Mark devices as offline if they haven't been seen within timeout."""
+        now = time.time()
+        changed = False
+        for device_id, device in self._devices.items():
+            if device.get("status") == "online":
+                last_seen = device.get("last_seen", 0)
+                if now - last_seen > timeout_seconds:
+                    device["status"] = "offline"
+                    changed = True
+                    logger.info(
+                        f"Device {device_id} marked offline (heartbeat timeout)"
+                    )
+        if changed:
+            self._save_devices()
+
     def set_device_settings(self, device_id: str, settings: dict) -> dict | None:
         """Update group_policy, ha_exposure_overrides, and/or threshold_overrides for a device."""
         device = self._devices.get(device_id)

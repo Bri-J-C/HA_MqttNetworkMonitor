@@ -5,6 +5,8 @@ import logging
 import os
 import queue
 import sys
+import threading
+import time
 from pathlib import Path
 
 import uvicorn
@@ -144,6 +146,17 @@ def create_app():
     mqtt_handler.on_device_update(on_device_update)
     init_app(registry, topology_engine, command_sender, mqtt_handler, tag_reg, settings_mgr, ha_entities)
     mqtt_handler.connect()
+
+    def _heartbeat_worker():
+        while True:
+            try:
+                registry.check_stale_devices(timeout_seconds=300)
+            except Exception as exc:
+                logger.error(f"Heartbeat checker error: {exc}")
+            time.sleep(60)
+
+    heartbeat_thread = threading.Thread(target=_heartbeat_worker, daemon=True, name="heartbeat-checker")
+    heartbeat_thread.start()
 
     return app
 

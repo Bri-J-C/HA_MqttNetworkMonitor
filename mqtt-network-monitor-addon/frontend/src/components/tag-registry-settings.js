@@ -161,14 +161,22 @@ class TagRegistrySettings extends LitElement {
     const count = item.device_count || item.count || 0;
 
     return html`
-      <div class="tag-card ${isSelected ? 'selected' : ''}" @click=${() => this._toggleTagSelection(item.tag)}>
+      <div class="tag-card ${isSelected ? 'selected' : ''}"
+        role="checkbox"
+        aria-checked=${isSelected ? 'true' : 'false'}
+        aria-label="Tag: ${item.tag}, used by ${count} device${count !== 1 ? 's' : ''}"
+        tabindex="0"
+        @click=${() => this._toggleTagSelection(item.tag)}
+        @keydown=${(e) => (e.key === 'Enter' || e.key === ' ') && this._toggleTagSelection(item.tag)}>
         <div class="tag-card-top">
           <span class="tag-card-name">${item.tag}</span>
         </div>
         <div class="tag-card-count">${count} device${count !== 1 ? 's' : ''}</div>
         <div class="tag-card-actions">
-          <button class="sensor-btn edit" @click=${(e) => { e.stopPropagation(); this._startRename(item.tag); }}>Rename</button>
-          <button class="sensor-btn remove" @click=${(e) => { e.stopPropagation(); this._deleteTag(item.tag); }}>Delete</button>
+          <button class="sensor-btn edit" aria-label="Rename tag ${item.tag}"
+            @click=${(e) => { e.stopPropagation(); this._startRename(item.tag); }}>Rename</button>
+          <button class="sensor-btn remove" aria-label="Delete tag ${item.tag}"
+            @click=${(e) => { e.stopPropagation(); this._deleteTag(item.tag); }}>Delete</button>
         </div>
       </div>
     `;

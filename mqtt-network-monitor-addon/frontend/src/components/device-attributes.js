@@ -223,7 +223,13 @@ class DeviceAttributes extends LitElement {
             <span class="attr-delete" title="Remove attribute"
               @click=${() => this._onDelete(name)}>&times;</span>
           </span>
-          <span class="toggle-wrap" @click=${() => this._onToggleExposure(name)}>
+          <span class="toggle-wrap"
+            role="switch"
+            aria-checked=${exposed ? 'true' : 'false'}
+            aria-label="Expose ${name.replace(/_/g, ' ')} to Home Assistant"
+            tabindex="0"
+            @click=${() => this._onToggleExposure(name)}
+            @keydown=${(e) => (e.key === 'Enter' || e.key === ' ') && this._onToggleExposure(name)}>
             <div class="toggle ${exposed ? 'on' : 'off'}">
               <div class="toggle-knob"></div>
             </div>
@@ -237,6 +243,7 @@ class DeviceAttributes extends LitElement {
           ${exceeded ? html`<span style="color: #ffb74d; font-size: 11px;">\u26A0</span>` : ''}
           <span style="font-size: 9px; color: #666;">Warn</span>
           <select class="threshold-op"
+            aria-label="Warning threshold operator for ${name.replace(/_/g, ' ')}"
             .value=${currentOp}
             @change=${(e) => this._onThresholdChange(name, currentThreshVal, e.target.value)}>
             <option value=">">&gt;</option>
@@ -247,6 +254,7 @@ class DeviceAttributes extends LitElement {
             <option value="!=">!=</option>
           </select>
           <input class="threshold-inline" type="number"
+            aria-label="Warning threshold value for ${name.replace(/_/g, ' ')}"
             placeholder="\u2014"
             .value=${currentThreshVal != null ? String(currentThreshVal) : ''}
             @change=${(e) => this._onThresholdChange(name, e.target.value, currentOp)}>
