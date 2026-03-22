@@ -503,18 +503,22 @@ class DeviceDetail extends LitElement {
     }
   }
 
-  _saveServerCommand({ name, shell }) {
+  async _saveServerCommand({ name, shell }) {
     this._serverCommands = { ...this._serverCommands, [name]: shell };
     this._localChanges   = true;
-    updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
+    await updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
+    // Auto-push to client so the command is immediately available
+    await pushDeviceConfig(this.deviceId, { commands: { [name]: shell } });
   }
 
-  _removeServerCommand(name) {
+  async _removeServerCommand(name) {
     const updated = { ...this._serverCommands };
     delete updated[name];
     this._serverCommands = updated;
     this._localChanges   = true;
-    updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
+    await updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
+    // Push updated commands to client
+    await pushDeviceConfig(this.deviceId, { commands: updated });
   }
 
   // ── Config event handlers ──────────────────────────────────────────────────
