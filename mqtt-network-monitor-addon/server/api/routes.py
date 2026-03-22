@@ -108,6 +108,8 @@ def push_device_config(device_id: str, body: dict[str, Any]):
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
     mqtt_handler.push_config(device_id, body)
+    # Store the pushed config on the device record so the frontend can read it back
+    registry.set_device_settings(device_id, {"remote_config": body})
     return {"status": "pushed", "device_id": device_id}
 
 

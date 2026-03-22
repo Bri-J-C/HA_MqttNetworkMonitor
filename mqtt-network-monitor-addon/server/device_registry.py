@@ -255,7 +255,7 @@ class DeviceRegistry:
         device = self._devices.get(device_id)
         if not device:
             return None
-        allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides", "server_commands"}
+        allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides", "server_commands", "remote_config"}
         for key in allowed_keys:
             if key in settings:
                 device[key] = settings[key]
