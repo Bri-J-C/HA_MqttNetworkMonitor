@@ -1,5 +1,5 @@
 import { LitElement, html, svg, css } from 'lit';
-import { fetchTopology, fetchLayouts, saveLayout, deleteLayout } from '../services/api.js';
+import { fetchTopology, fetchLayouts, saveLayout, deleteLayout, fetchDevice, sendCommand } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
 
 const STATUS_COLORS = {
@@ -25,6 +25,8 @@ class TopologyView extends LitElement {
     _error: { type: String, state: true },
     _loading: { type: Boolean, state: true },
     _selectedEdge: { type: Number, state: true },
+    _selectedDeviceData: { type: Object, state: true },
+    _commandResult: { type: String, state: true },
   };
 
   static styles = css`
@@ -88,6 +90,65 @@ class TopologyView extends LitElement {
       padding: 6px 0; border-bottom: 1px solid #3a3a5a; font-size: 12px; color: #aaa;
     }
     .edge-item:last-child { border-bottom: none; }
+    .device-panel {
+      background: #2a2a4a; border-radius: 8px; padding: 16px; margin-top: 12px;
+    }
+    .device-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .device-title { font-size: 18px; font-weight: 700; }
+    .device-type { font-size: 12px; color: #666; }
+    .device-status-badge {
+      padding: 3px 10px; border-radius: 10px; font-size: 12px;
+    }
+    .device-section {
+      margin-top: 14px;
+    }
+    .device-section-title {
+      font-size: 11px; color: #666; text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 8px;
+    }
+    .attr-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px;
+    }
+    .attr-item {
+      background: #1a1a2e; border-radius: 6px; padding: 10px; text-align: center;
+    }
+    .attr-label { font-size: 10px; color: #666; text-transform: uppercase; }
+    .attr-val { font-size: 18px; font-weight: 700; color: #4fc3f7; margin-top: 2px; }
+    .attr-unit { font-size: 11px; color: #888; }
+    .attr-val.warning { color: #ffb74d; }
+    .network-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 6px;
+    }
+    .net-item { font-size: 12px; color: #aaa; }
+    .net-label { color: #666; }
+    .tags-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag-badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 4px;
+      background: #1e3a5f; color: #4fc3f7;
+    }
+    .tag-badge.server { background: #3a1e5f; color: #ce93d8; }
+    .commands-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .cmd-btn {
+      background: #3a3a5a; border: none; color: #ccc; padding: 6px 14px;
+      border-radius: 5px; cursor: pointer; font-size: 12px; transition: all 0.2s;
+    }
+    .cmd-btn:hover { background: #4a4a6a; }
+    .cmd-btn.danger { background: #5a2a2a; color: #ef5350; }
+    .cmd-btn.danger:hover { background: #6a3a3a; }
+    .cmd-result {
+      margin-top: 6px; padding: 6px 10px; background: #1a1a2e;
+      border-radius: 4px; font-size: 11px; color: #aaa; font-family: monospace;
+    }
+    .close-btn {
+      background: none; border: none; color: #666; cursor: pointer;
+      font-size: 18px; padding: 0 4px; line-height: 1;
+    }
+    .close-btn:hover { color: #ccc; }
   `;
 
   constructor() {
@@ -106,13 +167,21 @@ class TopologyView extends LitElement {
     this._error = '';
     this._loading = true;
     this._selectedEdge = -1;
+    this._selectedDeviceData = null;
+    this._commandResult = '';
   }
 
   connectedCallback() {
     super.connectedCallback();
     this._loadTopology();
     this._loadLayouts();
-    wsService.onMessage(() => this._loadTopology());
+    wsService.onMessage((data) => {
+      this._loadTopology();
+      // Update selected device data in real-time
+      if (data.type === 'device_update' && data.device_id === this.selectedNode && data.device) {
+        this._selectedDeviceData = data.device;
+      }
+    });
   }
 
   async _loadTopology() {
@@ -333,16 +402,92 @@ class TopologyView extends LitElement {
     const node = this.topology.nodes.find(n => n.id === this.selectedNode);
     if (!node) return html``;
 
-    return html`
-      <div class="detail-panel">
-        <div class="detail-header">
-          <span class="detail-name" style="color: ${STATUS_COLORS[node.status] || '#ccc'}">
-            ${node.name}
-          </span>
-          <span style="color: #666; font-size: 12px;">${node.type} | ${node.status}</span>
+    const d = this._selectedDeviceData;
+    const color = STATUS_COLORS[node.status] || STATUS_COLORS.unknown;
+
+    // Still loading device data
+    if (!d) {
+      return html`
+        <div class="device-panel">
+          <div style="color: #888; font-size: 13px;">Loading device data...</div>
         </div>
-        <button class="tool-btn" style="margin-top: 4px;"
-          @click=${() => this._viewDevice(node.id)}>View Details</button>
+      `;
+    }
+
+    const attrs = Object.entries(d.attributes || {});
+    const network = d.network || {};
+    const tags = d.tags || [];
+    const serverTags = d.server_tags || [];
+    const WARNING_THRESHOLDS = { cpu_usage: 90, memory_usage: 90, disk_usage: 95, cpu_temp: 80 };
+
+    return html`
+      <div class="device-panel">
+        <div class="device-header">
+          <div>
+            <span class="device-title" style="color: ${color}">
+              ${d.device_name || this.selectedNode}
+            </span>
+            <span class="device-type">${d.device_type || node.type}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="device-status-badge" style="background: ${color}20; color: ${color}">
+              ${d.status || node.status}
+            </span>
+            <button class="close-btn" @click=${() => { this.selectedNode = null; this._selectedDeviceData = null; }}>&times;</button>
+          </div>
+        </div>
+
+        ${(tags.length > 0 || serverTags.length > 0) ? html`
+          <div style="margin-bottom: 12px;">
+            <div class="tags-row">
+              ${tags.map(t => html`<span class="tag-badge">${t}</span>`)}
+              ${serverTags.map(t => html`<span class="tag-badge server">${t}</span>`)}
+            </div>
+          </div>
+        ` : ''}
+
+        ${attrs.length > 0 ? html`
+          <div class="device-section">
+            <div class="device-section-title">Attributes</div>
+            <div class="attr-grid">
+              ${attrs.map(([name, data]) => {
+                const threshold = WARNING_THRESHOLDS[name];
+                const isWarn = threshold && typeof data.value === 'number' && data.value > threshold;
+                return html`
+                  <div class="attr-item">
+                    <div class="attr-label">${name.replace(/_/g, ' ')}</div>
+                    <div class="attr-val ${isWarn ? 'warning' : ''}">
+                      ${data.value != null ? data.value : '—'}
+                      <span class="attr-unit">${data.unit || ''}</span>
+                    </div>
+                  </div>
+                `;
+              })}
+            </div>
+          </div>
+        ` : ''}
+
+        ${Object.keys(network).length > 0 ? html`
+          <div class="device-section">
+            <div class="device-section-title">Network</div>
+            <div class="network-grid">
+              ${Object.entries(network).map(([key, val]) => html`
+                <div class="net-item">
+                  <span class="net-label">${key}: </span>${val}
+                </div>
+              `)}
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="device-section">
+          <div class="device-section-title">Commands</div>
+          <div class="commands-row">
+            <button class="cmd-btn" @click=${() => this._sendCmd('reboot')}>Reboot</button>
+            <button class="cmd-btn danger" @click=${() => this._sendCmd('shutdown')}>Shutdown</button>
+          </div>
+          ${this._commandResult ? html`<div class="cmd-result">${this._commandResult}</div>` : ''}
+        </div>
       </div>
     `;
   }
@@ -424,8 +569,33 @@ class TopologyView extends LitElement {
     }
   }
 
-  _selectNode(id) {
-    this.selectedNode = this.selectedNode === id ? null : id;
+  async _selectNode(id) {
+    if (this.selectedNode === id) {
+      this.selectedNode = null;
+      this._selectedDeviceData = null;
+      this._commandResult = '';
+      return;
+    }
+    this.selectedNode = id;
+    this._selectedDeviceData = null;
+    this._commandResult = '';
+    try {
+      this._selectedDeviceData = await fetchDevice(id);
+    } catch (e) {
+      // Might be a gateway node with no device data
+      this._selectedDeviceData = { status: 'inferred', attributes: {}, tags: [] };
+    }
+  }
+
+  async _sendCmd(command) {
+    if (!this.selectedNode) return;
+    try {
+      this._commandResult = `Sending ${command}...`;
+      const result = await sendCommand(this.selectedNode, command);
+      this._commandResult = `Sent (request: ${result.request_id})`;
+    } catch (e) {
+      this._commandResult = `Error: ${e.message}`;
+    }
   }
 
   _selectEdge(manualIndex) {
@@ -444,12 +614,6 @@ class TopologyView extends LitElement {
   _removeEdge(index) {
     this.manualEdges = this.manualEdges.filter((_, i) => i !== index);
     this._selectedEdge = -1;
-  }
-
-  _viewDevice(id) {
-    this.dispatchEvent(new CustomEvent('device-select', {
-      detail: { deviceId: id }, bubbles: true, composed: true,
-    }));
   }
 
   // --- Drag handlers ---
