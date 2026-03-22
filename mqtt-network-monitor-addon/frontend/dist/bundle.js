@@ -14,12 +14,12 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{createHTML:e=>e}):void 0,C="$lit$",E=`lit$${Math.random().toFixed(9).slice(2)}$`,A="?"+E,T=`<${A}>`,z=document,D=()=>z.createComment(""),N=e=>null===e||"object"!=typeof e&&"function"!=typeof e,P=Array.isArray,O="[ \t\n\f\r]",L=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,G=/-->/g,j=/>/g,M=RegExp(`>|${O}(?:([^\\s"'>=/]+)(${O}*=${O}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),R=/'/g,U=/"/g,I=/^(?:script|style|textarea|title)$/i,F=e=>(t,...s)=>({_$litType$:e,strings:t,values:s}),H=F(1),B=F(2),V=Symbol.for("lit-noChange"),q=Symbol.for("lit-nothing"),J=new WeakMap,W=z.createTreeWalker(z,129);function K(e,t){if(!P(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(t):t}const Y=(e,t)=>{const s=e.length-1,i=[];let o,a=2===t?"<svg>":3===t?"<math>":"",n=L;for(let t=0;t<s;t++){const s=e[t];let r,l,d=-1,c=0;for(;c<s.length&&(n.lastIndex=c,l=n.exec(s),null!==l);)c=n.lastIndex,n===L?"!--"===l[1]?n=G:void 0!==l[1]?n=j:void 0!==l[2]?(I.test(l[2])&&(o=RegExp("</"+l[2],"g")),n=M):void 0!==l[3]&&(n=M):n===M?">"===l[0]?(n=o??L,d=-1):void 0===l[1]?d=-2:(d=n.lastIndex-l[2].length,r=l[1],n=void 0===l[3]?M:'"'===l[3]?U:R):n===U||n===R?n=M:n===G||n===j?n=L:(n=M,o=void 0);const p=n===M&&e[t+1].startsWith("/>")?" ":"";a+=n===L?s+T:d>=0?(i.push(r),s.slice(0,d)+C+s.slice(d)+E+p):s+E+(-2===d?t:p)}return[K(e,a+(e[s]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),i]};class X{constructor({strings:e,_$litType$:t},s){let i;this.parts=[];let o=0,a=0;const n=e.length-1,r=this.parts,[l,d]=Y(e,t);if(this.el=X.createElement(l,s),W.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(i=W.nextNode())&&r.length<n;){if(1===i.nodeType){if(i.hasAttributes())for(const e of i.getAttributeNames())if(e.endsWith(C)){const t=d[a++],s=i.getAttribute(e).split(E),n=/([.?@])?(.*)/.exec(t);r.push({type:1,index:o,name:n[2],strings:s,ctor:"."===n[1]?se:"?"===n[1]?ie:"@"===n[1]?oe:te}),i.removeAttribute(e)}else e.startsWith(E)&&(r.push({type:6,index:o}),i.removeAttribute(e));if(I.test(i.tagName)){const e=i.textContent.split(E),t=e.length-1;if(t>0){i.textContent=k?k.emptyScript:"";for(let s=0;s<t;s++)i.append(e[s],D()),W.nextNode(),r.push({type:2,index:++o});i.append(e[t],D())}}}else if(8===i.nodeType)if(i.data===A)r.push({type:2,index:o});else{let e=-1;for(;-1!==(e=i.data.indexOf(E,e+1));)r.push({type:7,index:o}),e+=E.length-1}o++}}static createElement(e,t){const s=z.createElement("template");return s.innerHTML=e,s}}function Z(e,t,s=e,i){if(t===V)return t;let o=void 0!==i?s._$Co?.[i]:s._$Cl;const a=N(t)?void 0:t._$litDirective$;return o?.constructor!==a&&(o?._$AO?.(!1),void 0===a?o=void 0:(o=new a(e),o._$AT(e,s,i)),void 0!==i?(s._$Co??=[])[i]=o:s._$Cl=o),void 0!==o&&(t=Z(e,o._$AS(e,t.values),o,i)),t}class Q{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:s}=this._$AD,i=(e?.creationScope??z).importNode(t,!0);W.currentNode=i;let o=W.nextNode(),a=0,n=0,r=s[0];for(;void 0!==r;){if(a===r.index){let t;2===r.type?t=new ee(o,o.nextSibling,this,e):1===r.type?t=new r.ctor(o,r.name,r.strings,this,e):6===r.type&&(t=new ae(o,this,e)),this._$AV.push(t),r=s[++n]}a!==r?.index&&(o=W.nextNode(),a++)}return W.currentNode=z,i}p(e){let t=0;for(const s of this._$AV)void 0!==s&&(void 0!==s.strings?(s._$AI(e,s,t),t+=s.strings.length-2):s._$AI(e[t])),t++}}class ee{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,s,i){this.type=2,this._$AH=q,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=s,this.options=i,this._$Cv=i?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=Z(this,e,t),N(e)?e===q||null==e||""===e?(this._$AH!==q&&this._$AR(),this._$AH=q):e!==this._$AH&&e!==V&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>P(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==q&&N(this._$AH)?this._$AA.nextSibling.data=e:this.T(z.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:s}=e,i="number"==typeof s?this._$AC(e):(void 0===s.el&&(s.el=X.createElement(K(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===i)this._$AH.p(t);else{const e=new Q(i,this),s=e.u(this.options);e.p(t),this.T(s),this._$AH=e}}_$AC(e){let t=J.get(e.strings);return void 0===t&&J.set(e.strings,t=new X(e)),t}k(e){P(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let s,i=0;for(const o of e)i===t.length?t.push(s=new ee(this.O(D()),this.O(D()),this,this.options)):s=t[i],s._$AI(o),i++;i<t.length&&(this._$AR(s&&s._$AB.nextSibling,i),t.length=i)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=w(e).nextSibling;w(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class te{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,s,i,o){this.type=1,this._$AH=q,this._$AN=void 0,this.element=e,this.name=t,this._$AM=i,this.options=o,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=q}_$AI(e,t=this,s,i){const o=this.strings;let a=!1;if(void 0===o)e=Z(this,e,t,0),a=!N(e)||e!==this._$AH&&e!==V,a&&(this._$AH=e);else{const i=e;let n,r;for(e=o[0],n=0;n<o.length-1;n++)r=Z(this,i[s+n],t,n),r===V&&(r=this._$AH[n]),a||=!N(r)||r!==this._$AH[n],r===q?e=q:e!==q&&(e+=(r??"")+o[n+1]),this._$AH[n]=r}a&&!i&&this.j(e)}j(e){e===q?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class se extends te{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===q?void 0:e}}class ie extends te{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==q)}}class oe extends te{constructor(e,t,s,i,o){super(e,t,s,i,o),this.type=5}_$AI(e,t=this){if((e=Z(this,e,t,0)??q)===V)return;const s=this._$AH,i=e===q&&s!==q||e.capture!==s.capture||e.once!==s.once||e.passive!==s.passive,o=e!==q&&(s===q||i);i&&this.element.removeEventListener(this.name,this,s),o&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class ae{constructor(e,t,s){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=s}get _$AU(){return this._$AM._$AU}_$AI(e){Z(this,e)}}const ne=$.litHtmlPolyfillSupport;ne?.(X,ee),($.litHtmlVersions??=[]).push("3.3.2");const re=globalThis;
+const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{createHTML:e=>e}):void 0,C="$lit$",A=`lit$${Math.random().toFixed(9).slice(2)}$`,E="?"+A,T=`<${E}>`,D=document,z=()=>D.createComment(""),N=e=>null===e||"object"!=typeof e&&"function"!=typeof e,G=Array.isArray,O="[ \t\n\f\r]",L=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,P=/-->/g,j=/>/g,M=RegExp(`>|${O}(?:([^\\s"'>=/]+)(${O}*=${O}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),F=/'/g,I=/"/g,R=/^(?:script|style|textarea|title)$/i,U=e=>(t,...s)=>({_$litType$:e,strings:t,values:s}),H=U(1),B=U(2),V=Symbol.for("lit-noChange"),q=Symbol.for("lit-nothing"),J=new WeakMap,W=D.createTreeWalker(D,129);function K(e,t){if(!G(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(t):t}const Y=(e,t)=>{const s=e.length-1,i=[];let o,a=2===t?"<svg>":3===t?"<math>":"",n=L;for(let t=0;t<s;t++){const s=e[t];let r,l,d=-1,c=0;for(;c<s.length&&(n.lastIndex=c,l=n.exec(s),null!==l);)c=n.lastIndex,n===L?"!--"===l[1]?n=P:void 0!==l[1]?n=j:void 0!==l[2]?(R.test(l[2])&&(o=RegExp("</"+l[2],"g")),n=M):void 0!==l[3]&&(n=M):n===M?">"===l[0]?(n=o??L,d=-1):void 0===l[1]?d=-2:(d=n.lastIndex-l[2].length,r=l[1],n=void 0===l[3]?M:'"'===l[3]?I:F):n===I||n===F?n=M:n===P||n===j?n=L:(n=M,o=void 0);const p=n===M&&e[t+1].startsWith("/>")?" ":"";a+=n===L?s+T:d>=0?(i.push(r),s.slice(0,d)+C+s.slice(d)+A+p):s+A+(-2===d?t:p)}return[K(e,a+(e[s]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),i]};class X{constructor({strings:e,_$litType$:t},s){let i;this.parts=[];let o=0,a=0;const n=e.length-1,r=this.parts,[l,d]=Y(e,t);if(this.el=X.createElement(l,s),W.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(i=W.nextNode())&&r.length<n;){if(1===i.nodeType){if(i.hasAttributes())for(const e of i.getAttributeNames())if(e.endsWith(C)){const t=d[a++],s=i.getAttribute(e).split(A),n=/([.?@])?(.*)/.exec(t);r.push({type:1,index:o,name:n[2],strings:s,ctor:"."===n[1]?se:"?"===n[1]?ie:"@"===n[1]?oe:te}),i.removeAttribute(e)}else e.startsWith(A)&&(r.push({type:6,index:o}),i.removeAttribute(e));if(R.test(i.tagName)){const e=i.textContent.split(A),t=e.length-1;if(t>0){i.textContent=k?k.emptyScript:"";for(let s=0;s<t;s++)i.append(e[s],z()),W.nextNode(),r.push({type:2,index:++o});i.append(e[t],z())}}}else if(8===i.nodeType)if(i.data===E)r.push({type:2,index:o});else{let e=-1;for(;-1!==(e=i.data.indexOf(A,e+1));)r.push({type:7,index:o}),e+=A.length-1}o++}}static createElement(e,t){const s=D.createElement("template");return s.innerHTML=e,s}}function Z(e,t,s=e,i){if(t===V)return t;let o=void 0!==i?s._$Co?.[i]:s._$Cl;const a=N(t)?void 0:t._$litDirective$;return o?.constructor!==a&&(o?._$AO?.(!1),void 0===a?o=void 0:(o=new a(e),o._$AT(e,s,i)),void 0!==i?(s._$Co??=[])[i]=o:s._$Cl=o),void 0!==o&&(t=Z(e,o._$AS(e,t.values),o,i)),t}class Q{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:s}=this._$AD,i=(e?.creationScope??D).importNode(t,!0);W.currentNode=i;let o=W.nextNode(),a=0,n=0,r=s[0];for(;void 0!==r;){if(a===r.index){let t;2===r.type?t=new ee(o,o.nextSibling,this,e):1===r.type?t=new r.ctor(o,r.name,r.strings,this,e):6===r.type&&(t=new ae(o,this,e)),this._$AV.push(t),r=s[++n]}a!==r?.index&&(o=W.nextNode(),a++)}return W.currentNode=D,i}p(e){let t=0;for(const s of this._$AV)void 0!==s&&(void 0!==s.strings?(s._$AI(e,s,t),t+=s.strings.length-2):s._$AI(e[t])),t++}}class ee{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,s,i){this.type=2,this._$AH=q,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=s,this.options=i,this._$Cv=i?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=Z(this,e,t),N(e)?e===q||null==e||""===e?(this._$AH!==q&&this._$AR(),this._$AH=q):e!==this._$AH&&e!==V&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>G(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==q&&N(this._$AH)?this._$AA.nextSibling.data=e:this.T(D.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:s}=e,i="number"==typeof s?this._$AC(e):(void 0===s.el&&(s.el=X.createElement(K(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===i)this._$AH.p(t);else{const e=new Q(i,this),s=e.u(this.options);e.p(t),this.T(s),this._$AH=e}}_$AC(e){let t=J.get(e.strings);return void 0===t&&J.set(e.strings,t=new X(e)),t}k(e){G(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let s,i=0;for(const o of e)i===t.length?t.push(s=new ee(this.O(z()),this.O(z()),this,this.options)):s=t[i],s._$AI(o),i++;i<t.length&&(this._$AR(s&&s._$AB.nextSibling,i),t.length=i)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=w(e).nextSibling;w(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class te{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,s,i,o){this.type=1,this._$AH=q,this._$AN=void 0,this.element=e,this.name=t,this._$AM=i,this.options=o,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=q}_$AI(e,t=this,s,i){const o=this.strings;let a=!1;if(void 0===o)e=Z(this,e,t,0),a=!N(e)||e!==this._$AH&&e!==V,a&&(this._$AH=e);else{const i=e;let n,r;for(e=o[0],n=0;n<o.length-1;n++)r=Z(this,i[s+n],t,n),r===V&&(r=this._$AH[n]),a||=!N(r)||r!==this._$AH[n],r===q?e=q:e!==q&&(e+=(r??"")+o[n+1]),this._$AH[n]=r}a&&!i&&this.j(e)}j(e){e===q?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class se extends te{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===q?void 0:e}}class ie extends te{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==q)}}class oe extends te{constructor(e,t,s,i,o){super(e,t,s,i,o),this.type=5}_$AI(e,t=this){if((e=Z(this,e,t,0)??q)===V)return;const s=this._$AH,i=e===q&&s!==q||e.capture!==s.capture||e.once!==s.once||e.passive!==s.passive,o=e!==q&&(s===q||i);i&&this.element.removeEventListener(this.name,this,s),o&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class ae{constructor(e,t,s){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=s}get _$AU(){return this._$AM._$AU}_$AI(e){Z(this,e)}}const ne=$.litHtmlPolyfillSupport;ne?.(X,ee),($.litHtmlVersions??=[]).push("3.3.2");const re=globalThis;
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */class le extends y{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){const t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=((e,t,s)=>{const i=s?.renderBefore??t;let o=i._$litPart$;if(void 0===o){const e=s?.renderBefore??null;i._$litPart$=o=new ee(t.insertBefore(D(),e),e,void 0,s??{})}return o._$AI(e),o})(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return V}}le._$litElement$=!0,le.finalized=!0,re.litElementHydrateSupport?.({LitElement:le});const de=re.litElementPolyfillSupport;de?.({LitElement:le}),(re.litElementVersions??=[]).push("4.2.2");const ce=new class{constructor(){this._ws=null,this._listeners=[],this._reconnectDelay=1e3}connect(){const e="https:"===location.protocol?"wss:":"ws:",t=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/),s=t?t[1]:"",i=`${e}//${location.host}${s}/api/ws`;this._ws=new WebSocket(i),this._ws.onmessage=e=>{try{const t=JSON.parse(e.data);this._listeners.forEach(e=>e(t))}catch(e){console.error("WebSocket parse error:",e)}},this._ws.onclose=()=>{setTimeout(()=>this.connect(),this._reconnectDelay),this._reconnectDelay=Math.min(2*this._reconnectDelay,3e4)},this._ws.onopen=()=>{this._reconnectDelay=1e3}}onMessage(e){this._listeners.push(e)}disconnect(){this._ws&&this._ws.close()}};class pe extends le{static properties={currentView:{type:String}};static styles=a`
+ */class le extends y{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){const t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=((e,t,s)=>{const i=s?.renderBefore??t;let o=i._$litPart$;if(void 0===o){const e=s?.renderBefore??null;i._$litPart$=o=new ee(t.insertBefore(z(),e),e,void 0,s??{})}return o._$AI(e),o})(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return V}}le._$litElement$=!0,le.finalized=!0,re.litElementHydrateSupport?.({LitElement:le});const de=re.litElementPolyfillSupport;de?.({LitElement:le}),(re.litElementVersions??=[]).push("4.2.2");const ce=new class{constructor(){this._ws=null,this._listeners=[],this._reconnectDelay=1e3}connect(){const e="https:"===location.protocol?"wss:":"ws:",t=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/),s=t?t[1]:"",i=`${e}//${location.host}${s}/api/ws`;this._ws=new WebSocket(i),this._ws.onmessage=e=>{try{const t=JSON.parse(e.data);this._listeners.forEach(e=>e(t))}catch(e){console.error("WebSocket parse error:",e)}},this._ws.onclose=()=>{setTimeout(()=>this.connect(),this._reconnectDelay),this._reconnectDelay=Math.min(2*this._reconnectDelay,3e4)},this._ws.onopen=()=>{this._reconnectDelay=1e3}}onMessage(e){this._listeners.push(e)}disconnect(){this._ws&&this._ws.close()}};class pe extends le{static properties={currentView:{type:String}};static styles=a`
     :host {
       display: block;
       background: #16213e;
@@ -83,7 +83,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.1.0 build ${"3/22 17:31"}</span>
+        <span class="version">v0.1.0 build ${"3/22 17:43"}</span>
       </nav>
     `}_navigate(e){this.dispatchEvent(new CustomEvent("view-change",{detail:{view:e}}))}}customElements.define("nav-bar",pe);const he=function(){const e=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);return e?e[1]:""}();async function ue(){return(await fetch(`${he}/api/devices`)).json()}async function ge(e){return(await fetch(`${he}/api/devices/${e}`)).json()}async function me(e){return(await fetch(`${he}/api/topology/layouts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})).json()}async function ve(e,t,s={}){return(await fetch(`${he}/api/devices/${e}/command`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:t,params:s})})).json()}async function fe(){return(await fetch(`${he}/api/groups`)).json()}async function be(e,t,s=[]){return(await fetch(`${he}/api/groups`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e,name:t,device_ids:s})})).json()}async function _e(e,{name:t,device_ids:s,custom_commands:i,custom_sensors:o,thresholds:a}){return(await fetch(`${he}/api/groups/${e}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t,device_ids:s,custom_commands:i,custom_sensors:o,thresholds:a})})).json()}async function xe(){return(await fetch(`${he}/api/tags`)).json()}async function ye(e){return(await fetch(`${he}/api/tags`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tag:e})})).json()}async function $e(){return(await fetch(`${he}/api/settings`)).json()}async function we(e){return(await fetch(`${he}/api/devices/${e}/effective-settings`)).json()}async function ke(e,t){return(await fetch(`${he}/api/devices/${e}/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})).json()}const Se={online:"#81c784",offline:"#ef5350",warning:"#ffb74d",inferred:"#4fc3f7",unknown:"#666"};class Ce extends le{static properties={topology:{type:Object},layouts:{type:Object},selectedLayout:{type:String},editMode:{type:Boolean},linkMode:{type:Boolean},selectedNode:{type:String},nodePositions:{type:Object},manualEdges:{type:Array},_dragging:{type:String,state:!0},_linkSource:{type:String,state:!0},_error:{type:String,state:!0},_loading:{type:Boolean,state:!0},_selectedEdge:{type:Number,state:!0},_selectedDeviceData:{type:Object,state:!0},_commandResult:{type:String,state:!0},_dirty:{type:Boolean,state:!0},_showSaveDialog:{type:Boolean,state:!0},_showLabelDialog:{type:Boolean,state:!0},_labelEdgeIndex:{type:Number,state:!0},hideAutoEdges:{type:Boolean}};static styles=a`
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
@@ -523,7 +523,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         </div>
       </div>
-    `}_onNodeClick(e,t){e.stopPropagation(),this.linkMode?this._handleLinkClick(t):this._selectNode(t)}_handleLinkClick(e){if(this._linkSource)if(this._linkSource===e)this._linkSource=null;else{const t=this.manualEdges.some(t=>t.source===this._linkSource&&t.target===e||t.source===e&&t.target===this._linkSource);t||(this.manualEdges=[...this.manualEdges,{source:this._linkSource,target:e,sourceLabel:"",label:"",targetLabel:""}],this._markDirty(),this._labelEdgeIndex=this.manualEdges.length-1,this._showLabelDialog=!0),this._linkSource=null}else this._linkSource=e}_toggleEditMode(){this.editMode&&this._dirty?this._showSaveDialog=!0:this._enterOrExitEdit()}_enterOrExitEdit(){this.editMode=!this.editMode,this.editMode?(this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges),this._dirty=!1):(this.linkMode=!1,this._linkSource=null,this._selectedEdge=-1,this._dirty=!1)}_markDirty(){this.editMode&&(this._dirty=!0)}async _saveAndExit(){this._showSaveDialog=!1,await this._saveCurrentLayout(),this._dirty=!1,this._enterOrExitEdit()}_discardAndExit(){this._showSaveDialog=!1,this._savedPositions&&(this.nodePositions=JSON.parse(this._savedPositions)),this._savedManualEdges&&(this.manualEdges=JSON.parse(this._savedManualEdges)),this._dirty=!1,this._enterOrExitEdit()}_cancelDialog(){this._showSaveDialog=!1}_toggleLinkMode(){this.linkMode=!this.linkMode,this._linkSource=null,this.linkMode&&(this.selectedNode=null)}async _selectNode(e){if(this.selectedNode===e)return this.selectedNode=null,this._selectedDeviceData=null,void(this._commandResult="");this.selectedNode=e,this._selectedDeviceData=null,this._commandResult="";try{this._selectedDeviceData=await ge(e)}catch(e){this._selectedDeviceData={status:"inferred",attributes:{},tags:[]}}}async _sendCmd(e){if(this.selectedNode)try{this._commandResult=`Sending ${e}...`;const t=await ve(this.selectedNode,e);this._commandResult=`Sent (request: ${t.request_id})`}catch(e){this._commandResult=`Error: ${e.message}`}}_selectEdge(e){this._selectedEdge=this._selectedEdge===e?-1:e}_labelEdge(e){this._labelEdgeIndex=e,this._showLabelDialog=!0}_saveLabelDialog(){const e=this.shadowRoot.querySelector(".label-dialog"),t=e.querySelector("#source-label").value,s=e.querySelector("#link-label").value,i=e.querySelector("#target-label").value,o=[...this.manualEdges];o[this._labelEdgeIndex]={...o[this._labelEdgeIndex],sourceLabel:t,label:s,targetLabel:i},this.manualEdges=o,this._markDirty(),this._showLabelDialog=!1,this._labelEdgeIndex=-1}_cancelLabelDialog(){this._showLabelDialog=!1,this._labelEdgeIndex=-1}_removeEdge(e){this.manualEdges=this.manualEdges.filter((t,s)=>s!==e),this._selectedEdge=-1,this._markDirty()}_onMouseDown(e,t){this._dragging=t;const s=this.shadowRoot.querySelector("svg"),i=s.createSVGPoint();i.x=e.clientX,i.y=e.clientY;const o=i.matrixTransform(s.getScreenCTM().inverse()),a=this.nodePositions[t]||{x:0,y:0};this._dragOffset={x:o.x-a.x,y:o.y-a.y},e.preventDefault()}_onMouseMove(e){const t=this.shadowRoot.querySelector("svg"),s=t.createSVGPoint();s.x=e.clientX,s.y=e.clientY;const i=s.matrixTransform(t.getScreenCTM().inverse());this.linkMode&&this._linkSource&&(this._mousePos={x:i.x,y:i.y},this.requestUpdate()),this._dragging&&(this.nodePositions={...this.nodePositions,[this._dragging]:{x:i.x-this._dragOffset.x,y:i.y-this._dragOffset.y}})}_onMouseUp(){this._dragging&&this._markDirty(),this._dragging=null}_onLayoutChange(e){if(this.selectedLayout=e.target.value,this.selectedLayout&&this.layouts[this.selectedLayout]){const e=this.layouts[this.selectedLayout];this.nodePositions=e.positions||{},this.manualEdges=e.manualEdges||[],this.hideAutoEdges=e.hideAutoEdges||!1}else this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._autoLayout()}async _saveCurrentLayout(){const e=this.selectedLayout&&this.layouts[this.selectedLayout]?this.layouts[this.selectedLayout].name:"",t=prompt("Layout name:",e);if(!t)return;const s=this.selectedLayout&&this.layouts[this.selectedLayout]&&this.layouts[this.selectedLayout].isDefault||!1,i=await me({id:this.selectedLayout||void 0,name:t,positions:this.nodePositions,manualEdges:this.manualEdges,hideAutoEdges:this.hideAutoEdges,isDefault:s});this.selectedLayout=i.id,await this._loadLayouts(),this._dirty=!1,this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges)}async _setAsDefault(){if(!this.selectedLayout)return;for(const[e,t]of Object.entries(this.layouts))t.isDefault&&(t.isDefault=!1,await me(t));const e=this.layouts[this.selectedLayout];e&&(e.isDefault=!0,await me(e)),await this._loadLayouts(),this._layoutsLoaded=!0}async _deleteCurrentLayout(){if(!this.selectedLayout)return;const e=this.layouts[this.selectedLayout]?.name||this.selectedLayout;confirm(`Delete layout "${e}"?`)&&(await async function(e){await fetch(`${he}/api/topology/layouts/${e}`,{method:"DELETE"})}(this.selectedLayout),this.selectedLayout="",this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._dirty=!1,await this._loadLayouts(),this._autoLayout())}}customElements.define("topology-view",Ce);const Ee={online:"#81c784",offline:"#ef5350",warning:"#ffb74d",unknown:"#666"};class Ae extends le{static properties={device:{type:Object},deviceId:{type:String}};static styles=a`
+    `}_onNodeClick(e,t){e.stopPropagation(),this.linkMode?this._handleLinkClick(t):this._selectNode(t)}_handleLinkClick(e){if(this._linkSource)if(this._linkSource===e)this._linkSource=null;else{const t=this.manualEdges.some(t=>t.source===this._linkSource&&t.target===e||t.source===e&&t.target===this._linkSource);t||(this.manualEdges=[...this.manualEdges,{source:this._linkSource,target:e,sourceLabel:"",label:"",targetLabel:""}],this._markDirty(),this._labelEdgeIndex=this.manualEdges.length-1,this._showLabelDialog=!0),this._linkSource=null}else this._linkSource=e}_toggleEditMode(){this.editMode&&this._dirty?this._showSaveDialog=!0:this._enterOrExitEdit()}_enterOrExitEdit(){this.editMode=!this.editMode,this.editMode?(this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges),this._dirty=!1):(this.linkMode=!1,this._linkSource=null,this._selectedEdge=-1,this._dirty=!1)}_markDirty(){this.editMode&&(this._dirty=!0)}async _saveAndExit(){this._showSaveDialog=!1,await this._saveCurrentLayout(),this._dirty=!1,this._enterOrExitEdit()}_discardAndExit(){this._showSaveDialog=!1,this._savedPositions&&(this.nodePositions=JSON.parse(this._savedPositions)),this._savedManualEdges&&(this.manualEdges=JSON.parse(this._savedManualEdges)),this._dirty=!1,this._enterOrExitEdit()}_cancelDialog(){this._showSaveDialog=!1}_toggleLinkMode(){this.linkMode=!this.linkMode,this._linkSource=null,this.linkMode&&(this.selectedNode=null)}async _selectNode(e){if(this.selectedNode===e)return this.selectedNode=null,this._selectedDeviceData=null,void(this._commandResult="");this.selectedNode=e,this._selectedDeviceData=null,this._commandResult="";try{this._selectedDeviceData=await ge(e)}catch(e){this._selectedDeviceData={status:"inferred",attributes:{},tags:[]}}}async _sendCmd(e){if(this.selectedNode)try{this._commandResult=`Sending ${e}...`;const t=await ve(this.selectedNode,e);this._commandResult=`Sent (request: ${t.request_id})`}catch(e){this._commandResult=`Error: ${e.message}`}}_selectEdge(e){this._selectedEdge=this._selectedEdge===e?-1:e}_labelEdge(e){this._labelEdgeIndex=e,this._showLabelDialog=!0}_saveLabelDialog(){const e=this.shadowRoot.querySelector(".label-dialog"),t=e.querySelector("#source-label").value,s=e.querySelector("#link-label").value,i=e.querySelector("#target-label").value,o=[...this.manualEdges];o[this._labelEdgeIndex]={...o[this._labelEdgeIndex],sourceLabel:t,label:s,targetLabel:i},this.manualEdges=o,this._markDirty(),this._showLabelDialog=!1,this._labelEdgeIndex=-1}_cancelLabelDialog(){this._showLabelDialog=!1,this._labelEdgeIndex=-1}_removeEdge(e){this.manualEdges=this.manualEdges.filter((t,s)=>s!==e),this._selectedEdge=-1,this._markDirty()}_onMouseDown(e,t){this._dragging=t;const s=this.shadowRoot.querySelector("svg"),i=s.createSVGPoint();i.x=e.clientX,i.y=e.clientY;const o=i.matrixTransform(s.getScreenCTM().inverse()),a=this.nodePositions[t]||{x:0,y:0};this._dragOffset={x:o.x-a.x,y:o.y-a.y},e.preventDefault()}_onMouseMove(e){const t=this.shadowRoot.querySelector("svg"),s=t.createSVGPoint();s.x=e.clientX,s.y=e.clientY;const i=s.matrixTransform(t.getScreenCTM().inverse());this.linkMode&&this._linkSource&&(this._mousePos={x:i.x,y:i.y},this.requestUpdate()),this._dragging&&(this.nodePositions={...this.nodePositions,[this._dragging]:{x:i.x-this._dragOffset.x,y:i.y-this._dragOffset.y}})}_onMouseUp(){this._dragging&&this._markDirty(),this._dragging=null}_onLayoutChange(e){if(this.selectedLayout=e.target.value,this.selectedLayout&&this.layouts[this.selectedLayout]){const e=this.layouts[this.selectedLayout];this.nodePositions=e.positions||{},this.manualEdges=e.manualEdges||[],this.hideAutoEdges=e.hideAutoEdges||!1}else this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._autoLayout()}async _saveCurrentLayout(){const e=this.selectedLayout&&this.layouts[this.selectedLayout]?this.layouts[this.selectedLayout].name:"",t=prompt("Layout name:",e);if(!t)return;const s=this.selectedLayout&&this.layouts[this.selectedLayout]&&this.layouts[this.selectedLayout].isDefault||!1,i=await me({id:this.selectedLayout||void 0,name:t,positions:this.nodePositions,manualEdges:this.manualEdges,hideAutoEdges:this.hideAutoEdges,isDefault:s});this.selectedLayout=i.id,await this._loadLayouts(),this._dirty=!1,this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges)}async _setAsDefault(){if(!this.selectedLayout)return;for(const[e,t]of Object.entries(this.layouts))t.isDefault&&(t.isDefault=!1,await me(t));const e=this.layouts[this.selectedLayout];e&&(e.isDefault=!0,await me(e)),await this._loadLayouts(),this._layoutsLoaded=!0}async _deleteCurrentLayout(){if(!this.selectedLayout)return;const e=this.layouts[this.selectedLayout]?.name||this.selectedLayout;confirm(`Delete layout "${e}"?`)&&(await async function(e){await fetch(`${he}/api/topology/layouts/${e}`,{method:"DELETE"})}(this.selectedLayout),this.selectedLayout="",this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._dirty=!1,await this._loadLayouts(),this._autoLayout())}}customElements.define("topology-view",Ce);const Ae={online:"#81c784",offline:"#ef5350",warning:"#ffb74d",unknown:"#666"};class Ee extends le{static properties={device:{type:Object},deviceId:{type:String}};static styles=a`
     :host {
       display: block;
       background: #2a2a4a;
@@ -576,7 +576,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       font-size: 9px; background: #1e3a5f; color: #4fc3f7;
       padding: 1px 6px; border-radius: 3px;
     }
-  `;render(){if(!this.device)return H``;const e=this.device,t=Ee[e.status]||Ee.unknown,s=Object.entries(e.attributes||{}).slice(0,4),i=[...e.tags||[],...e.server_tags||[]];return this.style.setProperty("--status-color",t),H`
+  `;render(){if(!this.device)return H``;const e=this.device,t=Ae[e.status]||Ae.unknown,s=Object.entries(e.attributes||{}).slice(0,4),i=[...e.tags||[],...e.server_tags||[]];return this.style.setProperty("--status-color",t),H`
       <div class="header">
         <span class="name">${e.device_name||this.deviceId}</span>
         <span class="status" style="background: ${t}20; color: ${t}">
@@ -598,7 +598,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           ${i.map(e=>H`<span class="tag">${e}</span>`)}
         </div>
       `:""}
-    `}_isWarning(e,t){const s={cpu_usage:90,memory_usage:90,disk_usage:95,cpu_temp:80};return s[e]&&t.value>s[e]}}customElements.define("device-card",Ae);class Te extends le{static properties={selectedTags:{type:Array},_allTags:{type:Array,state:!0},_open:{type:Boolean,state:!0},_showCreate:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_creating:{type:Boolean,state:!0}};static styles=a`
+    `}_isWarning(e,t){const s={cpu_usage:90,memory_usage:90,disk_usage:95,cpu_temp:80};return s[e]&&t.value>s[e]}}customElements.define("device-card",Ee);class Te extends le{static properties={selectedTags:{type:Array},_allTags:{type:Array,state:!0},_open:{type:Boolean,state:!0},_showCreate:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_creating:{type:Boolean,state:!0}};static styles=a`
     :host { display: inline-block; position: relative; }
 
     .trigger {
@@ -702,7 +702,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           `}
         </div>
       `:""}
-    `}}customElements.define("tag-picker",Te);class ze extends le{static properties={devices:{type:Object},filter:{type:String},selectedTags:{type:Array},viewMode:{type:String},_groups:{type:Object,state:!0},_collapsedGroups:{type:Object,state:!0},_refreshInterval:{type:Number,state:!0}};static styles=a`
+    `}}customElements.define("tag-picker",Te);class De extends le{static properties={devices:{type:Object},filter:{type:String},selectedTags:{type:Array},viewMode:{type:String},_groups:{type:Object,state:!0},_collapsedGroups:{type:Object,state:!0},_refreshInterval:{type:Number,state:!0}};static styles=a`
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
 
     .filter-bar {
@@ -894,7 +894,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         `}
       </div>
-    `}_toggleGroupCollapse(e){this._collapsedGroups={...this._collapsedGroups,[e]:!this._collapsedGroups[e]}}_selectDevice(e){this.dispatchEvent(new CustomEvent("device-select",{detail:{deviceId:e},bubbles:!0,composed:!0}))}}customElements.define("dashboard-view",ze);const De=["shutdown","halt","poweroff","destroy"];class Ne extends le{static properties={deviceId:{type:String},device:{type:Object},commandResult:{type:String},_groups:{type:Object,state:!0},_effectiveSettings:{type:Object,state:!0},_haOverrides:{type:Object,state:!0},_configInterval:{type:Number,state:!0},_customSensors:{type:Object,state:!0},_showAddSensor:{type:Boolean,state:!0},_editSensorKey:{type:String,state:!0},_sensorForm:{type:Object,state:!0},_pushing:{type:Boolean,state:!0},_pushStatus:{type:String,state:!0},_lastPushed:{type:String,state:!0},_localChanges:{type:Boolean,state:!0},_showGroupDialog:{type:Boolean,state:!0},_newGroupName:{type:String,state:!0},_serverCommands:{type:Object,state:!0},_newCommandName:{type:String,state:!0},_newCommandShell:{type:String,state:!0},_showHidden:{type:Boolean,state:!0},_showAddCommand:{type:Boolean,state:!0},_editingCommandName:{type:String,state:!0},_editCommandForm:{type:Object,state:!0}};static styles=a`
+    `}_toggleGroupCollapse(e){this._collapsedGroups={...this._collapsedGroups,[e]:!this._collapsedGroups[e]}}_selectDevice(e){this.dispatchEvent(new CustomEvent("device-select",{detail:{deviceId:e},bubbles:!0,composed:!0}))}}customElements.define("dashboard-view",De);const ze=["shutdown","halt","poweroff","destroy"];class Ne extends le{static properties={deviceId:{type:String},device:{type:Object},commandResult:{type:String},_groups:{type:Object,state:!0},_effectiveSettings:{type:Object,state:!0},_haOverrides:{type:Object,state:!0},_configInterval:{type:Number,state:!0},_customSensors:{type:Object,state:!0},_showAddSensor:{type:Boolean,state:!0},_editSensorKey:{type:String,state:!0},_sensorForm:{type:Object,state:!0},_pushing:{type:Boolean,state:!0},_pushStatus:{type:String,state:!0},_lastPushed:{type:String,state:!0},_localChanges:{type:Boolean,state:!0},_showGroupDialog:{type:Boolean,state:!0},_newGroupName:{type:String,state:!0},_serverCommands:{type:Object,state:!0},_newCommandName:{type:String,state:!0},_newCommandShell:{type:String,state:!0},_showHidden:{type:Boolean,state:!0},_showAddCommand:{type:Boolean,state:!0},_editingCommandName:{type:String,state:!0},_editCommandForm:{type:Object,state:!0}};static styles=a`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     .close-btn {
@@ -1318,7 +1318,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         ${i.length>0?H`
           <div class="commands" style="margin-bottom: 12px;">
             ${i.map(e=>H`
-              <button class="cmd-btn ${function(e){const t=e.toLowerCase();return De.some(e=>t.includes(e))}(e)?"danger":""}"
+              <button class="cmd-btn ${function(e){const t=e.toLowerCase();return ze.some(e=>t.includes(e))}(e)?"danger":""}"
                 @click=${()=>this._sendCmd(e)}>
                 ${e}
               </button>
@@ -1488,7 +1488,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         </div>
       </div>
-    `}async _createGroup(){const e=this._newGroupName.trim();if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_");await be(t,e,[this.deviceId]),this._newGroupName="",this._showGroupDialog=!1,await this._loadGroups(),await this._loadDevice()}async _addTag(e){e&&(await async function(e,t){return(await fetch(`${he}/api/devices/${e}/tags/add`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tags:t})})).json()}(this.deviceId,[e]),await this._loadDevice())}async _removeTag(e){await async function(e,t){return(await fetch(`${he}/api/devices/${e}/tags/${t}`,{method:"DELETE"})).json()}(this.deviceId,e),await this._loadDevice()}_removeServerCommand(e){const t={...this._serverCommands};delete t[e],this._serverCommands=t,this._localChanges=!0,ke(this.deviceId,{server_commands:this._serverCommands})}async _deleteDevice(){if(confirm(`Delete device "${this.device?.device_name||this.deviceId}"? This removes it from the registry. It will reappear if the client agent is still running.`))try{await async function(e){await fetch(`${he}/api/devices/${e}`,{method:"DELETE"})}(this.deviceId),this.dispatchEvent(new CustomEvent("back"))}catch(e){console.error("Failed to delete device:",e)}}async _sendCmd(e,t={}){try{this.commandResult=`Sending ${e}...`;const s=await ve(this.deviceId,e,t);this.commandResult=`Command sent (request: ${s.request_id})`}catch(e){this.commandResult=`Error: ${e.message}`}}}customElements.define("device-detail",Ne);const Pe={};function Oe(e){return Pe[e]||(Pe[e]={name:"",shellCmd:""}),Pe[e]}const Le={};function Ge(e){return Le[e]||(Le[e]={name:"",command:"",interval:"",unit:""}),Le[e]}const je={};function Me(e){return je[e]||(je[e]={attr:"",value:""}),je[e]}const Re={attr:"",value:""};class Ue extends le{static properties={_tags:{type:Array,state:!0},_settings:{type:Object,state:!0},_groups:{type:Object,state:!0},_devices:{type:Object,state:!0},_loading:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_renamingTag:{type:String,state:!0},_renameValue:{type:String,state:!0},_expandedGroup:{type:String,state:!0},_newGroupName:{type:String,state:!0},_editGroupName:{type:String,state:!0},_editingGroupName:{type:String,state:!0},_savingSettings:{type:Boolean,state:!0},_settingsSaved:{type:Boolean,state:!0},_groupSaveStatus:{type:Object,state:!0},_groupPushStatus:{type:Object,state:!0}};static styles=a`
+    `}async _createGroup(){const e=this._newGroupName.trim();if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_");await be(t,e,[this.deviceId]),this._newGroupName="",this._showGroupDialog=!1,await this._loadGroups(),await this._loadDevice()}async _addTag(e){e&&(await async function(e,t){return(await fetch(`${he}/api/devices/${e}/tags/add`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tags:t})})).json()}(this.deviceId,[e]),await this._loadDevice())}async _removeTag(e){await async function(e,t){return(await fetch(`${he}/api/devices/${e}/tags/${t}`,{method:"DELETE"})).json()}(this.deviceId,e),await this._loadDevice()}_removeServerCommand(e){const t={...this._serverCommands};delete t[e],this._serverCommands=t,this._localChanges=!0,ke(this.deviceId,{server_commands:this._serverCommands})}async _deleteDevice(){if(confirm(`Delete device "${this.device?.device_name||this.deviceId}"? This removes it from the registry. It will reappear if the client agent is still running.`))try{await async function(e){await fetch(`${he}/api/devices/${e}`,{method:"DELETE"})}(this.deviceId),this.dispatchEvent(new CustomEvent("back"))}catch(e){console.error("Failed to delete device:",e)}}async _sendCmd(e,t={}){try{this.commandResult=`Sending ${e}...`;const s=await ve(this.deviceId,e,t);this.commandResult=`Command sent (request: ${s.request_id})`}catch(e){this.commandResult=`Error: ${e.message}`}}}customElements.define("device-detail",Ne);const Ge={};function Oe(e){return Ge[e]||(Ge[e]={attr:"",value:""}),Ge[e]}const Le={attr:"",value:""};class Pe extends le{static properties={_tags:{type:Array,state:!0},_settings:{type:Object,state:!0},_groups:{type:Object,state:!0},_devices:{type:Object,state:!0},_loading:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_renamingTag:{type:String,state:!0},_renameValue:{type:String,state:!0},_expandedGroup:{type:String,state:!0},_newGroupName:{type:String,state:!0},_editGroupName:{type:String,state:!0},_editingGroupName:{type:String,state:!0},_savingSettings:{type:Boolean,state:!0},_settingsSaved:{type:Boolean,state:!0},_groupSaveStatus:{type:Object,state:!0},_groupPushStatus:{type:Object,state:!0},_editingGroupCmd:{type:Object,state:!0},_showAddGroupCmd:{type:Object,state:!0},_groupCmdForm:{type:Object,state:!0},_editingGroupSensor:{type:Object,state:!0},_showAddGroupSensor:{type:Object,state:!0},_groupSensorForm:{type:Object,state:!0}};static styles=a`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     h2 { font-size: 20px; font-weight: 700; color: #e0e0e0; margin-bottom: 16px; margin-top: 0; }
@@ -1583,7 +1583,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       font-size: 13px; box-sizing: border-box;
     }
     .threshold-input:focus { outline: none; border-color: #4fc3f7; }
-    .group-footer { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+    .group-footer { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; align-items: center; }
     .group-save-btn {
       background: #4fc3f7; border: none; color: #1a1a2e; padding: 6px 16px;
       border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
@@ -1616,10 +1616,10 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .save-btn:hover { background: #81d4fa; }
     .save-btn:disabled { opacity: 0.5; cursor: default; }
     .saved-msg { font-size: 12px; color: #81c784; margin-left: 10px; }
-    .group-status-saved { font-size: 12px; color: #81c784; margin-left: 8px; }
-    .group-status-error { font-size: 12px; color: #ef5350; margin-left: 8px; }
-    .group-status-pushing { font-size: 12px; color: #4fc3f7; margin-left: 8px; }
-    .group-status-pushed { font-size: 12px; color: #81c784; margin-left: 8px; }
+    .group-status-saved { font-size: 12px; color: #81c784; }
+    .group-status-error { font-size: 12px; color: #ef5350; }
+    .group-status-pushing { font-size: 12px; color: #4fc3f7; }
+    .group-status-pushed { font-size: 12px; color: #81c784; }
 
     /* Toggle switch (command discovered) */
     .cmd-toggle-wrap { cursor: pointer; flex-shrink: 0; }
@@ -1636,8 +1636,50 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .cmd-toggle.on .cmd-toggle-knob { left: 14px; }
     .cmd-toggle.off .cmd-toggle-knob { left: 2px; }
 
+    /* Sensor / command tables */
+    .sensor-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .sensor-table th {
+      text-align: left; font-size: 10px; color: #666; padding: 6px 8px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .sensor-table td {
+      font-size: 12px; color: #ccc; padding: 6px 8px;
+      border-bottom: 1px solid #2a2a4a;
+    }
+    .sensor-table tr:last-child td { border-bottom: none; }
+    .sensor-btn {
+      background: none; border: none; cursor: pointer; font-size: 11px;
+      padding: 2px 8px; border-radius: 4px;
+    }
+    .sensor-btn.edit { color: #4fc3f7; }
+    .sensor-btn.edit:hover { background: rgba(79,195,247,0.1); }
+    .sensor-btn.remove { color: #666; }
+    .sensor-btn.remove:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
+    .sensor-actions { display: flex; gap: 4px; }
+    .sensor-form { background: #12122a; border-radius: 6px; padding: 10px; margin-top: 6px; }
+    .sensor-form-grid { display: grid; gap: 6px; margin-bottom: 6px; }
+    .sensor-form-grid input {
+      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 4px;
+      color: #e0e0e0; padding: 6px 8px; font-size: 12px;
+    }
+    .sensor-form-grid input:focus { outline: none; border-color: #4fc3f7; }
+    .sensor-form-actions { display: flex; gap: 6px; }
+    .form-btn { border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .form-btn.save { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
+    .form-btn.cancel { background: #3a3a5a; color: #aaa; }
+
     .loading { padding: 40px; text-align: center; color: #666; }
-  `;constructor(){super(),this._tags=[],this._settings=null,this._groups={},this._devices={},this._loading=!0,this._newTagName="",this._renamingTag=null,this._renameValue="",this._expandedGroup=null,this._newGroupName="",this._editGroupName="",this._editingGroupName=null,this._savingSettings=!1,this._settingsSaved=!1,this._groupSaveStatus={},this._groupPushStatus={}}connectedCallback(){super.connectedCallback(),this._loadAll()}async _loadAll(){this._loading=!0;try{const[e,t,s,i]=await Promise.all([xe().catch(()=>[]),$e().catch(()=>({})),fe().catch(()=>({})),ue().catch(()=>({}))]);this._tags=Array.isArray(e)?e.map(e=>"string"==typeof e?{tag:e,count:0}:e).sort((e,t)=>e.tag.localeCompare(t.tag)):[],this._settings=t,this._groups=s||{},this._devices=i||{}}finally{this._loading=!1}}render(){return this._loading?H`<div class="loading">Loading settings...</div>`:H`
+
+    .subsection-label {
+      font-size: 11px; color: #555; margin-bottom: 6px; margin-top: 8px;
+    }
+    .add-cmd-btn {
+      background: none; border: 1px solid #3a3a5a; color: #888;
+      padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+      margin-top: 4px; transition: all 0.15s;
+    }
+    .add-cmd-btn:hover { border-color: #4fc3f7; color: #4fc3f7; }
+  `;constructor(){super(),this._tags=[],this._settings=null,this._groups={},this._devices={},this._loading=!0,this._newTagName="",this._renamingTag=null,this._renameValue="",this._expandedGroup=null,this._newGroupName="",this._editGroupName="",this._editingGroupName=null,this._savingSettings=!1,this._settingsSaved=!1,this._groupSaveStatus={},this._groupPushStatus={},this._editingGroupCmd=null,this._showAddGroupCmd=null,this._groupCmdForm={name:"",shell:""},this._editingGroupSensor=null,this._showAddGroupSensor=null,this._groupSensorForm={name:"",command:"",interval:"",unit:""}}connectedCallback(){super.connectedCallback(),this._loadAll()}async _loadAll(){this._loading=!0;try{const[e,t,s,i]=await Promise.all([xe().catch(()=>[]),$e().catch(()=>({})),fe().catch(()=>({})),ue().catch(()=>({}))]);this._tags=Array.isArray(e)?e.map(e=>"string"==typeof e?{tag:e,count:0}:e).sort((e,t)=>e.tag.localeCompare(t.tag)):[],this._settings=t,this._groups=s||{},this._devices=i||{}}finally{this._loading=!1}}render(){return this._loading?H`<div class="loading">Loading settings...</div>`:H`
       <h2>Settings</h2>
       ${this._renderTagRegistry()}
       ${this._renderGroupPolicies()}
@@ -1693,7 +1735,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <button class="small-btn" @click=${this._createGroup}>New Group</button>
         </div>
       </div>
-    `}_renderGroup(e){const t=this._expandedGroup===e.id,s=(e.device_ids||[]).length;return e.thresholds,H`
+    `}_renderGroup(e){const t=this._expandedGroup===e.id,s=(e.device_ids||[]).length;return H`
       <div>
         <div class="group-header" @click=${()=>this._toggleGroup(e.id)}>
           <div class="group-header-left">
@@ -1741,67 +1783,94 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
 
             <div class="group-footer">
               <button class="group-delete-btn" @click=${()=>this._deleteGroup(e)}>Delete Group</button>
-              <button class="group-save-btn" @click=${()=>this._saveGroup(e)}>Save</button>
-              ${"saved"===this._groupSaveStatus[e.id]?H`<span class="group-status-saved">Saved!</span>`:""}
+              <button class="group-save-btn" @click=${()=>this._updateGroup(e)}>Update</button>
+              ${"saved"===this._groupSaveStatus[e.id]?H`<span class="group-status-saved">Updated!</span>`:""}
               ${"error"===this._groupSaveStatus[e.id]?H`<span class="group-status-error">Error</span>`:""}
               <button class="group-save-btn" style="background: #2e7d32;"
-                @click=${()=>this._pushGroupConfig(e)}>Push to Group</button>
-              ${"Pushing..."===this._groupPushStatus[e.id]?H`<span class="group-status-pushing">Pushing...</span>`:""}
-              ${"Pushed!"===this._groupPushStatus[e.id]?H`<span class="group-status-pushed">Pushed!</span>`:""}
+                @click=${()=>this._deployToDevices(e)}>Deploy to Devices</button>
+              ${"Deploying..."===this._groupPushStatus[e.id]?H`<span class="group-status-pushing">Deploying...</span>`:""}
+              ${"Deployed!"===this._groupPushStatus[e.id]?H`<span class="group-status-pushed">Deployed!</span>`:""}
               ${(this._groupPushStatus[e.id]||"").startsWith("Error")?H`<span class="group-status-error">${this._groupPushStatus[e.id]}</span>`:""}
             </div>
           </div>
         `:""}
       </div>
-    `}_renderGroupCustomCommands(e){const t=e.custom_commands||{},s=Oe(e.id),i=this._getGroupDiscoveredData(e).commands,o=Object.keys(i);return H`
-      ${o.length>0?H`
-        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Discovered from devices</div>
-        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
-          ${o.sort().map(s=>{const o=i[s],a=s in t;return H`
-              <div style="background: ${a?"#2a1a4a":"#1a1a2e"}; border: 1px solid ${a?"#7e57c2":"#2a2a4a"}; border-radius: 4px; padding: 4px 8px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span style="font-size: 11px; color: ${a?"#ce93d8":"#888"}; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${s}</span>
-                  <span class="cmd-toggle-wrap" @click=${()=>this._toggleDiscoveredCommand(e,s,o,!a)}>
-                    <div class="cmd-toggle ${a?"on":"off"}">
-                      <div class="cmd-toggle-knob"></div>
-                    </div>
-                  </span>
-                </div>
-                ${o?H`<span style="font-size: 9px; color: #7060a0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${o}>${o}</span>`:""}
-              </div>
-            `})}
-        </div>
+    `}_renderGroupCustomCommands(e){const t=e.custom_commands||{},s=this._getGroupDiscoveredData(e).commands,i=Object.keys(s).sort(),o=Object.entries(t).filter(([e])=>!i.includes(e)),a=this._editingGroupCmd&&this._editingGroupCmd.groupId===e.id,n=this._showAddGroupCmd&&this._showAddGroupCmd.groupId===e.id;return H`
+      ${i.length>0?H`
+        <div class="subsection-label">Discovered from devices</div>
+        <table class="sensor-table">
+          <thead>
+            <tr><th>Name</th><th>Shell Command</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${i.map(i=>{const o=s[i],a=i in t;return H`
+                <tr>
+                  <td style="font-family: monospace;">${i}</td>
+                  <td style="font-family: monospace; font-size: 11px; color: #888;">${o||"—"}</td>
+                  <td>
+                    <span class="cmd-toggle-wrap" @click=${()=>this._toggleDiscoveredCommand(e,i,o,!a)}>
+                      <div class="cmd-toggle ${a?"on":"off"}">
+                        <div class="cmd-toggle-knob"></div>
+                      </div>
+                    </span>
+                  </td>
+                </tr>
+              `})}
+          </tbody>
+        </table>
       `:""}
 
-      ${Object.keys(t).filter(e=>!o.includes(e)).length>0?H`
-        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Custom commands</div>
-        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
-          ${Object.entries(t).filter(([e])=>!o.includes(e)).map(([t,s])=>H`
-            <span title=${s} style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
-              <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
-                ${t}
-                <span style="cursor: pointer; opacity: 0.6;"
-                  @click=${()=>this._removeGroupCommand(e,t)}>&times;</span>
-              </span>
-              <span style="font-size: 9px; color: #a070c0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${s}</span>
-            </span>
-          `)}
-        </div>
-      `:0===o.length&&0===Object.keys(t).length?H`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No commands discovered yet.</div>`:""}
+      ${o.length>0||i.length>0?H`
+        <div class="subsection-label" style="margin-top: 10px;">Group commands</div>
+      `:""}
 
-      <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add new command</div>
-      <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-        <input class="small-input" type="text" placeholder="Command name..."
-          style="width: 130px;"
-          .value=${s.name}
-          @input=${t=>{Oe(e.id).name=t.target.value,this.requestUpdate()}}>
-        <input class="small-input" type="text" placeholder="Shell command..."
-          style="width: 220px;"
-          .value=${s.shellCmd}
-          @input=${t=>{Oe(e.id).shellCmd=t.target.value,this.requestUpdate()}}>
-        <button class="small-btn" @click=${()=>this._addGroupCommand(e)}>Add</button>
-      </div>
-    `}_toggleDiscoveredCommand(e,t,s,i){const o={...e.custom_commands||{}};i?o[t]=s||"":delete o[t],this._groups={...this._groups,[e.id]:{...e,custom_commands:o}}}_renderGroupThresholds(e){const t=e.thresholds||{},s=Me(e.id),i=this._getGroupDiscoveredData(e).attributes,o=Object.keys(t).filter(e=>null!=t[e]&&!i.includes(e)),a=[...i,...o];return H`
+      ${o.length>0?H`
+        <table class="sensor-table">
+          <thead>
+            <tr><th>Name</th><th>Shell Command</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${o.map(([t,s])=>H`
+              <tr>
+                <td style="font-family: monospace;">${t}</td>
+                <td style="font-family: monospace; font-size: 11px;">${s}</td>
+                <td>
+                  <div class="sensor-actions">
+                    <button class="sensor-btn edit"
+                      @click=${()=>this._startEditGroupCmd(e.id,t,s)}>Edit</button>
+                    <button class="sensor-btn remove"
+                      @click=${()=>this._removeGroupCommand(e,t)}>Remove</button>
+                  </div>
+                </td>
+              </tr>
+            `)}
+          </tbody>
+        </table>
+      `:0===i.length?H`
+        <div style="font-size: 12px; color: #555; margin-bottom: 8px;">No commands discovered yet.</div>
+      `:""}
+
+      ${a||n?H`
+        <div class="sensor-form">
+          <div class="sensor-form-grid" style="grid-template-columns: 1fr 2fr;">
+            <input type="text" placeholder="Command name"
+              .value=${this._groupCmdForm.name}
+              ?disabled=${!!a}
+              @input=${e=>this._groupCmdForm={...this._groupCmdForm,name:e.target.value}}>
+            <input type="text" placeholder="Shell command"
+              .value=${this._groupCmdForm.shell}
+              @input=${e=>this._groupCmdForm={...this._groupCmdForm,shell:e.target.value}}
+              @keydown=${t=>"Enter"===t.key&&this._saveGroupCmd(e)}>
+          </div>
+          <div class="sensor-form-actions">
+            <button class="form-btn save" @click=${()=>this._saveGroupCmd(e)}>${a?"Update":"Add"}</button>
+            <button class="form-btn cancel" @click=${this._cancelGroupCmdForm}>Cancel</button>
+          </div>
+        </div>
+      `:H`
+        <button class="add-cmd-btn" @click=${()=>this._startAddGroupCmd(e.id)}>+ Add Command</button>
+      `}
+    `}_startAddGroupCmd(e){this._showAddGroupCmd={groupId:e},this._editingGroupCmd=null,this._groupCmdForm={name:"",shell:""}}_startEditGroupCmd(e,t,s){this._editingGroupCmd={groupId:e,name:t},this._showAddGroupCmd=null,this._groupCmdForm={name:t,shell:s}}_cancelGroupCmdForm(){this._editingGroupCmd=null,this._showAddGroupCmd=null,this._groupCmdForm={name:"",shell:""}}_saveGroupCmd(e){const t=(this._groupCmdForm.name||"").trim(),s=(this._groupCmdForm.shell||"").trim();t&&s&&(this._groups={...this._groups,[e.id]:{...e,custom_commands:{...e.custom_commands||{},[t]:s}}},this._cancelGroupCmdForm())}_toggleDiscoveredCommand(e,t,s,i){const o={...e.custom_commands||{}};i?o[t]=s||"":delete o[t],this._groups={...this._groups,[e.id]:{...e,custom_commands:o}}}_removeGroupCommand(e,t){const s={...e.custom_commands||{}};delete s[t],this._groups={...this._groups,[e.id]:{...e,custom_commands:s}}}_renderGroupThresholds(e){const t=e.thresholds||{},s=Oe(e.id),i=this._getGroupDiscoveredData(e).attributes,o=Object.keys(t).filter(e=>null!=t[e]&&!i.includes(e)),a=[...i,...o];return H`
       ${a.length>0?H`
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; margin-bottom: 8px;">
           ${a.map(s=>{const i=t[s],o=null!=i&&""!==i;return H`
@@ -1825,65 +1894,90 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         <input class="small-input" type="text" placeholder="Attribute name..."
           style="width: 150px;"
           .value=${s.attr}
-          @input=${t=>{Me(e.id).attr=t.target.value,this.requestUpdate()}}>
+          @input=${t=>{Oe(e.id).attr=t.target.value,this.requestUpdate()}}>
         <input class="small-input" type="number" placeholder="Value..."
           style="width: 90px;"
           .value=${s.value}
-          @input=${t=>{Me(e.id).value=t.target.value,this.requestUpdate()}}>
+          @input=${t=>{Oe(e.id).value=t.target.value,this.requestUpdate()}}>
         <button class="small-btn" @click=${()=>this._addGroupThreshold(e)}>Add threshold</button>
       </div>
-    `}_addGroupThreshold(e){const t=Me(e.id),s=(t.attr||"").trim(),i=(t.value||"").trim();s&&""!==i&&(this._updateGroupThreshold(e.id,s,i),t.attr="",t.value="",this.requestUpdate())}_removeGroupThreshold(e,t){const s=this._groups[e];if(!s)return;const i={...s.thresholds||{}};delete i[t],this._groups={...this._groups,[e]:{...s,thresholds:i}}}_renderGroupCustomSensors(e){const t=e.custom_sensors||{},s=Ge(e.id),i=this._getGroupDiscoveredData(e).sensors,o=Object.keys(i);return H`
-      ${o.length>0?H`
-        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Discovered from devices</div>
-        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
-          ${o.sort().map(e=>{const t=i[e];return H`
-              <span style="font-size: 10px; background: #0e2a2a; color: #4db6ac; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 220px; border: 1px solid #1a3a3a;" title="Reported by member device">
-                <span style="font-weight: 600;">${e}</span>
-                ${t.command?H`<span style="font-size: 9px; color: #40807a; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.command}</span>`:""}
-                <span style="font-size: 9px; color: #406060;">${t.interval?t.interval+"s":""} ${t.unit||""}</span>
-              </span>
-            `})}
-        </div>
+    `}_addGroupThreshold(e){const t=Oe(e.id),s=(t.attr||"").trim(),i=(t.value||"").trim();s&&""!==i&&(this._updateGroupThreshold(e.id,s,i),t.attr="",t.value="",this.requestUpdate())}_removeGroupThreshold(e,t){const s=this._groups[e];if(!s)return;const i={...s.thresholds||{}};delete i[t],this._groups={...this._groups,[e]:{...s,thresholds:i}}}_renderGroupCustomSensors(e){const t=e.custom_sensors||{},s=this._getGroupDiscoveredData(e).sensors,i=Object.keys(s).sort(),o=this._editingGroupSensor&&this._editingGroupSensor.groupId===e.id,a=this._showAddGroupSensor&&this._showAddGroupSensor.groupId===e.id;return H`
+      ${i.length>0?H`
+        <div class="subsection-label">Discovered from devices</div>
+        <table class="sensor-table">
+          <thead>
+            <tr><th>Name</th><th>Command</th><th>Interval</th><th>Unit</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${i.map(e=>{const t=s[e];return H`
+                <tr>
+                  <td style="font-family: monospace;">${e}</td>
+                  <td style="font-family: monospace; font-size: 11px; color: #888;">${t.command||"—"}</td>
+                  <td style="color: #888;">${t.interval?t.interval+"s":"—"}</td>
+                  <td style="color: #888;">${t.unit||"—"}</td>
+                  <td></td>
+                </tr>
+              `})}
+          </tbody>
+        </table>
       `:""}
 
-      ${Object.keys(t).length>0?H`
-        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Group sensors</div>
-        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
-          ${Object.entries(t).map(([t,s])=>H`
-            <span style="font-size: 10px; background: #1a3a3a; color: #80cbc4; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 220px;">
-              <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
-                ${t}
-                <span style="cursor: pointer; opacity: 0.6;"
-                  @click=${()=>this._removeGroupSensor(e,t)}>&times;</span>
-              </span>
-              <span style="font-size: 9px; color: #60a0a0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${s.command||""}</span>
-              <span style="font-size: 9px; color: #608080;">${s.interval?s.interval+"s":""} ${s.unit||""}</span>
-            </span>
-          `)}
-        </div>
-      `:0===o.length?H`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No custom sensors</div>`:""}
+      <div class="subsection-label" style="margin-top: 10px;">Group sensors</div>
 
-      <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add sensor</div>
-      <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-        <input class="small-input" type="text" placeholder="Sensor name..."
-          style="width: 110px;"
-          .value=${s.name}
-          @input=${t=>{Ge(e.id).name=t.target.value,this.requestUpdate()}}>
-        <input class="small-input" type="text" placeholder="Shell command..."
-          style="width: 200px;"
-          .value=${s.command}
-          @input=${t=>{Ge(e.id).command=t.target.value,this.requestUpdate()}}>
-        <input class="small-input" type="number" placeholder="Interval (s)"
-          style="width: 90px;"
-          .value=${s.interval}
-          @input=${t=>{Ge(e.id).interval=t.target.value,this.requestUpdate()}}>
-        <input class="small-input" type="text" placeholder="Unit"
-          style="width: 60px;"
-          .value=${s.unit}
-          @input=${t=>{Ge(e.id).unit=t.target.value,this.requestUpdate()}}>
-        <button class="small-btn" @click=${()=>this._addGroupSensor(e)}>Add</button>
-      </div>
-    `}_addGroupSensor(e){const t=Ge(e.id),s=(t.name||"").trim(),i=(t.command||"").trim();s&&i&&(this._groups={...this._groups,[e.id]:{...e,custom_sensors:{...e.custom_sensors||{},[s]:{command:i,interval:t.interval?Number(t.interval):void 0,unit:t.unit||void 0}}}},t.name="",t.command="",t.interval="",t.unit="",this.requestUpdate())}_removeGroupSensor(e,t){const s={...e.custom_sensors||{}};delete s[t],this._groups={...this._groups,[e.id]:{...e,custom_sensors:s}}}_renderAddMemberDropdown(e){const t=e.device_ids||[],s=Object.entries(this._devices).filter(([e])=>!t.includes(e));return 0===s.length?H``:H`
+      ${Object.keys(t).length>0?H`
+        <table class="sensor-table">
+          <thead>
+            <tr><th>Name</th><th>Command</th><th>Interval</th><th>Unit</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${Object.entries(t).map(([t,s])=>H`
+              <tr>
+                <td style="font-family: monospace;">${t}</td>
+                <td style="font-family: monospace; font-size: 11px;">${s.command||"—"}</td>
+                <td>${s.interval?s.interval+"s":"—"}</td>
+                <td>${s.unit||"—"}</td>
+                <td>
+                  <div class="sensor-actions">
+                    <button class="sensor-btn edit"
+                      @click=${()=>this._startEditGroupSensor(e.id,t,s)}>Edit</button>
+                    <button class="sensor-btn remove"
+                      @click=${()=>this._removeGroupSensor(e,t)}>Remove</button>
+                  </div>
+                </td>
+              </tr>
+            `)}
+          </tbody>
+        </table>
+      `:H`
+        <div style="font-size: 12px; color: #555; margin-bottom: 8px;">No group sensors defined.</div>
+      `}
+
+      ${o||a?H`
+        <div class="sensor-form">
+          <div class="sensor-form-grid" style="grid-template-columns: 1fr 2fr 80px 80px;">
+            <input type="text" placeholder="Name"
+              .value=${this._groupSensorForm.name}
+              ?disabled=${!!o}
+              @input=${e=>this._groupSensorForm={...this._groupSensorForm,name:e.target.value}}>
+            <input type="text" placeholder="Shell command"
+              .value=${this._groupSensorForm.command}
+              @input=${e=>this._groupSensorForm={...this._groupSensorForm,command:e.target.value}}>
+            <input type="number" placeholder="Interval (s)"
+              .value=${this._groupSensorForm.interval}
+              @input=${e=>this._groupSensorForm={...this._groupSensorForm,interval:e.target.value}}>
+            <input type="text" placeholder="Unit"
+              .value=${this._groupSensorForm.unit}
+              @input=${e=>this._groupSensorForm={...this._groupSensorForm,unit:e.target.value}}>
+          </div>
+          <div class="sensor-form-actions">
+            <button class="form-btn save" @click=${()=>this._saveGroupSensor(e)}>${o?"Update":"Add"}</button>
+            <button class="form-btn cancel" @click=${this._cancelGroupSensorForm}>Cancel</button>
+          </div>
+        </div>
+      `:H`
+        <button class="add-cmd-btn" @click=${()=>this._startAddGroupSensor(e.id)}>+ Add Sensor</button>
+      `}
+    `}_startAddGroupSensor(e){this._showAddGroupSensor={groupId:e},this._editingGroupSensor=null,this._groupSensorForm={name:"",command:"",interval:"",unit:""}}_startEditGroupSensor(e,t,s){this._editingGroupSensor={groupId:e,name:t},this._showAddGroupSensor=null,this._groupSensorForm={name:t,command:s.command||"",interval:null!=s.interval?String(s.interval):"",unit:s.unit||""}}_cancelGroupSensorForm(){this._editingGroupSensor=null,this._showAddGroupSensor=null,this._groupSensorForm={name:"",command:"",interval:"",unit:""}}_saveGroupSensor(e){const t=(this._groupSensorForm.name||"").trim(),s=(this._groupSensorForm.command||"").trim();t&&s&&(this._groups={...this._groups,[e.id]:{...e,custom_sensors:{...e.custom_sensors||{},[t]:{command:s,interval:this._groupSensorForm.interval?Number(this._groupSensorForm.interval):void 0,unit:this._groupSensorForm.unit||void 0}}}},this._cancelGroupSensorForm())}_removeGroupSensor(e,t){const s={...e.custom_sensors||{}};delete s[t],this._groups={...this._groups,[e.id]:{...e,custom_sensors:s}}}_renderAddMemberDropdown(e){const t=e.device_ids||[],s=Object.entries(this._devices).filter(([e])=>!t.includes(e));return 0===s.length?H``:H`
       <select class="small-input" style="padding: 3px 8px;"
         @change=${t=>{t.target.value&&(this._addMember(e,t.target.value),t.target.value="")}}>
         <option value="">Add device...</option>
@@ -1891,7 +1985,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <option value=${e}>${t.device_name||e}</option>
         `)}
       </select>
-    `}_toggleGroup(e){this._expandedGroup=this._expandedGroup===e?null:e}_updateGroupThreshold(e,t,s){const i=this._groups[e];i&&(this._groups={...this._groups,[e]:{...i,thresholds:{...i.thresholds||{},[t]:""===s?null:Number(s)}}})}async _addMember(e,t){const s=[...e.device_ids||[],t];try{await _e(e.id,{device_ids:s}),await this._loadAll()}catch(e){console.error("Failed to add member:",e)}}async _removeMember(e,t){const s=(e.device_ids||[]).filter(e=>e!==t);try{await _e(e.id,{device_ids:s}),await this._loadAll()}catch(e){console.error("Failed to remove member:",e)}}async _saveGroup(e){const t=this._editingGroupName===e.id?this._editGroupName.trim():e.name,s={};for(const[t,i]of Object.entries(e.thresholds||{}))null==i||isNaN(i)||(s[t]=i);const i=t||e.name;try{await _e(e.id,{name:i,device_ids:e.device_ids||[],custom_commands:e.custom_commands||{},custom_sensors:e.custom_sensors||{},thresholds:s}),this._groups={...this._groups,[e.id]:{...e,name:i,thresholds:s}},this._editingGroupName===e.id&&(this._editingGroupName=null),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"saved"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}catch(t){console.error("Failed to save group:",t),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"error"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}}async _createGroup(){const e=this._newGroupName.trim();if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_");try{await be(t,e,[]),this._newGroupName="",this._expandedGroup=t,await this._loadAll()}catch(e){console.error("Failed to create group:",e)}}async _deleteGroup(e){const t=(e.device_ids||[]).length;if(!(t>0)||confirm(`Delete group "${e.name}"? It has ${t} member(s).`))try{await async function(e){await fetch(`${he}/api/groups/${e}`,{method:"DELETE"})}(e.id),this._expandedGroup===e.id&&(this._expandedGroup=null),await this._loadAll()}catch(e){console.error("Failed to delete group:",e)}}_addGroupCommand(e){const t=Oe(e.id),s=(t.name||"").trim(),i=(t.shellCmd||"").trim();s&&i&&(this._groups={...this._groups,[e.id]:{...e,custom_commands:{...e.custom_commands||{},[s]:i}}},t.name="",t.shellCmd="",this.requestUpdate())}_removeGroupCommand(e,t){const s={...e.custom_commands||{}};delete s[t],this._groups={...this._groups,[e.id]:{...e,custom_commands:s}}}async _pushGroupConfig(e){await this._saveGroup(e);const t={commands:e.custom_commands||{},plugins:{custom_command:{commands:e.custom_sensors||{}}}};console.log("Push to group:",e.id,"config:",JSON.stringify(t)),this._groupPushStatus={...this._groupPushStatus,[e.id]:"Pushing..."};try{const s=await async function(e,t){return(await fetch(`${he}/api/groups/${e}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})).json()}(e.id,t);console.log("Push result:",s),this._groupPushStatus={...this._groupPushStatus,[e.id]:"Pushed!"},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}catch(t){console.error("Failed to push group config:",t);const s=t&&t.message?`Error: ${t.message}`:"Error";this._groupPushStatus={...this._groupPushStatus,[e.id]:s},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}}_renderGlobalDefaults(){const e=(this._settings||{}).default_thresholds||{},t=Re;return H`
+    `}_toggleGroup(e){this._expandedGroup=this._expandedGroup===e?null:e}_updateGroupThreshold(e,t,s){const i=this._groups[e];i&&(this._groups={...this._groups,[e]:{...i,thresholds:{...i.thresholds||{},[t]:""===s?null:Number(s)}}})}async _addMember(e,t){const s=[...e.device_ids||[],t];try{await _e(e.id,{device_ids:s}),await this._loadAll()}catch(e){console.error("Failed to add member:",e)}}async _removeMember(e,t){const s=(e.device_ids||[]).filter(e=>e!==t);try{await _e(e.id,{device_ids:s}),await this._loadAll()}catch(e){console.error("Failed to remove member:",e)}}async _updateGroup(e){const t=this._editingGroupName===e.id?this._editGroupName.trim():e.name,s={};for(const[t,i]of Object.entries(e.thresholds||{}))null==i||isNaN(i)||(s[t]=i);const i=t||e.name;try{await _e(e.id,{name:i,device_ids:e.device_ids||[],custom_commands:e.custom_commands||{},custom_sensors:e.custom_sensors||{},thresholds:s}),this._groups={...this._groups,[e.id]:{...e,name:i,thresholds:s}},this._editingGroupName===e.id&&(this._editingGroupName=null),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"saved"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}catch(t){console.error("Failed to update group:",t),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"error"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}}async _createGroup(){const e=this._newGroupName.trim();if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_");try{await be(t,e,[]),this._newGroupName="",this._expandedGroup=t,await this._loadAll()}catch(e){console.error("Failed to create group:",e)}}async _deleteGroup(e){const t=(e.device_ids||[]).length;if(!(t>0)||confirm(`Delete group "${e.name}"? It has ${t} member(s).`))try{await async function(e){await fetch(`${he}/api/groups/${e}`,{method:"DELETE"})}(e.id),this._expandedGroup===e.id&&(this._expandedGroup=null),await this._loadAll()}catch(e){console.error("Failed to delete group:",e)}}async _deployToDevices(e){await this._updateGroup(e);const t={commands:e.custom_commands||{},plugins:{custom_command:{commands:e.custom_sensors||{}}}};console.log("Deploy to group:",e.id,"config:",JSON.stringify(t)),this._groupPushStatus={...this._groupPushStatus,[e.id]:"Deploying..."};try{const s=await async function(e,t){return(await fetch(`${he}/api/groups/${e}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})).json()}(e.id,t);console.log("Deploy result:",s),this._groupPushStatus={...this._groupPushStatus,[e.id]:"Deployed!"},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}catch(t){console.error("Failed to deploy group config:",t);const s=t&&t.message?`Error: ${t.message}`:"Error";this._groupPushStatus={...this._groupPushStatus,[e.id]:s},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}}_renderGlobalDefaults(){const e=(this._settings||{}).default_thresholds||{},t=Le;return H`
       <div class="section">
         <div class="section-title">Global Defaults</div>
 
@@ -1912,11 +2006,11 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <input class="small-input" type="text" placeholder="Attribute name..."
             style="width: 150px;"
             .value=${t.attr}
-            @input=${e=>{Re.attr=e.target.value,this.requestUpdate()}}>
+            @input=${e=>{Le.attr=e.target.value,this.requestUpdate()}}>
           <input class="small-input" type="number" placeholder="Value..."
             style="width: 90px;"
             .value=${t.value}
-            @input=${e=>{Re.value=e.target.value,this.requestUpdate()}}>
+            @input=${e=>{Le.value=e.target.value,this.requestUpdate()}}>
           <button class="small-btn" @click=${this._addDefaultThreshold.bind(this)}>Add threshold</button>
         </div>
 
@@ -1928,7 +2022,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           ${this._settingsSaved?H`<span class="saved-msg">Saved!</span>`:""}
         </div>
       </div>
-    `}_updateDefaultThreshold(e,t){const s=this._settings||{};this._settings={...s,default_thresholds:{...s.default_thresholds||{},[e]:""===t?null:Number(t)}}}_removeDefaultThreshold(e){const t=this._settings||{},s={...t.default_thresholds||{}};delete s[e],this._settings={...t,default_thresholds:s}}_addDefaultThreshold(){const e=(Re.attr||"").trim(),t=(Re.value||"").trim();e&&""!==t&&(this._updateDefaultThreshold(e,t),Re.attr="",Re.value="",this.requestUpdate())}async _saveSettings(){this._savingSettings=!0,this._settingsSaved=!1;try{await async function(e){return(await fetch(`${he}/api/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})).json()}(this._settings),this._settingsSaved=!0,setTimeout(()=>{this._settingsSaved=!1},2e3)}catch(e){console.error("Failed to save settings:",e)}finally{this._savingSettings=!1}}}customElements.define("settings-view",Ue);class Ie extends le{static properties={currentView:{type:String},selectedDevice:{type:String}};static styles=a`
+    `}_updateDefaultThreshold(e,t){const s=this._settings||{};this._settings={...s,default_thresholds:{...s.default_thresholds||{},[e]:""===t?null:Number(t)}}}_removeDefaultThreshold(e){const t=this._settings||{},s={...t.default_thresholds||{}};delete s[e],this._settings={...t,default_thresholds:s}}_addDefaultThreshold(){const e=(Le.attr||"").trim(),t=(Le.value||"").trim();e&&""!==t&&(this._updateDefaultThreshold(e,t),Le.attr="",Le.value="",this.requestUpdate())}async _saveSettings(){this._savingSettings=!0,this._settingsSaved=!1;try{await async function(e){return(await fetch(`${he}/api/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})).json()}(this._settings),this._settingsSaved=!0,setTimeout(()=>{this._settingsSaved=!1},2e3)}catch(e){console.error("Failed to save settings:",e)}finally{this._savingSettings=!1}}}customElements.define("settings-view",Pe);class je extends le{static properties={currentView:{type:String},selectedDevice:{type:String}};static styles=a`
     :host {
       display: block;
       min-height: 100vh;
@@ -1970,5 +2064,5 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           ></device-detail>
         </div>
       </div>
-    `}_onOverlayClick(){this.selectedDevice=null}_onViewChange(e){this.currentView=e.detail.view,this.selectedDevice=null}_onDeviceSelect(e){this.selectedDevice=e.detail.deviceId}}customElements.define("network-monitor-app",Ie);
+    `}_onOverlayClick(){this.selectedDevice=null}_onViewChange(e){this.currentView=e.detail.view,this.selectedDevice=null}_onDeviceSelect(e){this.selectedDevice=e.detail.deviceId}}customElements.define("network-monitor-app",je);
 //# sourceMappingURL=bundle.js.map

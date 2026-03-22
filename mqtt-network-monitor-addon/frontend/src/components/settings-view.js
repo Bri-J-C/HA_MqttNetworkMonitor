@@ -7,21 +7,7 @@ import {
   fetchDevices,
 } from '../services/api.js';
 
-// Per-group ephemeral state for custom command editing
-const _groupCmdForms = {}; // groupId → { name: '', shellCmd: '' }
-function getGroupCmdForm(groupId) {
-  if (!_groupCmdForms[groupId]) _groupCmdForms[groupId] = { name: '', shellCmd: '' };
-  return _groupCmdForms[groupId];
-}
-
-// Per-group ephemeral state for custom sensor editing
-const _groupSensorForms = {}; // groupId → { name: '', command: '', interval: '', unit: '' }
-function getGroupSensorForm(groupId) {
-  if (!_groupSensorForms[groupId]) _groupSensorForms[groupId] = { name: '', command: '', interval: '', unit: '' };
-  return _groupSensorForms[groupId];
-}
-
-// Per-group ephemeral state for threshold add row
+// Per-group ephemeral state for threshold add row (kept as module-level; not part of refactor)
 const _groupThresholdForms = {}; // groupId → { attr: '', value: '' }
 function getGroupThresholdForm(groupId) {
   if (!_groupThresholdForms[groupId]) _groupThresholdForms[groupId] = { attr: '', value: '' };
@@ -49,6 +35,14 @@ class SettingsView extends LitElement {
     _settingsSaved: { type: Boolean, state: true },
     _groupSaveStatus: { type: Object, state: true },
     _groupPushStatus: { type: Object, state: true },
+    // Command editing state
+    _editingGroupCmd: { type: Object, state: true },   // { groupId, name } or null
+    _showAddGroupCmd: { type: Object, state: true },   // { groupId } or null
+    _groupCmdForm: { type: Object, state: true },      // { name, shell }
+    // Sensor editing state
+    _editingGroupSensor: { type: Object, state: true }, // { groupId, name } or null
+    _showAddGroupSensor: { type: Object, state: true }, // { groupId } or null
+    _groupSensorForm: { type: Object, state: true },    // { name, command, interval, unit }
   };
 
   static styles = css`
@@ -146,7 +140,7 @@ class SettingsView extends LitElement {
       font-size: 13px; box-sizing: border-box;
     }
     .threshold-input:focus { outline: none; border-color: #4fc3f7; }
-    .group-footer { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+    .group-footer { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; align-items: center; }
     .group-save-btn {
       background: #4fc3f7; border: none; color: #1a1a2e; padding: 6px 16px;
       border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
@@ -179,10 +173,10 @@ class SettingsView extends LitElement {
     .save-btn:hover { background: #81d4fa; }
     .save-btn:disabled { opacity: 0.5; cursor: default; }
     .saved-msg { font-size: 12px; color: #81c784; margin-left: 10px; }
-    .group-status-saved { font-size: 12px; color: #81c784; margin-left: 8px; }
-    .group-status-error { font-size: 12px; color: #ef5350; margin-left: 8px; }
-    .group-status-pushing { font-size: 12px; color: #4fc3f7; margin-left: 8px; }
-    .group-status-pushed { font-size: 12px; color: #81c784; margin-left: 8px; }
+    .group-status-saved { font-size: 12px; color: #81c784; }
+    .group-status-error { font-size: 12px; color: #ef5350; }
+    .group-status-pushing { font-size: 12px; color: #4fc3f7; }
+    .group-status-pushed { font-size: 12px; color: #81c784; }
 
     /* Toggle switch (command discovered) */
     .cmd-toggle-wrap { cursor: pointer; flex-shrink: 0; }
@@ -199,7 +193,49 @@ class SettingsView extends LitElement {
     .cmd-toggle.on .cmd-toggle-knob { left: 14px; }
     .cmd-toggle.off .cmd-toggle-knob { left: 2px; }
 
+    /* Sensor / command tables */
+    .sensor-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .sensor-table th {
+      text-align: left; font-size: 10px; color: #666; padding: 6px 8px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .sensor-table td {
+      font-size: 12px; color: #ccc; padding: 6px 8px;
+      border-bottom: 1px solid #2a2a4a;
+    }
+    .sensor-table tr:last-child td { border-bottom: none; }
+    .sensor-btn {
+      background: none; border: none; cursor: pointer; font-size: 11px;
+      padding: 2px 8px; border-radius: 4px;
+    }
+    .sensor-btn.edit { color: #4fc3f7; }
+    .sensor-btn.edit:hover { background: rgba(79,195,247,0.1); }
+    .sensor-btn.remove { color: #666; }
+    .sensor-btn.remove:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
+    .sensor-actions { display: flex; gap: 4px; }
+    .sensor-form { background: #12122a; border-radius: 6px; padding: 10px; margin-top: 6px; }
+    .sensor-form-grid { display: grid; gap: 6px; margin-bottom: 6px; }
+    .sensor-form-grid input {
+      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 4px;
+      color: #e0e0e0; padding: 6px 8px; font-size: 12px;
+    }
+    .sensor-form-grid input:focus { outline: none; border-color: #4fc3f7; }
+    .sensor-form-actions { display: flex; gap: 6px; }
+    .form-btn { border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .form-btn.save { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
+    .form-btn.cancel { background: #3a3a5a; color: #aaa; }
+
     .loading { padding: 40px; text-align: center; color: #666; }
+
+    .subsection-label {
+      font-size: 11px; color: #555; margin-bottom: 6px; margin-top: 8px;
+    }
+    .add-cmd-btn {
+      background: none; border: 1px solid #3a3a5a; color: #888;
+      padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+      margin-top: 4px; transition: all 0.15s;
+    }
+    .add-cmd-btn:hover { border-color: #4fc3f7; color: #4fc3f7; }
   `;
 
   constructor() {
@@ -220,6 +256,14 @@ class SettingsView extends LitElement {
     this._settingsSaved = false;
     this._groupSaveStatus = {};
     this._groupPushStatus = {};
+    // Command editing
+    this._editingGroupCmd = null;
+    this._showAddGroupCmd = null;
+    this._groupCmdForm = { name: '', shell: '' };
+    // Sensor editing
+    this._editingGroupSensor = null;
+    this._showAddGroupSensor = null;
+    this._groupSensorForm = { name: '', command: '', interval: '', unit: '' };
   }
 
   connectedCallback() {
@@ -426,7 +470,6 @@ class SettingsView extends LitElement {
   _renderGroup(g) {
     const isExpanded = this._expandedGroup === g.id;
     const memberCount = (g.device_ids || []).length;
-    const thresholds = g.thresholds || {};
 
     return html`
       <div>
@@ -479,13 +522,13 @@ class SettingsView extends LitElement {
 
             <div class="group-footer">
               <button class="group-delete-btn" @click=${() => this._deleteGroup(g)}>Delete Group</button>
-              <button class="group-save-btn" @click=${() => this._saveGroup(g)}>Save</button>
-              ${this._groupSaveStatus[g.id] === 'saved' ? html`<span class="group-status-saved">Saved!</span>` : ''}
+              <button class="group-save-btn" @click=${() => this._updateGroup(g)}>Update</button>
+              ${this._groupSaveStatus[g.id] === 'saved' ? html`<span class="group-status-saved">Updated!</span>` : ''}
               ${this._groupSaveStatus[g.id] === 'error' ? html`<span class="group-status-error">Error</span>` : ''}
               <button class="group-save-btn" style="background: #2e7d32;"
-                @click=${() => this._pushGroupConfig(g)}>Push to Group</button>
-              ${this._groupPushStatus[g.id] === 'Pushing...' ? html`<span class="group-status-pushing">Pushing...</span>` : ''}
-              ${this._groupPushStatus[g.id] === 'Pushed!' ? html`<span class="group-status-pushed">Pushed!</span>` : ''}
+                @click=${() => this._deployToDevices(g)}>Deploy to Devices</button>
+              ${this._groupPushStatus[g.id] === 'Deploying...' ? html`<span class="group-status-pushing">Deploying...</span>` : ''}
+              ${this._groupPushStatus[g.id] === 'Deployed!' ? html`<span class="group-status-pushed">Deployed!</span>` : ''}
               ${(this._groupPushStatus[g.id] || '').startsWith('Error') ? html`<span class="group-status-error">${this._groupPushStatus[g.id]}</span>` : ''}
             </div>
           </div>
@@ -494,66 +537,131 @@ class SettingsView extends LitElement {
     `;
   }
 
+  // ── Group Custom Commands ─────────────────────────────────────────────────
+
   _renderGroupCustomCommands(g) {
     const commands = g.custom_commands || {};
-    const form = getGroupCmdForm(g.id);
     const discovered = this._getGroupDiscoveredData(g);
     const discoveredCmds = discovered.commands; // { name: shellCmd }
-    const discoveredNames = Object.keys(discoveredCmds);
+    const discoveredNames = Object.keys(discoveredCmds).sort();
+    // Group-defined commands that are NOT from discovery
+    const groupOnlyCmds = Object.entries(commands).filter(([n]) => !discoveredNames.includes(n));
+
+    const isEditingCmd = this._editingGroupCmd && this._editingGroupCmd.groupId === g.id;
+    const isAddingCmd = this._showAddGroupCmd && this._showAddGroupCmd.groupId === g.id;
 
     return html`
       ${discoveredNames.length > 0 ? html`
-        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Discovered from devices</div>
-        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
-          ${discoveredNames.sort().map(name => {
-            const shellCmd = discoveredCmds[name];
-            const included = name in commands;
-            return html`
-              <div style="background: ${included ? '#2a1a4a' : '#1a1a2e'}; border: 1px solid ${included ? '#7e57c2' : '#2a2a4a'}; border-radius: 4px; padding: 4px 8px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span style="font-size: 11px; color: ${included ? '#ce93d8' : '#888'}; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</span>
-                  <span class="cmd-toggle-wrap" @click=${() => this._toggleDiscoveredCommand(g, name, shellCmd, !included)}>
-                    <div class="cmd-toggle ${included ? 'on' : 'off'}">
-                      <div class="cmd-toggle-knob"></div>
-                    </div>
-                  </span>
-                </div>
-                ${shellCmd ? html`<span style="font-size: 9px; color: #7060a0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${shellCmd}>${shellCmd}</span>` : ''}
-              </div>
-            `;
-          })}
-        </div>
+        <div class="subsection-label">Discovered from devices</div>
+        <table class="sensor-table">
+          <thead>
+            <tr><th>Name</th><th>Shell Command</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${discoveredNames.map(name => {
+              const shellCmd = discoveredCmds[name];
+              const included = name in commands;
+              return html`
+                <tr>
+                  <td style="font-family: monospace;">${name}</td>
+                  <td style="font-family: monospace; font-size: 11px; color: #888;">${shellCmd || '—'}</td>
+                  <td>
+                    <span class="cmd-toggle-wrap" @click=${() => this._toggleDiscoveredCommand(g, name, shellCmd, !included)}>
+                      <div class="cmd-toggle ${included ? 'on' : 'off'}">
+                        <div class="cmd-toggle-knob"></div>
+                      </div>
+                    </span>
+                  </td>
+                </tr>
+              `;
+            })}
+          </tbody>
+        </table>
       ` : ''}
 
-      ${Object.keys(commands).filter(n => !discoveredNames.includes(n)).length > 0 ? html`
-        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Custom commands</div>
-        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
-          ${Object.entries(commands).filter(([n]) => !discoveredNames.includes(n)).map(([name, shellCmd]) => html`
-            <span title=${shellCmd} style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
-              <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
-                ${name}
-                <span style="cursor: pointer; opacity: 0.6;"
-                  @click=${() => this._removeGroupCommand(g, name)}>&times;</span>
-              </span>
-              <span style="font-size: 9px; color: #a070c0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${shellCmd}</span>
-            </span>
-          `)}
-        </div>
-      ` : (discoveredNames.length === 0 && Object.keys(commands).length === 0 ? html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No commands discovered yet.</div>` : '')}
+      ${groupOnlyCmds.length > 0 || discoveredNames.length > 0 ? html`
+        <div class="subsection-label" style="margin-top: 10px;">Group commands</div>
+      ` : ''}
 
-      <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add new command</div>
-      <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-        <input class="small-input" type="text" placeholder="Command name..."
-          style="width: 130px;"
-          .value=${form.name}
-          @input=${(e) => { getGroupCmdForm(g.id).name = e.target.value; this.requestUpdate(); }}>
-        <input class="small-input" type="text" placeholder="Shell command..."
-          style="width: 220px;"
-          .value=${form.shellCmd}
-          @input=${(e) => { getGroupCmdForm(g.id).shellCmd = e.target.value; this.requestUpdate(); }}>
-        <button class="small-btn" @click=${() => this._addGroupCommand(g)}>Add</button>
-      </div>
+      ${groupOnlyCmds.length > 0 ? html`
+        <table class="sensor-table">
+          <thead>
+            <tr><th>Name</th><th>Shell Command</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${groupOnlyCmds.map(([name, shellCmd]) => html`
+              <tr>
+                <td style="font-family: monospace;">${name}</td>
+                <td style="font-family: monospace; font-size: 11px;">${shellCmd}</td>
+                <td>
+                  <div class="sensor-actions">
+                    <button class="sensor-btn edit"
+                      @click=${() => this._startEditGroupCmd(g.id, name, shellCmd)}>Edit</button>
+                    <button class="sensor-btn remove"
+                      @click=${() => this._removeGroupCommand(g, name)}>Remove</button>
+                  </div>
+                </td>
+              </tr>
+            `)}
+          </tbody>
+        </table>
+      ` : (discoveredNames.length === 0 ? html`
+        <div style="font-size: 12px; color: #555; margin-bottom: 8px;">No commands discovered yet.</div>
+      ` : '')}
+
+      ${(isEditingCmd || isAddingCmd) ? html`
+        <div class="sensor-form">
+          <div class="sensor-form-grid" style="grid-template-columns: 1fr 2fr;">
+            <input type="text" placeholder="Command name"
+              .value=${this._groupCmdForm.name}
+              ?disabled=${!!isEditingCmd}
+              @input=${(e) => this._groupCmdForm = { ...this._groupCmdForm, name: e.target.value }}>
+            <input type="text" placeholder="Shell command"
+              .value=${this._groupCmdForm.shell}
+              @input=${(e) => this._groupCmdForm = { ...this._groupCmdForm, shell: e.target.value }}
+              @keydown=${(e) => e.key === 'Enter' && this._saveGroupCmd(g)}>
+          </div>
+          <div class="sensor-form-actions">
+            <button class="form-btn save" @click=${() => this._saveGroupCmd(g)}>${isEditingCmd ? 'Update' : 'Add'}</button>
+            <button class="form-btn cancel" @click=${this._cancelGroupCmdForm}>Cancel</button>
+          </div>
+        </div>
+      ` : html`
+        <button class="add-cmd-btn" @click=${() => this._startAddGroupCmd(g.id)}>+ Add Command</button>
+      `}
     `;
+  }
+
+  _startAddGroupCmd(groupId) {
+    this._showAddGroupCmd = { groupId };
+    this._editingGroupCmd = null;
+    this._groupCmdForm = { name: '', shell: '' };
+  }
+
+  _startEditGroupCmd(groupId, name, shell) {
+    this._editingGroupCmd = { groupId, name };
+    this._showAddGroupCmd = null;
+    this._groupCmdForm = { name, shell };
+  }
+
+  _cancelGroupCmdForm() {
+    this._editingGroupCmd = null;
+    this._showAddGroupCmd = null;
+    this._groupCmdForm = { name: '', shell: '' };
+  }
+
+  _saveGroupCmd(g) {
+    const name = (this._groupCmdForm.name || '').trim();
+    const shell = (this._groupCmdForm.shell || '').trim();
+    if (!name || !shell) return;
+    this._groups = {
+      ...this._groups,
+      [g.id]: {
+        ...g,
+        custom_commands: { ...(g.custom_commands || {}), [name]: shell },
+      },
+    };
+    this._cancelGroupCmdForm();
   }
 
   _toggleDiscoveredCommand(g, name, shellCmd, include) {
@@ -568,6 +676,17 @@ class SettingsView extends LitElement {
       [g.id]: { ...g, custom_commands: commands },
     };
   }
+
+  _removeGroupCommand(g, name) {
+    const updated = { ...(g.custom_commands || {}) };
+    delete updated[name];
+    this._groups = {
+      ...this._groups,
+      [g.id]: { ...g, custom_commands: updated },
+    };
+  }
+
+  // ── Group Thresholds ──────────────────────────────────────────────────────
 
   _renderGroupThresholds(g) {
     const thresholds = g.thresholds || {};
@@ -641,74 +760,125 @@ class SettingsView extends LitElement {
     };
   }
 
+  // ── Group Custom Sensors ──────────────────────────────────────────────────
+
   _renderGroupCustomSensors(g) {
     const sensors = g.custom_sensors || {};
-    const form = getGroupSensorForm(g.id);
     const discovered = this._getGroupDiscoveredData(g);
     const discoveredSensors = discovered.sensors;
-    const discoveredNames = Object.keys(discoveredSensors);
+    const discoveredNames = Object.keys(discoveredSensors).sort();
+
+    const isEditingSensor = this._editingGroupSensor && this._editingGroupSensor.groupId === g.id;
+    const isAddingSensor = this._showAddGroupSensor && this._showAddGroupSensor.groupId === g.id;
 
     return html`
       ${discoveredNames.length > 0 ? html`
-        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Discovered from devices</div>
-        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
-          ${discoveredNames.sort().map(name => {
-            const sensor = discoveredSensors[name];
-            return html`
-              <span style="font-size: 10px; background: #0e2a2a; color: #4db6ac; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 220px; border: 1px solid #1a3a3a;" title="Reported by member device">
-                <span style="font-weight: 600;">${name}</span>
-                ${sensor.command ? html`<span style="font-size: 9px; color: #40807a; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sensor.command}</span>` : ''}
-                <span style="font-size: 9px; color: #406060;">${sensor.interval ? sensor.interval + 's' : ''} ${sensor.unit || ''}</span>
-              </span>
-            `;
-          })}
-        </div>
+        <div class="subsection-label">Discovered from devices</div>
+        <table class="sensor-table">
+          <thead>
+            <tr><th>Name</th><th>Command</th><th>Interval</th><th>Unit</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${discoveredNames.map(name => {
+              const s = discoveredSensors[name];
+              return html`
+                <tr>
+                  <td style="font-family: monospace;">${name}</td>
+                  <td style="font-family: monospace; font-size: 11px; color: #888;">${s.command || '—'}</td>
+                  <td style="color: #888;">${s.interval ? s.interval + 's' : '—'}</td>
+                  <td style="color: #888;">${s.unit || '—'}</td>
+                  <td></td>
+                </tr>
+              `;
+            })}
+          </tbody>
+        </table>
       ` : ''}
 
-      ${Object.keys(sensors).length > 0 ? html`
-        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Group sensors</div>
-        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
-          ${Object.entries(sensors).map(([name, sensor]) => html`
-            <span style="font-size: 10px; background: #1a3a3a; color: #80cbc4; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 220px;">
-              <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
-                ${name}
-                <span style="cursor: pointer; opacity: 0.6;"
-                  @click=${() => this._removeGroupSensor(g, name)}>&times;</span>
-              </span>
-              <span style="font-size: 9px; color: #60a0a0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sensor.command || ''}</span>
-              <span style="font-size: 9px; color: #608080;">${sensor.interval ? sensor.interval + 's' : ''} ${sensor.unit || ''}</span>
-            </span>
-          `)}
-        </div>
-      ` : (discoveredNames.length === 0 ? html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No custom sensors</div>` : '')}
+      <div class="subsection-label" style="margin-top: 10px;">Group sensors</div>
 
-      <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add sensor</div>
-      <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-        <input class="small-input" type="text" placeholder="Sensor name..."
-          style="width: 110px;"
-          .value=${form.name}
-          @input=${(e) => { getGroupSensorForm(g.id).name = e.target.value; this.requestUpdate(); }}>
-        <input class="small-input" type="text" placeholder="Shell command..."
-          style="width: 200px;"
-          .value=${form.command}
-          @input=${(e) => { getGroupSensorForm(g.id).command = e.target.value; this.requestUpdate(); }}>
-        <input class="small-input" type="number" placeholder="Interval (s)"
-          style="width: 90px;"
-          .value=${form.interval}
-          @input=${(e) => { getGroupSensorForm(g.id).interval = e.target.value; this.requestUpdate(); }}>
-        <input class="small-input" type="text" placeholder="Unit"
-          style="width: 60px;"
-          .value=${form.unit}
-          @input=${(e) => { getGroupSensorForm(g.id).unit = e.target.value; this.requestUpdate(); }}>
-        <button class="small-btn" @click=${() => this._addGroupSensor(g)}>Add</button>
-      </div>
+      ${Object.keys(sensors).length > 0 ? html`
+        <table class="sensor-table">
+          <thead>
+            <tr><th>Name</th><th>Command</th><th>Interval</th><th>Unit</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${Object.entries(sensors).map(([name, sensor]) => html`
+              <tr>
+                <td style="font-family: monospace;">${name}</td>
+                <td style="font-family: monospace; font-size: 11px;">${sensor.command || '—'}</td>
+                <td>${sensor.interval ? sensor.interval + 's' : '—'}</td>
+                <td>${sensor.unit || '—'}</td>
+                <td>
+                  <div class="sensor-actions">
+                    <button class="sensor-btn edit"
+                      @click=${() => this._startEditGroupSensor(g.id, name, sensor)}>Edit</button>
+                    <button class="sensor-btn remove"
+                      @click=${() => this._removeGroupSensor(g, name)}>Remove</button>
+                  </div>
+                </td>
+              </tr>
+            `)}
+          </tbody>
+        </table>
+      ` : html`
+        <div style="font-size: 12px; color: #555; margin-bottom: 8px;">No group sensors defined.</div>
+      `}
+
+      ${(isEditingSensor || isAddingSensor) ? html`
+        <div class="sensor-form">
+          <div class="sensor-form-grid" style="grid-template-columns: 1fr 2fr 80px 80px;">
+            <input type="text" placeholder="Name"
+              .value=${this._groupSensorForm.name}
+              ?disabled=${!!isEditingSensor}
+              @input=${(e) => this._groupSensorForm = { ...this._groupSensorForm, name: e.target.value }}>
+            <input type="text" placeholder="Shell command"
+              .value=${this._groupSensorForm.command}
+              @input=${(e) => this._groupSensorForm = { ...this._groupSensorForm, command: e.target.value }}>
+            <input type="number" placeholder="Interval (s)"
+              .value=${this._groupSensorForm.interval}
+              @input=${(e) => this._groupSensorForm = { ...this._groupSensorForm, interval: e.target.value }}>
+            <input type="text" placeholder="Unit"
+              .value=${this._groupSensorForm.unit}
+              @input=${(e) => this._groupSensorForm = { ...this._groupSensorForm, unit: e.target.value }}>
+          </div>
+          <div class="sensor-form-actions">
+            <button class="form-btn save" @click=${() => this._saveGroupSensor(g)}>${isEditingSensor ? 'Update' : 'Add'}</button>
+            <button class="form-btn cancel" @click=${this._cancelGroupSensorForm}>Cancel</button>
+          </div>
+        </div>
+      ` : html`
+        <button class="add-cmd-btn" @click=${() => this._startAddGroupSensor(g.id)}>+ Add Sensor</button>
+      `}
     `;
   }
 
-  _addGroupSensor(g) {
-    const form = getGroupSensorForm(g.id);
-    const name = (form.name || '').trim();
-    const command = (form.command || '').trim();
+  _startAddGroupSensor(groupId) {
+    this._showAddGroupSensor = { groupId };
+    this._editingGroupSensor = null;
+    this._groupSensorForm = { name: '', command: '', interval: '', unit: '' };
+  }
+
+  _startEditGroupSensor(groupId, name, sensor) {
+    this._editingGroupSensor = { groupId, name };
+    this._showAddGroupSensor = null;
+    this._groupSensorForm = {
+      name,
+      command: sensor.command || '',
+      interval: sensor.interval != null ? String(sensor.interval) : '',
+      unit: sensor.unit || '',
+    };
+  }
+
+  _cancelGroupSensorForm() {
+    this._editingGroupSensor = null;
+    this._showAddGroupSensor = null;
+    this._groupSensorForm = { name: '', command: '', interval: '', unit: '' };
+  }
+
+  _saveGroupSensor(g) {
+    const name = (this._groupSensorForm.name || '').trim();
+    const command = (this._groupSensorForm.command || '').trim();
     if (!name || !command) return;
     this._groups = {
       ...this._groups,
@@ -718,17 +888,13 @@ class SettingsView extends LitElement {
           ...(g.custom_sensors || {}),
           [name]: {
             command,
-            interval: form.interval ? Number(form.interval) : undefined,
-            unit: form.unit || undefined,
+            interval: this._groupSensorForm.interval ? Number(this._groupSensorForm.interval) : undefined,
+            unit: this._groupSensorForm.unit || undefined,
           },
         },
       },
     };
-    form.name = '';
-    form.command = '';
-    form.interval = '';
-    form.unit = '';
-    this.requestUpdate();
+    this._cancelGroupSensorForm();
   }
 
   _removeGroupSensor(g, name) {
@@ -739,6 +905,8 @@ class SettingsView extends LitElement {
       [g.id]: { ...g, custom_sensors: updated },
     };
   }
+
+  // ── Group Member Management ───────────────────────────────────────────────
 
   _renderAddMemberDropdown(g) {
     const memberIds = g.device_ids || [];
@@ -791,7 +959,7 @@ class SettingsView extends LitElement {
     }
   }
 
-  async _saveGroup(g) {
+  async _updateGroup(g) {
     const name = this._editingGroupName === g.id ? this._editGroupName.trim() : g.name;
     // Filter out thresholds where value is null or NaN
     const cleanThresholds = {};
@@ -813,13 +981,13 @@ class SettingsView extends LitElement {
         [g.id]: { ...g, name: savedName, thresholds: cleanThresholds },
       };
       if (this._editingGroupName === g.id) this._editingGroupName = null;
-      // Show "Saved!" feedback for 2 seconds
+      // Show "Updated!" feedback for 2 seconds
       this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: 'saved' };
       setTimeout(() => {
         this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: '' };
       }, 2000);
     } catch (e) {
-      console.error('Failed to save group:', e);
+      console.error('Failed to update group:', e);
       this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: 'error' };
       setTimeout(() => {
         this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: '' };
@@ -855,35 +1023,9 @@ class SettingsView extends LitElement {
     }
   }
 
-  _addGroupCommand(g) {
-    const form = getGroupCmdForm(g.id);
-    const name = (form.name || '').trim();
-    const shellCmd = (form.shellCmd || '').trim();
-    if (!name || !shellCmd) return;
-    this._groups = {
-      ...this._groups,
-      [g.id]: {
-        ...g,
-        custom_commands: { ...(g.custom_commands || {}), [name]: shellCmd },
-      },
-    };
-    form.name = '';
-    form.shellCmd = '';
-    this.requestUpdate();
-  }
-
-  _removeGroupCommand(g, name) {
-    const updated = { ...(g.custom_commands || {}) };
-    delete updated[name];
-    this._groups = {
-      ...this._groups,
-      [g.id]: { ...g, custom_commands: updated },
-    };
-  }
-
-  async _pushGroupConfig(g) {
-    // Auto-save first so server has latest data
-    await this._saveGroup(g);
+  async _deployToDevices(g) {
+    // Auto-save (update) first so server has latest data
+    await this._updateGroup(g);
 
     const config = {
       commands: g.custom_commands || {},
@@ -893,17 +1035,17 @@ class SettingsView extends LitElement {
         },
       },
     };
-    console.log('Push to group:', g.id, 'config:', JSON.stringify(config));
-    this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Pushing...' };
+    console.log('Deploy to group:', g.id, 'config:', JSON.stringify(config));
+    this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Deploying...' };
     try {
       const result = await pushGroupConfig(g.id, config);
-      console.log('Push result:', result);
-      this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Pushed!' };
+      console.log('Deploy result:', result);
+      this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Deployed!' };
       setTimeout(() => {
         this._groupPushStatus = { ...this._groupPushStatus, [g.id]: '' };
       }, 3000);
     } catch (e) {
-      console.error('Failed to push group config:', e);
+      console.error('Failed to deploy group config:', e);
       const msg = e && e.message ? `Error: ${e.message}` : 'Error';
       this._groupPushStatus = { ...this._groupPushStatus, [g.id]: msg };
       setTimeout(() => {
