@@ -47,6 +47,8 @@ class SettingsView extends LitElement {
     _editingGroupName: { type: String, state: true },
     _savingSettings: { type: Boolean, state: true },
     _settingsSaved: { type: Boolean, state: true },
+    _groupSaveStatus: { type: Object, state: true },
+    _groupPushStatus: { type: Object, state: true },
   };
 
   static styles = css`
@@ -177,6 +179,25 @@ class SettingsView extends LitElement {
     .save-btn:hover { background: #81d4fa; }
     .save-btn:disabled { opacity: 0.5; cursor: default; }
     .saved-msg { font-size: 12px; color: #81c784; margin-left: 10px; }
+    .group-status-saved { font-size: 12px; color: #81c784; margin-left: 8px; }
+    .group-status-error { font-size: 12px; color: #ef5350; margin-left: 8px; }
+    .group-status-pushing { font-size: 12px; color: #4fc3f7; margin-left: 8px; }
+    .group-status-pushed { font-size: 12px; color: #81c784; margin-left: 8px; }
+
+    /* Toggle switch (command discovered) */
+    .cmd-toggle-wrap { cursor: pointer; flex-shrink: 0; }
+    .cmd-toggle {
+      width: 28px; height: 16px; border-radius: 8px; position: relative;
+      transition: background 0.2s;
+    }
+    .cmd-toggle.on { background: #7e57c2; }
+    .cmd-toggle.off { background: #333; }
+    .cmd-toggle-knob {
+      width: 12px; height: 12px; border-radius: 50%; background: #fff;
+      position: absolute; top: 2px; transition: left 0.2s;
+    }
+    .cmd-toggle.on .cmd-toggle-knob { left: 14px; }
+    .cmd-toggle.off .cmd-toggle-knob { left: 2px; }
 
     .loading { padding: 40px; text-align: center; color: #666; }
   `;
@@ -197,6 +218,8 @@ class SettingsView extends LitElement {
     this._editingGroupName = null;
     this._savingSettings = false;
     this._settingsSaved = false;
+    this._groupSaveStatus = {};
+    this._groupPushStatus = {};
   }
 
   connectedCallback() {
@@ -457,8 +480,13 @@ class SettingsView extends LitElement {
             <div class="group-footer">
               <button class="group-delete-btn" @click=${() => this._deleteGroup(g)}>Delete Group</button>
               <button class="group-save-btn" @click=${() => this._saveGroup(g)}>Save</button>
+              ${this._groupSaveStatus[g.id] === 'saved' ? html`<span class="group-status-saved">Saved!</span>` : ''}
+              ${this._groupSaveStatus[g.id] === 'error' ? html`<span class="group-status-error">Error</span>` : ''}
               <button class="group-save-btn" style="background: #2e7d32;"
                 @click=${() => this._pushGroupConfig(g)}>Push to Group</button>
+              ${this._groupPushStatus[g.id] === 'Pushing...' ? html`<span class="group-status-pushing">Pushing...</span>` : ''}
+              ${this._groupPushStatus[g.id] === 'Pushed!' ? html`<span class="group-status-pushed">Pushed!</span>` : ''}
+              ${(this._groupPushStatus[g.id] || '').startsWith('Error') ? html`<span class="group-status-error">${this._groupPushStatus[g.id]}</span>` : ''}
             </div>
           </div>
         ` : ''}
@@ -484,12 +512,11 @@ class SettingsView extends LitElement {
               <div style="background: ${included ? '#2a1a4a' : '#1a1a2e'}; border: 1px solid ${included ? '#7e57c2' : '#2a2a4a'}; border-radius: 4px; padding: 4px 8px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
                 <div style="display: flex; align-items: center; gap: 6px;">
                   <span style="font-size: 11px; color: ${included ? '#ce93d8' : '#888'}; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</span>
-                  <label style="display: flex; align-items: center; gap: 3px; cursor: pointer; flex-shrink: 0; text-transform: none; letter-spacing: 0; font-size: 10px; color: ${included ? '#ce93d8' : '#555'};">
-                    <input type="checkbox" style="margin: 0; cursor: pointer;"
-                      .checked=${included}
-                      @change=${(e) => this._toggleDiscoveredCommand(g, name, shellCmd, e.target.checked)}>
-                    ${included ? 'on' : 'off'}
-                  </label>
+                  <span class="cmd-toggle-wrap" @click=${() => this._toggleDiscoveredCommand(g, name, shellCmd, !included)}>
+                    <div class="cmd-toggle ${included ? 'on' : 'off'}">
+                      <div class="cmd-toggle-knob"></div>
+                    </div>
+                  </span>
                 </div>
                 ${shellCmd ? html`<span style="font-size: 9px; color: #7060a0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${shellCmd}>${shellCmd}</span>` : ''}
               </div>
@@ -766,18 +793,37 @@ class SettingsView extends LitElement {
 
   async _saveGroup(g) {
     const name = this._editingGroupName === g.id ? this._editGroupName.trim() : g.name;
+    // Filter out thresholds where value is null or NaN
+    const cleanThresholds = {};
+    for (const [k, v] of Object.entries(g.thresholds || {})) {
+      if (v != null && !isNaN(v)) cleanThresholds[k] = v;
+    }
+    const savedName = name || g.name;
     try {
       await updateGroup(g.id, {
-        name: name || g.name,
+        name: savedName,
         device_ids: g.device_ids || [],
         custom_commands: g.custom_commands || {},
         custom_sensors: g.custom_sensors || {},
-        thresholds: g.thresholds || {},
+        thresholds: cleanThresholds,
       });
-      this._editingGroupName = null;
-      await this._loadAll();
+      // Update local state without full reload
+      this._groups = {
+        ...this._groups,
+        [g.id]: { ...g, name: savedName, thresholds: cleanThresholds },
+      };
+      if (this._editingGroupName === g.id) this._editingGroupName = null;
+      // Show "Saved!" feedback for 2 seconds
+      this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: 'saved' };
+      setTimeout(() => {
+        this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: '' };
+      }, 2000);
     } catch (e) {
       console.error('Failed to save group:', e);
+      this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: 'error' };
+      setTimeout(() => {
+        this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: '' };
+      }, 2000);
     }
   }
 
@@ -845,10 +891,20 @@ class SettingsView extends LitElement {
         },
       },
     };
+    this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Pushing...' };
     try {
       await pushGroupConfig(g.id, config);
+      this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Pushed!' };
+      setTimeout(() => {
+        this._groupPushStatus = { ...this._groupPushStatus, [g.id]: '' };
+      }, 3000);
     } catch (e) {
       console.error('Failed to push group config:', e);
+      const msg = e && e.message ? `Error: ${e.message}` : 'Error';
+      this._groupPushStatus = { ...this._groupPushStatus, [g.id]: msg };
+      setTimeout(() => {
+        this._groupPushStatus = { ...this._groupPushStatus, [g.id]: '' };
+      }, 3000);
     }
   }
 
