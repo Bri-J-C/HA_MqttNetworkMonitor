@@ -35,7 +35,7 @@ class SystemResourcesPlugin(BasePlugin):
     @staticmethod
     @collector("cpu_usage")
     def _cpu_usage():
-        return {"value": psutil.cpu_percent(interval=0), "unit": "%"}
+        return {"value": psutil.cpu_percent(interval=0.5), "unit": "%"}
 
     @staticmethod
     @collector("memory_usage")
