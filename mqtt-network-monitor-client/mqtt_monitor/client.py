@@ -12,6 +12,7 @@ import paho.mqtt.client as mqtt
 
 from mqtt_monitor.command_handler import CommandHandler
 from mqtt_monitor.config import Config, ConfigLoader
+from mqtt_monitor.config_handler import ConfigHandler
 from mqtt_monitor.message import MessageBuilder
 from mqtt_monitor.plugins.registry import PluginRegistry
 
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class MQTTMonitorClient:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, config_dir: Path | None = None):
         self.config = config
         self._mqtt = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
         self._message_builder = MessageBuilder(
@@ -27,11 +28,18 @@ class MQTTMonitorClient:
             device_name=config.device.name,
             device_type=config.device.type,
             tags=config.device.tags,
+            allowed_commands=config.allowed_commands,
         )
         self._command_handler = CommandHandler(config.allowed_commands)
         self._plugins = []
         self._timers: list[threading.Timer] = []
         self._running = False
+
+        _config_dir = config_dir if config_dir is not None else Path(".")
+        self._config_handler = ConfigHandler(
+            _config_dir,
+            on_config_applied=self._apply_config_update,
+        )
 
         registry = PluginRegistry()
         registry.load_builtins()
@@ -65,6 +73,7 @@ class MQTTMonitorClient:
         )
 
         client.subscribe(self._message_builder.command_topic)
+        client.subscribe(self._message_builder.config_topic)
 
         self._start_collection()
 
@@ -80,6 +89,26 @@ class MQTTMonitorClient:
                 self._message_builder.command_response_topic,
                 payload=response_json,
             )
+
+        elif msg.topic == self._message_builder.config_topic:
+            payload_str = msg.payload.decode()
+            logger.info(f"Received config update: {payload_str}")
+
+            result = self._config_handler.handle_config_message(payload_str)
+            response_json = json.dumps(result)
+
+            client.publish(
+                self._message_builder.config_response_topic,
+                payload=response_json,
+            )
+
+    def _apply_config_update(self, remote_config: dict):
+        """Apply remote config changes to running plugins."""
+        if "interval" in remote_config:
+            new_interval = remote_config["interval"]
+            for plugin in self._plugins:
+                plugin.interval = new_interval
+                logger.info(f"Updated {plugin.name} interval to {new_interval}s")
 
     def _collect_and_publish(self, plugin):
         try:
@@ -149,8 +178,9 @@ def main():
     if len(sys.argv) > 1:
         config_path = Path(sys.argv[1])
 
-    config = ConfigLoader.load(config_path)
+    remote_path = config_path.parent / "config.remote.yaml"
+    config = ConfigLoader.load_with_remote(config_path, remote_path)
     logger.info(f"Starting MQTT Monitor for device: {config.device.id}")
 
-    client = MQTTMonitorClient(config)
+    client = MQTTMonitorClient(config, config_dir=config_path.parent)
     client.run()
