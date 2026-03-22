@@ -13,15 +13,23 @@ registry = None
 topology = None
 command_sender = None
 mqtt_handler = None
+tag_registry = None
+settings_manager = None
+settings_resolver = None
 
 
-def init_app(reg, topo, cmd_sender, mqtt_hdlr):
+def init_app(reg, topo, cmd_sender, mqtt_hdlr, tag_reg=None, settings_mgr=None):
     global registry, topology, command_sender, mqtt_handler
+    global tag_registry, settings_manager
     registry = reg
     topology = topo
     command_sender = cmd_sender
     mqtt_handler = mqtt_hdlr
+    tag_registry = tag_reg
+    settings_manager = settings_mgr
 
+
+# ── Devices ────────────────────────────────────────────────────────────────
 
 @app.get("/api/devices")
 def get_devices():
@@ -35,6 +43,39 @@ def get_device(device_id: str):
         raise HTTPException(status_code=404, detail="Device not found")
     return device
 
+
+@app.get("/api/devices/{device_id}/effective-settings")
+def get_effective_settings(device_id: str):
+    from server.settings_resolver import resolve_settings
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    global_settings = settings_manager.get_settings() if settings_manager else {}
+    groups = registry.get_groups()
+    return resolve_settings(device, groups, global_settings)
+
+
+@app.put("/api/devices/{device_id}/settings")
+def update_device_settings(device_id: str, body: dict[str, Any]):
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    result = registry.set_device_settings(device_id, body)
+    if not result:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return result
+
+
+@app.post("/api/devices/{device_id}/push-config")
+def push_device_config(device_id: str, body: dict[str, Any]):
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    mqtt_handler.push_config(device_id, body)
+    return {"status": "pushed", "device_id": device_id}
+
+
+# ── Topology ───────────────────────────────────────────────────────────────
 
 @app.get("/api/topology")
 def get_topology():
@@ -58,6 +99,8 @@ def delete_layout(layout_id: str):
     return {"status": "deleted"}
 
 
+# ── Device commands ────────────────────────────────────────────────────────
+
 @app.post("/api/devices/{device_id}/command")
 def send_command(device_id: str, body: dict[str, Any]):
     device = registry.get_device(device_id)
@@ -70,6 +113,8 @@ def send_command(device_id: str, body: dict[str, Any]):
     request_id = command_sender.send(device_id, command, params)
     return {"request_id": request_id, "status": "sent"}
 
+
+# ── Groups ─────────────────────────────────────────────────────────────────
 
 @app.get("/api/groups")
 def get_groups():
@@ -105,6 +150,44 @@ def delete_group(group_id: str):
     return {"status": "deleted"}
 
 
+@app.post("/api/groups/{group_id}/command")
+def group_command(group_id: str, body: dict[str, Any]):
+    groups = registry.get_groups()
+    group = groups.get(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    command = body.get("command")
+    params = body.get("params", {})
+    if not command:
+        raise HTTPException(status_code=400, detail="Missing 'command' field")
+    results = []
+    for device_id in group.get("device_ids", []):
+        if registry.get_device(device_id):
+            request_id = command_sender.send(device_id, command, params)
+            results.append({"device_id": device_id, "request_id": request_id, "status": "sent"})
+        else:
+            results.append({"device_id": device_id, "status": "device_not_found"})
+    return {"results": results}
+
+
+@app.post("/api/groups/{group_id}/push-config")
+def group_push_config(group_id: str, body: dict[str, Any]):
+    groups = registry.get_groups()
+    group = groups.get(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    results = []
+    for device_id in group.get("device_ids", []):
+        if registry.get_device(device_id):
+            mqtt_handler.push_config(device_id, body)
+            results.append({"device_id": device_id, "status": "pushed"})
+        else:
+            results.append({"device_id": device_id, "status": "device_not_found"})
+    return {"results": results}
+
+
+# ── Device tags ────────────────────────────────────────────────────────────
+
 @app.post("/api/devices/{device_id}/tags")
 def set_device_tags(device_id: str, body: dict[str, Any]):
     device = registry.get_device(device_id)
@@ -134,7 +217,64 @@ def remove_device_tag(device_id: str, tag: str):
     return {"tags": registry.get_device(device_id).get("server_tags", [])}
 
 
-# Serve frontend static files
+# ── Tag registry ───────────────────────────────────────────────────────────
+
+@app.get("/api/tags")
+def get_tags():
+    devices = registry.get_all_devices() if registry else {}
+    return tag_registry.get_all_tags(devices)
+
+
+@app.post("/api/tags")
+def create_tag(body: dict[str, Any]):
+    tag = body.get("tag", "").strip()
+    if not tag:
+        raise HTTPException(status_code=400, detail="Missing 'tag' field")
+    try:
+        added = tag_registry.add_tag(tag)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not added:
+        raise HTTPException(status_code=409, detail="Tag already exists")
+    return {"tag": tag}
+
+
+@app.put("/api/tags/{tag}")
+def rename_tag(tag: str, body: dict[str, Any]):
+    new_name = body.get("new_name", "").strip()
+    if not new_name:
+        raise HTTPException(status_code=400, detail="Missing 'new_name' field")
+    try:
+        result = tag_registry.rename_tag(tag, new_name)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    if not result:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    return {"tag": new_name}
+
+
+@app.delete("/api/tags/{tag}")
+def delete_tag(tag: str):
+    result = tag_registry.delete_tag(tag)
+    if not result:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    return {"status": "deleted"}
+
+
+# ── Global settings ────────────────────────────────────────────────────────
+
+@app.get("/api/settings")
+def get_settings():
+    return settings_manager.get_settings()
+
+
+@app.put("/api/settings")
+def update_settings(body: dict[str, Any]):
+    return settings_manager.update_settings(body)
+
+
+# ── Serve frontend static files ────────────────────────────────────────────
+
 frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")

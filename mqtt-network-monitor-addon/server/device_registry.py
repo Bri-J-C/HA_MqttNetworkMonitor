@@ -48,6 +48,11 @@ class DeviceRegistry:
                 "status": "online",
                 "server_tags": [],
                 "groups": [],
+                # New fields
+                "group_policy": None,
+                "ha_exposure_overrides": {},
+                "threshold_overrides": {},
+                "allowed_commands": [],
             }
             logger.info(f"New device discovered: {device_id}")
 
@@ -59,6 +64,8 @@ class DeviceRegistry:
         device["attributes"] = payload.get("attributes", {})
         if payload.get("network"):
             device["network"] = payload["network"]
+        if "allowed_commands" in payload:
+            device["allowed_commands"] = payload["allowed_commands"]
 
         # Derive status
         device["status"] = self._derive_status(device)
@@ -102,6 +109,10 @@ class DeviceRegistry:
             "id": group_id,
             "name": name,
             "device_ids": device_ids or [],
+            # Expanded group schema
+            "thresholds": {},
+            "ha_exposed_attributes": [],
+            "custom_sensors": {},
         }
         self._save_groups()
         return self._groups[group_id]
@@ -148,3 +159,15 @@ class DeviceRegistry:
 
     def set_warning_thresholds(self, thresholds: dict[str, float]) -> None:
         self._warning_thresholds.update(thresholds)
+
+    def set_device_settings(self, device_id: str, settings: dict) -> dict | None:
+        """Update group_policy, ha_exposure_overrides, and/or threshold_overrides for a device."""
+        device = self._devices.get(device_id)
+        if not device:
+            return None
+        allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides"}
+        for key in allowed_keys:
+            if key in settings:
+                device[key] = settings[key]
+        self._save_devices()
+        return device

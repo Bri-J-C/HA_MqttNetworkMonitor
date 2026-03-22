@@ -14,7 +14,10 @@ from server.command_sender import CommandSender
 from server.device_registry import DeviceRegistry
 from server.ha_entities import HAEntityManager
 from server.mqtt_handler import MQTTHandler
+from server.settings_manager import SettingsManager
+from server.settings_resolver import resolve_settings
 from server.storage.store import Storage
+from server.tag_registry import TagRegistry
 from server.topology import TopologyEngine
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -44,11 +47,29 @@ def create_app():
     mqtt_handler = MQTTHandler(registry, mqtt_broker, mqtt_port, mqtt_user, mqtt_pass)
     ha_entities = HAEntityManager(mqtt_handler._client)
     command_sender = CommandSender(mqtt_handler)
+    tag_reg = TagRegistry(storage)
+    settings_mgr = SettingsManager(storage)
+
+    # Auto-populate tag registry from any devices already in the registry
+    tag_reg.auto_populate(registry.get_all_devices())
 
     def on_device_update(device_id: str):
         device = registry.get_device(device_id)
         if device:
-            ha_entities.update_device_states(device_id, device)
+            # Auto-populate tag registry from device tags
+            tag_reg.auto_populate({device_id: device})
+
+            # Resolve effective settings for HA entity exposure
+            global_settings = settings_mgr.get_settings()
+            groups = registry.get_groups()
+            effective = resolve_settings(device, groups, global_settings)
+            ha_exposure = effective.get("ha_exposure", "all")
+            if ha_exposure == "all":
+                exposed_attrs = None
+            else:
+                exposed_attrs = effective.get("ha_exposed_attributes")
+
+            ha_entities.update_device_states(device_id, device, exposed_attrs)
             loop = asyncio.new_event_loop()
             try:
                 loop.run_until_complete(ws_manager.broadcast({
@@ -60,7 +81,7 @@ def create_app():
                 loop.close()
 
     mqtt_handler.on_device_update(on_device_update)
-    init_app(registry, topology_engine, command_sender, mqtt_handler)
+    init_app(registry, topology_engine, command_sender, mqtt_handler, tag_reg, settings_mgr)
     mqtt_handler.connect()
 
     return app

@@ -52,11 +52,19 @@ class MQTTHandler:
         logger.info(f"Sent command '{command}' to {device_id} (req: {request_id})")
         return request_id
 
+    def push_config(self, device_id: str, config: dict) -> None:
+        """Publish a config update to a device via MQTT."""
+        payload = json.dumps({"type": "config_update", **config})
+        topic = f"{TOPIC_PREFIX}/{device_id}/config"
+        self._client.publish(topic, payload)
+        logger.info(f"Pushed config to {device_id}")
+
     def _on_connect(self, client, userdata, flags, rc, *args):
         logger.info(f"MQTT connected (rc={rc})")
         client.subscribe(f"{TOPIC_PREFIX}/+/status")
         client.subscribe(f"{TOPIC_PREFIX}/+/+")
         client.subscribe(f"{TOPIC_PREFIX}/+/command/response")
+        client.subscribe(f"{TOPIC_PREFIX}/+/config/response")
 
     def _on_message(self, client, userdata, msg):
         topic_parts = msg.topic.split("/")
@@ -79,11 +87,23 @@ class MQTTHandler:
             except json.JSONDecodeError:
                 logger.error(f"Invalid command response from {device_id}")
 
+        elif subtopic == "config/response":
+            try:
+                response = json.loads(msg.payload.decode())
+                status = response.get("status", "unknown")
+                logger.info(f"Config response from {device_id}: status={status}")
+            except json.JSONDecodeError:
+                logger.error(f"Invalid config response from {device_id}")
+
         else:
             # Plugin data
             try:
                 payload = json.loads(msg.payload.decode())
-                self._registry.update_device(device_id, payload)
+                # Store allowed_commands if present
+                if "allowed_commands" in payload:
+                    self._registry.update_device(device_id, payload)
+                else:
+                    self._registry.update_device(device_id, payload)
                 self._notify_update(device_id)
                 logger.debug(f"Updated device {device_id} from plugin {subtopic}")
             except json.JSONDecodeError:
