@@ -56,19 +56,22 @@ class NavBar extends LitElement {
 
   render() {
     return html`
-      <nav>
+      <nav role="navigation" aria-label="Main navigation">
         <span class="logo">Network Monitor</span>
         <div class="nav-links">
           <button
             class=${this.currentView === 'dashboard' ? 'active' : ''}
+            aria-current=${this.currentView === 'dashboard' ? 'page' : 'false'}
             @click=${() => this._navigate('dashboard')}
           >Devices</button>
           <button
             class=${this.currentView === 'topology' ? 'active' : ''}
+            aria-current=${this.currentView === 'topology' ? 'page' : 'false'}
             @click=${() => this._navigate('topology')}
           >Topology</button>
           <button
             class=${this.currentView === 'settings' ? 'active' : ''}
+            aria-current=${this.currentView === 'settings' ? 'page' : 'false'}
             @click=${() => this._navigate('settings')}
           >Settings</button>
         </div>

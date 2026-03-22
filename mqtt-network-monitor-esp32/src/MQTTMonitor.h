@@ -29,9 +29,17 @@ public:
     }
 
     void addPlugin(BasePlugin* plugin) {
-        if (_pluginCount < MQTT_MONITOR_MAX_PLUGINS) {
-            _plugins[_pluginCount++] = plugin;
+        if (_pluginCount >= MQTT_MONITOR_MAX_PLUGINS) return;
+
+        // Warn on duplicate plugin names
+        for (int i = 0; i < _pluginCount; i++) {
+            if (strcmp(_plugins[i]->name(), plugin->name()) == 0) {
+                Serial.printf("[MQTTMonitor] WARNING: duplicate plugin name '%s' — skipping\n", plugin->name());
+                return;
+            }
         }
+
+        _plugins[_pluginCount++] = plugin;
     }
 
     void addTag(const char* tag) {
@@ -41,11 +49,16 @@ public:
     }
 
     void begin() {
+        if (strlen(_deviceId) > 64) {
+            Serial.println("[MQTTMonitor] ERROR: device_id too long (max 64 chars)");
+            return;
+        }
+
         _mqttClient.setServer(_brokerHost, _brokerPort);
         _mqttClient.setBufferSize(MQTT_MONITOR_JSON_SIZE);
 
         // Set LWT
-        char statusTopic[128];
+        char statusTopic[256];
         snprintf(statusTopic, sizeof(statusTopic), "%s/%s/status",
                  MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
         _mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
@@ -56,6 +69,13 @@ public:
     }
 
     void loop() {
+        if (WiFi.status() != WL_CONNECTED) {
+            Serial.println("[MQTTMonitor] WiFi disconnected, reconnecting...");
+            WiFi.reconnect();
+            delay(5000);
+            return;
+        }
+
         if (!_mqttClient.connected()) {
             _connect();
         }
@@ -104,12 +124,14 @@ private:
     void (*_commandCallback)(const char* command, JsonObject& params) = nullptr;
 
     unsigned long _lastReconnect = 0;
+    int _reconnectFailures = 0;
 
     void _connect() {
-        if (millis() - _lastReconnect < 5000) return;
+        unsigned long backoff = 5000UL + (unsigned long)min(_reconnectFailures, 10) * 3000UL;
+        if (millis() - _lastReconnect < backoff) return;
         _lastReconnect = millis();
 
-        char statusTopic[128];
+        char statusTopic[256];
         snprintf(statusTopic, sizeof(statusTopic), "%s/%s/status",
                  MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
 
@@ -126,15 +148,20 @@ private:
 
         if (_mqttClient.connected()) {
             Serial.printf("[MQTTMonitor] Connected to %s:%d\n", _brokerHost, _brokerPort);
+            _reconnectFailures = 0;
 
             // Publish online
             _mqttClient.publish(statusTopic, "online", true);
 
             // Subscribe to commands
-            char cmdTopic[128];
+            char cmdTopic[256];
             snprintf(cmdTopic, sizeof(cmdTopic), "%s/%s/command",
                      MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
             _mqttClient.subscribe(cmdTopic);
+        } else {
+            _reconnectFailures++;
+            Serial.printf("[MQTTMonitor] Connect failed (attempt %d), backoff %lums\n",
+                          _reconnectFailures, backoff);
         }
     }
 
@@ -159,7 +186,7 @@ private:
             plugin->getNetworkInfo(network);
         }
 
-        char topic[128];
+        char topic[256];
         snprintf(topic, sizeof(topic), "%s/%s/%s",
                  MQTT_MONITOR_TOPIC_PREFIX, _deviceId, plugin->name());
 
@@ -169,8 +196,8 @@ private:
     }
 
     void _handleMessage(char* topic, byte* payload, unsigned int length) {
-        char msg[512];
-        int copyLen = min((unsigned int)511, length);
+        char msg[1024];
+        int copyLen = min((unsigned int)1023, length);
         memcpy(msg, payload, copyLen);
         msg[copyLen] = '\0';
 
@@ -191,7 +218,7 @@ private:
             }
         }
 
-        char responseTopic[128];
+        char responseTopic[256];
         snprintf(responseTopic, sizeof(responseTopic), "%s/%s/command/response",
                  MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
 

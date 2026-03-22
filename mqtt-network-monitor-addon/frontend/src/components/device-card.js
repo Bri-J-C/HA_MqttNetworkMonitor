@@ -74,12 +74,16 @@ class DeviceCard extends LitElement {
     const color = STATUS_COLORS[d.status] || STATUS_COLORS.unknown;
     const attrs = Object.entries(d.attributes || {}).slice(0, 4);
     const tags = [...(d.tags || []), ...(d.server_tags || [])];
+    const displayName = d.device_name || this.deviceId;
 
     this.style.setProperty('--status-color', color);
+    this.setAttribute('role', 'button');
+    this.setAttribute('tabindex', '0');
+    this.setAttribute('aria-label', `${displayName}, ${d.status || 'unknown'}`);
 
     return html`
       <div class="header">
-        <span class="name">${d.device_name || this.deviceId}</span>
+        <span class="name">${displayName}</span>
         <span class="status" style="background: ${color}20; color: ${color}">
           ${d.status === 'online' ? '● ' : d.status === 'offline' ? '● ' : '⚠ '}${d.status}
         </span>

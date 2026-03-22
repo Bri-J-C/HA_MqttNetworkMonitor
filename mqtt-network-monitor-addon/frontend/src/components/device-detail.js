@@ -415,7 +415,7 @@ class DeviceDetail extends LitElement {
           </span>
           <button class="cmd-btn danger" style="font-size: 11px; padding: 4px 10px;"
             @click=${this._deleteDevice}>Delete</button>
-          <button class="close-btn" @click=${() => this.dispatchEvent(new CustomEvent('back'))}>&#10005;</button>
+          <button class="close-btn" aria-label="Close" @click=${() => this.dispatchEvent(new CustomEvent('back'))}>&#10005;</button>
         </div>
       </div>
 
@@ -645,7 +645,13 @@ class DeviceDetail extends LitElement {
             <span class="attr-delete" title="Remove attribute"
               @click=${() => this._deleteAttribute(name)}>&times;</span>
           </span>
-          <span class="toggle-wrap" @click=${() => this._toggleHaExposure(name)}>
+          <span class="toggle-wrap"
+            role="switch"
+            aria-checked=${exposed ? 'true' : 'false'}
+            aria-label="${name.replace(/_/g, ' ')} Home Assistant exposure"
+            tabindex="0"
+            @click=${() => this._toggleHaExposure(name)}
+            @keydown=${(e) => (e.key === 'Enter' || e.key === ' ') && this._toggleHaExposure(name)}>
             <div class="toggle ${exposed ? 'on' : 'off'}">
               <div class="toggle-knob"></div>
             </div>
