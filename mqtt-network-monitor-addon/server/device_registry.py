@@ -23,6 +23,7 @@ class DeviceRegistry:
             "disk_usage": 95.0,
             "cpu_temp": 80.0,
         }
+        self._settings_resolver = None
         self._load()
 
     def _load(self):
@@ -85,11 +86,25 @@ class DeviceRegistry:
         self._devices[device_id]["last_seen"] = time.time()
         self._save_devices()
 
+    def set_settings_resolver(self, resolver) -> None:
+        """Set a callable (device) -> effective_settings used for threshold resolution."""
+        self._settings_resolver = resolver
+
     def _derive_status(self, device: dict) -> str:
         if device.get("status") == "offline":
             return "offline"
         attrs = device.get("attributes", {})
-        for attr_name, threshold in self._warning_thresholds.items():
+        if self._settings_resolver is not None:
+            try:
+                effective = self._settings_resolver(device)
+                thresholds = effective.get("thresholds", {})
+            except Exception:
+                thresholds = self._warning_thresholds
+        else:
+            thresholds = self._warning_thresholds
+        for attr_name, threshold in thresholds.items():
+            if threshold is None:
+                continue
             attr = attrs.get(attr_name, {})
             value = attr.get("value")
             if value is not None and isinstance(value, (int, float)) and value > threshold:
@@ -142,7 +157,9 @@ class DeviceRegistry:
 
     def update_group(self, group_id: str, name: str | None = None,
                      device_ids: list[str] | None = None,
-                     custom_commands: dict | None = None) -> dict | None:
+                     custom_commands: dict | None = None,
+                     custom_sensors: dict | None = None,
+                     thresholds: dict | None = None) -> dict | None:
         group = self._groups.get(group_id)
         if not group:
             return None
@@ -152,6 +169,10 @@ class DeviceRegistry:
             group["device_ids"] = device_ids
         if custom_commands is not None:
             group["custom_commands"] = custom_commands
+        if custom_sensors is not None:
+            group["custom_sensors"] = custom_sensors
+        if thresholds is not None:
+            group["thresholds"] = thresholds
         self._save_groups()
         return group
 

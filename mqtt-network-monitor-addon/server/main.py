@@ -50,6 +50,14 @@ def create_app():
     tag_reg = TagRegistry(storage)
     settings_mgr = SettingsManager(storage)
 
+    # Wire up the settings resolver so _derive_status uses effective thresholds
+    def get_effective_thresholds(device):
+        global_settings = settings_mgr.get_settings()
+        groups = registry.get_groups()
+        return resolve_settings(device, groups, global_settings)
+
+    registry.set_settings_resolver(get_effective_thresholds)
+
     # Auto-populate tag registry from any devices already in the registry
     tag_reg.auto_populate(registry.get_all_devices())
 

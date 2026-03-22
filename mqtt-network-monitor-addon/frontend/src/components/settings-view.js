@@ -14,6 +14,23 @@ function getGroupCmdForm(groupId) {
   return _groupCmdForms[groupId];
 }
 
+// Per-group ephemeral state for custom sensor editing
+const _groupSensorForms = {}; // groupId → { name: '', command: '', interval: '', unit: '' }
+function getGroupSensorForm(groupId) {
+  if (!_groupSensorForms[groupId]) _groupSensorForms[groupId] = { name: '', command: '', interval: '', unit: '' };
+  return _groupSensorForms[groupId];
+}
+
+// Per-group ephemeral state for threshold add row
+const _groupThresholdForms = {}; // groupId → { attr: '', value: '' }
+function getGroupThresholdForm(groupId) {
+  if (!_groupThresholdForms[groupId]) _groupThresholdForms[groupId] = { attr: '', value: '' };
+  return _groupThresholdForms[groupId];
+}
+
+// Global threshold add form
+const _globalThresholdForm = { attr: '', value: '' };
+
 class SettingsView extends LitElement {
   static properties = {
     _tags: { type: Array, state: true },
@@ -375,27 +392,17 @@ class SettingsView extends LitElement {
 
             <div class="group-field">
               <label>Warning Thresholds</label>
-              <div class="threshold-grid">
-                ${[
-                  { key: 'cpu_usage', label: 'CPU %', placeholder: '90' },
-                  { key: 'memory_usage', label: 'Memory %', placeholder: '90' },
-                  { key: 'disk_usage', label: 'Disk %', placeholder: '95' },
-                  { key: 'cpu_temp', label: 'Temp °C', placeholder: '80' },
-                ].map(f => html`
-                  <div class="threshold-item">
-                    <label>${f.label}</label>
-                    <input class="threshold-input" type="number"
-                      placeholder=${f.placeholder}
-                      .value=${thresholds[f.key] != null ? String(thresholds[f.key]) : ''}
-                      @input=${(e) => this._updateGroupThreshold(g.id, f.key, e.target.value)}>
-                  </div>
-                `)}
-              </div>
+              ${this._renderGroupThresholds(g)}
             </div>
 
             <div class="group-field">
               <label>Custom Commands</label>
               ${this._renderGroupCustomCommands(g)}
+            </div>
+
+            <div class="group-field">
+              <label>Custom Sensors</label>
+              ${this._renderGroupCustomSensors(g)}
             </div>
 
             <div class="group-footer">
@@ -440,6 +447,132 @@ class SettingsView extends LitElement {
         <button class="small-btn" @click=${() => this._addGroupCommand(g)}>Add</button>
       </div>
     `;
+  }
+
+  _renderGroupThresholds(g) {
+    const thresholds = g.thresholds || {};
+    const form = getGroupThresholdForm(g.id);
+    return html`
+      ${Object.keys(thresholds).filter(k => thresholds[k] != null).map(key => html`
+        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 12px; color: #ccc; min-width: 140px;">${key}</span>
+          <input class="threshold-input" type="number" style="width: 90px;"
+            .value=${String(thresholds[key])}
+            @input=${(e) => this._updateGroupThreshold(g.id, key, e.target.value)}>
+          <button class="icon-btn delete"
+            @click=${() => this._removeGroupThreshold(g.id, key)}>Remove</button>
+        </div>
+      `)}
+      <div style="display: flex; gap: 4px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
+        <input class="small-input" type="text" placeholder="Attribute name..."
+          style="width: 150px;"
+          .value=${form.attr}
+          @input=${(e) => { getGroupThresholdForm(g.id).attr = e.target.value; this.requestUpdate(); }}>
+        <input class="small-input" type="number" placeholder="Value..."
+          style="width: 90px;"
+          .value=${form.value}
+          @input=${(e) => { getGroupThresholdForm(g.id).value = e.target.value; this.requestUpdate(); }}>
+        <button class="small-btn" @click=${() => this._addGroupThreshold(g)}>Add threshold</button>
+      </div>
+    `;
+  }
+
+  _addGroupThreshold(g) {
+    const form = getGroupThresholdForm(g.id);
+    const attr = (form.attr || '').trim();
+    const value = (form.value || '').trim();
+    if (!attr || value === '') return;
+    this._updateGroupThreshold(g.id, attr, value);
+    form.attr = '';
+    form.value = '';
+    this.requestUpdate();
+  }
+
+  _removeGroupThreshold(groupId, key) {
+    const group = this._groups[groupId];
+    if (!group) return;
+    const updated = { ...(group.thresholds || {}) };
+    delete updated[key];
+    this._groups = {
+      ...this._groups,
+      [groupId]: { ...group, thresholds: updated },
+    };
+  }
+
+  _renderGroupCustomSensors(g) {
+    const sensors = g.custom_sensors || {};
+    const form = getGroupSensorForm(g.id);
+    return html`
+      ${Object.keys(sensors).length > 0 ? html`
+        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
+          ${Object.entries(sensors).map(([name, sensor]) => html`
+            <span style="font-size: 10px; background: #1a3a3a; color: #80cbc4; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 220px;">
+              <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
+                ${name}
+                <span style="cursor: pointer; opacity: 0.6;"
+                  @click=${() => this._removeGroupSensor(g, name)}>&times;</span>
+              </span>
+              <span style="font-size: 9px; color: #60a0a0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sensor.command || ''}</span>
+              <span style="font-size: 9px; color: #608080;">${sensor.interval ? sensor.interval + 's' : ''} ${sensor.unit || ''}</span>
+            </span>
+          `)}
+        </div>
+      ` : html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No custom sensors</div>`}
+      <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+        <input class="small-input" type="text" placeholder="Sensor name..."
+          style="width: 110px;"
+          .value=${form.name}
+          @input=${(e) => { getGroupSensorForm(g.id).name = e.target.value; this.requestUpdate(); }}>
+        <input class="small-input" type="text" placeholder="Shell command..."
+          style="width: 200px;"
+          .value=${form.command}
+          @input=${(e) => { getGroupSensorForm(g.id).command = e.target.value; this.requestUpdate(); }}>
+        <input class="small-input" type="number" placeholder="Interval (s)"
+          style="width: 90px;"
+          .value=${form.interval}
+          @input=${(e) => { getGroupSensorForm(g.id).interval = e.target.value; this.requestUpdate(); }}>
+        <input class="small-input" type="text" placeholder="Unit"
+          style="width: 60px;"
+          .value=${form.unit}
+          @input=${(e) => { getGroupSensorForm(g.id).unit = e.target.value; this.requestUpdate(); }}>
+        <button class="small-btn" @click=${() => this._addGroupSensor(g)}>Add</button>
+      </div>
+    `;
+  }
+
+  _addGroupSensor(g) {
+    const form = getGroupSensorForm(g.id);
+    const name = (form.name || '').trim();
+    const command = (form.command || '').trim();
+    if (!name || !command) return;
+    this._groups = {
+      ...this._groups,
+      [g.id]: {
+        ...g,
+        custom_sensors: {
+          ...(g.custom_sensors || {}),
+          [name]: {
+            command,
+            interval: form.interval ? Number(form.interval) : undefined,
+            unit: form.unit || undefined,
+          },
+        },
+      },
+    };
+    form.name = '';
+    form.command = '';
+    form.interval = '';
+    form.unit = '';
+    this.requestUpdate();
+  }
+
+  _removeGroupSensor(g, name) {
+    const updated = { ...(g.custom_sensors || {}) };
+    delete updated[name];
+    this._groups = {
+      ...this._groups,
+      [g.id]: { ...g, custom_sensors: updated },
+    };
   }
 
   _renderAddMemberDropdown(g) {
@@ -500,6 +633,8 @@ class SettingsView extends LitElement {
         name: name || g.name,
         device_ids: g.device_ids || [],
         custom_commands: g.custom_commands || {},
+        custom_sensors: g.custom_sensors || {},
+        thresholds: g.thresholds || {},
       });
       this._editingGroupName = null;
       await this._loadAll();
@@ -566,6 +701,11 @@ class SettingsView extends LitElement {
     const config = {
       type: 'config_update',
       commands: g.custom_commands || {},
+      plugins: {
+        custom_command: {
+          commands: g.custom_sensors || {},
+        },
+      },
     };
     try {
       await pushGroupConfig(g.id, config);
@@ -579,27 +719,35 @@ class SettingsView extends LitElement {
   _renderGlobalDefaults() {
     const s = this._settings || {};
     const t = s.default_thresholds || {};
+    const form = _globalThresholdForm;
 
     return html`
       <div class="section">
         <div class="section-title">Global Defaults</div>
 
         <div style="font-size: 11px; color: #888; margin-bottom: 10px;">Default Warning Thresholds</div>
-        <div class="settings-grid">
-          ${[
-            { key: 'cpu_usage', label: 'CPU %', placeholder: '90' },
-            { key: 'memory_usage', label: 'Memory %', placeholder: '90' },
-            { key: 'disk_usage', label: 'Disk %', placeholder: '95' },
-            { key: 'cpu_temp', label: 'Temp °C', placeholder: '80' },
-          ].map(f => html`
-            <div class="settings-field">
-              <label>${f.label}</label>
-              <input class="settings-input" type="number"
-                placeholder=${f.placeholder}
-                .value=${t[f.key] != null ? String(t[f.key]) : ''}
-                @input=${(e) => this._updateDefaultThreshold(f.key, e.target.value)}>
-            </div>
-          `)}
+
+        ${Object.keys(t).filter(k => t[k] != null).map(key => html`
+          <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 12px; color: #ccc; min-width: 140px;">${key}</span>
+            <input class="settings-input" type="number" style="width: 90px;"
+              .value=${String(t[key])}
+              @input=${(e) => this._updateDefaultThreshold(key, e.target.value)}>
+            <button class="icon-btn delete"
+              @click=${() => this._removeDefaultThreshold(key)}>Remove</button>
+          </div>
+        `)}
+
+        <div style="display: flex; gap: 6px; align-items: center; margin-top: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+          <input class="small-input" type="text" placeholder="Attribute name..."
+            style="width: 150px;"
+            .value=${form.attr}
+            @input=${(e) => { _globalThresholdForm.attr = e.target.value; this.requestUpdate(); }}>
+          <input class="small-input" type="number" placeholder="Value..."
+            style="width: 90px;"
+            .value=${form.value}
+            @input=${(e) => { _globalThresholdForm.value = e.target.value; this.requestUpdate(); }}>
+          <button class="small-btn" @click=${this._addDefaultThreshold.bind(this)}>Add threshold</button>
         </div>
 
         <div style="display: flex; align-items: center;">
@@ -622,6 +770,23 @@ class SettingsView extends LitElement {
         [key]: value === '' ? null : Number(value),
       },
     };
+  }
+
+  _removeDefaultThreshold(key) {
+    const s = this._settings || {};
+    const updated = { ...(s.default_thresholds || {}) };
+    delete updated[key];
+    this._settings = { ...s, default_thresholds: updated };
+  }
+
+  _addDefaultThreshold() {
+    const attr = (_globalThresholdForm.attr || '').trim();
+    const value = (_globalThresholdForm.value || '').trim();
+    if (!attr || value === '') return;
+    this._updateDefaultThreshold(attr, value);
+    _globalThresholdForm.attr = '';
+    _globalThresholdForm.value = '';
+    this.requestUpdate();
   }
 
   async _saveSettings() {
