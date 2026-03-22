@@ -80,3 +80,29 @@ class ConfigLoader:
             plugins=raw.get("plugins", {}),
             allowed_commands=raw.get("allowed_commands", []),
         )
+
+    @staticmethod
+    def load_with_remote(path: Path, remote_path: Path) -> Config:
+        """Load config.yaml, then merge config.remote.yaml on top if it exists."""
+        # Lazy import to avoid circular dependency
+        from mqtt_monitor.config_handler import ConfigHandler
+
+        config = ConfigLoader.load(path)
+
+        if not remote_path.exists():
+            return config
+
+        try:
+            remote = yaml.safe_load(remote_path.read_text()) or {}
+        except yaml.YAMLError:
+            return config
+
+        raw_local = {"plugins": config.plugins}
+        merged = ConfigHandler.merge_configs(raw_local, remote)
+
+        return Config(
+            mqtt=config.mqtt,
+            device=config.device,
+            plugins=merged.get("plugins", config.plugins),
+            allowed_commands=config.allowed_commands,
+        )
