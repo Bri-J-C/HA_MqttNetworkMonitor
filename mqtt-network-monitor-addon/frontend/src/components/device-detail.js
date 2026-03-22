@@ -37,6 +37,9 @@ class DeviceDetail extends LitElement {
     _newCommandName: { type: String, state: true },
     _newCommandShell: { type: String, state: true },
     _showHidden: { type: Boolean, state: true },
+    _showAddCommand: { type: Boolean, state: true },
+    _editingCommandName: { type: String, state: true },
+    _editCommandForm: { type: Object, state: true },
   };
 
   static styles = css`
@@ -713,62 +716,107 @@ class DeviceDetail extends LitElement {
   // ── Section 6: Commands ───────────────────────────────────────────────────
 
   _renderCommands() {
-    // Merge client-side allowed_commands with any server-added commands
     const clientCommands = this.device.allowed_commands || [];
-    const serverCommandNames = Object.keys(this._serverCommands || {});
-    const allCommands = [...new Set([...clientCommands, ...serverCommandNames])];
+    const serverCmds = this._serverCommands || {};
+    const serverCommandNames = Object.keys(serverCmds);
+    const allCommandNames = [...new Set([...clientCommands, ...serverCommandNames])];
 
     return html`
       <div class="section">
         <div class="section-title">Commands</div>
-        ${allCommands.length === 0 ? html`
-          <div class="no-commands">
-            No commands available — add commands below or configure <code>allowed_commands</code> in the client's config.yaml
-          </div>
-        ` : html`
-          <div class="commands">
-            ${allCommands.map(cmd => html`
+
+        <!-- Run buttons -->
+        ${allCommandNames.length > 0 ? html`
+          <div class="commands" style="margin-bottom: 12px;">
+            ${allCommandNames.map(cmd => html`
               <button class="cmd-btn ${isDangerous(cmd) ? 'danger' : ''}"
                 @click=${() => this._sendCmd(cmd)}>
                 ${cmd}
               </button>
             `)}
           </div>
-        `}
+        ` : ''}
         ${this.commandResult ? html`<div class="cmd-result">${this.commandResult}</div>` : ''}
 
-        <div style="margin-top: 10px;">
-          <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-            <input class="config-input" type="text" placeholder="Command name..."
-              style="width: 130px;"
-              .value=${this._newCommandName || ''}
-              @input=${(e) => this._newCommandName = e.target.value}
-              @keydown=${(e) => e.key === 'Enter' && this._addServerCommand()}>
-            <input class="config-input" type="text" placeholder="Shell command..."
-              style="width: 220px;"
-              .value=${this._newCommandShell || ''}
-              @input=${(e) => this._newCommandShell = e.target.value}
-              @keydown=${(e) => e.key === 'Enter' && this._addServerCommand()}>
-            <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
-              @click=${this._addServerCommand}>Add</button>
-          </div>
-          ${serverCommandNames.length > 0 ? html`
-            <div style="margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; align-items: flex-start;">
-              ${Object.entries(this._serverCommands).map(([name, shellCmd]) => html`
-                <span title=${shellCmd} style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
-                  <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
-                    ${name}
-                    <span style="cursor: pointer; opacity: 0.6;" @click=${() => this._removeServerCommand(name)}>&times;</span>
-                  </span>
-                  <span style="font-size: 9px; color: #a070c0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${shellCmd}</span>
-                </span>
+        <!-- Command table -->
+        ${serverCommandNames.length > 0 ? html`
+          <div style="margin-top: 8px; font-size: 11px; color: #555; margin-bottom: 6px;">Server-managed commands</div>
+          <table class="sensor-table">
+            <thead>
+              <tr><th>Name</th><th>Shell Command</th><th></th></tr>
+            </thead>
+            <tbody>
+              ${Object.entries(serverCmds).map(([name, shellCmd]) => html`
+                <tr>
+                  <td>${name}</td>
+                  <td style="font-family: monospace; font-size: 11px;">${shellCmd}</td>
+                  <td>
+                    <div class="sensor-actions">
+                      <button class="sensor-btn edit" @click=${() => this._editCommand(name, shellCmd)}>Edit</button>
+                      <button class="sensor-btn remove" @click=${() => this._removeServerCommand(name)}>Remove</button>
+                    </div>
+                  </td>
+                </tr>
               `)}
-              <span style="font-size: 9px; color: #555; align-self: center;">server-added commands</span>
+            </tbody>
+          </table>
+        ` : ''}
+
+        <!-- Add/Edit form -->
+        ${this._editingCommandName || this._showAddCommand ? html`
+          <div class="sensor-form" style="margin-top: 8px;">
+            <div class="sensor-form-grid" style="grid-template-columns: 1fr 2fr;">
+              <input type="text" placeholder="Command name"
+                .value=${this._editCommandForm?.name || ''}
+                ?disabled=${!!this._editingCommandName}
+                @input=${(e) => this._editCommandForm = { ...this._editCommandForm, name: e.target.value }}>
+              <input type="text" placeholder="Shell command (e.g. systemctl restart nginx)"
+                .value=${this._editCommandForm?.shell || ''}
+                @input=${(e) => this._editCommandForm = { ...this._editCommandForm, shell: e.target.value }}
+                @keydown=${(e) => e.key === 'Enter' && this._saveCommand()}>
             </div>
-          ` : ''}
-        </div>
+            <div class="sensor-form-actions">
+              <button class="form-btn save" @click=${this._saveCommand}>${this._editingCommandName ? 'Update' : 'Add'}</button>
+              <button class="form-btn cancel" @click=${this._cancelCommandForm}>Cancel</button>
+            </div>
+          </div>
+        ` : html`
+          <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px; margin-top: 8px;"
+            @click=${this._startAddCommand}>+ Add Command</button>
+        `}
       </div>
     `;
+  }
+
+  _startAddCommand() {
+    this._showAddCommand = true;
+    this._editingCommandName = null;
+    this._editCommandForm = { name: '', shell: '' };
+  }
+
+  _editCommand(name, shellCmd) {
+    this._editingCommandName = name;
+    this._showAddCommand = false;
+    this._editCommandForm = { name, shell: shellCmd };
+  }
+
+  _cancelCommandForm() {
+    this._showAddCommand = false;
+    this._editingCommandName = null;
+    this._editCommandForm = null;
+  }
+
+  _saveCommand() {
+    const form = this._editCommandForm;
+    if (!form) return;
+    const name = (form.name || '').trim();
+    const shell = (form.shell || '').trim();
+    if (!name || !shell) return;
+
+    this._serverCommands = { ...this._serverCommands, [name]: shell };
+    this._localChanges = true;
+    updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
+    this._cancelCommandForm();
   }
 
   // ── Section 7: Agent Configuration ───────────────────────────────────────
@@ -1001,16 +1049,6 @@ class DeviceDetail extends LitElement {
 
   // ── Command ───────────────────────────────────────────────────────────────
 
-  _addServerCommand() {
-    const name = (this._newCommandName || '').trim();
-    const shellCmd = (this._newCommandShell || '').trim();
-    if (!name || !shellCmd) return;
-    this._serverCommands = { ...this._serverCommands, [name]: shellCmd };
-    this._localChanges = true;
-    updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
-    this._newCommandName = '';
-    this._newCommandShell = '';
-  }
 
   _removeServerCommand(name) {
     const updated = { ...this._serverCommands };
