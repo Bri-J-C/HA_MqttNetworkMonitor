@@ -20,6 +20,10 @@ export async function deleteDevice(id) {
   await fetch(`${BASE}/api/devices/${id}`, { method: 'DELETE' });
 }
 
+export async function deleteAttribute(deviceId, attrName) {
+  await fetch(`${BASE}/api/devices/${deviceId}/attributes/${attrName}`, { method: 'DELETE' });
+}
+
 export async function fetchTopology() {
   const res = await fetch(`${BASE}/api/topology`);
   return res.json();

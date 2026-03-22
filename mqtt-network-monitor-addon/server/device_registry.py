@@ -240,6 +240,17 @@ class DeviceRegistry:
             return True
         return False
 
+    def delete_attribute(self, device_id: str, attr_name: str) -> bool:
+        device = self._devices.get(device_id)
+        if not device:
+            return False
+        attrs = device.get("attributes", {})
+        if attr_name in attrs:
+            del attrs[attr_name]
+            self._save_devices()
+            return True
+        return False
+
     def delete_device(self, device_id: str) -> bool:
         if device_id in self._devices:
             del self._devices[device_id]

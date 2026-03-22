@@ -80,6 +80,20 @@ def delete_all_devices():
     return {"status": "deleted", "count": len(all_devices)}
 
 
+@app.delete("/api/devices/{device_id}/attributes/{attr_name}")
+def delete_attribute(device_id: str, attr_name: str):
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    if not registry.delete_attribute(device_id, attr_name):
+        raise HTTPException(status_code=404, detail="Attribute not found")
+    # Remove HA entity for this attribute
+    if ha_entity_manager:
+        ha_entity_manager._remove_sensor(device_id, attr_name)
+        ha_entity_manager._mqtt.publish(f"network_monitor/{device_id}/ha/{attr_name}", "", retain=True)
+    return {"status": "deleted"}
+
+
 @app.get("/api/devices/{device_id}/effective-settings")
 def get_effective_settings(device_id: str):
     from server.settings_resolver import resolve_settings

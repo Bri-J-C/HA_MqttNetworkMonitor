@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import {
-  fetchDevice, deleteDevice, sendCommand, addDeviceTags, removeDeviceTag,
+  fetchDevice, deleteDevice, deleteAttribute, sendCommand, addDeviceTags, removeDeviceTag,
   fetchGroups, createGroup, updateGroup,
   fetchEffectiveSettings, updateDeviceSettings, pushDeviceConfig,
 } from '../services/api.js';
@@ -107,7 +107,13 @@ class DeviceDetail extends LitElement {
       display: flex; justify-content: space-between; align-items: flex-start;
       margin-bottom: 6px;
     }
-    .attr-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .attr-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px; }
+    .attr-delete {
+      font-size: 12px; color: #444; cursor: pointer; line-height: 1;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .attr-tile:hover .attr-delete { opacity: 1; }
+    .attr-delete:hover { color: #ef5350; }
     .attr-val {
       font-size: 22px; font-weight: 700; margin-top: 4px; color: #4fc3f7;
       transition: color 0.2s;
@@ -577,7 +583,10 @@ class DeviceDetail extends LitElement {
     return html`
       <div class="attr-tile ${exposed ? '' : 'dimmed'} ${exceeded ? 'exceeded' : ''}">
         <div class="attr-tile-top">
-          <span class="attr-label">${name.replace(/_/g, ' ')}</span>
+          <span class="attr-label">${name.replace(/_/g, ' ')}
+            <span class="attr-delete" title="Remove attribute"
+              @click=${() => this._deleteAttribute(name)}>&times;</span>
+          </span>
           <span class="toggle-wrap" @click=${() => this._toggleHaExposure(name)}>
             <div class="toggle ${exposed ? 'on' : 'off'}">
               <div class="toggle-knob"></div>
@@ -611,6 +620,16 @@ class DeviceDetail extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  async _deleteAttribute(name) {
+    if (!confirm(`Delete attribute "${name}"? It will reappear if the client is still reporting it.`)) return;
+    try {
+      await deleteAttribute(this.deviceId, name);
+      await this._loadDevice();
+    } catch (e) {
+      console.error('Failed to delete attribute:', e);
+    }
   }
 
   async _setThreshold(name, value, op) {
