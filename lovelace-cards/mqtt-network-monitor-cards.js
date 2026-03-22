@@ -432,7 +432,7 @@ class MQTTTopologyCard extends HTMLElement {
             border-radius: 8px;
             overflow: hidden;
           }
-          svg { width: 100%; height: auto; display: block; }
+          svg { width: 100%; display: block; aspect-ratio: ${(vbW / vbH).toFixed(2)}; }
         </style>
         <div class="card-content">
           <div class="header">
@@ -459,7 +459,9 @@ class MQTTTopologyCard extends HTMLElement {
   }
 
   getCardSize() {
-    return 4;
+    // HA sections layout: each unit ≈ 50px.
+    // Return a reasonable size so HA allocates enough space.
+    return 6;
   }
 
   static getConfigElement() {
