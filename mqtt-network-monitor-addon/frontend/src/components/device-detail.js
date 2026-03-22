@@ -123,6 +123,12 @@ class DeviceDetail extends LitElement {
     .attr-threshold-row {
       display: flex; align-items: center; gap: 4px; margin-top: 4px;
     }
+    .threshold-op {
+      background: transparent; border: 1px solid #3a3a5a; border-radius: 3px;
+      color: #aaa; padding: 2px 2px; font-size: 10px; cursor: pointer;
+      width: 36px; text-align: center;
+    }
+    .threshold-op:focus { outline: none; border-color: #4fc3f7; }
     .threshold-inline {
       width: 50px; background: transparent; border: 1px solid #3a3a5a;
       border-radius: 3px; color: #aaa; padding: 2px 4px; font-size: 10px;
@@ -522,13 +528,51 @@ class DeviceDetail extends LitElement {
     return { value: val, source };
   }
 
+  _checkThreshold(currentVal, threshold) {
+    if (!threshold || currentVal == null || typeof currentVal !== 'number') return false;
+    const val = typeof threshold === 'object' ? threshold.value : threshold;
+    const op = typeof threshold === 'object' ? (threshold.op || '>') : '>';
+    if (val == null) return false;
+    switch (op) {
+      case '>': return currentVal > val;
+      case '<': return currentVal < val;
+      case '>=': return currentVal >= val;
+      case '<=': return currentVal <= val;
+      case '==': return currentVal === val;
+      case '!=': return currentVal !== val;
+      default: return currentVal > val;
+    }
+  }
+
+  _getThresholdOp(name) {
+    const overrides = this.device.threshold_overrides || {};
+    const local = overrides[name];
+    if (local != null && typeof local === 'object') return local.op || '>';
+    const es = this._effectiveSettings;
+    if (!es) return '>';
+    const t = (es.thresholds || {})[name];
+    if (t != null && typeof t === 'object') return t.op || '>';
+    return '>';
+  }
+
+  _getThresholdVal(name) {
+    const overrides = this.device.threshold_overrides || {};
+    const local = overrides[name];
+    if (local != null) return typeof local === 'object' ? local.value : local;
+    const threshold = this._getThresholdForAttr(name);
+    return threshold ? threshold.value : null;
+  }
+
   _renderAttrTile(name, data) {
     const exposed = this._isExposed(name);
     const threshold = this._getThresholdForAttr(name);
     const currentVal = data.value != null ? data.value : null;
-    const exceeded = threshold && currentVal != null && typeof currentVal === 'number' && currentVal > threshold.value;
     const thresholdOverrides = this.device.threshold_overrides || {};
     const localThreshold = thresholdOverrides[name];
+    const effectiveThreshold = localThreshold != null ? localThreshold : (threshold ? threshold.value : null);
+    const exceeded = this._checkThreshold(currentVal, effectiveThreshold);
+    const currentOp = this._getThresholdOp(name);
+    const currentThreshVal = this._getThresholdVal(name);
 
     return html`
       <div class="attr-tile ${exposed ? '' : 'dimmed'} ${exceeded ? 'exceeded' : ''}">
@@ -546,11 +590,21 @@ class DeviceDetail extends LitElement {
         </div>
         <div class="attr-threshold-row">
           ${exceeded ? html`<span style="color: #ffb74d; font-size: 11px;">\u26A0</span>` : ''}
-          <span style="font-size: 9px; color: #666;">Warn &gt;</span>
+          <span style="font-size: 9px; color: #666;">Warn</span>
+          <select class="threshold-op"
+            .value=${currentOp}
+            @change=${(e) => this._setThreshold(name, currentThreshVal, e.target.value)}>
+            <option value=">">&gt;</option>
+            <option value="<">&lt;</option>
+            <option value=">=">&gt;=</option>
+            <option value="<=">&lt;=</option>
+            <option value="==">==</option>
+            <option value="!=">!=</option>
+          </select>
           <input class="threshold-inline" type="number"
             placeholder="\u2014"
-            .value=${localThreshold != null ? String(localThreshold) : (threshold ? String(threshold.value) : '')}
-            @change=${(e) => this._setThreshold(name, e.target.value)}>
+            .value=${currentThreshVal != null ? String(currentThreshVal) : ''}
+            @change=${(e) => this._setThreshold(name, e.target.value, currentOp)}>
           ${threshold && threshold.source !== 'device' && localThreshold == null ? html`
             <span style="font-size: 8px; color: #555;">${threshold.source}</span>
           ` : ''}
@@ -559,17 +613,16 @@ class DeviceDetail extends LitElement {
     `;
   }
 
-  async _setThreshold(name, value) {
+  async _setThreshold(name, value, op) {
     const overrides = { ...(this.device.threshold_overrides || {}) };
     if (value === '' || value == null) {
       delete overrides[name];
     } else {
-      overrides[name] = Number(value);
+      overrides[name] = { op: op || '>', value: Number(value) };
     }
     try {
       await updateDeviceSettings(this.deviceId, { threshold_overrides: overrides });
       this.device = { ...this.device, threshold_overrides: overrides };
-      // Refresh effective settings
       this._effectiveSettings = await fetchEffectiveSettings(this.deviceId);
     } catch (e) {
       console.error('Failed to set threshold:', e);

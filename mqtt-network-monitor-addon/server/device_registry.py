@@ -90,6 +90,27 @@ class DeviceRegistry:
         self._devices[device_id]["last_seen"] = time.time()
         self._save_devices()
 
+    @staticmethod
+    def _check_threshold(value, threshold) -> bool:
+        """Check if a value exceeds a threshold. Supports operator format."""
+        if isinstance(threshold, dict):
+            op = threshold.get("op", ">")
+            thresh_val = threshold.get("value")
+        elif isinstance(threshold, (int, float)):
+            op = ">"
+            thresh_val = threshold
+        else:
+            return False
+        if thresh_val is None:
+            return False
+        if op == ">": return value > thresh_val
+        if op == "<": return value < thresh_val
+        if op == ">=": return value >= thresh_val
+        if op == "<=": return value <= thresh_val
+        if op == "==": return value == thresh_val
+        if op == "!=": return value != thresh_val
+        return value > thresh_val
+
     def set_settings_resolver(self, resolver) -> None:
         """Set a callable (device) -> effective_settings used for threshold resolution."""
         self._settings_resolver = resolver
@@ -119,7 +140,7 @@ class DeviceRegistry:
                 value = attr
             else:
                 continue
-            if value is not None and isinstance(value, (int, float)) and value > threshold:
+            if value is not None and isinstance(value, (int, float)) and self._check_threshold(value, threshold):
                 return "warning"
         return "online"
 
