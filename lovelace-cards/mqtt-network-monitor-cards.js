@@ -480,9 +480,9 @@ class MQTTTopologyCard extends HTMLElement {
   getGridOptions() {
     return {
       columns: 12,
-      rows: 4,
+      rows: 8,
       min_rows: 2,
-      max_rows: 12,
+      max_rows: 8,
       min_columns: 6,
     };
   }
