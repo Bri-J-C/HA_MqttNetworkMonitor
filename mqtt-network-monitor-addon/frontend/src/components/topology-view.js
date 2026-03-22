@@ -31,6 +31,7 @@ class TopologyView extends LitElement {
     _showSaveDialog: { type: Boolean, state: true },
     _showLabelDialog: { type: Boolean, state: true },
     _labelEdgeIndex: { type: Number, state: true },
+    hideAutoEdges: { type: Boolean },
   };
 
   static styles = css`
@@ -230,6 +231,7 @@ class TopologyView extends LitElement {
     this._labelEdgeIndex = -1;
     this._savedPositions = null;
     this._savedManualEdges = null;
+    this.hideAutoEdges = false;
   }
 
   connectedCallback() {
@@ -263,6 +265,17 @@ class TopologyView extends LitElement {
   async _loadLayouts() {
     try {
       this.layouts = await fetchLayouts();
+      // On first load, auto-select the default layout
+      if (!this._layoutsLoaded) {
+        this._layoutsLoaded = true;
+        const defaultEntry = Object.entries(this.layouts).find(([, l]) => l.isDefault);
+        if (defaultEntry) {
+          this.selectedLayout = defaultEntry[0];
+          this.nodePositions = defaultEntry[1].positions || {};
+          this.manualEdges = defaultEntry[1].manualEdges || [];
+          this.hideAutoEdges = defaultEntry[1].hideAutoEdges || false;
+        }
+      }
     } catch (e) {
       console.error('Failed to load layouts:', e);
     }
@@ -300,7 +313,7 @@ class TopologyView extends LitElement {
   }
 
   get _allEdges() {
-    const auto = this.topology.edges || [];
+    const auto = this.hideAutoEdges ? [] : (this.topology.edges || []);
     const manual = this.manualEdges.map(e => ({ ...e, type: 'manual' }));
     return [...auto, ...manual];
   }
@@ -329,9 +342,11 @@ class TopologyView extends LitElement {
       <div class="toolbar">
         <div class="toolbar-left">
           <select @change=${this._onLayoutChange}>
-            <option value="">Auto Layout</option>
+            <option value="">Auto Discovery</option>
             ${Object.entries(this.layouts).map(([id, l]) => html`
-              <option value=${id} ?selected=${this.selectedLayout === id}>${l.name}</option>
+              <option value=${id} ?selected=${this.selectedLayout === id}>
+                ${l.name}${l.isDefault ? ' (default)' : ''}
+              </option>
             `)}
           </select>
           <button class="tool-btn ${this.editMode ? 'active' : ''}"
@@ -344,12 +359,20 @@ class TopologyView extends LitElement {
               @click=${this._toggleLinkMode}>
               ${this.linkMode ? 'Cancel Link' : 'Add Link'}
             </button>
+            <button class="tool-btn ${this.hideAutoEdges ? 'active' : ''}"
+              @click=${() => { this.hideAutoEdges = !this.hideAutoEdges; this._markDirty(); }}>
+              ${this.hideAutoEdges ? 'Show Auto Links' : 'Hide Auto Links'}
+            </button>
+            <span class="separator">|</span>
             <button class="tool-btn save" @click=${this._saveCurrentLayout}>Save Layout</button>
+            ${this.selectedLayout ? html`
+              <button class="tool-btn" @click=${this._setAsDefault}>
+                ${this.layouts[this.selectedLayout]?.isDefault ? 'Default' : 'Set Default'}
+              </button>
+              <button class="tool-btn danger" @click=${this._deleteCurrentLayout}>Delete</button>
+            ` : ''}
             ${this._dirty ? html`<span class="dirty-indicator">unsaved changes</span>` : ''}
           ` : ''}
-          <button class="tool-btn" @click=${() => { this.nodePositions = {}; this._autoLayout(); }}>
-            Auto Layout
-          </button>
         </div>
         <div class="toolbar-right">
           <span class="status-dot" style="color: #81c784">${counts.online} online</span>
@@ -941,11 +964,14 @@ class TopologyView extends LitElement {
   _onLayoutChange(e) {
     this.selectedLayout = e.target.value;
     if (this.selectedLayout && this.layouts[this.selectedLayout]) {
-      this.nodePositions = this.layouts[this.selectedLayout].positions || {};
-      this.manualEdges = this.layouts[this.selectedLayout].manualEdges || [];
+      const layout = this.layouts[this.selectedLayout];
+      this.nodePositions = layout.positions || {};
+      this.manualEdges = layout.manualEdges || [];
+      this.hideAutoEdges = layout.hideAutoEdges || false;
     } else {
       this.nodePositions = {};
       this.manualEdges = [];
+      this.hideAutoEdges = false;
       this._autoLayout();
     }
   }
@@ -955,17 +981,58 @@ class TopologyView extends LitElement {
       ? this.layouts[this.selectedLayout].name : '';
     const name = prompt('Layout name:', existingName);
     if (!name) return;
+    const isDefault = this.selectedLayout && this.layouts[this.selectedLayout]
+      ? this.layouts[this.selectedLayout].isDefault || false : false;
     const saved = await saveLayout({
       id: this.selectedLayout || undefined,
       name,
       positions: this.nodePositions,
       manualEdges: this.manualEdges,
+      hideAutoEdges: this.hideAutoEdges,
+      isDefault,
     });
     this.selectedLayout = saved.id;
     await this._loadLayouts();
     this._dirty = false;
     this._savedPositions = JSON.stringify(this.nodePositions);
     this._savedManualEdges = JSON.stringify(this.manualEdges);
+  }
+
+  async _setAsDefault() {
+    if (!this.selectedLayout) return;
+
+    // Clear default from all layouts, set on current
+    for (const [id, layout] of Object.entries(this.layouts)) {
+      if (layout.isDefault) {
+        layout.isDefault = false;
+        await saveLayout(layout);
+      }
+    }
+
+    const current = this.layouts[this.selectedLayout];
+    if (current) {
+      current.isDefault = true;
+      await saveLayout(current);
+    }
+
+    await this._loadLayouts();
+    // Prevent loadLayouts from re-selecting default since we already have it selected
+    this._layoutsLoaded = true;
+  }
+
+  async _deleteCurrentLayout() {
+    if (!this.selectedLayout) return;
+    const name = this.layouts[this.selectedLayout]?.name || this.selectedLayout;
+    if (!confirm(`Delete layout "${name}"?`)) return;
+
+    await deleteLayout(this.selectedLayout);
+    this.selectedLayout = '';
+    this.nodePositions = {};
+    this.manualEdges = [];
+    this.hideAutoEdges = false;
+    this._dirty = false;
+    await this._loadLayouts();
+    this._autoLayout();
   }
 }
 
