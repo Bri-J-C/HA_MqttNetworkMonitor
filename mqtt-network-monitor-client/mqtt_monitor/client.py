@@ -31,6 +31,7 @@ class MQTTMonitorClient:
             allowed_commands=config.allowed_commands,
         )
         self._command_handler = CommandHandler(config.allowed_commands)
+        self._local_commands = set(config.allowed_commands)  # Commands from config.yaml, never removed by push
         self._plugins = []
         self._plugin_timers: dict[str, threading.Timer] = {}
         self._running = False
@@ -147,7 +148,16 @@ class MQTTMonitorClient:
                 logger.info(f"Created custom_command plugin with: {list(cc_commands.keys())}")
 
         if "commands" in remote_config:
-            for name, shell_cmd in remote_config["commands"].items():
+            pushed_cmds = remote_config["commands"]
+            # Remove commands that were previously pushed but are no longer in the list
+            # Keep commands that came from the original config (self._local_commands)
+            current = self._command_handler.get_commands()
+            for name in list(current.keys()):
+                if name not in pushed_cmds and name not in self._local_commands:
+                    self._command_handler.remove_command(name)
+                    logger.info(f"Removed remote command: {name}")
+            # Add/update commands from the push
+            for name, shell_cmd in pushed_cmds.items():
                 self._command_handler.add_command(name, shell_cmd)
                 logger.info(f"Added remote command: {name}")
             self._message_builder.allowed_commands = sorted(
