@@ -882,6 +882,9 @@ class SettingsView extends LitElement {
   }
 
   async _pushGroupConfig(g) {
+    // Auto-save first so server has latest data
+    await this._saveGroup(g);
+
     const config = {
       commands: g.custom_commands || {},
       plugins: {
@@ -890,9 +893,11 @@ class SettingsView extends LitElement {
         },
       },
     };
+    console.log('Push to group:', g.id, 'config:', JSON.stringify(config));
     this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Pushing...' };
     try {
-      await pushGroupConfig(g.id, config);
+      const result = await pushGroupConfig(g.id, config);
+      console.log('Push result:', result);
       this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Pushed!' };
       setTimeout(() => {
         this._groupPushStatus = { ...this._groupPushStatus, [g.id]: '' };

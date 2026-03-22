@@ -266,6 +266,7 @@ def group_push_config(group_id: str, body: dict[str, Any]):
     for device_id in group.get("device_ids", []):
         if registry.get_device(device_id):
             mqtt_handler.push_config(device_id, body)
+            registry.set_device_settings(device_id, {"remote_config": body})
             results.append({"device_id": device_id, "status": "pushed"})
         else:
             results.append({"device_id": device_id, "status": "device_not_found"})
