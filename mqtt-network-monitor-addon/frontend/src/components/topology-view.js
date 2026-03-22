@@ -29,6 +29,8 @@ class TopologyView extends LitElement {
     _commandResult: { type: String, state: true },
     _dirty: { type: Boolean, state: true },
     _showSaveDialog: { type: Boolean, state: true },
+    _showLabelDialog: { type: Boolean, state: true },
+    _labelEdgeIndex: { type: Number, state: true },
   };
 
   static styles = css`
@@ -180,6 +182,28 @@ class TopologyView extends LitElement {
     .dirty-indicator {
       font-size: 11px; color: #ffb74d; margin-left: 4px;
     }
+    .label-dialog {
+      background: #2a2a4a; border-radius: 12px; padding: 24px;
+      min-width: 360px; max-width: 440px; border: 1px solid #3a3a5a;
+    }
+    .label-dialog h3 { color: #e0e0e0; margin-bottom: 4px; font-size: 16px; }
+    .label-dialog .subtitle { color: #666; font-size: 12px; margin-bottom: 16px; }
+    .label-field { margin-bottom: 14px; }
+    .label-field label {
+      display: block; font-size: 11px; color: #888; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 4px;
+    }
+    .label-field input {
+      width: 100%; background: #1a1a2e; border: 1px solid #3a3a5a;
+      border-radius: 6px; color: #e0e0e0; padding: 8px 12px; font-size: 13px;
+      box-sizing: border-box;
+    }
+    .label-field input:focus {
+      outline: none; border-color: #4fc3f7;
+    }
+    .label-field .hint {
+      font-size: 10px; color: #555; margin-top: 3px;
+    }
   `;
 
   constructor() {
@@ -202,6 +226,8 @@ class TopologyView extends LitElement {
     this._commandResult = '';
     this._dirty = false;
     this._showSaveDialog = false;
+    this._showLabelDialog = false;
+    this._labelEdgeIndex = -1;
     this._savedPositions = null;
     this._savedManualEdges = null;
   }
@@ -354,6 +380,7 @@ class TopologyView extends LitElement {
       ${this.selectedNode && !this.linkMode ? this._renderDetailPanel() : ''}
       ${this.editMode && this.manualEdges.length > 0 ? this._renderManualEdgesList() : ''}
       ${this._showSaveDialog ? this._renderSaveDialog() : ''}
+      ${this._showLabelDialog ? this._renderLabelDialog() : ''}
     `;
   }
 
@@ -411,6 +438,19 @@ class TopologyView extends LitElement {
     const midX = (from.x + to.x) / 2;
     const midY = (from.y + to.y) / 2;
 
+    // Position source/target labels offset from the endpoints toward the midpoint
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const offsetDist = 35;
+    const perpX = -dy / len * 10;
+    const perpY = dx / len * 10;
+
+    const srcLabelX = from.x + (dx / len) * offsetDist + perpX;
+    const srcLabelY = from.y + (dy / len) * offsetDist + perpY;
+    const tgtLabelX = to.x - (dx / len) * offsetDist + perpX;
+    const tgtLabelY = to.y - (dy / len) * offsetDist + perpY;
+
     return svg`
       <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}"
         stroke="${strokeColor}" stroke-width="${strokeWidth}"
@@ -418,8 +458,16 @@ class TopologyView extends LitElement {
         @click=${isManual && this.editMode ? () => this._selectEdge(index - (this.topology.edges?.length || 0)) : null}
         style="${isManual && this.editMode ? 'cursor:pointer' : ''}"/>
       ${edge.label ? svg`
-        <text x="${midX}" y="${midY - 6}" text-anchor="middle"
+        <text x="${midX + perpX}" y="${midY + perpY}" text-anchor="middle"
           fill="#888" font-size="9">${edge.label}</text>
+      ` : svg``}
+      ${edge.sourceLabel ? svg`
+        <text x="${srcLabelX}" y="${srcLabelY}" text-anchor="middle"
+          fill="#4fc3f7" font-size="8">${edge.sourceLabel}</text>
+      ` : svg``}
+      ${edge.targetLabel ? svg`
+        <text x="${tgtLabelX}" y="${tgtLabelY}" text-anchor="middle"
+          fill="#4fc3f7" font-size="8">${edge.targetLabel}</text>
       ` : svg``}
     `;
   }
@@ -540,9 +588,11 @@ class TopologyView extends LitElement {
             <div class="edge-item">
               <span>
                 ${this._getNodeName(edge.source)}
-                <span style="color: #4fc3f7;"> &#8594; </span>
+                ${edge.sourceLabel ? html`<span style="color: #4fc3f7; font-size: 10px;"> [${edge.sourceLabel}]</span>` : ''}
+                <span style="color: #666;"> &#8594; </span>
+                ${edge.label ? html`<span style="color: #888; font-size: 10px;">(${edge.label})</span><span style="color: #666;"> &#8594; </span>` : ''}
+                ${edge.targetLabel ? html`<span style="color: #4fc3f7; font-size: 10px;">[${edge.targetLabel}] </span>` : ''}
                 ${this._getNodeName(edge.target)}
-                ${edge.label ? html`<span style="color: #888;"> (${edge.label})</span>` : ''}
               </span>
               <span style="display: flex; gap: 4px;">
                 <button class="tool-btn" @click=${() => this._labelEdge(i)}>Label</button>
@@ -565,6 +615,55 @@ class TopologyView extends LitElement {
             <button class="dialog-btn cancel" @click=${this._cancelDialog}>Keep Editing</button>
             <button class="dialog-btn discard" @click=${this._discardAndExit}>Discard</button>
             <button class="dialog-btn save" @click=${this._saveAndExit}>Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderLabelDialog() {
+    const edge = this.manualEdges[this._labelEdgeIndex];
+    if (!edge) return html``;
+
+    const sourceName = this._getNodeName(edge.source);
+    const targetName = this._getNodeName(edge.target);
+
+    return html`
+      <div class="save-overlay" @click=${this._cancelLabelDialog}>
+        <div class="label-dialog" @click=${(e) => e.stopPropagation()}>
+          <h3>Link Labels</h3>
+          <div class="subtitle">${sourceName} &#8594; ${targetName}</div>
+
+          <div class="label-field">
+            <label>Source Interface (${sourceName})</label>
+            <input id="source-label" type="text"
+              .value=${edge.sourceLabel || ''}
+              placeholder="e.g., eth0, port 24, WAN"
+              @keydown=${(e) => e.key === 'Enter' && this._saveLabelDialog()}>
+            <div class="hint">Shown near the source device</div>
+          </div>
+
+          <div class="label-field">
+            <label>Link Description</label>
+            <input id="link-label" type="text"
+              .value=${edge.label || ''}
+              placeholder="e.g., 1Gbps, WiFi, VLAN 10"
+              @keydown=${(e) => e.key === 'Enter' && this._saveLabelDialog()}>
+            <div class="hint">Shown in the middle of the link</div>
+          </div>
+
+          <div class="label-field">
+            <label>Target Interface (${targetName})</label>
+            <input id="target-label" type="text"
+              .value=${edge.targetLabel || ''}
+              placeholder="e.g., eth1, port 1, LAN"
+              @keydown=${(e) => e.key === 'Enter' && this._saveLabelDialog()}>
+            <div class="hint">Shown near the target device</div>
+          </div>
+
+          <div class="save-dialog-buttons">
+            <button class="dialog-btn cancel" @click=${this._cancelLabelDialog}>Cancel</button>
+            <button class="dialog-btn save" @click=${this._saveLabelDialog}>Apply</button>
           </div>
         </div>
       </div>
@@ -598,9 +697,14 @@ class TopologyView extends LitElement {
         this.manualEdges = [...this.manualEdges, {
           source: this._linkSource,
           target: nodeId,
+          sourceLabel: '',
           label: '',
+          targetLabel: '',
         }];
         this._markDirty();
+        // Open label dialog for the new link
+        this._labelEdgeIndex = this.manualEdges.length - 1;
+        this._showLabelDialog = true;
       }
       this._linkSource = null;
     }
@@ -701,13 +805,32 @@ class TopologyView extends LitElement {
   }
 
   _labelEdge(index) {
-    const current = this.manualEdges[index]?.label || '';
-    const label = prompt('Link label (e.g., "1Gbps", "WiFi", "VLAN 10"):', current);
-    if (label === null) return; // cancelled
+    this._labelEdgeIndex = index;
+    this._showLabelDialog = true;
+  }
+
+  _saveLabelDialog() {
+    const dialog = this.shadowRoot.querySelector('.label-dialog');
+    const sourceLabel = dialog.querySelector('#source-label').value;
+    const linkLabel = dialog.querySelector('#link-label').value;
+    const targetLabel = dialog.querySelector('#target-label').value;
+
     const updated = [...this.manualEdges];
-    updated[index] = { ...updated[index], label };
+    updated[this._labelEdgeIndex] = {
+      ...updated[this._labelEdgeIndex],
+      sourceLabel,
+      label: linkLabel,
+      targetLabel,
+    };
     this.manualEdges = updated;
     this._markDirty();
+    this._showLabelDialog = false;
+    this._labelEdgeIndex = -1;
+  }
+
+  _cancelLabelDialog() {
+    this._showLabelDialog = false;
+    this._labelEdgeIndex = -1;
   }
 
   _removeEdge(index) {
