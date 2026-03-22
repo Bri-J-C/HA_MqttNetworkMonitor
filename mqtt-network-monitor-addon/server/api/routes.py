@@ -377,6 +377,12 @@ def rename_tag(tag: str, body: dict[str, Any]):
         raise HTTPException(status_code=409, detail=str(e))
     if not result:
         raise HTTPException(status_code=404, detail="Tag not found")
+    # Update the tag on all devices that have it
+    for device_id, device in registry.get_all_devices().items():
+        server_tags = device.get("server_tags", [])
+        if tag in server_tags:
+            updated = [new_name if t == tag else t for t in server_tags]
+            registry.set_server_tags(device_id, updated)
     return {"tag": new_name}
 
 
