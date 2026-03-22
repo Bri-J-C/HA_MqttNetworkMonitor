@@ -435,21 +435,35 @@ class TopologyView extends LitElement {
     const strokeWidth = isSelected ? 2.5 : 1.5;
     const dash = isManual ? 'none' : '4,2';
 
-    const midX = (from.x + to.x) / 2;
-    const midY = (from.y + to.y) / 2;
-
-    // Position source/target labels offset from the endpoints toward the midpoint
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const offsetDist = 35;
-    const perpX = -dy / len * 10;
-    const perpY = dx / len * 10;
+    const ux = dx / len;
+    const uy = dy / len;
 
-    const srcLabelX = from.x + (dx / len) * offsetDist + perpX;
-    const srcLabelY = from.y + (dy / len) * offsetDist + perpY;
-    const tgtLabelX = to.x - (dx / len) * offsetDist + perpX;
-    const tgtLabelY = to.y - (dy / len) * offsetDist + perpY;
+    // Perpendicular direction — always pick the side that pushes "up" in screen space
+    // If line is mostly horizontal, labels go above; if mostly vertical, labels go to the left
+    let perpX = -uy;
+    let perpY = ux;
+    // Flip if perpendicular points downward (prefer labels above the line)
+    if (perpY > 0) { perpX = -perpX; perpY = -perpY; }
+
+    const perpOff = 14; // perpendicular offset from line
+
+    // Source label: placed just outside the source node boundary
+    // Node box is ~45x18, circle is ~22r. Use 55px along line from source center
+    const srcDist = Math.min(55, len * 0.25);
+    const srcLabelX = from.x + ux * srcDist + perpX * perpOff;
+    const srcLabelY = from.y + uy * srcDist + perpY * perpOff;
+
+    // Target label: placed just outside the target node boundary
+    const tgtDist = Math.min(55, len * 0.25);
+    const tgtLabelX = to.x - ux * tgtDist + perpX * perpOff;
+    const tgtLabelY = to.y - uy * tgtDist + perpY * perpOff;
+
+    // Mid label
+    const midX = (from.x + to.x) / 2 + perpX * perpOff;
+    const midY = (from.y + to.y) / 2 + perpY * perpOff;
 
     return svg`
       <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}"
@@ -458,16 +472,22 @@ class TopologyView extends LitElement {
         @click=${isManual && this.editMode ? () => this._selectEdge(index - (this.topology.edges?.length || 0)) : null}
         style="${isManual && this.editMode ? 'cursor:pointer' : ''}"/>
       ${edge.label ? svg`
-        <text x="${midX + perpX}" y="${midY + perpY}" text-anchor="middle"
-          fill="#888" font-size="9">${edge.label}</text>
+        <rect x="${midX - edge.label.length * 3 - 3}" y="${midY - 9}"
+          width="${edge.label.length * 6 + 6}" height="13" rx="2" fill="#1a1a2e" opacity="0.85"/>
+        <text x="${midX}" y="${midY}" text-anchor="middle"
+          fill="#888" font-size="9" style="pointer-events:none">${edge.label}</text>
       ` : svg``}
       ${edge.sourceLabel ? svg`
+        <rect x="${srcLabelX - edge.sourceLabel.length * 2.5 - 3}" y="${srcLabelY - 8}"
+          width="${edge.sourceLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.85"/>
         <text x="${srcLabelX}" y="${srcLabelY}" text-anchor="middle"
-          fill="#4fc3f7" font-size="8">${edge.sourceLabel}</text>
+          fill="#4fc3f7" font-size="8" style="pointer-events:none">${edge.sourceLabel}</text>
       ` : svg``}
       ${edge.targetLabel ? svg`
+        <rect x="${tgtLabelX - edge.targetLabel.length * 2.5 - 3}" y="${tgtLabelY - 8}"
+          width="${edge.targetLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.85"/>
         <text x="${tgtLabelX}" y="${tgtLabelY}" text-anchor="middle"
-          fill="#4fc3f7" font-size="8">${edge.targetLabel}</text>
+          fill="#4fc3f7" font-size="8" style="pointer-events:none">${edge.targetLabel}</text>
       ` : svg``}
     `;
   }
