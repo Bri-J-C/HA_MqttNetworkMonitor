@@ -1,0 +1,37 @@
+#include <tunables/global>
+
+profile mqtt_network_monitor flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # Network access for MQTT and HTTP
+  capability net_bind_service,
+  network inet tcp,
+  network inet udp,
+  network inet6 tcp,
+  network inet6 udp,
+
+  # Python interpreter
+  /usr/bin/python3* rix,
+  /usr/lib/python3*/** r,
+
+  # Application files
+  /app/** r,
+  /app/**/*.py r,
+
+  # Data persistence
+  /data/ rw,
+  /data/** rw,
+
+  # Temp files for atomic writes
+  /tmp/** rw,
+
+  # System info for psutil-like operations (read-only)
+  /proc/stat r,
+  /proc/meminfo r,
+  /proc/uptime r,
+  /sys/class/thermal/** r,
+
+  # Deny everything else by default
+  deny /etc/shadow r,
+  deny /etc/passwd w,
+}
