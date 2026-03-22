@@ -23,6 +23,8 @@ class SystemResourcesPlugin(BasePlugin):
     def __init__(self, config):
         super().__init__(config)
         self.requested_attributes = config.get("attributes", list(COLLECTORS.keys()))
+        # Prime cpu_percent so subsequent interval=0 calls return meaningful values
+        psutil.cpu_percent(interval=0)
 
     def collect(self) -> dict:
         result = {}
@@ -35,7 +37,7 @@ class SystemResourcesPlugin(BasePlugin):
     @staticmethod
     @collector("cpu_usage")
     def _cpu_usage():
-        return {"value": psutil.cpu_percent(interval=0.5), "unit": "%"}
+        return {"value": psutil.cpu_percent(interval=0), "unit": "%"}
 
     @staticmethod
     @collector("memory_usage")
