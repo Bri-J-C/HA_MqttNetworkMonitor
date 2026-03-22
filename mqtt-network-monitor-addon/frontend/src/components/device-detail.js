@@ -33,8 +33,9 @@ class DeviceDetail extends LitElement {
     _localChanges: { type: Boolean, state: true },
     _showGroupDialog: { type: Boolean, state: true },
     _newGroupName: { type: String, state: true },
-    _serverCommands: { type: Array, state: true },
-    _newCommand: { type: String, state: true },
+    _serverCommands: { type: Object, state: true },
+    _newCommandName: { type: String, state: true },
+    _newCommandShell: { type: String, state: true },
   };
 
   static styles = css`
@@ -271,8 +272,9 @@ class DeviceDetail extends LitElement {
     this._localChanges = false;
     this._showGroupDialog = false;
     this._newGroupName = '';
-    this._serverCommands = [];
-    this._newCommand = '';
+    this._serverCommands = {};
+    this._newCommandName = '';
+    this._newCommandShell = '';
   }
 
   connectedCallback() {
@@ -291,8 +293,9 @@ class DeviceDetail extends LitElement {
       this.device = await fetchDevice(this.deviceId);
       // Seed local HA overrides from device
       this._haOverrides = { ...(this.device.ha_exposure_overrides || {}) };
-      // Seed server-side commands
-      this._serverCommands = [...(this.device.server_commands || [])];
+      // Seed server-side commands (dict: name → shell_cmd)
+      const sc = this.device.server_commands;
+      this._serverCommands = (sc && !Array.isArray(sc)) ? { ...sc } : {};
       // Seed config state from device remote_config if available
       if (this.device.remote_config) {
         this._configInterval = this.device.remote_config.interval || 30;
@@ -530,8 +533,8 @@ class DeviceDetail extends LitElement {
   _renderCommands() {
     // Merge client-side allowed_commands with any server-added commands
     const clientCommands = this.device.allowed_commands || [];
-    const serverCommands = this._serverCommands || [];
-    const allCommands = [...new Set([...clientCommands, ...serverCommands])];
+    const serverCommandNames = Object.keys(this._serverCommands || {});
+    const allCommands = [...new Set([...clientCommands, ...serverCommandNames])];
 
     return html`
       <div class="section">
@@ -553,24 +556,32 @@ class DeviceDetail extends LitElement {
         ${this.commandResult ? html`<div class="cmd-result">${this.commandResult}</div>` : ''}
 
         <div style="margin-top: 10px;">
-          <div style="display: flex; gap: 4px; align-items: center;">
-            <input class="config-input" type="text" placeholder="Add command..."
-              style="width: 160px;"
-              .value=${this._newCommand || ''}
-              @input=${(e) => this._newCommand = e.target.value}
+          <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+            <input class="config-input" type="text" placeholder="Command name..."
+              style="width: 130px;"
+              .value=${this._newCommandName || ''}
+              @input=${(e) => this._newCommandName = e.target.value}
+              @keydown=${(e) => e.key === 'Enter' && this._addServerCommand()}>
+            <input class="config-input" type="text" placeholder="Shell command..."
+              style="width: 220px;"
+              .value=${this._newCommandShell || ''}
+              @input=${(e) => this._newCommandShell = e.target.value}
               @keydown=${(e) => e.key === 'Enter' && this._addServerCommand()}>
             <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
               @click=${this._addServerCommand}>Add</button>
           </div>
-          ${serverCommands.length > 0 ? html`
-            <div style="margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap;">
-              ${serverCommands.map(cmd => html`
-                <span style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 2px 8px; border-radius: 3px; display: flex; align-items: center; gap: 4px;">
-                  ${cmd}
-                  <span style="cursor: pointer; opacity: 0.6;" @click=${() => this._removeServerCommand(cmd)}>&times;</span>
+          ${serverCommandNames.length > 0 ? html`
+            <div style="margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; align-items: flex-start;">
+              ${Object.entries(this._serverCommands).map(([name, shellCmd]) => html`
+                <span title=${shellCmd} style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
+                  <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
+                    ${name}
+                    <span style="cursor: pointer; opacity: 0.6;" @click=${() => this._removeServerCommand(name)}>&times;</span>
+                  </span>
+                  <span style="font-size: 9px; color: #a070c0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${shellCmd}</span>
                 </span>
               `)}
-              <span style="font-size: 9px; color: #555;">server-added commands</span>
+              <span style="font-size: 9px; color: #555; align-self: center;">server-added commands</span>
             </div>
           ` : ''}
         </div>
@@ -739,6 +750,7 @@ class DeviceDetail extends LitElement {
         plugins: {
           custom_command: { commands: this._customSensors },
         },
+        commands: this._serverCommands,
       };
       await pushDeviceConfig(this.deviceId, config);
       this._lastPushed = new Date().toLocaleTimeString();
@@ -801,19 +813,20 @@ class DeviceDetail extends LitElement {
   // ── Command ───────────────────────────────────────────────────────────────
 
   _addServerCommand() {
-    const cmd = (this._newCommand || '').trim();
-    if (!cmd) return;
-    if (!this._serverCommands.includes(cmd)) {
-      this._serverCommands = [...this._serverCommands, cmd];
-      this._localChanges = true;
-      // Save to device settings
-      updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
-    }
-    this._newCommand = '';
+    const name = (this._newCommandName || '').trim();
+    const shellCmd = (this._newCommandShell || '').trim();
+    if (!name || !shellCmd) return;
+    this._serverCommands = { ...this._serverCommands, [name]: shellCmd };
+    this._localChanges = true;
+    updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
+    this._newCommandName = '';
+    this._newCommandShell = '';
   }
 
-  _removeServerCommand(cmd) {
-    this._serverCommands = this._serverCommands.filter(c => c !== cmd);
+  _removeServerCommand(name) {
+    const updated = { ...this._serverCommands };
+    delete updated[name];
+    this._serverCommands = updated;
     this._localChanges = true;
     updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
   }

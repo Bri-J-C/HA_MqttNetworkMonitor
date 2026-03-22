@@ -53,7 +53,7 @@ class DeviceRegistry:
                 "ha_exposure_overrides": {},
                 "threshold_overrides": {},
                 "allowed_commands": [],
-                "server_commands": [],
+                "server_commands": {},
             }
             logger.info(f"New device discovered: {device_id}")
 
@@ -114,6 +114,7 @@ class DeviceRegistry:
             "thresholds": {},
             "ha_exposed_attributes": [],
             "custom_sensors": {},
+            "custom_commands": {},
         }
         self._save_groups()
         return self._groups[group_id]
@@ -140,7 +141,8 @@ class DeviceRegistry:
             self._save_devices()
 
     def update_group(self, group_id: str, name: str | None = None,
-                     device_ids: list[str] | None = None) -> dict | None:
+                     device_ids: list[str] | None = None,
+                     custom_commands: dict | None = None) -> dict | None:
         group = self._groups.get(group_id)
         if not group:
             return None
@@ -148,6 +150,8 @@ class DeviceRegistry:
             group["name"] = name
         if device_ids is not None:
             group["device_ids"] = device_ids
+        if custom_commands is not None:
+            group["custom_commands"] = custom_commands
         self._save_groups()
         return group
 

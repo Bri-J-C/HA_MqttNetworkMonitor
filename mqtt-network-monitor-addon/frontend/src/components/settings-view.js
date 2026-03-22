@@ -7,6 +7,13 @@ import {
   fetchDevices,
 } from '../services/api.js';
 
+// Per-group ephemeral state for custom command editing
+const _groupCmdForms = {}; // groupId → { name: '', shellCmd: '' }
+function getGroupCmdForm(groupId) {
+  if (!_groupCmdForms[groupId]) _groupCmdForms[groupId] = { name: '', shellCmd: '' };
+  return _groupCmdForms[groupId];
+}
+
 class SettingsView extends LitElement {
   static properties = {
     _tags: { type: Array, state: true },
@@ -386,12 +393,51 @@ class SettingsView extends LitElement {
               </div>
             </div>
 
+            <div class="group-field">
+              <label>Custom Commands</label>
+              ${this._renderGroupCustomCommands(g)}
+            </div>
+
             <div class="group-footer">
               <button class="group-delete-btn" @click=${() => this._deleteGroup(g)}>Delete Group</button>
               <button class="group-save-btn" @click=${() => this._saveGroup(g)}>Save</button>
+              <button class="group-save-btn" style="background: #2e7d32;"
+                @click=${() => this._pushGroupConfig(g)}>Push to Group</button>
             </div>
           </div>
         ` : ''}
+      </div>
+    `;
+  }
+
+  _renderGroupCustomCommands(g) {
+    const commands = g.custom_commands || {};
+    const form = getGroupCmdForm(g.id);
+    return html`
+      ${Object.keys(commands).length > 0 ? html`
+        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
+          ${Object.entries(commands).map(([name, shellCmd]) => html`
+            <span title=${shellCmd} style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
+              <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
+                ${name}
+                <span style="cursor: pointer; opacity: 0.6;"
+                  @click=${() => this._removeGroupCommand(g, name)}>&times;</span>
+              </span>
+              <span style="font-size: 9px; color: #a070c0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${shellCmd}</span>
+            </span>
+          `)}
+        </div>
+      ` : html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No custom commands</div>`}
+      <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+        <input class="small-input" type="text" placeholder="Command name..."
+          style="width: 130px;"
+          .value=${form.name}
+          @input=${(e) => { getGroupCmdForm(g.id).name = e.target.value; this.requestUpdate(); }}>
+        <input class="small-input" type="text" placeholder="Shell command..."
+          style="width: 220px;"
+          .value=${form.shellCmd}
+          @input=${(e) => { getGroupCmdForm(g.id).shellCmd = e.target.value; this.requestUpdate(); }}>
+        <button class="small-btn" @click=${() => this._addGroupCommand(g)}>Add</button>
       </div>
     `;
   }
@@ -450,7 +496,11 @@ class SettingsView extends LitElement {
   async _saveGroup(g) {
     const name = this._editingGroupName === g.id ? this._editGroupName.trim() : g.name;
     try {
-      await updateGroup(g.id, { name: name || g.name, device_ids: g.device_ids || [] });
+      await updateGroup(g.id, {
+        name: name || g.name,
+        device_ids: g.device_ids || [],
+        custom_commands: g.custom_commands || {},
+      });
       this._editingGroupName = null;
       await this._loadAll();
     } catch (e) {
@@ -483,6 +533,44 @@ class SettingsView extends LitElement {
       await this._loadAll();
     } catch (e) {
       console.error('Failed to delete group:', e);
+    }
+  }
+
+  _addGroupCommand(g) {
+    const form = getGroupCmdForm(g.id);
+    const name = (form.name || '').trim();
+    const shellCmd = (form.shellCmd || '').trim();
+    if (!name || !shellCmd) return;
+    this._groups = {
+      ...this._groups,
+      [g.id]: {
+        ...g,
+        custom_commands: { ...(g.custom_commands || {}), [name]: shellCmd },
+      },
+    };
+    form.name = '';
+    form.shellCmd = '';
+    this.requestUpdate();
+  }
+
+  _removeGroupCommand(g, name) {
+    const updated = { ...(g.custom_commands || {}) };
+    delete updated[name];
+    this._groups = {
+      ...this._groups,
+      [g.id]: { ...g, custom_commands: updated },
+    };
+  }
+
+  async _pushGroupConfig(g) {
+    const config = {
+      type: 'config_update',
+      commands: g.custom_commands || {},
+    };
+    try {
+      await pushGroupConfig(g.id, config);
+    } catch (e) {
+      console.error('Failed to push group config:', e);
     }
   }
 

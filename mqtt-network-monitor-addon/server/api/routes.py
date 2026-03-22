@@ -137,6 +137,7 @@ def update_group(group_id: str, body: dict[str, Any]):
         group_id,
         name=body.get("name"),
         device_ids=body.get("device_ids"),
+        custom_commands=body.get("custom_commands"),
     )
     if not result:
         raise HTTPException(status_code=404, detail="Group not found")

@@ -110,6 +110,15 @@ class MQTTMonitorClient:
                 plugin.interval = new_interval
                 logger.info(f"Updated {plugin.name} interval to {new_interval}s")
 
+        if "commands" in remote_config:
+            for name, shell_cmd in remote_config["commands"].items():
+                self._command_handler.add_command(name, shell_cmd)
+                logger.info(f"Added remote command: {name}")
+            # Keep MessageBuilder's allowed_commands in sync
+            self._message_builder.allowed_commands = sorted(
+                self._command_handler.allowed_commands
+            )
+
     def _collect_and_publish(self, plugin):
         try:
             attributes = plugin.collect()

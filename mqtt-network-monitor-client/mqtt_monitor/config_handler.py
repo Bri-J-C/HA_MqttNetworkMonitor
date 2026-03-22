@@ -70,6 +70,12 @@ class ConfigHandler:
             for plugin_name, plugin_config in data["plugins"].items():
                 self._remote_config["plugins"][plugin_name] = plugin_config
 
+        # Update commands
+        if "commands" in data:
+            if "commands" not in self._remote_config:
+                self._remote_config["commands"] = {}
+            self._remote_config["commands"].update(data["commands"])
+
         if self._on_config_applied:
             self._on_config_applied(self._remote_config)
 
@@ -100,5 +106,12 @@ class ConfigHandler:
                         merged["plugins"][plugin_name] = plugin_config
                 else:
                     merged["plugins"][plugin_name] = plugin_config
+
+        if "commands" in remote:
+            # Remote commands are added to/override allowed_commands
+            existing = set(merged.get("allowed_commands", []))
+            existing.update(remote["commands"].keys())
+            merged["allowed_commands"] = sorted(existing)
+            merged["commands"] = dict(remote["commands"])
 
         return merged

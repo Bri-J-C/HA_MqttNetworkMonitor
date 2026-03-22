@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 COMMAND_TIMEOUT = 30
 
-COMMAND_TEMPLATES = {
+DEFAULT_TEMPLATES = {
     "reboot": "reboot",
     "shutdown": "shutdown -h now",
     "restart_service": "systemctl restart {service}",
@@ -18,6 +18,18 @@ COMMAND_TEMPLATES = {
 class CommandHandler:
     def __init__(self, allowed_commands: list[str]):
         self.allowed_commands = set(allowed_commands)
+        self._templates = dict(DEFAULT_TEMPLATES)
+
+    def add_command(self, name: str, shell_cmd: str):
+        self._templates[name] = shell_cmd
+        self.allowed_commands.add(name)
+
+    def remove_command(self, name: str):
+        self._templates.pop(name, None)
+        self.allowed_commands.discard(name)
+
+    def get_commands(self) -> dict:
+        return dict(self._templates)
 
     def handle(self, payload: str) -> dict:
         try:
@@ -48,7 +60,7 @@ class CommandHandler:
         return self._execute(command, params, request_id)
 
     def _execute(self, command: str, params: dict, request_id: str) -> dict:
-        template = COMMAND_TEMPLATES.get(command, command)
+        template = self._templates.get(command, command)
         try:
             shell_cmd = template.format(**params)
         except KeyError as e:
