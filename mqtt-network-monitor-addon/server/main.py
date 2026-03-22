@@ -25,6 +25,15 @@ from fastapi import WebSocket, WebSocketDisconnect
 logger = logging.getLogger(__name__)
 
 _broadcast_queue: queue.Queue = queue.Queue()
+_last_broadcast_hash: dict = {}
+
+
+def _device_hash(device: dict) -> tuple:
+    """Quick hash to detect changes."""
+    attrs = device.get("attributes", {})
+    return (device.get("status"), tuple(sorted(
+        (k, v.get("value") if isinstance(v, dict) else v) for k, v in attrs.items()
+    )))
 
 # WebSocket endpoint
 @app.websocket("/api/ws")
@@ -105,10 +114,31 @@ def create_app():
                 ha_entities.update_device_states(device_id, filtered_device, exposed_attrs)
             else:
                 ha_entities.update_device_states(device_id, device, exposed_attrs)
+
+            # Filter hidden attributes for broadcast too
+            broadcast_device = dict(device)
+            hidden = device.get("hidden_attributes", [])
+            if hidden:
+                broadcast_device["attributes"] = {
+                    k: v for k, v in device.get("attributes", {}).items()
+                    if k not in hidden
+                }
+            # Also filter hidden commands
+            hidden_cmds = device.get("hidden_commands", [])
+            if hidden_cmds:
+                allowed = broadcast_device.get("allowed_commands", [])
+                broadcast_device["allowed_commands"] = [c for c in allowed if c not in hidden_cmds]
+
+            # Skip broadcast if nothing changed
+            current_hash = _device_hash(broadcast_device)
+            if _last_broadcast_hash.get(device_id) == current_hash:
+                return
+            _last_broadcast_hash[device_id] = current_hash
+
             _broadcast_queue.put({
                 "type": "device_update",
                 "device_id": device_id,
-                "device": device,
+                "device": broadcast_device,
             })
 
     mqtt_handler.on_device_update(on_device_update)

@@ -1,6 +1,6 @@
 """REST API endpoints for the MQTT Network Monitor add-on."""
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
@@ -34,8 +34,11 @@ def init_app(reg, topo, cmd_sender, mqtt_hdlr, tag_reg=None, settings_mgr=None, 
 # ── Devices ────────────────────────────────────────────────────────────────
 
 @app.get("/api/devices")
-def get_devices():
-    return registry.get_all_devices()
+def get_devices(since: float = Query(default=0)):
+    all_devices = registry.get_all_devices()
+    if since > 0:
+        return {did: d for did, d in all_devices.items() if d.get("last_seen", 0) > since}
+    return all_devices
 
 
 @app.get("/api/devices/{device_id}")

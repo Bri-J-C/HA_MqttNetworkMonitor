@@ -117,6 +117,7 @@ class DashboardView extends LitElement {
     this._wsUnsub = null;
     this._refreshInterval = parseInt(localStorage.getItem('mqtt-monitor-refresh') || '5');
     this._pollTimer = null;
+    this._lastFetchTime = 0;
   }
 
   connectedCallback() {
@@ -146,7 +147,14 @@ class DashboardView extends LitElement {
 
   async _loadDevices() {
     try {
-      this.devices = await fetchDevices();
+      const data = await fetchDevices(this._lastFetchTime);
+      if (data && Object.keys(data).length > 0) {
+        this.devices = { ...this.devices, ...data };
+      } else if (this._lastFetchTime === 0) {
+        // Initial load returned empty — still update so the view reflects it
+        this.devices = data || {};
+      }
+      this._lastFetchTime = Date.now() / 1000;
     } catch (e) {
       console.error('Failed to load devices:', e);
     }

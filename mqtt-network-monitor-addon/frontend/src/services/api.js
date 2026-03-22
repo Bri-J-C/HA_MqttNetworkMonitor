@@ -6,206 +6,195 @@ function getBase() {
 }
 const BASE = getBase();
 
-export async function fetchDevices() {
-  const res = await fetch(`${BASE}/api/devices`);
-  return res.json();
+async function apiCall(url, options = {}) {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`API error ${res.status}: ${text}`);
+  }
+  // Some endpoints return empty (DELETE), handle gracefully
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return res.json();
+  }
+  return null;
+}
+
+export async function fetchDevices(since = 0) {
+  const url = since > 0 ? `${BASE}/api/devices?since=${since}` : `${BASE}/api/devices`;
+  return apiCall(url);
 }
 
 export async function fetchDevice(id) {
-  const res = await fetch(`${BASE}/api/devices/${id}`);
-  return res.json();
+  return apiCall(`${BASE}/api/devices/${id}`);
 }
 
 export async function deleteDevice(id) {
-  await fetch(`${BASE}/api/devices/${id}`, { method: 'DELETE' });
+  return apiCall(`${BASE}/api/devices/${id}`, { method: 'DELETE' });
 }
 
 export async function deleteAttribute(deviceId, attrName) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/attributes/${attrName}`, { method: 'DELETE' });
-  return res.json();
+  return apiCall(`${BASE}/api/devices/${deviceId}/attributes/${attrName}`, { method: 'DELETE' });
 }
 
 export async function unhideAttribute(deviceId, attrName) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/attributes/${attrName}/unhide`, { method: 'POST' });
-  return res.json();
+  return apiCall(`${BASE}/api/devices/${deviceId}/attributes/${attrName}/unhide`, { method: 'POST' });
 }
 
 export async function hideCommand(deviceId, cmdName) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/commands/${cmdName}`, { method: 'DELETE' });
-  return res.json();
+  return apiCall(`${BASE}/api/devices/${deviceId}/commands/${cmdName}`, { method: 'DELETE' });
 }
 
 export async function unhideCommand(deviceId, cmdName) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/commands/${cmdName}/unhide`, { method: 'POST' });
-  return res.json();
+  return apiCall(`${BASE}/api/devices/${deviceId}/commands/${cmdName}/unhide`, { method: 'POST' });
 }
 
 export async function fetchTopology() {
-  const res = await fetch(`${BASE}/api/topology`);
-  return res.json();
+  return apiCall(`${BASE}/api/topology`);
 }
 
 export async function fetchLayouts() {
-  const res = await fetch(`${BASE}/api/topology/layouts`);
-  return res.json();
+  return apiCall(`${BASE}/api/topology/layouts`);
 }
 
 export async function saveLayout(layout) {
-  const res = await fetch(`${BASE}/api/topology/layouts`, {
+  return apiCall(`${BASE}/api/topology/layouts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(layout),
   });
-  return res.json();
 }
 
 export async function deleteLayout(id) {
-  await fetch(`${BASE}/api/topology/layouts/${id}`, { method: 'DELETE' });
+  return apiCall(`${BASE}/api/topology/layouts/${id}`, { method: 'DELETE' });
 }
 
 export async function sendCommand(deviceId, command, params = {}) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/command`, {
+  return apiCall(`${BASE}/api/devices/${deviceId}/command`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ command, params }),
   });
-  return res.json();
 }
 
 export async function fetchGroups() {
-  const res = await fetch(`${BASE}/api/groups`);
-  return res.json();
+  return apiCall(`${BASE}/api/groups`);
 }
 
 export async function createGroup(id, name, deviceIds = []) {
-  const res = await fetch(`${BASE}/api/groups`, {
+  return apiCall(`${BASE}/api/groups`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, name, device_ids: deviceIds }),
   });
-  return res.json();
 }
 
 export async function updateGroup(groupId, { name, device_ids, custom_commands, custom_sensors, thresholds, hidden_commands }) {
-  const res = await fetch(`${BASE}/api/groups/${groupId}`, {
+  return apiCall(`${BASE}/api/groups/${groupId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, device_ids, custom_commands, custom_sensors, thresholds, hidden_commands }),
   });
-  return res.json();
 }
 
 export async function deleteGroup(groupId) {
-  await fetch(`${BASE}/api/groups/${groupId}`, { method: 'DELETE' });
+  return apiCall(`${BASE}/api/groups/${groupId}`, { method: 'DELETE' });
 }
 
 export async function setDeviceTags(deviceId, tags) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/tags`, {
+  return apiCall(`${BASE}/api/devices/${deviceId}/tags`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tags }),
   });
-  return res.json();
 }
 
 export async function addDeviceTags(deviceId, tags) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/tags/add`, {
+  return apiCall(`${BASE}/api/devices/${deviceId}/tags/add`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tags }),
   });
-  return res.json();
 }
 
 export async function removeDeviceTag(deviceId, tag) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/tags/${tag}`, {
+  return apiCall(`${BASE}/api/devices/${deviceId}/tags/${tag}`, {
     method: 'DELETE',
   });
-  return res.json();
 }
 
 // Tags
 export async function fetchTags() {
-  const res = await fetch(`${BASE}/api/tags`);
-  return res.json();
+  return apiCall(`${BASE}/api/tags`);
 }
 
 export async function createTag(tag) {
-  const res = await fetch(`${BASE}/api/tags`, {
+  return apiCall(`${BASE}/api/tags`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tag }),
   });
-  return res.json();
 }
 
 export async function renameTag(oldTag, newName) {
-  const res = await fetch(`${BASE}/api/tags/${encodeURIComponent(oldTag)}`, {
+  return apiCall(`${BASE}/api/tags/${encodeURIComponent(oldTag)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ new_name: newName }),
   });
-  return res.json();
 }
 
 export async function deleteTag(tag) {
-  await fetch(`${BASE}/api/tags/${encodeURIComponent(tag)}`, { method: 'DELETE' });
+  return apiCall(`${BASE}/api/tags/${encodeURIComponent(tag)}`, { method: 'DELETE' });
 }
 
 // Settings
 export async function fetchSettings() {
-  const res = await fetch(`${BASE}/api/settings`);
-  return res.json();
+  return apiCall(`${BASE}/api/settings`);
 }
 
 export async function updateSettings(data) {
-  const res = await fetch(`${BASE}/api/settings`, {
+  return apiCall(`${BASE}/api/settings`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  return res.json();
 }
 
 // Device settings
 export async function fetchEffectiveSettings(deviceId) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/effective-settings`);
-  return res.json();
+  return apiCall(`${BASE}/api/devices/${deviceId}/effective-settings`);
 }
 
 export async function updateDeviceSettings(deviceId, settings) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/settings`, {
+  return apiCall(`${BASE}/api/devices/${deviceId}/settings`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(settings),
   });
-  return res.json();
 }
 
 export async function pushDeviceConfig(deviceId, config) {
-  const res = await fetch(`${BASE}/api/devices/${deviceId}/push-config`, {
+  return apiCall(`${BASE}/api/devices/${deviceId}/push-config`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
   });
-  return res.json();
 }
 
 // Group operations
 export async function sendGroupCommand(groupId, command, params = {}) {
-  const res = await fetch(`${BASE}/api/groups/${groupId}/command`, {
+  return apiCall(`${BASE}/api/groups/${groupId}/command`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ command, params }),
   });
-  return res.json();
 }
 
 export async function pushGroupConfig(groupId, config) {
-  const res = await fetch(`${BASE}/api/groups/${groupId}/push-config`, {
+  return apiCall(`${BASE}/api/groups/${groupId}/push-config`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
   });
-  return res.json();
 }

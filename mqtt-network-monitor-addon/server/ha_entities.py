@@ -14,6 +14,7 @@ class HAEntityManager:
     def __init__(self, mqtt_client: mqtt.Client):
         self._mqtt = mqtt_client
         self._registered_entities: set[str] = set()
+        self._last_published: dict[str, str] = {}  # "device_id/attr_name" -> last published value
 
     def register_device_entities(
         self,
@@ -158,8 +159,13 @@ class HAEntityManager:
         logger.info(f"Registered HA binary sensor: {unique_id}")
 
     def publish_attribute_state(self, device_id: str, attr_name: str, value) -> None:
+        key = f"{device_id}/{attr_name}"
+        str_val = str(value) if value is not None else "unknown"
+        if self._last_published.get(key) == str_val:
+            return  # Value unchanged, skip
         topic = f"network_monitor/{device_id}/ha/{attr_name}"
-        self._mqtt.publish(topic, str(value) if value is not None else "unknown")
+        self._mqtt.publish(topic, str_val)
+        self._last_published[key] = str_val
 
     def update_device_states(
         self,
