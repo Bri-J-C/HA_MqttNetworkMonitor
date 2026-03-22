@@ -249,6 +249,7 @@ class MQTTTopologyCard extends HTMLElement {
 
   async _render() {
     const topo = await addonFetch(this._hass, '/api/topology', this._config.server_url);
+    const layouts = await addonFetch(this._hass, '/api/topology/layouts', this._config.server_url);
 
     if (!this.shadowRoot) {
       this.attachShadow({ mode: 'open' });
@@ -266,46 +267,104 @@ class MQTTTopologyCard extends HTMLElement {
       return;
     }
 
+    // Find the selected layout (by config or default)
+    let layout = null;
+    if (layouts) {
+      if (this._config.layout) {
+        // Try by ID first, then by name
+        layout = layouts[this._config.layout] ||
+          Object.values(layouts).find(l => l.name === this._config.layout);
+      }
+      if (!layout) {
+        // Fall back to the default layout
+        layout = Object.values(layouts).find(l => l.isDefault);
+      }
+    }
+
     const nodes = topo.nodes;
-    const edges = topo.edges;
+
+    // Determine which edges to show
+    const hideAutoEdges = layout?.hideAutoEdges || false;
+    const autoEdges = hideAutoEdges ? [] : (topo.edges || []);
+    const manualEdges = layout?.manualEdges || [];
+    const allEdges = [...autoEdges, ...manualEdges];
+
     const counts = {
       online: nodes.filter(n => n.status === 'online').length,
       offline: nodes.filter(n => n.status === 'offline').length,
       warning: nodes.filter(n => n.status === 'warning').length,
     };
 
+    // Use saved positions from layout, or auto-layout
+    const savedPositions = layout?.positions || {};
     const width = 280;
     const height = Math.max(180, Math.ceil(nodes.length / 4) * 60 + 40);
     const cols = Math.ceil(Math.sqrt(nodes.length));
-    const positions = {};
+    const positions = { ...savedPositions };
+
+    // Auto-position any nodes not in the saved layout
     nodes.forEach((node, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      positions[node.id] = {
-        x: 30 + col * ((width - 60) / Math.max(cols - 1, 1)),
-        y: 30 + row * 50,
-      };
+      if (!positions[node.id]) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        positions[node.id] = {
+          x: 30 + col * ((width - 60) / Math.max(cols - 1, 1)),
+          y: 30 + row * 50,
+        };
+      }
     });
 
-    const edgesSvg = edges.map(e => {
-      const from = positions[e.source];
-      const to = positions[e.target];
+    // Scale saved positions to fit the card's viewBox
+    // Saved positions are from the full editor (900x500), scale to card size
+    const scaledPositions = {};
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const [id, pos] of Object.entries(positions)) {
+      if (pos.x < minX) minX = pos.x;
+      if (pos.x > maxX) maxX = pos.x;
+      if (pos.y < minY) minY = pos.y;
+      if (pos.y > maxY) maxY = pos.y;
+    }
+    const rangeX = (maxX - minX) || 1;
+    const rangeY = (maxY - minY) || 1;
+    const padding = 25;
+    for (const [id, pos] of Object.entries(positions)) {
+      scaledPositions[id] = {
+        x: padding + ((pos.x - minX) / rangeX) * (width - padding * 2),
+        y: padding + ((pos.y - minY) / rangeY) * (height - padding * 2),
+      };
+    }
+
+    const edgesSvg = allEdges.map(e => {
+      const from = scaledPositions[e.source];
+      const to = scaledPositions[e.target];
       if (!from || !to) return '';
-      return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="var(--divider-color, #555)" stroke-width="1"/>`;
+      const isManual = e.type === 'manual' || e.sourceLabel || e.targetLabel || (!e.type);
+      const color = isManual ? 'var(--primary-color, #4fc3f7)' : 'var(--divider-color, #555)';
+      const dash = isManual ? 'none' : '4,2';
+      let labelSvg = '';
+      if (e.label) {
+        const mx = (from.x + to.x) / 2;
+        const my = (from.y + to.y) / 2;
+        labelSvg += `<text x="${mx}" y="${my - 4}" text-anchor="middle" fill="var(--secondary-text-color, #888)" font-size="6">${e.label}</text>`;
+      }
+      return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${color}" stroke-width="1" stroke-dasharray="${dash}"/>${labelSvg}`;
     }).join('');
 
     const nodesSvg = nodes.map(n => {
-      const pos = positions[n.id];
+      const pos = scaledPositions[n.id];
+      if (!pos) return '';
       const color = STATUS_COLORS[n.status] || STATUS_COLORS.unknown;
       return `
         <circle cx="${pos.x}" cy="${pos.y}" r="${n.type === 'gateway' ? 10 : 7}"
           fill="${color}" opacity="0.8"/>
         <text x="${pos.x}" y="${pos.y + 18}" text-anchor="middle"
-          fill="var(--secondary-text-color, #999)" font-size="8">
+          fill="var(--secondary-text-color, #999)" font-size="7">
           ${(n.name || n.id).substring(0, 10)}
         </text>
       `;
     }).join('');
+
+    const layoutName = layout ? layout.name : 'Auto Discovery';
 
     this.shadowRoot.innerHTML = `
       <ha-card>
@@ -316,6 +375,7 @@ class MQTTTopologyCard extends HTMLElement {
             margin-bottom: 8px;
           }
           .title { font-size: 14px; font-weight: 600; color: var(--primary-text-color); }
+          .subtitle { font-size: 10px; color: var(--secondary-text-color, #666); }
           .counts { font-size: 10px; color: var(--secondary-text-color, #999); }
           .count-online { color: ${STATUS_COLORS.online}; }
           .count-offline { color: ${STATUS_COLORS.offline}; }
@@ -324,7 +384,10 @@ class MQTTTopologyCard extends HTMLElement {
         </style>
         <div class="card-content">
           <div class="header">
-            <span class="title">${this._config.title || 'Network'}</span>
+            <div>
+              <span class="title">${this._config.title || 'Network'}</span>
+              <div class="subtitle">${layoutName}</div>
+            </div>
             <span class="counts">
               <span class="count-online">${counts.online} online</span>
               · <span class="count-offline">${counts.offline} offline</span>
@@ -349,7 +412,7 @@ class MQTTTopologyCard extends HTMLElement {
   }
 
   static getStubConfig() {
-    return { title: 'Network' };
+    return { title: 'Network', layout: '' };
   }
 }
 
@@ -460,28 +523,50 @@ class MQTTDeviceStatusEditor extends HTMLElement {
 }
 
 class MQTTTopologyEditor extends HTMLElement {
-  set hass(hass) { this._hass = hass; }
+  set hass(hass) {
+    this._hass = hass;
+    if (this._config && !this._layoutsLoaded) {
+      this._loadLayouts();
+    }
+  }
 
   setConfig(config) {
     this._config = { ...config };
+    this._layouts = [];
+    this._layoutsLoaded = false;
     this._render();
+  }
+
+  async _loadLayouts() {
+    this._layoutsLoaded = true;
+    const data = await addonFetch(this._hass, '/api/topology/layouts');
+    if (data) {
+      this._layouts = Object.entries(data).map(([id, l]) => ({
+        id,
+        name: l.name || id,
+        isDefault: l.isDefault || false,
+      }));
+      this._render();
+    }
   }
 
   _render() {
     if (!this.shadowRoot) this.attachShadow({ mode: 'open' });
+    const currentLayout = this._config.layout || '';
 
     this.shadowRoot.innerHTML = `
       <style>
         .form { padding: 16px; }
         .field { margin-bottom: 12px; }
         .field label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 14px; }
-        .field input {
+        .field select, .field input {
           width: 100%; padding: 8px; border-radius: 4px;
           border: 1px solid var(--divider-color, #ccc);
           background: var(--card-background-color, #fff);
           color: var(--primary-text-color);
           font-size: 14px; box-sizing: border-box;
         }
+        .hint { font-size: 11px; color: var(--secondary-text-color, #999); margin-top: 2px; }
       </style>
       <div class="form">
         <div class="field">
@@ -490,15 +575,43 @@ class MQTTTopologyEditor extends HTMLElement {
             value="${this._config.title || ''}"
             placeholder="e.g., Home Network">
         </div>
+        <div class="field">
+          <label>Layout</label>
+          ${this._layouts.length > 0 ? `
+            <select id="layout-select">
+              <option value="" ${!currentLayout ? 'selected' : ''}>Default (or auto-discovery)</option>
+              ${this._layouts.map(l =>
+                `<option value="${l.id}" ${l.id === currentLayout ? 'selected' : ''}>${l.name}${l.isDefault ? ' (default)' : ''}</option>`
+              ).join('')}
+            </select>
+            <div class="hint">Layouts are created in the add-on's Topology editor</div>
+          ` : `
+            <input id="layout-input" type="text" value="${currentLayout}" placeholder="Layout ID (optional)">
+            <div class="hint">Create layouts in the add-on's Topology editor</div>
+          `}
+        </div>
       </div>
     `;
 
     this.shadowRoot.getElementById('title-input')
       .addEventListener('input', (e) => this._update('title', e.target.value));
+
+    const layoutSelect = this.shadowRoot.getElementById('layout-select');
+    const layoutInput = this.shadowRoot.getElementById('layout-input');
+    if (layoutSelect) {
+      layoutSelect.addEventListener('change', (e) => this._update('layout', e.target.value || undefined));
+    }
+    if (layoutInput) {
+      layoutInput.addEventListener('input', (e) => this._update('layout', e.target.value || undefined));
+    }
   }
 
   _update(key, value) {
-    this._config[key] = value;
+    if (value === undefined || value === '') {
+      delete this._config[key];
+    } else {
+      this._config[key] = value;
+    }
     this.dispatchEvent(new CustomEvent('config-changed', {
       detail: { config: { ...this._config } },
       bubbles: true, composed: true,
