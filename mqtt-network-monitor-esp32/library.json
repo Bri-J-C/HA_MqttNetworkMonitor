@@ -1,0 +1,15 @@
+{
+  "name": "MQTTNetworkMonitor",
+  "version": "0.1.0",
+  "description": "Lightweight MQTT client for ESP32 network monitoring",
+  "keywords": "mqtt, monitoring, esp32, homeassistant",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/mqtt-network-monitor"
+  },
+  "frameworks": ["arduino"],
+  "platforms": ["espressif32"],
+  "dependencies": {
+    "knolleary/PubSubClient": "^2.8"
+  }
+}
