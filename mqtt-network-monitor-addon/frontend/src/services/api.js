@@ -86,11 +86,11 @@ export async function createGroup(id, name, deviceIds = []) {
   return res.json();
 }
 
-export async function updateGroup(groupId, { name, device_ids, custom_commands, custom_sensors, thresholds }) {
+export async function updateGroup(groupId, { name, device_ids, custom_commands, custom_sensors, thresholds, hidden_commands }) {
   const res = await fetch(`${BASE}/api/groups/${groupId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, device_ids, custom_commands, custom_sensors, thresholds }),
+    body: JSON.stringify({ name, device_ids, custom_commands, custom_sensors, thresholds, hidden_commands }),
   });
   return res.json();
 }

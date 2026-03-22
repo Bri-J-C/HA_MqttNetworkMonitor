@@ -4,7 +4,7 @@ import {
   fetchSettings, updateSettings,
   fetchGroups, createGroup, updateGroup, deleteGroup,
   sendGroupCommand, pushGroupConfig,
-  fetchDevices,
+  fetchDevices, updateDeviceSettings,
 } from '../services/api.js';
 
 // Per-group ephemeral state for threshold add row (kept as module-level; not part of refactor)
@@ -1041,6 +1041,7 @@ class SettingsView extends LitElement {
       custom_commands: latest.custom_commands || {},
       custom_sensors: latest.custom_sensors || {},
       thresholds: cleanThresholds,
+      hidden_commands: latest.hidden_commands || [],
     };
     console.log('Saving group:', g.id, payload);
     try {
@@ -1107,6 +1108,16 @@ class SettingsView extends LitElement {
         },
       },
     };
+    // Also apply hidden_commands to each member device
+    const hiddenCmds = latest.hidden_commands || [];
+    if (hiddenCmds.length > 0) {
+      for (const did of (latest.device_ids || [])) {
+        try {
+          await updateDeviceSettings(did, { hidden_commands: hiddenCmds });
+        } catch (e) { console.error(`Failed to set hidden_commands on ${did}:`, e); }
+      }
+    }
+
     console.log('Deploy to group:', g.id, 'config:', JSON.stringify(config));
     this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Deploying...' };
     try {

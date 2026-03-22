@@ -206,7 +206,8 @@ class DeviceRegistry:
                      device_ids: list[str] | None = None,
                      custom_commands: dict | None = None,
                      custom_sensors: dict | None = None,
-                     thresholds: dict | None = None) -> dict | None:
+                     thresholds: dict | None = None,
+                     hidden_commands: list | None = None) -> dict | None:
         group = self._groups.get(group_id)
         if not group:
             return None
@@ -233,6 +234,8 @@ class DeviceRegistry:
             group["custom_sensors"] = custom_sensors
         if thresholds is not None:
             group["thresholds"] = thresholds
+        if hidden_commands is not None:
+            group["hidden_commands"] = hidden_commands
         self._save_groups()
         return group
 
