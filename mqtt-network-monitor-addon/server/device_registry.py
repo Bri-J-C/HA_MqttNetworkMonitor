@@ -214,18 +214,17 @@ class DeviceRegistry:
         if device_ids is not None:
             old_ids = set(group.get("device_ids") or [])
             new_ids = set(device_ids)
-            # Devices added to this group: set their group_policy
-            for did in new_ids - old_ids:
-                device = self._devices.get(did)
-                if device is not None:
-                    device["group_policy"] = group_id
             # Devices removed from this group: clear group_policy if it pointed here
             for did in old_ids - new_ids:
                 device = self._devices.get(did)
                 if device is not None and device.get("group_policy") == group_id:
                     device["group_policy"] = None
-            if old_ids != new_ids:
-                self._save_devices()
+            # ALL current members should have group_policy set to this group
+            for did in new_ids:
+                device = self._devices.get(did)
+                if device is not None:
+                    device["group_policy"] = group_id
+            self._save_devices()
             group["device_ids"] = device_ids
         if custom_commands is not None:
             group["custom_commands"] = custom_commands
