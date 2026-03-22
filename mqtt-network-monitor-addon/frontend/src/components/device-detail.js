@@ -517,8 +517,10 @@ class DeviceDetail extends LitElement {
     this._serverCommands = updated;
     this._localChanges   = true;
     await updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
-    // Push updated commands to client
+    // Push updated commands to client (removes from whitelist)
     await pushDeviceConfig(this.deviceId, { commands: updated });
+    // Reload device to get updated allowed_commands
+    await this._loadDevice();
   }
 
   // ── Config event handlers ──────────────────────────────────────────────────

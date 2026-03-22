@@ -86,7 +86,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.1.0 build ${"3/22 19:50"}</span>
+        <span class="version">v0.1.0 build ${"3/22 19:54"}</span>
       </nav>
     `}_navigate(e){this.dispatchEvent(new CustomEvent("view-change",{detail:{view:e}}))}}customElements.define("nav-bar",pe);const he=function(){const e=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);return e?e[1]:""}();async function ue(e,t={}){const s=await fetch(e,t);if(!s.ok){const e=await s.text().catch(()=>s.statusText);throw new Error(`API error ${s.status}: ${e}`)}const o=s.headers.get("content-type");return o&&o.includes("application/json")?s.json():null}async function ge(e=0){return ue(e>0?`${he}/api/devices?since=${e}`:`${he}/api/devices`)}async function me(e){return ue(`${he}/api/devices/${e}`)}async function be(){return ue(`${he}/api/topology`)}async function ve(e){return ue(`${he}/api/topology/layouts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})}async function fe(){return ue(`${he}/api/groups`)}async function _e(e,t,s=[]){return ue(`${he}/api/groups`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e,name:t,device_ids:s})})}async function xe(e,{name:t,device_ids:s,custom_commands:o,custom_sensors:i,thresholds:a,hidden_commands:n}){return ue(`${he}/api/groups/${e}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t,device_ids:s,custom_commands:o,custom_sensors:i,thresholds:a,hidden_commands:n})})}async function ye(){return ue(`${he}/api/tags`)}async function $e(e){return ue(`${he}/api/tags`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tag:e})})}async function we(e){return ue(`${he}/api/tags/${encodeURIComponent(e)}`,{method:"DELETE"})}async function ke(e){return ue(`${he}/api/devices/${e}/effective-settings`)}async function Se(e,t){return ue(`${he}/api/devices/${e}/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function Ce(e,t){return ue(`${he}/api/devices/${e}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}class Ee extends de{static properties={selectedTags:{type:Array},_allTags:{type:Array,state:!0},_open:{type:Boolean,state:!0},_showCreate:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_creating:{type:Boolean,state:!0}};static styles=a`
     :host { display: inline-block; position: relative; }
@@ -344,26 +344,29 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       font-size: 12px; color: #666; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 12px; font-weight: 600;
     }
-
-    .commands { display: flex; gap: 8px; flex-wrap: wrap; }
+    .commands { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cmd-wrap {
+      display: inline-flex; position: relative;
+    }
     .cmd-btn {
-      background: #3a3a5a; border: none; color: #ccc; padding: 8px 16px;
+      background: #3a3a5a; border: none; color: #ccc; padding: 8px 14px;
       border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s;
     }
     .cmd-btn:hover { background: #4a4a6a; }
     .cmd-btn.danger { background: #5a2a2a; color: #ef5350; }
     .cmd-btn.danger:hover { background: #6a3a3a; }
+    .cmd-eye {
+      position: absolute; top: -4px; right: -4px;
+      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 50%;
+      width: 16px; height: 16px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; font-size: 9px;
+      color: #666; transition: all 0.15s; line-height: 1;
+    }
+    .cmd-eye:hover { color: #4fc3f7; border-color: #4fc3f7; background: #1a2a3e; }
     .cmd-result {
       margin-top: 8px; padding: 8px 12px; background: #1a1a2e;
       border-radius: 4px; font-size: 12px; color: #aaa; font-family: monospace;
     }
-
-    .attr-delete {
-      font-size: 14px; color: #555; cursor: pointer; line-height: 1;
-    }
-    .attr-delete:hover { color: #ef5350; }
-
-    /* Sensor / command table */
     .sensor-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     .sensor-table th {
       text-align: left; font-size: 10px; color: #666; text-transform: uppercase;
@@ -371,8 +374,8 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     }
     .sensor-table td {
       font-size: 12px; color: #ccc; padding: 7px 8px; border-bottom: 1px solid #2a2a4a;
-      font-family: monospace;
     }
+    .sensor-table td.mono { font-family: monospace; font-size: 11px; }
     .sensor-table tr:last-child td { border-bottom: none; }
     .sensor-actions { display: flex; gap: 4px; }
     .sensor-btn {
@@ -383,8 +386,6 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .sensor-btn.edit:hover  { background: rgba(79,195,247,0.1); }
     .sensor-btn.remove { color: #666; }
     .sensor-btn.remove:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
-
-    /* Add/edit form */
     .sensor-form {
       background: #1a1a2e; border-radius: 6px; padding: 14px; margin-bottom: 12px;
     }
@@ -403,42 +404,43 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     }
     .form-btn.save   { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
     .form-btn.cancel { background: #3a3a5a; color: #aaa; }
+    .add-btn {
+      background: none; border: 1px dashed #3a3a5a; color: #666; padding: 6px 14px;
+      border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.15s;
+      margin-top: 8px;
+    }
+    .add-btn:hover { border-color: #4fc3f7; color: #4fc3f7; }
   `;constructor(){super(),this.device=null,this.serverCommands={},this.commandResult="",this._showHiddenCmds=!1,this._showAddCommand=!1,this._editingCommandName=null,this._editCommandForm=null}render(){if(!this.device)return H``;const e=this.device.allowed_commands||[],t=this.serverCommands||{},s=Object.keys(t),o=[...new Set([...e,...s])],i=this.device.hidden_commands||[],a=o.filter(e=>!i.includes(e)),n=o.filter(e=>i.includes(e));return H`
       <div class="section">
         <div class="section-title">Commands</div>
 
-        <!-- Run buttons -->
         ${a.length>0?H`
           <div class="commands" style="margin-bottom: 12px;">
             ${a.map(e=>H`
-              <span style="display: inline-flex; align-items: center; gap: 0;">
+              <span class="cmd-wrap">
                 <button class="cmd-btn ${function(e){const t=e.toLowerCase();return Te.some(e=>t.includes(e))}(e)?"danger":""}"
-                  @click=${()=>this._onSend(e)}>
-                  ${e}
-                </button><span class="attr-delete" style="margin-left: -4px;" title="Hide command"
-                  @click=${t=>{t.stopPropagation(),this._onHide(e)}}>&times;</span>
+                  @click=${()=>this._onSend(e)}>${e}</button>
+                <span class="cmd-eye" title="Hide command"
+                  @click=${t=>{t.stopPropagation(),this._onHide(e)}}>&#128065;</span>
               </span>
             `)}
           </div>
         `:""}
         ${this.commandResult?H`<div class="cmd-result">${this.commandResult}</div>`:""}
 
-        <!-- Server command table -->
         ${s.length>0?H`
           <div style="margin-top: 8px; font-size: 11px; color: #555; margin-bottom: 6px;">Server-managed commands</div>
           <table class="sensor-table">
-            <thead>
-              <tr><th>Name</th><th>Shell Command</th><th></th></tr>
-            </thead>
+            <thead><tr><th>Name</th><th>Shell Command</th><th></th></tr></thead>
             <tbody>
               ${Object.entries(t).map(([e,t])=>H`
                 <tr>
                   <td>${e}</td>
-                  <td style="font-family: monospace; font-size: 11px;">${t}</td>
+                  <td class="mono">${t}</td>
                   <td>
                     <div class="sensor-actions">
-                      <button class="sensor-btn edit"   @click=${()=>this._startEdit(e,t)}>Edit</button>
-                      <button class="sensor-btn remove" @click=${()=>this._onRemove(e)}>Remove</button>
+                      <button class="sensor-btn edit" @click=${()=>this._startEdit(e,t)}>Edit</button>
+                      <button class="sensor-btn remove" @click=${()=>this._onRemove(e)}>Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -447,7 +449,6 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </table>
         `:""}
 
-        <!-- Add/Edit form -->
         ${this._editingCommandName||this._showAddCommand?H`
           <div class="sensor-form" style="margin-top: 8px;">
             <div class="sensor-form-grid">
@@ -455,32 +456,30 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
                 .value=${this._editCommandForm?.name||""}
                 ?disabled=${!!this._editingCommandName}
                 @input=${e=>this._editCommandForm={...this._editCommandForm,name:e.target.value}}>
-              <input type="text" placeholder="Shell command (e.g. systemctl restart nginx)"
+              <input type="text" placeholder="Shell command (e.g. notify-send 'Hello')"
                 .value=${this._editCommandForm?.shell||""}
                 @input=${e=>this._editCommandForm={...this._editCommandForm,shell:e.target.value}}
                 @keydown=${e=>"Enter"===e.key&&this._saveForm()}>
             </div>
             <div class="sensor-form-actions">
-              <button class="form-btn save"   @click=${this._saveForm}>${this._editingCommandName?"Update":"Add"}</button>
+              <button class="form-btn save" @click=${this._saveForm}>${this._editingCommandName?"Update":"Add"}</button>
               <button class="form-btn cancel" @click=${this._cancelForm}>Cancel</button>
             </div>
           </div>
         `:H`
-          <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px; margin-top: 8px;"
-            @click=${this._startAdd}>+ Add Command</button>
+          <button class="add-btn" @click=${this._startAdd}>+ Add Command</button>
         `}
 
-        <!-- Hidden commands -->
         ${n.length>0?H`
           <div style="margin-top: 12px;">
             <div style="font-size: 10px; color: #555; margin-bottom: 6px; cursor: pointer;"
               @click=${()=>this._showHiddenCmds=!this._showHiddenCmds}>
-              ${this._showHiddenCmds?"▾":"▸"} ${n.length} hidden command${1!==n.length?"s":""}
+              ${this._showHiddenCmds?"▾":"▸"} ${n.length} hidden
             </div>
             ${this._showHiddenCmds?H`
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 ${n.map(e=>H`
-                  <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                  <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px;">
                     ${e}
                     <span style="cursor: pointer; color: #4fc3f7; font-size: 10px;"
                       @click=${()=>this._onUnhide(e)}>show</span>
@@ -903,7 +902,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           `)}
         </div>
       </div>
-    `}async _deleteAttribute(e){if(confirm(`Hide attribute "${e}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`))try{await async function(e,t){return ue(`${he}/api/devices/${e}/attributes/${t}`,{method:"DELETE"})}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to hide attribute:",e)}}async _unhideAttribute(e){try{await async function(e,t){return ue(`${he}/api/devices/${e}/attributes/${t}/unhide`,{method:"POST"})}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to unhide attribute:",e)}}async _toggleHaExposure(e){const t=void 0!==this._haOverrides[e]?this._haOverrides[e]:void 0===this._effectiveSettings?.ha_exposure_overrides?.[e]||this._effectiveSettings.ha_exposure_overrides[e];this._haOverrides={...this._haOverrides,[e]:!t},this._localChanges=!0;try{await Se(this.deviceId,{ha_exposure_overrides:this._haOverrides})}catch(e){console.error("Failed to update HA exposure:",e)}}async _setThreshold(e,t,s){const o={...this.device.threshold_overrides||{}};""===t||null==t?delete o[e]:o[e]={op:s||">",value:Number(t)};try{await Se(this.deviceId,{threshold_overrides:o}),this.device={...this.device,threshold_overrides:o},this._effectiveSettings=await ke(this.deviceId)}catch(e){console.error("Failed to set threshold:",e)}}async _sendCmd(e,t={}){try{this.commandResult=`Sending ${e}...`;const s=await async function(e,t,s={}){return ue(`${he}/api/devices/${e}/command`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:t,params:s})})}(this.deviceId,e,t);this.commandResult=`Command sent (request: ${s.request_id})`}catch(e){this.commandResult=`Error: ${e.message}`}}async _hideCommand(e){try{await async function(e,t){return ue(`${he}/api/devices/${e}/commands/${t}`,{method:"DELETE"})}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to hide command:",e)}}async _unhideCommand(e){try{await async function(e,t){return ue(`${he}/api/devices/${e}/commands/${t}/unhide`,{method:"POST"})}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to unhide command:",e)}}async _saveServerCommand({name:e,shell:t}){this._serverCommands={...this._serverCommands,[e]:t},this._localChanges=!0,await Se(this.deviceId,{server_commands:this._serverCommands}),await Ce(this.deviceId,{commands:{[e]:t}})}async _removeServerCommand(e){const t={...this._serverCommands};delete t[e],this._serverCommands=t,this._localChanges=!0,await Se(this.deviceId,{server_commands:this._serverCommands}),await Ce(this.deviceId,{commands:t})}_saveSensor({key:e,sensor:t,oldKey:s}){const o={...this._customSensors};s&&s!==e&&delete o[s],o[e]=t,this._customSensors=o,this._localChanges=!0}_removeSensor(e){const t={...this._customSensors};delete t[e],this._customSensors=t,this._localChanges=!0}async _pushConfig(){this._pushing=!0,this._pushStatus="";try{const e={interval:this._configInterval,plugins:{custom_command:{commands:this._customSensors}},commands:this._serverCommands};console.log("Pushing config:",e);const t=await Ce(this.deviceId,e);console.log("Push result:",t),t&&t.detail?this._pushStatus=`Push failed: ${t.detail}`:(this._lastPushed=(new Date).toLocaleTimeString(),this._localChanges=!1,this._pushStatus="Config synced")}catch(e){console.error("Push config error:",e),this._pushStatus=`Push failed: ${e.message}`}finally{this._pushing=!1}}async _deleteDevice(){if(confirm(`Delete device "${this.device?.device_name||this.deviceId}"? This removes it from the registry. It will reappear if the client agent is still running.`))try{await async function(e){return ue(`${he}/api/devices/${e}`,{method:"DELETE"})}(this.deviceId),this.dispatchEvent(new CustomEvent("back"))}catch(e){console.error("Failed to delete device:",e)}}}customElements.define("device-detail",Ne);const Ge={online:"#81c784",offline:"#ef5350",warning:"#ffb74d",inferred:"#4fc3f7",unknown:"#666"};class Oe extends de{static properties={topology:{type:Object},layouts:{type:Object},selectedLayout:{type:String},editMode:{type:Boolean},linkMode:{type:Boolean},selectedNode:{type:String},nodePositions:{type:Object},manualEdges:{type:Array},_dragging:{type:String,state:!0},_linkSource:{type:String,state:!0},_error:{type:String,state:!0},_loading:{type:Boolean,state:!0},_selectedEdge:{type:Number,state:!0},_selectedDeviceData:{type:Object,state:!0},_dirty:{type:Boolean,state:!0},_showSaveDialog:{type:Boolean,state:!0},_showLabelDialog:{type:Boolean,state:!0},_labelEdgeIndex:{type:Number,state:!0},hideAutoEdges:{type:Boolean}};static styles=a`
+    `}async _deleteAttribute(e){if(confirm(`Hide attribute "${e}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`))try{await async function(e,t){return ue(`${he}/api/devices/${e}/attributes/${t}`,{method:"DELETE"})}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to hide attribute:",e)}}async _unhideAttribute(e){try{await async function(e,t){return ue(`${he}/api/devices/${e}/attributes/${t}/unhide`,{method:"POST"})}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to unhide attribute:",e)}}async _toggleHaExposure(e){const t=void 0!==this._haOverrides[e]?this._haOverrides[e]:void 0===this._effectiveSettings?.ha_exposure_overrides?.[e]||this._effectiveSettings.ha_exposure_overrides[e];this._haOverrides={...this._haOverrides,[e]:!t},this._localChanges=!0;try{await Se(this.deviceId,{ha_exposure_overrides:this._haOverrides})}catch(e){console.error("Failed to update HA exposure:",e)}}async _setThreshold(e,t,s){const o={...this.device.threshold_overrides||{}};""===t||null==t?delete o[e]:o[e]={op:s||">",value:Number(t)};try{await Se(this.deviceId,{threshold_overrides:o}),this.device={...this.device,threshold_overrides:o},this._effectiveSettings=await ke(this.deviceId)}catch(e){console.error("Failed to set threshold:",e)}}async _sendCmd(e,t={}){try{this.commandResult=`Sending ${e}...`;const s=await async function(e,t,s={}){return ue(`${he}/api/devices/${e}/command`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:t,params:s})})}(this.deviceId,e,t);this.commandResult=`Command sent (request: ${s.request_id})`}catch(e){this.commandResult=`Error: ${e.message}`}}async _hideCommand(e){try{await async function(e,t){return ue(`${he}/api/devices/${e}/commands/${t}`,{method:"DELETE"})}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to hide command:",e)}}async _unhideCommand(e){try{await async function(e,t){return ue(`${he}/api/devices/${e}/commands/${t}/unhide`,{method:"POST"})}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to unhide command:",e)}}async _saveServerCommand({name:e,shell:t}){this._serverCommands={...this._serverCommands,[e]:t},this._localChanges=!0,await Se(this.deviceId,{server_commands:this._serverCommands}),await Ce(this.deviceId,{commands:{[e]:t}})}async _removeServerCommand(e){const t={...this._serverCommands};delete t[e],this._serverCommands=t,this._localChanges=!0,await Se(this.deviceId,{server_commands:this._serverCommands}),await Ce(this.deviceId,{commands:t}),await this._loadDevice()}_saveSensor({key:e,sensor:t,oldKey:s}){const o={...this._customSensors};s&&s!==e&&delete o[s],o[e]=t,this._customSensors=o,this._localChanges=!0}_removeSensor(e){const t={...this._customSensors};delete t[e],this._customSensors=t,this._localChanges=!0}async _pushConfig(){this._pushing=!0,this._pushStatus="";try{const e={interval:this._configInterval,plugins:{custom_command:{commands:this._customSensors}},commands:this._serverCommands};console.log("Pushing config:",e);const t=await Ce(this.deviceId,e);console.log("Push result:",t),t&&t.detail?this._pushStatus=`Push failed: ${t.detail}`:(this._lastPushed=(new Date).toLocaleTimeString(),this._localChanges=!1,this._pushStatus="Config synced")}catch(e){console.error("Push config error:",e),this._pushStatus=`Push failed: ${e.message}`}finally{this._pushing=!1}}async _deleteDevice(){if(confirm(`Delete device "${this.device?.device_name||this.deviceId}"? This removes it from the registry. It will reappear if the client agent is still running.`))try{await async function(e){return ue(`${he}/api/devices/${e}`,{method:"DELETE"})}(this.deviceId),this.dispatchEvent(new CustomEvent("back"))}catch(e){console.error("Failed to delete device:",e)}}}customElements.define("device-detail",Ne);const Ge={online:"#81c784",offline:"#ef5350",warning:"#ffb74d",inferred:"#4fc3f7",unknown:"#666"};class Oe extends de{static properties={topology:{type:Object},layouts:{type:Object},selectedLayout:{type:String},editMode:{type:Boolean},linkMode:{type:Boolean},selectedNode:{type:String},nodePositions:{type:Object},manualEdges:{type:Array},_dragging:{type:String,state:!0},_linkSource:{type:String,state:!0},_error:{type:String,state:!0},_loading:{type:Boolean,state:!0},_selectedEdge:{type:Number,state:!0},_selectedDeviceData:{type:Object,state:!0},_dirty:{type:Boolean,state:!0},_showSaveDialog:{type:Boolean,state:!0},_showLabelDialog:{type:Boolean,state:!0},_labelEdgeIndex:{type:Number,state:!0},hideAutoEdges:{type:Boolean}};static styles=a`
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
     .toolbar {
       display: flex; justify-content: space-between; align-items: center;

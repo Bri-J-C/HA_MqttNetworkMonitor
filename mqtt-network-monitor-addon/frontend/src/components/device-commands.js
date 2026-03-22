@@ -7,21 +7,6 @@ function isDangerous(cmd) {
   return DANGEROUS_COMMANDS.some(d => lower.includes(d));
 }
 
-/**
- * device-commands — command buttons, server command table, add/edit/remove, hide/unhide.
- *
- * Properties:
- *   device         {Object} — full device record
- *   serverCommands {Object} — server-managed commands (name → shell_cmd)
- *   commandResult  {String} — result text shown below buttons
- *
- * Events fired:
- *   command-send           {command}           — user clicked a command button
- *   command-hide           {name}              — user hid a command
- *   command-unhide         {name}              — user un-hid a command
- *   server-command-save    {name, shell}       — user saved add/edit form
- *   server-command-remove  {name}              — user removed a server command
- */
 class DeviceCommands extends LitElement {
   static properties = {
     device:             { type: Object },
@@ -42,26 +27,29 @@ class DeviceCommands extends LitElement {
       font-size: 12px; color: #666; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 12px; font-weight: 600;
     }
-
-    .commands { display: flex; gap: 8px; flex-wrap: wrap; }
+    .commands { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cmd-wrap {
+      display: inline-flex; position: relative;
+    }
     .cmd-btn {
-      background: #3a3a5a; border: none; color: #ccc; padding: 8px 16px;
+      background: #3a3a5a; border: none; color: #ccc; padding: 8px 14px;
       border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s;
     }
     .cmd-btn:hover { background: #4a4a6a; }
     .cmd-btn.danger { background: #5a2a2a; color: #ef5350; }
     .cmd-btn.danger:hover { background: #6a3a3a; }
+    .cmd-eye {
+      position: absolute; top: -4px; right: -4px;
+      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 50%;
+      width: 16px; height: 16px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; font-size: 9px;
+      color: #666; transition: all 0.15s; line-height: 1;
+    }
+    .cmd-eye:hover { color: #4fc3f7; border-color: #4fc3f7; background: #1a2a3e; }
     .cmd-result {
       margin-top: 8px; padding: 8px 12px; background: #1a1a2e;
       border-radius: 4px; font-size: 12px; color: #aaa; font-family: monospace;
     }
-
-    .attr-delete {
-      font-size: 14px; color: #555; cursor: pointer; line-height: 1;
-    }
-    .attr-delete:hover { color: #ef5350; }
-
-    /* Sensor / command table */
     .sensor-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     .sensor-table th {
       text-align: left; font-size: 10px; color: #666; text-transform: uppercase;
@@ -69,8 +57,8 @@ class DeviceCommands extends LitElement {
     }
     .sensor-table td {
       font-size: 12px; color: #ccc; padding: 7px 8px; border-bottom: 1px solid #2a2a4a;
-      font-family: monospace;
     }
+    .sensor-table td.mono { font-family: monospace; font-size: 11px; }
     .sensor-table tr:last-child td { border-bottom: none; }
     .sensor-actions { display: flex; gap: 4px; }
     .sensor-btn {
@@ -81,8 +69,6 @@ class DeviceCommands extends LitElement {
     .sensor-btn.edit:hover  { background: rgba(79,195,247,0.1); }
     .sensor-btn.remove { color: #666; }
     .sensor-btn.remove:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
-
-    /* Add/edit form */
     .sensor-form {
       background: #1a1a2e; border-radius: 6px; padding: 14px; margin-bottom: 12px;
     }
@@ -101,6 +87,12 @@ class DeviceCommands extends LitElement {
     }
     .form-btn.save   { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
     .form-btn.cancel { background: #3a3a5a; color: #aaa; }
+    .add-btn {
+      background: none; border: 1px dashed #3a3a5a; color: #666; padding: 6px 14px;
+      border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.15s;
+      margin-top: 8px;
+    }
+    .add-btn:hover { border-color: #4fc3f7; color: #4fc3f7; }
   `;
 
   constructor() {
@@ -116,50 +108,45 @@ class DeviceCommands extends LitElement {
 
   render() {
     if (!this.device) return html``;
-    const clientCommands   = this.device.allowed_commands || [];
-    const serverCmds       = this.serverCommands || {};
-    const serverCommandNames = Object.keys(serverCmds);
-    const allCommandNames  = [...new Set([...clientCommands, ...serverCommandNames])];
-    const hidden           = this.device.hidden_commands || [];
-    const visibleCommands  = allCommandNames.filter(c => !hidden.includes(c));
-    const hiddenCommands   = allCommandNames.filter(c =>  hidden.includes(c));
+    const clientCommands     = this.device.allowed_commands || [];
+    const serverCmds         = this.serverCommands || {};
+    const serverNames        = Object.keys(serverCmds);
+    const allNames           = [...new Set([...clientCommands, ...serverNames])];
+    const hidden             = this.device.hidden_commands || [];
+    const visible            = allNames.filter(c => !hidden.includes(c));
+    const hiddenList         = allNames.filter(c => hidden.includes(c));
 
     return html`
       <div class="section">
         <div class="section-title">Commands</div>
 
-        <!-- Run buttons -->
-        ${visibleCommands.length > 0 ? html`
+        ${visible.length > 0 ? html`
           <div class="commands" style="margin-bottom: 12px;">
-            ${visibleCommands.map(cmd => html`
-              <span style="display: inline-flex; align-items: center; gap: 0;">
+            ${visible.map(cmd => html`
+              <span class="cmd-wrap">
                 <button class="cmd-btn ${isDangerous(cmd) ? 'danger' : ''}"
-                  @click=${() => this._onSend(cmd)}>
-                  ${cmd}
-                </button><span class="attr-delete" style="margin-left: -4px;" title="Hide command"
-                  @click=${(e) => { e.stopPropagation(); this._onHide(cmd); }}>&times;</span>
+                  @click=${() => this._onSend(cmd)}>${cmd}</button>
+                <span class="cmd-eye" title="Hide command"
+                  @click=${(e) => { e.stopPropagation(); this._onHide(cmd); }}>&#128065;</span>
               </span>
             `)}
           </div>
         ` : ''}
         ${this.commandResult ? html`<div class="cmd-result">${this.commandResult}</div>` : ''}
 
-        <!-- Server command table -->
-        ${serverCommandNames.length > 0 ? html`
+        ${serverNames.length > 0 ? html`
           <div style="margin-top: 8px; font-size: 11px; color: #555; margin-bottom: 6px;">Server-managed commands</div>
           <table class="sensor-table">
-            <thead>
-              <tr><th>Name</th><th>Shell Command</th><th></th></tr>
-            </thead>
+            <thead><tr><th>Name</th><th>Shell Command</th><th></th></tr></thead>
             <tbody>
               ${Object.entries(serverCmds).map(([name, shellCmd]) => html`
                 <tr>
                   <td>${name}</td>
-                  <td style="font-family: monospace; font-size: 11px;">${shellCmd}</td>
+                  <td class="mono">${shellCmd}</td>
                   <td>
                     <div class="sensor-actions">
-                      <button class="sensor-btn edit"   @click=${() => this._startEdit(name, shellCmd)}>Edit</button>
-                      <button class="sensor-btn remove" @click=${() => this._onRemove(name)}>Remove</button>
+                      <button class="sensor-btn edit" @click=${() => this._startEdit(name, shellCmd)}>Edit</button>
+                      <button class="sensor-btn remove" @click=${() => this._onRemove(name)}>Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -168,7 +155,6 @@ class DeviceCommands extends LitElement {
           </table>
         ` : ''}
 
-        <!-- Add/Edit form -->
         ${this._editingCommandName || this._showAddCommand ? html`
           <div class="sensor-form" style="margin-top: 8px;">
             <div class="sensor-form-grid">
@@ -176,32 +162,30 @@ class DeviceCommands extends LitElement {
                 .value=${this._editCommandForm?.name || ''}
                 ?disabled=${!!this._editingCommandName}
                 @input=${(e) => this._editCommandForm = { ...this._editCommandForm, name: e.target.value }}>
-              <input type="text" placeholder="Shell command (e.g. systemctl restart nginx)"
+              <input type="text" placeholder="Shell command (e.g. notify-send 'Hello')"
                 .value=${this._editCommandForm?.shell || ''}
                 @input=${(e) => this._editCommandForm = { ...this._editCommandForm, shell: e.target.value }}
                 @keydown=${(e) => e.key === 'Enter' && this._saveForm()}>
             </div>
             <div class="sensor-form-actions">
-              <button class="form-btn save"   @click=${this._saveForm}>${this._editingCommandName ? 'Update' : 'Add'}</button>
+              <button class="form-btn save" @click=${this._saveForm}>${this._editingCommandName ? 'Update' : 'Add'}</button>
               <button class="form-btn cancel" @click=${this._cancelForm}>Cancel</button>
             </div>
           </div>
         ` : html`
-          <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px; margin-top: 8px;"
-            @click=${this._startAdd}>+ Add Command</button>
+          <button class="add-btn" @click=${this._startAdd}>+ Add Command</button>
         `}
 
-        <!-- Hidden commands -->
-        ${hiddenCommands.length > 0 ? html`
+        ${hiddenList.length > 0 ? html`
           <div style="margin-top: 12px;">
             <div style="font-size: 10px; color: #555; margin-bottom: 6px; cursor: pointer;"
               @click=${() => this._showHiddenCmds = !this._showHiddenCmds}>
-              ${this._showHiddenCmds ? '▾' : '▸'} ${hiddenCommands.length} hidden command${hiddenCommands.length !== 1 ? 's' : ''}
+              ${this._showHiddenCmds ? '\u25BE' : '\u25B8'} ${hiddenList.length} hidden
             </div>
             ${this._showHiddenCmds ? html`
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                ${hiddenCommands.map(cmd => html`
-                  <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                ${hiddenList.map(cmd => html`
+                  <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px;">
                     ${cmd}
                     <span style="cursor: pointer; color: #4fc3f7; font-size: 10px;"
                       @click=${() => this._onUnhide(cmd)}>show</span>
@@ -214,8 +198,6 @@ class DeviceCommands extends LitElement {
       </div>
     `;
   }
-
-  // ── Form helpers ───────────────────────────────────────────────────────────
 
   _startAdd() {
     this._showAddCommand     = true;
@@ -230,7 +212,7 @@ class DeviceCommands extends LitElement {
   }
 
   _saveForm() {
-    const form  = this._editCommandForm;
+    const form = this._editCommandForm;
     if (!form) return;
     const name  = (form.name  || '').trim();
     const shell = (form.shell || '').trim();
@@ -248,20 +230,15 @@ class DeviceCommands extends LitElement {
     this._editCommandForm    = null;
   }
 
-  // ── Event dispatchers ──────────────────────────────────────────────────────
-
   _onSend(command) {
     this.dispatchEvent(new CustomEvent('command-send', { detail: { command }, bubbles: true, composed: true }));
   }
-
   _onHide(name) {
     this.dispatchEvent(new CustomEvent('command-hide', { detail: { name }, bubbles: true, composed: true }));
   }
-
   _onUnhide(name) {
     this.dispatchEvent(new CustomEvent('command-unhide', { detail: { name }, bubbles: true, composed: true }));
   }
-
   _onRemove(name) {
     this.dispatchEvent(new CustomEvent('server-command-remove', { detail: { name }, bubbles: true, composed: true }));
   }
