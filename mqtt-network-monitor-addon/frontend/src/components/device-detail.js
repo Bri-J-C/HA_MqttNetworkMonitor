@@ -120,10 +120,16 @@ class DeviceDetail extends LitElement {
     .attr-ha-status.exposed { color: #4fc3f7; }
     .attr-tile.exceeded { border: 1px solid #ffb74d; }
     .attr-val.exceeded-val { color: #ffb74d; }
-    .attr-threshold {
-      font-size: 9px; color: #666; margin-top: 3px;
+    .attr-threshold-row {
+      display: flex; align-items: center; gap: 4px; margin-top: 4px;
     }
-    .attr-threshold.exceeded { color: #ffb74d; }
+    .threshold-inline {
+      width: 50px; background: transparent; border: 1px solid #3a3a5a;
+      border-radius: 3px; color: #aaa; padding: 2px 4px; font-size: 10px;
+      text-align: center;
+    }
+    .threshold-inline:focus { outline: none; border-color: #4fc3f7; color: #e0e0e0; }
+    .threshold-inline::placeholder { color: #444; }
 
     /* Toggle switch */
     .toggle-wrap { cursor: pointer; flex-shrink: 0; }
@@ -518,10 +524,11 @@ class DeviceDetail extends LitElement {
 
   _renderAttrTile(name, data) {
     const exposed = this._isExposed(name);
-    const fromGroup = this._fromGroup(name);
     const threshold = this._getThresholdForAttr(name);
     const currentVal = data.value != null ? data.value : null;
     const exceeded = threshold && currentVal != null && typeof currentVal === 'number' && currentVal > threshold.value;
+    const thresholdOverrides = this.device.threshold_overrides || {};
+    const localThreshold = thresholdOverrides[name];
 
     return html`
       <div class="attr-tile ${exposed ? '' : 'dimmed'} ${exceeded ? 'exceeded' : ''}">
@@ -537,18 +544,36 @@ class DeviceDetail extends LitElement {
           ${currentVal != null ? currentVal : '\u2014'}
           <span class="attr-unit">${data.unit || ''}</span>
         </div>
-        ${threshold ? html`
-          <div class="attr-threshold ${exceeded ? 'exceeded' : ''}">
-            ${exceeded ? '\u26A0 ' : ''}Threshold: ${threshold.value}${data.unit || ''}
-            <span style="color: #555;"> (${threshold.source})</span>
-          </div>
-        ` : ''}
-        <div class="attr-ha-status ${exposed ? 'exposed' : ''}">
-          ${exposed ? 'HA' : 'Not in HA'}
-          ${fromGroup ? html` <span style="color: #666;">&#8592; group</span>` : ''}
+        <div class="attr-threshold-row">
+          ${exceeded ? html`<span style="color: #ffb74d; font-size: 11px;">\u26A0</span>` : ''}
+          <span style="font-size: 9px; color: #666;">Warn &gt;</span>
+          <input class="threshold-inline" type="number"
+            placeholder="\u2014"
+            .value=${localThreshold != null ? String(localThreshold) : (threshold ? String(threshold.value) : '')}
+            @change=${(e) => this._setThreshold(name, e.target.value)}>
+          ${threshold && threshold.source !== 'device' && localThreshold == null ? html`
+            <span style="font-size: 8px; color: #555;">${threshold.source}</span>
+          ` : ''}
         </div>
       </div>
     `;
+  }
+
+  async _setThreshold(name, value) {
+    const overrides = { ...(this.device.threshold_overrides || {}) };
+    if (value === '' || value == null) {
+      delete overrides[name];
+    } else {
+      overrides[name] = Number(value);
+    }
+    try {
+      await updateDeviceSettings(this.deviceId, { threshold_overrides: overrides });
+      this.device = { ...this.device, threshold_overrides: overrides };
+      // Refresh effective settings
+      this._effectiveSettings = await fetchEffectiveSettings(this.deviceId);
+    } catch (e) {
+      console.error('Failed to set threshold:', e);
+    }
   }
 
   async _toggleHaExposure(name) {
