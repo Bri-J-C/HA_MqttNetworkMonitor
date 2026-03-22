@@ -1,0 +1,44 @@
+# MQTT Network Monitor — Client Configuration
+# Copy this file to config.yaml and customize for your device.
+
+mqtt:
+  broker: 192.168.1.10
+  port: 1883
+  # username: monitor
+  # password: secret
+
+device:
+  id: my-device           # Unique ID for this device (no spaces)
+  name: "My Device"       # Human-readable name
+  type: raspberry_pi      # Device type (raspberry_pi, linux, windows, esp32, etc.)
+  tags: [home, servers]   # Tags for grouping/filtering
+
+plugins:
+  system_resources:
+    interval: 30           # Collect every 30 seconds
+    attributes:
+      - cpu_usage
+      - memory_usage
+      - disk_usage
+      - cpu_temp
+      - uptime
+
+  network_info:
+    interval: 60
+    interfaces:
+      - eth0
+      # - wlan0
+
+  # custom_command:
+  #   commands:
+  #     my_metric:
+  #       command: "echo 42"
+  #       interval: 10
+  #       unit: ""
+
+# Commands that the server is allowed to execute remotely on this device.
+# Only commands listed here will be accepted — everything else is rejected.
+allowed_commands:
+  - reboot
+  - shutdown
+  # - restart_service
