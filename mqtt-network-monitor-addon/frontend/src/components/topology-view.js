@@ -1,6 +1,7 @@
 import { LitElement, html, svg, css } from 'lit';
-import { fetchTopology, fetchLayouts, saveLayout, deleteLayout, fetchDevice, sendCommand } from '../services/api.js';
+import { fetchTopology, fetchLayouts, saveLayout, deleteLayout } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
+import './device-detail.js';
 
 const STATUS_COLORS = {
   online: '#81c784',
@@ -25,8 +26,7 @@ class TopologyView extends LitElement {
     _error: { type: String, state: true },
     _loading: { type: Boolean, state: true },
     _selectedEdge: { type: Number, state: true },
-    _selectedDeviceData: { type: Object, state: true },
-    _commandResult: { type: String, state: true },
+    _selectedDeviceData: { type: Object, state: true },  // kept for compatibility
     _dirty: { type: Boolean, state: true },
     _showSaveDialog: { type: Boolean, state: true },
     _showLabelDialog: { type: Boolean, state: true },
@@ -578,108 +578,26 @@ class TopologyView extends LitElement {
   }
 
   _renderDetailPanel() {
+    if (!this.selectedNode) return html``;
+    // Check it's not a gateway node (no real device data)
     const node = this.topology.nodes.find(n => n.id === this.selectedNode);
-    if (!node) return html``;
-
-    const d = this._selectedDeviceData;
-    const color = STATUS_COLORS[node.status] || STATUS_COLORS.unknown;
-
-    // Still loading device data
-    if (!d) {
+    if (!node || node.type === 'gateway') {
       return html`
-        <div class="device-panel">
-          <div style="color: #888; font-size: 13px;">Loading device data...</div>
+        <div style="background: #2a2a4a; border-radius: 8px; padding: 14px; margin-top: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 16px; font-weight: 600; color: #4fc3f7;">${node ? node.name : this.selectedNode}</span>
+            <button class="tool-btn" @click=${() => { this.selectedNode = null; }}>✕</button>
+          </div>
+          <div style="color: #666; font-size: 12px; margin-top: 4px;">${node ? node.type : 'unknown'}</div>
         </div>
       `;
     }
 
-    const attrs = Object.entries(d.attributes || {});
-    const network = d.network || {};
-    const tags = d.tags || [];
-    const serverTags = d.server_tags || [];
-    const WARNING_THRESHOLDS = { cpu_usage: 90, memory_usage: 90, disk_usage: 95, cpu_temp: 80 };
-
     return html`
-      <div class="device-panel">
-        <div class="device-header">
-          <div>
-            <span class="device-title" style="color: ${color}">
-              ${d.device_name || this.selectedNode}
-            </span>
-            <span class="device-type">${d.device_type || node.type}</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="device-status-badge" style="background: ${color}20; color: ${color}">
-              ${d.status || node.status}
-            </span>
-            <button class="close-btn" @click=${() => { this.selectedNode = null; this._selectedDeviceData = null; }}>&times;</button>
-          </div>
-        </div>
-
-        ${(tags.length > 0 || serverTags.length > 0) ? html`
-          <div style="margin-bottom: 12px;">
-            <div class="tags-row">
-              ${tags.map(t => html`<span class="tag-badge">${t}</span>`)}
-              ${serverTags.map(t => html`<span class="tag-badge server">${t}</span>`)}
-            </div>
-          </div>
-        ` : ''}
-
-        ${attrs.length > 0 ? html`
-          <div class="device-section">
-            <div class="device-section-title">Attributes</div>
-            <div class="attr-grid">
-              ${attrs.map(([name, data]) => {
-                const threshold = WARNING_THRESHOLDS[name];
-                const isWarn = threshold && typeof data.value === 'number' && data.value > threshold;
-                return html`
-                  <div class="attr-item">
-                    <div class="attr-label">${name.replace(/_/g, ' ')}</div>
-                    <div class="attr-val ${isWarn ? 'warning' : ''}">
-                      ${data.value != null ? data.value : '—'}
-                      <span class="attr-unit">${data.unit || ''}</span>
-                    </div>
-                  </div>
-                `;
-              })}
-            </div>
-          </div>
-        ` : ''}
-
-        ${Object.keys(network).length > 0 ? html`
-          <div class="device-section">
-            <div class="device-section-title">Network</div>
-            <div class="network-grid">
-              ${Object.entries(network).map(([key, val]) => html`
-                <div class="net-item">
-                  <span class="net-label">${key}: </span>${val}
-                </div>
-              `)}
-            </div>
-          </div>
-        ` : ''}
-
-        <div class="device-section">
-          <div class="device-section-title">Commands</div>
-          ${d.allowed_commands && d.allowed_commands.length > 0 ? html`
-            <div class="commands-row">
-              ${d.allowed_commands.map(cmd => {
-                const DANGEROUS = ['shutdown', 'halt', 'poweroff', 'destroy'];
-                const danger = DANGEROUS.some(x => cmd.toLowerCase().includes(x));
-                return html`
-                  <button class="cmd-btn ${danger ? 'danger' : ''}"
-                    @click=${() => this._sendCmd(cmd)}>${cmd}</button>
-                `;
-              })}
-            </div>
-          ` : html`
-            <div style="font-size: 12px; color: #666; font-style: italic;">
-              No commands available — configure allowed_commands in the client's config.yaml
-            </div>
-          `}
-          ${this._commandResult ? html`<div class="cmd-result">${this._commandResult}</div>` : ''}
-        </div>
-      </div>
+      <device-detail
+        .deviceId=${this.selectedNode}
+        @back=${() => { this.selectedNode = null; this._selectedDeviceData = null; }}
+      ></device-detail>
     `;
   }
 
