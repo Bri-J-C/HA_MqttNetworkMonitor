@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import {
-  fetchDevice, deleteDevice, deleteAttribute, sendCommand, addDeviceTags, removeDeviceTag,
+  fetchDevice, deleteDevice, deleteAttribute, unhideAttribute, sendCommand, addDeviceTags, removeDeviceTag,
   fetchGroups, createGroup, updateGroup,
   fetchEffectiveSettings, updateDeviceSettings, pushDeviceConfig,
 } from '../services/api.js';
@@ -36,6 +36,7 @@ class DeviceDetail extends LitElement {
     _serverCommands: { type: Object, state: true },
     _newCommandName: { type: String, state: true },
     _newCommandShell: { type: String, state: true },
+    _showHidden: { type: Boolean, state: true },
   };
 
   static styles = css`
@@ -486,15 +487,38 @@ class DeviceDetail extends LitElement {
   // ── Section 4: Attributes + HA Exposure ───────────────────────────────────
 
   _renderAttributesSection() {
-    const attrs = Object.entries(this.device.attributes || {});
-    if (attrs.length === 0) return html``;
+    const allAttrs = Object.entries(this.device.attributes || {});
+    const hidden = this.device.hidden_attributes || [];
+    const visibleAttrs = allAttrs.filter(([name]) => !hidden.includes(name));
+    const hiddenAttrs = allAttrs.filter(([name]) => hidden.includes(name));
+
+    if (allAttrs.length === 0) return html``;
 
     return html`
       <div class="section">
-        <div class="section-title">Attributes &amp; HA Exposure</div>
+        <div class="section-title">Attributes</div>
         <div class="attr-grid">
-          ${attrs.map(([name, data]) => this._renderAttrTile(name, data))}
+          ${visibleAttrs.map(([name, data]) => this._renderAttrTile(name, data))}
         </div>
+        ${hiddenAttrs.length > 0 ? html`
+          <div style="margin-top: 12px;">
+            <div style="font-size: 10px; color: #555; margin-bottom: 6px; cursor: pointer;"
+              @click=${() => this._showHidden = !this._showHidden}>
+              ${this._showHidden ? '▾' : '▸'} ${hiddenAttrs.length} hidden attribute${hiddenAttrs.length !== 1 ? 's' : ''}
+            </div>
+            ${this._showHidden ? html`
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                ${hiddenAttrs.map(([name]) => html`
+                  <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                    ${name.replace(/_/g, ' ')}
+                    <span style="cursor: pointer; color: #4fc3f7; font-size: 10px;"
+                      @click=${() => this._unhideAttribute(name)}>show</span>
+                  </span>
+                `)}
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -621,12 +645,21 @@ class DeviceDetail extends LitElement {
   }
 
   async _deleteAttribute(name) {
-    if (!confirm(`Delete attribute "${name}"? It will reappear if the client is still reporting it.`)) return;
+    if (!confirm(`Hide attribute "${name}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`)) return;
     try {
       await deleteAttribute(this.deviceId, name);
       await this._loadDevice();
     } catch (e) {
-      console.error('Failed to delete attribute:', e);
+      console.error('Failed to hide attribute:', e);
+    }
+  }
+
+  async _unhideAttribute(name) {
+    try {
+      await unhideAttribute(this.deviceId, name);
+      await this._loadDevice();
+    } catch (e) {
+      console.error('Failed to unhide attribute:', e);
     }
   }
 

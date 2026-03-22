@@ -14,12 +14,12 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{createHTML:e=>e}):void 0,E="$lit$",A=`lit$${Math.random().toFixed(9).slice(2)}$`,C="?"+A,T=`<${C}>`,z=document,D=()=>z.createComment(""),N=e=>null===e||"object"!=typeof e&&"function"!=typeof e,P=Array.isArray,L="[ \t\n\f\r]",O=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,G=/-->/g,j=/>/g,M=RegExp(`>|${L}(?:([^\\s"'>=/]+)(${L}*=${L}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),U=/'/g,I=/"/g,R=/^(?:script|style|textarea|title)$/i,F=e=>(t,...s)=>({_$litType$:e,strings:t,values:s}),H=F(1),V=F(2),q=Symbol.for("lit-noChange"),B=Symbol.for("lit-nothing"),J=new WeakMap,W=z.createTreeWalker(z,129);function K(e,t){if(!P(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(t):t}const Y=(e,t)=>{const s=e.length-1,i=[];let o,a=2===t?"<svg>":3===t?"<math>":"",n=O;for(let t=0;t<s;t++){const s=e[t];let r,l,d=-1,c=0;for(;c<s.length&&(n.lastIndex=c,l=n.exec(s),null!==l);)c=n.lastIndex,n===O?"!--"===l[1]?n=G:void 0!==l[1]?n=j:void 0!==l[2]?(R.test(l[2])&&(o=RegExp("</"+l[2],"g")),n=M):void 0!==l[3]&&(n=M):n===M?">"===l[0]?(n=o??O,d=-1):void 0===l[1]?d=-2:(d=n.lastIndex-l[2].length,r=l[1],n=void 0===l[3]?M:'"'===l[3]?I:U):n===I||n===U?n=M:n===G||n===j?n=O:(n=M,o=void 0);const p=n===M&&e[t+1].startsWith("/>")?" ":"";a+=n===O?s+T:d>=0?(i.push(r),s.slice(0,d)+E+s.slice(d)+A+p):s+A+(-2===d?t:p)}return[K(e,a+(e[s]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),i]};class X{constructor({strings:e,_$litType$:t},s){let i;this.parts=[];let o=0,a=0;const n=e.length-1,r=this.parts,[l,d]=Y(e,t);if(this.el=X.createElement(l,s),W.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(i=W.nextNode())&&r.length<n;){if(1===i.nodeType){if(i.hasAttributes())for(const e of i.getAttributeNames())if(e.endsWith(E)){const t=d[a++],s=i.getAttribute(e).split(A),n=/([.?@])?(.*)/.exec(t);r.push({type:1,index:o,name:n[2],strings:s,ctor:"."===n[1]?se:"?"===n[1]?ie:"@"===n[1]?oe:te}),i.removeAttribute(e)}else e.startsWith(A)&&(r.push({type:6,index:o}),i.removeAttribute(e));if(R.test(i.tagName)){const e=i.textContent.split(A),t=e.length-1;if(t>0){i.textContent=k?k.emptyScript:"";for(let s=0;s<t;s++)i.append(e[s],D()),W.nextNode(),r.push({type:2,index:++o});i.append(e[t],D())}}}else if(8===i.nodeType)if(i.data===C)r.push({type:2,index:o});else{let e=-1;for(;-1!==(e=i.data.indexOf(A,e+1));)r.push({type:7,index:o}),e+=A.length-1}o++}}static createElement(e,t){const s=z.createElement("template");return s.innerHTML=e,s}}function Z(e,t,s=e,i){if(t===q)return t;let o=void 0!==i?s._$Co?.[i]:s._$Cl;const a=N(t)?void 0:t._$litDirective$;return o?.constructor!==a&&(o?._$AO?.(!1),void 0===a?o=void 0:(o=new a(e),o._$AT(e,s,i)),void 0!==i?(s._$Co??=[])[i]=o:s._$Cl=o),void 0!==o&&(t=Z(e,o._$AS(e,t.values),o,i)),t}class Q{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:s}=this._$AD,i=(e?.creationScope??z).importNode(t,!0);W.currentNode=i;let o=W.nextNode(),a=0,n=0,r=s[0];for(;void 0!==r;){if(a===r.index){let t;2===r.type?t=new ee(o,o.nextSibling,this,e):1===r.type?t=new r.ctor(o,r.name,r.strings,this,e):6===r.type&&(t=new ae(o,this,e)),this._$AV.push(t),r=s[++n]}a!==r?.index&&(o=W.nextNode(),a++)}return W.currentNode=z,i}p(e){let t=0;for(const s of this._$AV)void 0!==s&&(void 0!==s.strings?(s._$AI(e,s,t),t+=s.strings.length-2):s._$AI(e[t])),t++}}class ee{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,s,i){this.type=2,this._$AH=B,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=s,this.options=i,this._$Cv=i?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=Z(this,e,t),N(e)?e===B||null==e||""===e?(this._$AH!==B&&this._$AR(),this._$AH=B):e!==this._$AH&&e!==q&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>P(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==B&&N(this._$AH)?this._$AA.nextSibling.data=e:this.T(z.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:s}=e,i="number"==typeof s?this._$AC(e):(void 0===s.el&&(s.el=X.createElement(K(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===i)this._$AH.p(t);else{const e=new Q(i,this),s=e.u(this.options);e.p(t),this.T(s),this._$AH=e}}_$AC(e){let t=J.get(e.strings);return void 0===t&&J.set(e.strings,t=new X(e)),t}k(e){P(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let s,i=0;for(const o of e)i===t.length?t.push(s=new ee(this.O(D()),this.O(D()),this,this.options)):s=t[i],s._$AI(o),i++;i<t.length&&(this._$AR(s&&s._$AB.nextSibling,i),t.length=i)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=w(e).nextSibling;w(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class te{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,s,i,o){this.type=1,this._$AH=B,this._$AN=void 0,this.element=e,this.name=t,this._$AM=i,this.options=o,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=B}_$AI(e,t=this,s,i){const o=this.strings;let a=!1;if(void 0===o)e=Z(this,e,t,0),a=!N(e)||e!==this._$AH&&e!==q,a&&(this._$AH=e);else{const i=e;let n,r;for(e=o[0],n=0;n<o.length-1;n++)r=Z(this,i[s+n],t,n),r===q&&(r=this._$AH[n]),a||=!N(r)||r!==this._$AH[n],r===B?e=B:e!==B&&(e+=(r??"")+o[n+1]),this._$AH[n]=r}a&&!i&&this.j(e)}j(e){e===B?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class se extends te{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===B?void 0:e}}class ie extends te{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==B)}}class oe extends te{constructor(e,t,s,i,o){super(e,t,s,i,o),this.type=5}_$AI(e,t=this){if((e=Z(this,e,t,0)??B)===q)return;const s=this._$AH,i=e===B&&s!==B||e.capture!==s.capture||e.once!==s.once||e.passive!==s.passive,o=e!==B&&(s===B||i);i&&this.element.removeEventListener(this.name,this,s),o&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class ae{constructor(e,t,s){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=s}get _$AU(){return this._$AM._$AU}_$AI(e){Z(this,e)}}const ne=$.litHtmlPolyfillSupport;ne?.(X,ee),($.litHtmlVersions??=[]).push("3.3.2");const re=globalThis;
+const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{createHTML:e=>e}):void 0,E="$lit$",A=`lit$${Math.random().toFixed(9).slice(2)}$`,C="?"+A,T=`<${C}>`,z=document,D=()=>z.createComment(""),N=e=>null===e||"object"!=typeof e&&"function"!=typeof e,P=Array.isArray,L="[ \t\n\f\r]",O=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,G=/-->/g,j=/>/g,M=RegExp(`>|${L}(?:([^\\s"'>=/]+)(${L}*=${L}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),U=/'/g,I=/"/g,R=/^(?:script|style|textarea|title)$/i,H=e=>(t,...s)=>({_$litType$:e,strings:t,values:s}),F=H(1),B=H(2),V=Symbol.for("lit-noChange"),q=Symbol.for("lit-nothing"),J=new WeakMap,W=z.createTreeWalker(z,129);function K(e,t){if(!P(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(t):t}const Y=(e,t)=>{const s=e.length-1,i=[];let o,a=2===t?"<svg>":3===t?"<math>":"",n=O;for(let t=0;t<s;t++){const s=e[t];let r,l,d=-1,c=0;for(;c<s.length&&(n.lastIndex=c,l=n.exec(s),null!==l);)c=n.lastIndex,n===O?"!--"===l[1]?n=G:void 0!==l[1]?n=j:void 0!==l[2]?(R.test(l[2])&&(o=RegExp("</"+l[2],"g")),n=M):void 0!==l[3]&&(n=M):n===M?">"===l[0]?(n=o??O,d=-1):void 0===l[1]?d=-2:(d=n.lastIndex-l[2].length,r=l[1],n=void 0===l[3]?M:'"'===l[3]?I:U):n===I||n===U?n=M:n===G||n===j?n=O:(n=M,o=void 0);const p=n===M&&e[t+1].startsWith("/>")?" ":"";a+=n===O?s+T:d>=0?(i.push(r),s.slice(0,d)+E+s.slice(d)+A+p):s+A+(-2===d?t:p)}return[K(e,a+(e[s]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),i]};class X{constructor({strings:e,_$litType$:t},s){let i;this.parts=[];let o=0,a=0;const n=e.length-1,r=this.parts,[l,d]=Y(e,t);if(this.el=X.createElement(l,s),W.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(i=W.nextNode())&&r.length<n;){if(1===i.nodeType){if(i.hasAttributes())for(const e of i.getAttributeNames())if(e.endsWith(E)){const t=d[a++],s=i.getAttribute(e).split(A),n=/([.?@])?(.*)/.exec(t);r.push({type:1,index:o,name:n[2],strings:s,ctor:"."===n[1]?se:"?"===n[1]?ie:"@"===n[1]?oe:te}),i.removeAttribute(e)}else e.startsWith(A)&&(r.push({type:6,index:o}),i.removeAttribute(e));if(R.test(i.tagName)){const e=i.textContent.split(A),t=e.length-1;if(t>0){i.textContent=k?k.emptyScript:"";for(let s=0;s<t;s++)i.append(e[s],D()),W.nextNode(),r.push({type:2,index:++o});i.append(e[t],D())}}}else if(8===i.nodeType)if(i.data===C)r.push({type:2,index:o});else{let e=-1;for(;-1!==(e=i.data.indexOf(A,e+1));)r.push({type:7,index:o}),e+=A.length-1}o++}}static createElement(e,t){const s=z.createElement("template");return s.innerHTML=e,s}}function Z(e,t,s=e,i){if(t===V)return t;let o=void 0!==i?s._$Co?.[i]:s._$Cl;const a=N(t)?void 0:t._$litDirective$;return o?.constructor!==a&&(o?._$AO?.(!1),void 0===a?o=void 0:(o=new a(e),o._$AT(e,s,i)),void 0!==i?(s._$Co??=[])[i]=o:s._$Cl=o),void 0!==o&&(t=Z(e,o._$AS(e,t.values),o,i)),t}class Q{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:s}=this._$AD,i=(e?.creationScope??z).importNode(t,!0);W.currentNode=i;let o=W.nextNode(),a=0,n=0,r=s[0];for(;void 0!==r;){if(a===r.index){let t;2===r.type?t=new ee(o,o.nextSibling,this,e):1===r.type?t=new r.ctor(o,r.name,r.strings,this,e):6===r.type&&(t=new ae(o,this,e)),this._$AV.push(t),r=s[++n]}a!==r?.index&&(o=W.nextNode(),a++)}return W.currentNode=z,i}p(e){let t=0;for(const s of this._$AV)void 0!==s&&(void 0!==s.strings?(s._$AI(e,s,t),t+=s.strings.length-2):s._$AI(e[t])),t++}}class ee{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,s,i){this.type=2,this._$AH=q,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=s,this.options=i,this._$Cv=i?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=Z(this,e,t),N(e)?e===q||null==e||""===e?(this._$AH!==q&&this._$AR(),this._$AH=q):e!==this._$AH&&e!==V&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>P(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==q&&N(this._$AH)?this._$AA.nextSibling.data=e:this.T(z.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:s}=e,i="number"==typeof s?this._$AC(e):(void 0===s.el&&(s.el=X.createElement(K(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===i)this._$AH.p(t);else{const e=new Q(i,this),s=e.u(this.options);e.p(t),this.T(s),this._$AH=e}}_$AC(e){let t=J.get(e.strings);return void 0===t&&J.set(e.strings,t=new X(e)),t}k(e){P(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let s,i=0;for(const o of e)i===t.length?t.push(s=new ee(this.O(D()),this.O(D()),this,this.options)):s=t[i],s._$AI(o),i++;i<t.length&&(this._$AR(s&&s._$AB.nextSibling,i),t.length=i)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=w(e).nextSibling;w(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class te{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,s,i,o){this.type=1,this._$AH=q,this._$AN=void 0,this.element=e,this.name=t,this._$AM=i,this.options=o,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=q}_$AI(e,t=this,s,i){const o=this.strings;let a=!1;if(void 0===o)e=Z(this,e,t,0),a=!N(e)||e!==this._$AH&&e!==V,a&&(this._$AH=e);else{const i=e;let n,r;for(e=o[0],n=0;n<o.length-1;n++)r=Z(this,i[s+n],t,n),r===V&&(r=this._$AH[n]),a||=!N(r)||r!==this._$AH[n],r===q?e=q:e!==q&&(e+=(r??"")+o[n+1]),this._$AH[n]=r}a&&!i&&this.j(e)}j(e){e===q?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class se extends te{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===q?void 0:e}}class ie extends te{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==q)}}class oe extends te{constructor(e,t,s,i,o){super(e,t,s,i,o),this.type=5}_$AI(e,t=this){if((e=Z(this,e,t,0)??q)===V)return;const s=this._$AH,i=e===q&&s!==q||e.capture!==s.capture||e.once!==s.once||e.passive!==s.passive,o=e!==q&&(s===q||i);i&&this.element.removeEventListener(this.name,this,s),o&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class ae{constructor(e,t,s){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=s}get _$AU(){return this._$AM._$AU}_$AI(e){Z(this,e)}}const ne=$.litHtmlPolyfillSupport;ne?.(X,ee),($.litHtmlVersions??=[]).push("3.3.2");const re=globalThis;
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */class le extends y{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){const t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=((e,t,s)=>{const i=s?.renderBefore??t;let o=i._$litPart$;if(void 0===o){const e=s?.renderBefore??null;i._$litPart$=o=new ee(t.insertBefore(D(),e),e,void 0,s??{})}return o._$AI(e),o})(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return q}}le._$litElement$=!0,le.finalized=!0,re.litElementHydrateSupport?.({LitElement:le});const de=re.litElementPolyfillSupport;de?.({LitElement:le}),(re.litElementVersions??=[]).push("4.2.2");const ce=new class{constructor(){this._ws=null,this._listeners=[],this._reconnectDelay=1e3}connect(){const e="https:"===location.protocol?"wss:":"ws:",t=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/),s=t?t[1]:"",i=`${e}//${location.host}${s}/api/ws`;this._ws=new WebSocket(i),this._ws.onmessage=e=>{try{const t=JSON.parse(e.data);this._listeners.forEach(e=>e(t))}catch(e){console.error("WebSocket parse error:",e)}},this._ws.onclose=()=>{setTimeout(()=>this.connect(),this._reconnectDelay),this._reconnectDelay=Math.min(2*this._reconnectDelay,3e4)},this._ws.onopen=()=>{this._reconnectDelay=1e3}}onMessage(e){this._listeners.push(e)}disconnect(){this._ws&&this._ws.close()}};class pe extends le{static properties={currentView:{type:String}};static styles=a`
+ */class le extends y{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){const t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=((e,t,s)=>{const i=s?.renderBefore??t;let o=i._$litPart$;if(void 0===o){const e=s?.renderBefore??null;i._$litPart$=o=new ee(t.insertBefore(D(),e),e,void 0,s??{})}return o._$AI(e),o})(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return V}}le._$litElement$=!0,le.finalized=!0,re.litElementHydrateSupport?.({LitElement:le});const de=re.litElementPolyfillSupport;de?.({LitElement:le}),(re.litElementVersions??=[]).push("4.2.2");const ce=new class{constructor(){this._ws=null,this._listeners=[],this._reconnectDelay=1e3}connect(){const e="https:"===location.protocol?"wss:":"ws:",t=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/),s=t?t[1]:"",i=`${e}//${location.host}${s}/api/ws`;this._ws=new WebSocket(i),this._ws.onmessage=e=>{try{const t=JSON.parse(e.data);this._listeners.forEach(e=>e(t))}catch(e){console.error("WebSocket parse error:",e)}},this._ws.onclose=()=>{setTimeout(()=>this.connect(),this._reconnectDelay),this._reconnectDelay=Math.min(2*this._reconnectDelay,3e4)},this._ws.onopen=()=>{this._reconnectDelay=1e3}}onMessage(e){this._listeners.push(e)}disconnect(){this._ws&&this._ws.close()}};class pe extends le{static properties={currentView:{type:String}};static styles=a`
     :host {
       display: block;
       background: #16213e;
@@ -66,7 +66,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       color: #444;
       margin-left: auto;
     }
-  `;render(){return H`
+  `;render(){return F`
       <nav>
         <span class="logo">Network Monitor</span>
         <div class="nav-links">
@@ -83,7 +83,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.1.0 build ${"3/22 16:57"}</span>
+        <span class="version">v0.1.0 build ${"3/22 17:05"}</span>
       </nav>
     `}_navigate(e){this.dispatchEvent(new CustomEvent("view-change",{detail:{view:e}}))}}customElements.define("nav-bar",pe);const he=function(){const e=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);return e?e[1]:""}();async function ue(){return(await fetch(`${he}/api/devices`)).json()}async function ge(e){return(await fetch(`${he}/api/devices/${e}`)).json()}async function me(e){return(await fetch(`${he}/api/topology/layouts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})).json()}async function ve(e,t,s={}){return(await fetch(`${he}/api/devices/${e}/command`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:t,params:s})})).json()}async function fe(){return(await fetch(`${he}/api/groups`)).json()}async function be(e,t,s=[]){return(await fetch(`${he}/api/groups`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e,name:t,device_ids:s})})).json()}async function xe(e,{name:t,device_ids:s,custom_commands:i,custom_sensors:o,thresholds:a}){return(await fetch(`${he}/api/groups/${e}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t,device_ids:s,custom_commands:i,custom_sensors:o,thresholds:a})})).json()}async function _e(){return(await fetch(`${he}/api/tags`)).json()}async function ye(e){return(await fetch(`${he}/api/tags`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tag:e})})).json()}async function $e(){return(await fetch(`${he}/api/settings`)).json()}async function we(e){return(await fetch(`${he}/api/devices/${e}/effective-settings`)).json()}async function ke(e,t){return(await fetch(`${he}/api/devices/${e}/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})).json()}const Se={online:"#81c784",offline:"#ef5350",warning:"#ffb74d",inferred:"#4fc3f7",unknown:"#666"};class Ee extends le{static properties={topology:{type:Object},layouts:{type:Object},selectedLayout:{type:String},editMode:{type:Boolean},linkMode:{type:Boolean},selectedNode:{type:String},nodePositions:{type:Object},manualEdges:{type:Array},_dragging:{type:String,state:!0},_linkSource:{type:String,state:!0},_error:{type:String,state:!0},_loading:{type:Boolean,state:!0},_selectedEdge:{type:Number,state:!0},_selectedDeviceData:{type:Object,state:!0},_commandResult:{type:String,state:!0},_dirty:{type:Boolean,state:!0},_showSaveDialog:{type:Boolean,state:!0},_showLabelDialog:{type:Boolean,state:!0},_labelEdgeIndex:{type:Number,state:!0},hideAutoEdges:{type:Boolean}};static styles=a`
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
@@ -256,12 +256,12 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .label-field .hint {
       font-size: 10px; color: #555; margin-top: 3px;
     }
-  `;constructor(){super(),this.topology={nodes:[],edges:[]},this.layouts={},this.selectedLayout="",this.editMode=!1,this.linkMode=!1,this.selectedNode=null,this.nodePositions={},this.manualEdges=[],this._dragging=null,this._dragOffset={x:0,y:0},this._linkSource=null,this._error="",this._loading=!0,this._selectedEdge=-1,this._selectedDeviceData=null,this._commandResult="",this._dirty=!1,this._showSaveDialog=!1,this._showLabelDialog=!1,this._labelEdgeIndex=-1,this._savedPositions=null,this._savedManualEdges=null,this.hideAutoEdges=!1}connectedCallback(){super.connectedCallback(),this._loadTopology(),this._loadLayouts(),ce.onMessage(e=>{this._loadTopology(),"device_update"===e.type&&e.device_id===this.selectedNode&&e.device&&(this._selectedDeviceData=e.device)})}async _loadTopology(){try{this._loading=!0,this._error="";const e=await async function(){return(await fetch(`${he}/api/topology`)).json()}();this.topology=e,this._autoLayout(),this._loading=!1}catch(e){console.error("Failed to load topology:",e),this._error=`Failed to load: ${e.message}`,this._loading=!1}}async _loadLayouts(){try{if(this.layouts=await async function(){return(await fetch(`${he}/api/topology/layouts`)).json()}(),!this._layoutsLoaded){this._layoutsLoaded=!0;const e=Object.entries(this.layouts).find(([,e])=>e.isDefault);e&&(this.selectedLayout=e[0],this.nodePositions=e[1].positions||{},this.manualEdges=e[1].manualEdges||[],this.hideAutoEdges=e[1].hideAutoEdges||!1)}}catch(e){console.error("Failed to load layouts:",e)}}_autoLayout(){const e=this.topology.nodes;if(!e.length)return;const t={...this.selectedLayout&&this.layouts[this.selectedLayout]&&this.layouts[this.selectedLayout].positions||{}},s=Math.ceil(Math.sqrt(e.length));e.forEach((e,i)=>{if(!t[e.id]){const o=i%s,a=Math.floor(i/s);t[e.id]={x:100+o*(800/(s+1)),y:80+100*a}}}),this.nodePositions=t,this.selectedLayout&&this.layouts[this.selectedLayout]&&(this.manualEdges=this.layouts[this.selectedLayout].manualEdges||[])}get _allEdges(){const e=this.hideAutoEdges?[]:this.topology.edges||[],t=this.manualEdges.map(e=>({...e,type:"manual"}));return[...e,...t]}_getNodeName(e){const t=this.topology.nodes.find(t=>t.id===e);return t&&t.name||e}render(){if(this._loading&&!this.topology.nodes.length)return H`<div style="padding: 40px; text-align: center; color: #888;">Loading topology...</div>`;if(this._error)return H`<div style="padding: 40px; text-align: center; color: #ef5350;">${this._error}</div>`;const e=this.topology.nodes,t=this._allEdges,s=e.filter(e=>"online"===e.status).length,i=e.filter(e=>"offline"===e.status).length,o=e.filter(e=>"warning"===e.status).length;return H`
+  `;constructor(){super(),this.topology={nodes:[],edges:[]},this.layouts={},this.selectedLayout="",this.editMode=!1,this.linkMode=!1,this.selectedNode=null,this.nodePositions={},this.manualEdges=[],this._dragging=null,this._dragOffset={x:0,y:0},this._linkSource=null,this._error="",this._loading=!0,this._selectedEdge=-1,this._selectedDeviceData=null,this._commandResult="",this._dirty=!1,this._showSaveDialog=!1,this._showLabelDialog=!1,this._labelEdgeIndex=-1,this._savedPositions=null,this._savedManualEdges=null,this.hideAutoEdges=!1}connectedCallback(){super.connectedCallback(),this._loadTopology(),this._loadLayouts(),ce.onMessage(e=>{this._loadTopology(),"device_update"===e.type&&e.device_id===this.selectedNode&&e.device&&(this._selectedDeviceData=e.device)})}async _loadTopology(){try{this._loading=!0,this._error="";const e=await async function(){return(await fetch(`${he}/api/topology`)).json()}();this.topology=e,this._autoLayout(),this._loading=!1}catch(e){console.error("Failed to load topology:",e),this._error=`Failed to load: ${e.message}`,this._loading=!1}}async _loadLayouts(){try{if(this.layouts=await async function(){return(await fetch(`${he}/api/topology/layouts`)).json()}(),!this._layoutsLoaded){this._layoutsLoaded=!0;const e=Object.entries(this.layouts).find(([,e])=>e.isDefault);e&&(this.selectedLayout=e[0],this.nodePositions=e[1].positions||{},this.manualEdges=e[1].manualEdges||[],this.hideAutoEdges=e[1].hideAutoEdges||!1)}}catch(e){console.error("Failed to load layouts:",e)}}_autoLayout(){const e=this.topology.nodes;if(!e.length)return;const t={...this.selectedLayout&&this.layouts[this.selectedLayout]&&this.layouts[this.selectedLayout].positions||{}},s=Math.ceil(Math.sqrt(e.length));e.forEach((e,i)=>{if(!t[e.id]){const o=i%s,a=Math.floor(i/s);t[e.id]={x:100+o*(800/(s+1)),y:80+100*a}}}),this.nodePositions=t,this.selectedLayout&&this.layouts[this.selectedLayout]&&(this.manualEdges=this.layouts[this.selectedLayout].manualEdges||[])}get _allEdges(){const e=this.hideAutoEdges?[]:this.topology.edges||[],t=this.manualEdges.map(e=>({...e,type:"manual"}));return[...e,...t]}_getNodeName(e){const t=this.topology.nodes.find(t=>t.id===e);return t&&t.name||e}render(){if(this._loading&&!this.topology.nodes.length)return F`<div style="padding: 40px; text-align: center; color: #888;">Loading topology...</div>`;if(this._error)return F`<div style="padding: 40px; text-align: center; color: #ef5350;">${this._error}</div>`;const e=this.topology.nodes,t=this._allEdges,s=e.filter(e=>"online"===e.status).length,i=e.filter(e=>"offline"===e.status).length,o=e.filter(e=>"warning"===e.status).length;return F`
       <div class="toolbar">
         <div class="toolbar-left">
           <select @change=${this._onLayoutChange}>
             <option value="">Auto Discovery</option>
-            ${Object.entries(this.layouts).map(([e,t])=>H`
+            ${Object.entries(this.layouts).map(([e,t])=>F`
               <option value=${e} ?selected=${this.selectedLayout===e}>
                 ${t.name}${t.isDefault?" (default)":""}
               </option>
@@ -271,7 +271,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${this._toggleEditMode}>
             ${this.editMode?"Done Editing":"Edit Mode"}
           </button>
-          ${this.editMode?H`
+          ${this.editMode?F`
             <span class="separator">|</span>
             <button class="tool-btn link-mode ${this.linkMode?"active":""}"
               @click=${this._toggleLinkMode}>
@@ -283,13 +283,13 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             </button>
             <span class="separator">|</span>
             <button class="tool-btn save" @click=${this._saveCurrentLayout}>Save Layout</button>
-            ${this.selectedLayout?H`
+            ${this.selectedLayout?F`
               <button class="tool-btn" @click=${this._setAsDefault}>
                 ${this.layouts[this.selectedLayout]?.isDefault?"Default":"Set Default"}
               </button>
               <button class="tool-btn danger" @click=${this._deleteCurrentLayout}>Delete</button>
             `:""}
-            ${this._dirty?H`<span class="dirty-indicator">unsaved changes</span>`:""}
+            ${this._dirty?F`<span class="dirty-indicator">unsaved changes</span>`:""}
           `:""}
         </div>
         <div class="toolbar-right">
@@ -299,7 +299,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         </div>
       </div>
 
-      ${this.linkMode?H`
+      ${this.linkMode?F`
         <div class="link-hint">
           ${this._linkSource?`Click a second device to link it to "${this._getNodeName(this._linkSource)}"`:"Click a device to start a link"}
         </div>
@@ -321,7 +321,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       ${this.editMode&&this.manualEdges.length>0?this._renderManualEdgesList():""}
       ${this._showSaveDialog?this._renderSaveDialog():""}
       ${this._showLabelDialog?this._renderLabelDialog():""}
-    `}_renderNode(e){const t=this.nodePositions[e.id]||{x:100,y:100},s=Se[e.status]||Se.unknown,i=this.selectedNode===e.id,o=this._linkSource===e.id,a=i||o?2.5:1.5,n=i?"4,2":o?"2,2":"none",r=o?"#ffb74d":s;return"gateway"===e.type?V`
+    `}_renderNode(e){const t=this.nodePositions[e.id]||{x:100,y:100},s=Se[e.status]||Se.unknown,i=this.selectedNode===e.id,o=this._linkSource===e.id,a=i||o?2.5:1.5,n=i?"4,2":o?"2,2":"none",r=o?"#ffb74d":s;return"gateway"===e.type?B`
         <g transform="translate(${t.x}, ${t.y})"
           @click=${t=>this._onNodeClick(t,e.id)}
           @mousedown=${t=>this.editMode&&!this.linkMode&&this._onMouseDown(t,e.id)}
@@ -330,7 +330,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             stroke-dasharray="${n}"/>
           <text text-anchor="middle" dy="4" fill="${r}" font-size="10">${e.name.substring(0,12)}</text>
         </g>
-      `:V`
+      `:B`
       <g transform="translate(${t.x}, ${t.y})"
         @click=${t=>this._onNodeClick(t,e.id)}
         @mousedown=${t=>this.editMode&&!this.linkMode&&this._onMouseDown(t,e.id)}
@@ -343,39 +343,39 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         </text>
         <text text-anchor="middle" dy="10" fill="#666" font-size="8">${e.status}</text>
       </g>
-    `}_edgeGeometry(e){const t=this.nodePositions[e.source],s=this.nodePositions[e.target];if(!t||!s)return null;const i=s.x-t.x,o=s.y-t.y,a=Math.sqrt(i*i+o*o)||1,n=i/a,r=o/a;let l=-r,d=n;d>0&&(l=-l,d=-d);const c=this._boxExitDistance(n,r);return{from:t,to:s,ux:n,uy:r,perpX:l,perpY:d,len:a,srcDist:c+8,tgtDist:c+8}}_boxExitDistance(e,t){if(Math.abs(e)<.001)return 22;if(Math.abs(t)<.001)return 48;const s=48/Math.abs(e),i=22/Math.abs(t);return Math.min(s,i)}_renderEdgeLine(e,t){const s=this._edgeGeometry(e);if(!s)return V``;const i="manual"===e.type,o=i?"#4fc3f7":"#555",a=i&&this._selectedEdge===t-(this.topology.edges?.length||0)?2.5:1.5,n=i?"none":"4,2";return V`
+    `}_edgeGeometry(e){const t=this.nodePositions[e.source],s=this.nodePositions[e.target];if(!t||!s)return null;const i=s.x-t.x,o=s.y-t.y,a=Math.sqrt(i*i+o*o)||1,n=i/a,r=o/a;let l=-r,d=n;d>0&&(l=-l,d=-d);const c=this._boxExitDistance(n,r);return{from:t,to:s,ux:n,uy:r,perpX:l,perpY:d,len:a,srcDist:c+8,tgtDist:c+8}}_boxExitDistance(e,t){if(Math.abs(e)<.001)return 22;if(Math.abs(t)<.001)return 48;const s=48/Math.abs(e),i=22/Math.abs(t);return Math.min(s,i)}_renderEdgeLine(e,t){const s=this._edgeGeometry(e);if(!s)return B``;const i="manual"===e.type,o=i?"#4fc3f7":"#555",a=i&&this._selectedEdge===t-(this.topology.edges?.length||0)?2.5:1.5,n=i?"none":"4,2";return B`
       <line x1="${s.from.x}" y1="${s.from.y}" x2="${s.to.x}" y2="${s.to.y}"
         stroke="${o}" stroke-width="${a}"
         stroke-dasharray="${n}"
         @click=${i&&this.editMode?()=>this._selectEdge(t-(this.topology.edges?.length||0)):null}
         style="${i&&this.editMode?"cursor:pointer":""}"/>
-    `}_renderEdgeLabels(e,t){if(!e.label&&!e.sourceLabel&&!e.targetLabel)return V``;const s=this._edgeGeometry(e);if(!s)return V``;const{from:i,to:o,ux:a,uy:n,perpX:r,perpY:l,srcDist:d,tgtDist:c}=s,p=i.x+a*d,h=i.y+n*d,u=o.x-a*c,g=o.y-n*c,m=(i.x+o.x)/2+14*r,v=(i.y+o.y)/2+14*l;return V`
-      ${e.label?V`
+    `}_renderEdgeLabels(e,t){if(!e.label&&!e.sourceLabel&&!e.targetLabel)return B``;const s=this._edgeGeometry(e);if(!s)return B``;const{from:i,to:o,ux:a,uy:n,perpX:r,perpY:l,srcDist:d,tgtDist:c}=s,p=i.x+a*d,h=i.y+n*d,u=o.x-a*c,g=o.y-n*c,m=(i.x+o.x)/2+14*r,v=(i.y+o.y)/2+14*l;return B`
+      ${e.label?B`
         <rect x="${m-3*e.label.length-3}" y="${v-9}"
           width="${6*e.label.length+6}" height="13" rx="2" fill="#1a1a2e" opacity="0.9"/>
         <text x="${m}" y="${v}" text-anchor="middle"
           fill="#888" font-size="9" style="pointer-events:none">${e.label}</text>
-      `:V``}
-      ${e.sourceLabel?V`
+      `:B``}
+      ${e.sourceLabel?B`
         <rect x="${p-2.5*e.sourceLabel.length-3}" y="${h-8}"
           width="${5*e.sourceLabel.length+6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>
         <text x="${p}" y="${h}" text-anchor="middle"
           fill="#4fc3f7" font-size="8" style="pointer-events:none">${e.sourceLabel}</text>
-      `:V``}
-      ${e.targetLabel?V`
+      `:B``}
+      ${e.targetLabel?B`
         <rect x="${u-2.5*e.targetLabel.length-3}" y="${g-8}"
           width="${5*e.targetLabel.length+6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>
         <text x="${u}" y="${g}" text-anchor="middle"
           fill="#4fc3f7" font-size="8" style="pointer-events:none">${e.targetLabel}</text>
-      `:V``}
-    `}_renderLinkPreview(){if(!this._linkSource||!this._mousePos)return V``;const e=this.nodePositions[this._linkSource];return e?V`
+      `:B``}
+    `}_renderLinkPreview(){if(!this._linkSource||!this._mousePos)return B``;const e=this.nodePositions[this._linkSource];return e?B`
       <line x1="${e.x}" y1="${e.y}" x2="${this._mousePos.x}" y2="${this._mousePos.y}"
         stroke="#ffb74d" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.6"/>
-    `:V``}_renderDetailPanel(){const e=this.topology.nodes.find(e=>e.id===this.selectedNode);if(!e)return H``;const t=this._selectedDeviceData,s=Se[e.status]||Se.unknown;if(!t)return H`
+    `:B``}_renderDetailPanel(){const e=this.topology.nodes.find(e=>e.id===this.selectedNode);if(!e)return F``;const t=this._selectedDeviceData,s=Se[e.status]||Se.unknown;if(!t)return F`
         <div class="device-panel">
           <div style="color: #888; font-size: 13px;">Loading device data...</div>
         </div>
-      `;const i=Object.entries(t.attributes||{}),o=t.network||{},a=t.tags||[],n=t.server_tags||[],r={cpu_usage:90,memory_usage:90,disk_usage:95,cpu_temp:80};return H`
+      `;const i=Object.entries(t.attributes||{}),o=t.network||{},a=t.tags||[],n=t.server_tags||[],r={cpu_usage:90,memory_usage:90,disk_usage:95,cpu_temp:80};return F`
       <div class="device-panel">
         <div class="device-header">
           <div>
@@ -392,20 +392,20 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         </div>
 
-        ${a.length>0||n.length>0?H`
+        ${a.length>0||n.length>0?F`
           <div style="margin-bottom: 12px;">
             <div class="tags-row">
-              ${a.map(e=>H`<span class="tag-badge">${e}</span>`)}
-              ${n.map(e=>H`<span class="tag-badge server">${e}</span>`)}
+              ${a.map(e=>F`<span class="tag-badge">${e}</span>`)}
+              ${n.map(e=>F`<span class="tag-badge server">${e}</span>`)}
             </div>
           </div>
         `:""}
 
-        ${i.length>0?H`
+        ${i.length>0?F`
           <div class="device-section">
             <div class="device-section-title">Attributes</div>
             <div class="attr-grid">
-              ${i.map(([e,t])=>{const s=r[e],i=s&&"number"==typeof t.value&&t.value>s;return H`
+              ${i.map(([e,t])=>{const s=r[e],i=s&&"number"==typeof t.value&&t.value>s;return F`
                   <div class="attr-item">
                     <div class="attr-label">${e.replace(/_/g," ")}</div>
                     <div class="attr-val ${i?"warning":""}">
@@ -418,11 +418,11 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         `:""}
 
-        ${Object.keys(o).length>0?H`
+        ${Object.keys(o).length>0?F`
           <div class="device-section">
             <div class="device-section-title">Network</div>
             <div class="network-grid">
-              ${Object.entries(o).map(([e,t])=>H`
+              ${Object.entries(o).map(([e,t])=>F`
                 <div class="net-item">
                   <span class="net-label">${e}: </span>${t}
                 </div>
@@ -433,35 +433,35 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
 
         <div class="device-section">
           <div class="device-section-title">Commands</div>
-          ${t.allowed_commands&&t.allowed_commands.length>0?H`
+          ${t.allowed_commands&&t.allowed_commands.length>0?F`
             <div class="commands-row">
-              ${t.allowed_commands.map(e=>{const t=["shutdown","halt","poweroff","destroy"].some(t=>e.toLowerCase().includes(t));return H`
+              ${t.allowed_commands.map(e=>{const t=["shutdown","halt","poweroff","destroy"].some(t=>e.toLowerCase().includes(t));return F`
                   <button class="cmd-btn ${t?"danger":""}"
                     @click=${()=>this._sendCmd(e)}>${e}</button>
                 `})}
             </div>
-          `:H`
+          `:F`
             <div style="font-size: 12px; color: #666; font-style: italic;">
               No commands available — configure allowed_commands in the client's config.yaml
             </div>
           `}
-          ${this._commandResult?H`<div class="cmd-result">${this._commandResult}</div>`:""}
+          ${this._commandResult?F`<div class="cmd-result">${this._commandResult}</div>`:""}
         </div>
       </div>
-    `}_renderManualEdgesList(){return H`
+    `}_renderManualEdgesList(){return F`
       <div class="edge-panel">
         <div class="edge-panel-header">
           <span style="font-size: 13px; color: #ccc; font-weight: 600;">Manual Links</span>
         </div>
         <div class="edge-list">
-          ${this.manualEdges.map((e,t)=>H`
+          ${this.manualEdges.map((e,t)=>F`
             <div class="edge-item">
               <span>
                 ${this._getNodeName(e.source)}
-                ${e.sourceLabel?H`<span style="color: #4fc3f7; font-size: 10px;"> [${e.sourceLabel}]</span>`:""}
+                ${e.sourceLabel?F`<span style="color: #4fc3f7; font-size: 10px;"> [${e.sourceLabel}]</span>`:""}
                 <span style="color: #666;"> &#8594; </span>
-                ${e.label?H`<span style="color: #888; font-size: 10px;">(${e.label})</span><span style="color: #666;"> &#8594; </span>`:""}
-                ${e.targetLabel?H`<span style="color: #4fc3f7; font-size: 10px;">[${e.targetLabel}] </span>`:""}
+                ${e.label?F`<span style="color: #888; font-size: 10px;">(${e.label})</span><span style="color: #666;"> &#8594; </span>`:""}
+                ${e.targetLabel?F`<span style="color: #4fc3f7; font-size: 10px;">[${e.targetLabel}] </span>`:""}
                 ${this._getNodeName(e.target)}
               </span>
               <span style="display: flex; gap: 4px;">
@@ -472,7 +472,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           `)}
         </div>
       </div>
-    `}_renderSaveDialog(){return H`
+    `}_renderSaveDialog(){return F`
       <div class="save-overlay" @click=${this._cancelDialog}>
         <div class="save-dialog" @click=${e=>e.stopPropagation()}>
           <h3>Unsaved Changes</h3>
@@ -484,7 +484,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         </div>
       </div>
-    `}_renderLabelDialog(){const e=this.manualEdges[this._labelEdgeIndex];if(!e)return H``;const t=this._getNodeName(e.source),s=this._getNodeName(e.target);return H`
+    `}_renderLabelDialog(){const e=this.manualEdges[this._labelEdgeIndex];if(!e)return F``;const t=this._getNodeName(e.source),s=this._getNodeName(e.target);return F`
       <div class="save-overlay" @click=${this._cancelLabelDialog}>
         <div class="label-dialog" @click=${e=>e.stopPropagation()}>
           <h3>Link Labels</h3>
@@ -576,7 +576,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       font-size: 9px; background: #1e3a5f; color: #4fc3f7;
       padding: 1px 6px; border-radius: 3px;
     }
-  `;render(){if(!this.device)return H``;const e=this.device,t=Ae[e.status]||Ae.unknown,s=Object.entries(e.attributes||{}).slice(0,4),i=[...e.tags||[],...e.server_tags||[]];return this.style.setProperty("--status-color",t),H`
+  `;render(){if(!this.device)return F``;const e=this.device,t=Ae[e.status]||Ae.unknown,s=Object.entries(e.attributes||{}).slice(0,4),i=[...e.tags||[],...e.server_tags||[]];return this.style.setProperty("--status-color",t),F`
       <div class="header">
         <span class="name">${e.device_name||this.deviceId}</span>
         <span class="status" style="background: ${t}20; color: ${t}">
@@ -584,18 +584,18 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         </span>
       </div>
       <div class="type">${e.device_type||"unknown"}</div>
-      ${s.length>0?H`
+      ${s.length>0?F`
         <div class="attrs">
-          ${s.map(([e,t])=>H`
+          ${s.map(([e,t])=>F`
             <div class="attr">
               ${e.replace(/_/g," ")}: <span class="attr-value ${this._isWarning(e,t)?"warning":""}">${t.value}${t.unit}</span>
             </div>
           `)}
         </div>
       `:""}
-      ${i.length>0?H`
+      ${i.length>0?F`
         <div class="tags">
-          ${i.map(e=>H`<span class="tag">${e}</span>`)}
+          ${i.map(e=>F`<span class="tag">${e}</span>`)}
         </div>
       `:""}
     `}_isWarning(e,t){const s={cpu_usage:90,memory_usage:90,disk_usage:95,cpu_temp:80};return s[e]&&t.value>s[e]}}customElements.define("device-card",Ce);class Te extends le{static properties={selectedTags:{type:Array},_allTags:{type:Array,state:!0},_open:{type:Boolean,state:!0},_showCreate:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_creating:{type:Boolean,state:!0}};static styles=a`
@@ -664,25 +664,25 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .cancel-btn:hover { color: #ccc; }
 
     .empty { padding: 12px 14px; color: #666; font-size: 12px; text-align: center; }
-  `;constructor(){super(),this.selectedTags=[],this._allTags=[],this._open=!1,this._showCreate=!1,this._newTagName="",this._creating=!1,this._onDocClick=this._onDocClick.bind(this)}connectedCallback(){super.connectedCallback(),this._loadTags(),document.addEventListener("click",this._onDocClick)}disconnectedCallback(){super.disconnectedCallback(),document.removeEventListener("click",this._onDocClick)}async _loadTags(){try{const e=await _e();Array.isArray(e)&&(this._allTags=e.map(e=>"string"==typeof e?e:e.tag).sort())}catch(e){console.error("Failed to load tags:",e)}}_onDocClick(e){if(!this._open)return;e.composedPath().includes(this)||(this._open=!1,this._showCreate=!1)}_toggle(e){e.stopPropagation(),this._open=!this._open,this._open||(this._showCreate=!1)}_toggleTag(e){(this.selectedTags||[]).includes(e)?this.dispatchEvent(new CustomEvent("tag-remove",{detail:{tag:e},bubbles:!0,composed:!0})):this.dispatchEvent(new CustomEvent("tag-add",{detail:{tag:e},bubbles:!0,composed:!0}))}async _createTag(){const e=this._newTagName.trim();if(e&&!this._creating){this._creating=!0;try{await ye(e),await this._loadTags(),this.dispatchEvent(new CustomEvent("tag-add",{detail:{tag:e},bubbles:!0,composed:!0})),this._newTagName="",this._showCreate=!1}catch(e){console.error("Failed to create tag:",e)}finally{this._creating=!1}}}render(){const e=this.selectedTags||[],t=e.length>0;return H`
+  `;constructor(){super(),this.selectedTags=[],this._allTags=[],this._open=!1,this._showCreate=!1,this._newTagName="",this._creating=!1,this._onDocClick=this._onDocClick.bind(this)}connectedCallback(){super.connectedCallback(),this._loadTags(),document.addEventListener("click",this._onDocClick)}disconnectedCallback(){super.disconnectedCallback(),document.removeEventListener("click",this._onDocClick)}async _loadTags(){try{const e=await _e();Array.isArray(e)&&(this._allTags=e.map(e=>"string"==typeof e?e:e.tag).sort())}catch(e){console.error("Failed to load tags:",e)}}_onDocClick(e){if(!this._open)return;e.composedPath().includes(this)||(this._open=!1,this._showCreate=!1)}_toggle(e){e.stopPropagation(),this._open=!this._open,this._open||(this._showCreate=!1)}_toggleTag(e){(this.selectedTags||[]).includes(e)?this.dispatchEvent(new CustomEvent("tag-remove",{detail:{tag:e},bubbles:!0,composed:!0})):this.dispatchEvent(new CustomEvent("tag-add",{detail:{tag:e},bubbles:!0,composed:!0}))}async _createTag(){const e=this._newTagName.trim();if(e&&!this._creating){this._creating=!0;try{await ye(e),await this._loadTags(),this.dispatchEvent(new CustomEvent("tag-add",{detail:{tag:e},bubbles:!0,composed:!0})),this._newTagName="",this._showCreate=!1}catch(e){console.error("Failed to create tag:",e)}finally{this._creating=!1}}}render(){const e=this.selectedTags||[],t=e.length>0;return F`
       <button class="trigger ${t?"has-selected":""}" @click=${this._toggle}>
         Tags${t?` (${e.length})`:""}
         <span class="arrow">${this._open?"▲":"▼"}</span>
       </button>
 
-      ${this._open?H`
+      ${this._open?F`
         <div class="dropdown" @click=${e=>e.stopPropagation()}>
-          ${0!==this._allTags.length||this._showCreate?this._allTags.map(t=>H`
+          ${0!==this._allTags.length||this._showCreate?this._allTags.map(t=>F`
               <div class="dropdown-item ${e.includes(t)?"checked":""}"
                 @click=${()=>this._toggleTag(t)}>
                 <span class="checkbox">${e.includes(t)?"✓":""}</span>
                 ${t}
               </div>
-            `):H`<div class="empty">No tags in registry</div>`}
+            `):F`<div class="empty">No tags in registry</div>`}
 
           <hr class="dropdown-divider">
 
-          ${this._showCreate?H`
+          ${this._showCreate?F`
             <div class="create-row">
               <input class="create-input" type="text" placeholder="New tag name..."
                 .value=${this._newTagName}
@@ -695,7 +695,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
               </button>
               <button class="cancel-btn" @click=${()=>{this._showCreate=!1,this._newTagName=""}}>&times;</button>
             </div>
-          `:H`
+          `:F`
             <div class="create-row">
               <span class="create-link" @click=${()=>this._showCreate=!0}>+ Create new tag</span>
             </div>
@@ -791,7 +791,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       font-size: 11px; color: #555; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 8px; margin-top: 4px;
     }
-  `;constructor(){super(),this.devices={},this.filter="all",this.selectedTags=[],this.viewMode="all",this._groups={},this._collapsedGroups={},this._wsUnsub=null,this._refreshInterval=5,this._pollTimer=null}connectedCallback(){super.connectedCallback(),this._loadDevices(),this._loadGroups(),this._startPolling(),this._wsUnsub=ce.onMessage(e=>{"device_update"===e.type&&(this.devices={...this.devices,[e.device_id]:e.device},this.requestUpdate())})}disconnectedCallback(){super.disconnectedCallback(),this._pollTimer&&clearInterval(this._pollTimer)}_startPolling(){this._pollTimer&&clearInterval(this._pollTimer);const e=1e3*(this._refreshInterval||5);this._pollTimer=setInterval(()=>this._loadDevices(),e)}async _loadDevices(){try{this.devices=await ue()}catch(e){console.error("Failed to load devices:",e)}}async _loadGroups(){try{this._groups=await fe()}catch(e){console.error("Failed to load groups:",e)}}get _filteredDevices(){let e=Object.entries(this.devices);return"all"!==this.filter&&(e=e.filter(([,e])=>e.status===this.filter)),this.selectedTags.length>0&&(e=e.filter(([,e])=>{const t=[...e.tags||[],...e.server_tags||[]];return this.selectedTags.some(e=>t.includes(e))})),e}get _counts(){const e=Object.values(this.devices);return{all:e.length,online:e.filter(e=>"online"===e.status).length,offline:e.filter(e=>"offline"===e.status).length,warning:e.filter(e=>"warning"===e.status).length}}_onTagAdd(e){const t=e.detail.tag;this.selectedTags.includes(t)||(this.selectedTags=[...this.selectedTags,t])}_onTagRemove(e){this.selectedTags=this.selectedTags.filter(t=>t!==e.detail.tag)}render(){const e=this._counts;return H`
+  `;constructor(){super(),this.devices={},this.filter="all",this.selectedTags=[],this.viewMode="all",this._groups={},this._collapsedGroups={},this._wsUnsub=null,this._refreshInterval=5,this._pollTimer=null}connectedCallback(){super.connectedCallback(),this._loadDevices(),this._loadGroups(),this._startPolling(),this._wsUnsub=ce.onMessage(e=>{"device_update"===e.type&&(this.devices={...this.devices,[e.device_id]:e.device},this.requestUpdate())})}disconnectedCallback(){super.disconnectedCallback(),this._pollTimer&&clearInterval(this._pollTimer)}_startPolling(){this._pollTimer&&clearInterval(this._pollTimer);const e=1e3*(this._refreshInterval||5);this._pollTimer=setInterval(()=>this._loadDevices(),e)}async _loadDevices(){try{this.devices=await ue()}catch(e){console.error("Failed to load devices:",e)}}async _loadGroups(){try{this._groups=await fe()}catch(e){console.error("Failed to load groups:",e)}}get _filteredDevices(){let e=Object.entries(this.devices);return"all"!==this.filter&&(e=e.filter(([,e])=>e.status===this.filter)),this.selectedTags.length>0&&(e=e.filter(([,e])=>{const t=[...e.tags||[],...e.server_tags||[]];return this.selectedTags.some(e=>t.includes(e))})),e}get _counts(){const e=Object.values(this.devices);return{all:e.length,online:e.filter(e=>"online"===e.status).length,offline:e.filter(e=>"offline"===e.status).length,warning:e.filter(e=>"warning"===e.status).length}}_onTagAdd(e){const t=e.detail.tag;this.selectedTags.includes(t)||(this.selectedTags=[...this.selectedTags,t])}_onTagRemove(e){this.selectedTags=this.selectedTags.filter(t=>t!==e.detail.tag)}render(){const e=this._counts;return F`
       <div class="filter-bar">
         <div class="status-filters">
           <button class="filter-btn ${"all"===this.filter?"active":""}"
@@ -831,9 +831,9 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         </div>
       </div>
 
-      ${this.selectedTags.length>0?H`
+      ${this.selectedTags.length>0?F`
         <div class="active-tags">
-          ${this.selectedTags.map(e=>H`
+          ${this.selectedTags.map(e=>F`
             <span class="active-tag">
               #${e}
               <span class="remove" @click=${()=>this.selectedTags=this.selectedTags.filter(t=>t!==e)}>&times;</span>
@@ -844,9 +844,9 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       `:""}
 
       ${"group"===this.viewMode?this._renderByGroup():this._renderAll()}
-    `}_renderAll(){const e=this._filteredDevices;return 0===e.length?H`<div class="empty">No devices found</div>`:H`
+    `}_renderAll(){const e=this._filteredDevices;return 0===e.length?F`<div class="empty">No devices found</div>`:F`
       <div class="grid">
-        ${e.map(([e,t])=>H`
+        ${e.map(([e,t])=>F`
           <device-card
             .device=${t}
             .deviceId=${e}
@@ -854,21 +854,21 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           ></device-card>
         `)}
       </div>
-    `}_renderByGroup(){const e=this._filteredDevices,t=Object.values(this._groups),s={},i=new Set;t.forEach(t=>{const o=e.filter(([e])=>(t.device_ids||[]).includes(e));s[t.id]=o,o.forEach(([e])=>i.add(e))});const o=e.filter(([e])=>!i.has(e));return H`
+    `}_renderByGroup(){const e=this._filteredDevices,t=Object.values(this._groups),s={},i=new Set;t.forEach(t=>{const o=e.filter(([e])=>(t.device_ids||[]).includes(e));s[t.id]=o,o.forEach(([e])=>i.add(e))});const o=e.filter(([e])=>!i.has(e));return F`
       ${t.map(e=>this._renderGroupSection(e,s[e.id]||[]))}
-      ${o.length>0?H`
+      ${o.length>0?F`
         <div class="group-section">
           <div class="ungrouped-header">Ungrouped (${o.length})</div>
           <div class="grid">
-            ${o.map(([e,t])=>H`
+            ${o.map(([e,t])=>F`
               <device-card .device=${t} .deviceId=${e}
                 @click=${()=>this._selectDevice(e)}></device-card>
             `)}
           </div>
         </div>
       `:""}
-      ${0===e.length?H`<div class="empty">No devices found</div>`:""}
-    `}_renderGroupSection(e,t){const s=!!this._collapsedGroups[e.id],i=Object.entries(this.devices).filter(([t])=>(e.device_ids||[]).includes(t)).map(([,e])=>e),o=i.filter(e=>"online"===e.status).length,a=i.length;return H`
+      ${0===e.length?F`<div class="empty">No devices found</div>`:""}
+    `}_renderGroupSection(e,t){const s=!!this._collapsedGroups[e.id],i=Object.entries(this.devices).filter(([t])=>(e.device_ids||[]).includes(t)).map(([,e])=>e),o=i.filter(e=>"online"===e.status).length,a=i.length;return F`
       <div class="group-section">
         <div class="group-section-header"
           @click=${()=>this._toggleGroupCollapse(e.id)}>
@@ -881,11 +881,11 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             </span>
           </div>
         </div>
-        ${s?"":H`
+        ${s?"":F`
           <div class="group-body">
-            ${0===t.length?H`<div style="color: #555; font-size: 13px; padding: 8px 4px;">No devices match current filters</div>`:H`
+            ${0===t.length?F`<div style="color: #555; font-size: 13px; padding: 8px 4px;">No devices match current filters</div>`:F`
                 <div class="grid">
-                  ${t.map(([e,t])=>H`
+                  ${t.map(([e,t])=>F`
                     <device-card .device=${t} .deviceId=${e}
                       @click=${()=>this._selectDevice(e)}></device-card>
                   `)}
@@ -894,7 +894,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         `}
       </div>
-    `}_toggleGroupCollapse(e){this._collapsedGroups={...this._collapsedGroups,[e]:!this._collapsedGroups[e]}}_selectDevice(e){this.dispatchEvent(new CustomEvent("device-select",{detail:{deviceId:e},bubbles:!0,composed:!0}))}}customElements.define("dashboard-view",ze);const De=["shutdown","halt","poweroff","destroy"];class Ne extends le{static properties={deviceId:{type:String},device:{type:Object},commandResult:{type:String},_groups:{type:Object,state:!0},_effectiveSettings:{type:Object,state:!0},_haOverrides:{type:Object,state:!0},_configInterval:{type:Number,state:!0},_customSensors:{type:Object,state:!0},_showAddSensor:{type:Boolean,state:!0},_editSensorKey:{type:String,state:!0},_sensorForm:{type:Object,state:!0},_pushing:{type:Boolean,state:!0},_pushStatus:{type:String,state:!0},_lastPushed:{type:String,state:!0},_localChanges:{type:Boolean,state:!0},_showGroupDialog:{type:Boolean,state:!0},_newGroupName:{type:String,state:!0},_serverCommands:{type:Object,state:!0},_newCommandName:{type:String,state:!0},_newCommandShell:{type:String,state:!0}};static styles=a`
+    `}_toggleGroupCollapse(e){this._collapsedGroups={...this._collapsedGroups,[e]:!this._collapsedGroups[e]}}_selectDevice(e){this.dispatchEvent(new CustomEvent("device-select",{detail:{deviceId:e},bubbles:!0,composed:!0}))}}customElements.define("dashboard-view",ze);const De=["shutdown","halt","poweroff","destroy"];class Ne extends le{static properties={deviceId:{type:String},device:{type:Object},commandResult:{type:String},_groups:{type:Object,state:!0},_effectiveSettings:{type:Object,state:!0},_haOverrides:{type:Object,state:!0},_configInterval:{type:Number,state:!0},_customSensors:{type:Object,state:!0},_showAddSensor:{type:Boolean,state:!0},_editSensorKey:{type:String,state:!0},_sensorForm:{type:Object,state:!0},_pushing:{type:Boolean,state:!0},_pushStatus:{type:String,state:!0},_lastPushed:{type:String,state:!0},_localChanges:{type:Boolean,state:!0},_showGroupDialog:{type:Boolean,state:!0},_newGroupName:{type:String,state:!0},_serverCommands:{type:Object,state:!0},_newCommandName:{type:String,state:!0},_newCommandShell:{type:String,state:!0},_showHidden:{type:Boolean,state:!0}};static styles=a`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     .close-btn {
@@ -1149,7 +1149,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     }
     .dialog-btn.save { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
     .dialog-btn.cancel { background: #3a3a5a; color: #aaa; }
-  `;constructor(){super(),this.device=null,this.commandResult="",this._groups={},this._effectiveSettings=null,this._haOverrides={},this._configInterval=30,this._customSensors={},this._showAddSensor=!1,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""},this._pushing=!1,this._pushStatus="",this._lastPushed="",this._localChanges=!1,this._showGroupDialog=!1,this._newGroupName="",this._serverCommands={},this._newCommandName="",this._newCommandShell=""}connectedCallback(){super.connectedCallback(),this._loadDevice(),this._loadGroups(),ce.onMessage(e=>{"device_update"===e.type&&e.device_id===this.deviceId&&(this.device=e.device)})}async _loadDevice(){try{this.device=await ge(this.deviceId),this._haOverrides={...this.device.ha_exposure_overrides||{}};const e=this.device.server_commands;if(this._serverCommands=e&&!Array.isArray(e)?{...e}:{},this.device.remote_config){this._configInterval=this.device.remote_config.interval||30;const e=this.device.remote_config.plugins?.custom_command?.commands||{};this._customSensors={...e}}try{this._effectiveSettings=await we(this.deviceId)}catch(e){}}catch(e){console.error("Failed to load device:",e)}}async _loadGroups(){try{this._groups=await fe()}catch(e){console.error("Failed to load groups:",e)}}render(){if(!this.device)return H`<div style="padding: 40px; text-align: center; color: #888;">Loading...</div>`;const e=this.device,t="online"===e.status?"#81c784":"offline"===e.status?"#ef5350":"#ffb74d";return H`
+  `;constructor(){super(),this.device=null,this.commandResult="",this._groups={},this._effectiveSettings=null,this._haOverrides={},this._configInterval=30,this._customSensors={},this._showAddSensor=!1,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""},this._pushing=!1,this._pushStatus="",this._lastPushed="",this._localChanges=!1,this._showGroupDialog=!1,this._newGroupName="",this._serverCommands={},this._newCommandName="",this._newCommandShell=""}connectedCallback(){super.connectedCallback(),this._loadDevice(),this._loadGroups(),ce.onMessage(e=>{"device_update"===e.type&&e.device_id===this.deviceId&&(this.device=e.device)})}async _loadDevice(){try{this.device=await ge(this.deviceId),this._haOverrides={...this.device.ha_exposure_overrides||{}};const e=this.device.server_commands;if(this._serverCommands=e&&!Array.isArray(e)?{...e}:{},this.device.remote_config){this._configInterval=this.device.remote_config.interval||30;const e=this.device.remote_config.plugins?.custom_command?.commands||{};this._customSensors={...e}}try{this._effectiveSettings=await we(this.deviceId)}catch(e){}}catch(e){console.error("Failed to load device:",e)}}async _loadGroups(){try{this._groups=await fe()}catch(e){console.error("Failed to load groups:",e)}}render(){if(!this.device)return F`<div style="padding: 40px; text-align: center; color: #888;">Loading...</div>`;const e=this.device,t="online"===e.status?"#81c784":"offline"===e.status?"#ef5350":"#ffb74d";return F`
       <!-- 1. Header -->
       <div class="header">
         <div class="header-left">
@@ -1185,12 +1185,12 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       ${this._renderAgentConfig()}
 
       ${this._showGroupDialog?this._renderGroupDialog():""}
-    `}_renderTagsSection(){const e=this.device.tags||[],t=this.device.server_tags||[];return H`
+    `}_renderTagsSection(){const e=this.device.tags||[],t=this.device.server_tags||[];return F`
       <div class="section">
         <div class="section-title">Tags</div>
         <div class="tags-row">
-          ${e.map(e=>H`<span class="tag client">${e}</span>`)}
-          ${t.map(e=>H`
+          ${e.map(e=>F`<span class="tag client">${e}</span>`)}
+          ${t.map(e=>F`
             <span class="tag server">
               ${e}
               <span class="remove" @click=${()=>this._removeTag(e)}>&times;</span>
@@ -1206,7 +1206,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           Client tags (blue) come from the device config. Server tags (purple) are managed here.
         </div>
       </div>
-    `}_renderGroupPolicy(){const e=Object.values(this._groups),t=this.device.group_policy||"",s=t?this._groups[t]:null,i=s?.thresholds||{};return H`
+    `}_renderGroupPolicy(){const e=Object.values(this._groups),t=this.device.group_policy||"",s=t?this._groups[t]:null,i=s?.thresholds||{};return F`
       <div class="section">
         <div class="section-title">Group Policy</div>
         <div class="group-policy-row">
@@ -1214,7 +1214,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             .value=${t}
             @change=${this._onGroupPolicyChange}>
             <option value="">None — use global defaults</option>
-            ${e.map(e=>H`
+            ${e.map(e=>F`
               <option value=${e.id} ?selected=${e.id===t}>${e.name}</option>
             `)}
           </select>
@@ -1222,9 +1222,9 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._showGroupDialog=!0}>New Group</button>
         </div>
 
-        ${s&&Object.keys(i).length>0?H`
+        ${s&&Object.keys(i).length>0?F`
           <div class="group-threshold-summary">
-            ${Object.entries(i).map(([e,t])=>H`
+            ${Object.entries(i).map(([e,t])=>F`
               <span><span style="color: #888;">${e.replace(/_/g," ")}:</span> ${t}</span>
             `)}
           </div>
@@ -1234,14 +1234,33 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           Group policy sets default thresholds and HA entity settings. Device-level overrides take priority.
         </div>
       </div>
-    `}async _onGroupPolicyChange(e){const t=e.target.value||null;try{await ke(this.deviceId,{group_policy:t}),await this._loadDevice()}catch(e){console.error("Failed to update group policy:",e)}}_renderAttributesSection(){const e=Object.entries(this.device.attributes||{});return 0===e.length?H``:H`
+    `}async _onGroupPolicyChange(e){const t=e.target.value||null;try{await ke(this.deviceId,{group_policy:t}),await this._loadDevice()}catch(e){console.error("Failed to update group policy:",e)}}_renderAttributesSection(){const e=Object.entries(this.device.attributes||{}),t=this.device.hidden_attributes||[],s=e.filter(([e])=>!t.includes(e)),i=e.filter(([e])=>t.includes(e));return 0===e.length?F``:F`
       <div class="section">
-        <div class="section-title">Attributes &amp; HA Exposure</div>
+        <div class="section-title">Attributes</div>
         <div class="attr-grid">
-          ${e.map(([e,t])=>this._renderAttrTile(e,t))}
+          ${s.map(([e,t])=>this._renderAttrTile(e,t))}
         </div>
+        ${i.length>0?F`
+          <div style="margin-top: 12px;">
+            <div style="font-size: 10px; color: #555; margin-bottom: 6px; cursor: pointer;"
+              @click=${()=>this._showHidden=!this._showHidden}>
+              ${this._showHidden?"▾":"▸"} ${i.length} hidden attribute${1!==i.length?"s":""}
+            </div>
+            ${this._showHidden?F`
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                ${i.map(([e])=>F`
+                  <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                    ${e.replace(/_/g," ")}
+                    <span style="cursor: pointer; color: #4fc3f7; font-size: 10px;"
+                      @click=${()=>this._unhideAttribute(e)}>show</span>
+                  </span>
+                `)}
+              </div>
+            `:""}
+          </div>
+        `:""}
       </div>
-    `}_isExposed(e){if(void 0!==this._haOverrides[e])return this._haOverrides[e];const t=this._effectiveSettings;return void 0===t?.ha_exposure_overrides?.[e]||t.ha_exposure_overrides[e]}_fromGroup(e){if(void 0!==this._haOverrides[e])return!1;const t=this._effectiveSettings;return void 0!==t?.ha_exposure_overrides?.[e]}_getThresholdForAttr(e){const t=this._effectiveSettings;if(!t)return null;const s=(t.thresholds||{})[e];if(null==s)return null;const i=this.device.threshold_overrides||{},o=this.device.group_policy,a=o?this._groups[o]:null;let n="global";return null!=i[e]?n="device":a&&a.thresholds&&null!=a.thresholds[e]&&(n="group"),{value:s,source:n}}_checkThreshold(e,t){if(!t||null==e||"number"!=typeof e)return!1;const s="object"==typeof t?t.value:t,i="object"==typeof t&&t.op||">";if(null==s)return!1;switch(i){case">":default:return e>s;case"<":return e<s;case">=":return e>=s;case"<=":return e<=s;case"==":return e===s;case"!=":return e!==s}}_getThresholdOp(e){const t=(this.device.threshold_overrides||{})[e];if(null!=t&&"object"==typeof t)return t.op||">";const s=this._effectiveSettings;if(!s)return">";const i=(s.thresholds||{})[e];return null!=i&&"object"==typeof i&&i.op||">"}_getThresholdVal(e){const t=(this.device.threshold_overrides||{})[e];if(null!=t)return"object"==typeof t?t.value:t;const s=this._getThresholdForAttr(e);return s?s.value:null}_renderAttrTile(e,t){const s=this._isExposed(e),i=this._getThresholdForAttr(e),o=null!=t.value?t.value:null,a=(this.device.threshold_overrides||{})[e],n=null!=a?a:i?i.value:null,r=this._checkThreshold(o,n),l=this._getThresholdOp(e),d=this._getThresholdVal(e);return H`
+    `}_isExposed(e){if(void 0!==this._haOverrides[e])return this._haOverrides[e];const t=this._effectiveSettings;return void 0===t?.ha_exposure_overrides?.[e]||t.ha_exposure_overrides[e]}_fromGroup(e){if(void 0!==this._haOverrides[e])return!1;const t=this._effectiveSettings;return void 0!==t?.ha_exposure_overrides?.[e]}_getThresholdForAttr(e){const t=this._effectiveSettings;if(!t)return null;const s=(t.thresholds||{})[e];if(null==s)return null;const i=this.device.threshold_overrides||{},o=this.device.group_policy,a=o?this._groups[o]:null;let n="global";return null!=i[e]?n="device":a&&a.thresholds&&null!=a.thresholds[e]&&(n="group"),{value:s,source:n}}_checkThreshold(e,t){if(!t||null==e||"number"!=typeof e)return!1;const s="object"==typeof t?t.value:t,i="object"==typeof t&&t.op||">";if(null==s)return!1;switch(i){case">":default:return e>s;case"<":return e<s;case">=":return e>=s;case"<=":return e<=s;case"==":return e===s;case"!=":return e!==s}}_getThresholdOp(e){const t=(this.device.threshold_overrides||{})[e];if(null!=t&&"object"==typeof t)return t.op||">";const s=this._effectiveSettings;if(!s)return">";const i=(s.thresholds||{})[e];return null!=i&&"object"==typeof i&&i.op||">"}_getThresholdVal(e){const t=(this.device.threshold_overrides||{})[e];if(null!=t)return"object"==typeof t?t.value:t;const s=this._getThresholdForAttr(e);return s?s.value:null}_renderAttrTile(e,t){const s=this._isExposed(e),i=this._getThresholdForAttr(e),o=null!=t.value?t.value:null,a=(this.device.threshold_overrides||{})[e],n=null!=a?a:i?i.value:null,r=this._checkThreshold(o,n),l=this._getThresholdOp(e),d=this._getThresholdVal(e);return F`
       <div class="attr-tile ${s?"":"dimmed"} ${r?"exceeded":""}">
         <div class="attr-tile-top">
           <span class="attr-label">${e.replace(/_/g," ")}
@@ -1259,7 +1278,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <span class="attr-unit">${t.unit||""}</span>
         </div>
         <div class="attr-threshold-row">
-          ${r?H`<span style="color: #ffb74d; font-size: 11px;">\u26A0</span>`:""}
+          ${r?F`<span style="color: #ffb74d; font-size: 11px;">\u26A0</span>`:""}
           <span style="font-size: 9px; color: #666;">Warn</span>
           <select class="threshold-op"
             .value=${l}
@@ -1275,32 +1294,32 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             placeholder="\u2014"
             .value=${null!=d?String(d):""}
             @change=${t=>this._setThreshold(e,t.target.value,l)}>
-          ${i&&"device"!==i.source&&null==a?H`
+          ${i&&"device"!==i.source&&null==a?F`
             <span style="font-size: 8px; color: #555;">${i.source}</span>
           `:""}
         </div>
       </div>
-    `}async _deleteAttribute(e){if(confirm(`Delete attribute "${e}"? It will reappear if the client is still reporting it.`))try{await async function(e,t){await fetch(`${he}/api/devices/${e}/attributes/${t}`,{method:"DELETE"})}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to delete attribute:",e)}}async _setThreshold(e,t,s){const i={...this.device.threshold_overrides||{}};""===t||null==t?delete i[e]:i[e]={op:s||">",value:Number(t)};try{await ke(this.deviceId,{threshold_overrides:i}),this.device={...this.device,threshold_overrides:i},this._effectiveSettings=await we(this.deviceId)}catch(e){console.error("Failed to set threshold:",e)}}async _toggleHaExposure(e){const t=this._isExposed(e);this._haOverrides={...this._haOverrides,[e]:!t},this._localChanges=!0;try{await ke(this.deviceId,{ha_exposure_overrides:this._haOverrides})}catch(e){console.error("Failed to update HA exposure:",e)}}_renderNetwork(){const e=this.device.network||{};return 0===Object.keys(e).length?H``:H`
+    `}async _deleteAttribute(e){if(confirm(`Hide attribute "${e}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`))try{await async function(e,t){return(await fetch(`${he}/api/devices/${e}/attributes/${t}`,{method:"DELETE"})).json()}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to hide attribute:",e)}}async _unhideAttribute(e){try{await async function(e,t){return(await fetch(`${he}/api/devices/${e}/attributes/${t}/unhide`,{method:"POST"})).json()}(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to unhide attribute:",e)}}async _setThreshold(e,t,s){const i={...this.device.threshold_overrides||{}};""===t||null==t?delete i[e]:i[e]={op:s||">",value:Number(t)};try{await ke(this.deviceId,{threshold_overrides:i}),this.device={...this.device,threshold_overrides:i},this._effectiveSettings=await we(this.deviceId)}catch(e){console.error("Failed to set threshold:",e)}}async _toggleHaExposure(e){const t=this._isExposed(e);this._haOverrides={...this._haOverrides,[e]:!t},this._localChanges=!0;try{await ke(this.deviceId,{ha_exposure_overrides:this._haOverrides})}catch(e){console.error("Failed to update HA exposure:",e)}}_renderNetwork(){const e=this.device.network||{};return 0===Object.keys(e).length?F``:F`
       <div class="section">
         <div class="section-title">Network</div>
         <div class="network-grid">
-          ${Object.entries(e).map(([e,t])=>H`
+          ${Object.entries(e).map(([e,t])=>F`
             <div class="net-item">
               <span class="net-label">${e}:</span>${t}
             </div>
           `)}
         </div>
       </div>
-    `}_renderCommands(){const e=this.device.allowed_commands||[],t=Object.keys(this._serverCommands||{}),s=[...new Set([...e,...t])];return H`
+    `}_renderCommands(){const e=this.device.allowed_commands||[],t=Object.keys(this._serverCommands||{}),s=[...new Set([...e,...t])];return F`
       <div class="section">
         <div class="section-title">Commands</div>
-        ${0===s.length?H`
+        ${0===s.length?F`
           <div class="no-commands">
             No commands available — add commands below or configure <code>allowed_commands</code> in the client's config.yaml
           </div>
-        `:H`
+        `:F`
           <div class="commands">
-            ${s.map(e=>H`
+            ${s.map(e=>F`
               <button class="cmd-btn ${function(e){const t=e.toLowerCase();return De.some(e=>t.includes(e))}(e)?"danger":""}"
                 @click=${()=>this._sendCmd(e)}>
                 ${e}
@@ -1308,7 +1327,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             `)}
           </div>
         `}
-        ${this.commandResult?H`<div class="cmd-result">${this.commandResult}</div>`:""}
+        ${this.commandResult?F`<div class="cmd-result">${this.commandResult}</div>`:""}
 
         <div style="margin-top: 10px;">
           <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
@@ -1325,9 +1344,9 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
               @click=${this._addServerCommand}>Add</button>
           </div>
-          ${t.length>0?H`
+          ${t.length>0?F`
             <div style="margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; align-items: flex-start;">
-              ${Object.entries(this._serverCommands).map(([e,t])=>H`
+              ${Object.entries(this._serverCommands).map(([e,t])=>F`
                 <span title=${t} style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
                   <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
                     ${e}
@@ -1341,7 +1360,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           `:""}
         </div>
       </div>
-    `}_renderAgentConfig(){const e=this.device.remote_config||{},t=this.device.active_plugins||(e.plugins?Object.keys(e.plugins):[]),s=this._customSensors;return H`
+    `}_renderAgentConfig(){const e=this.device.remote_config||{},t=this.device.active_plugins||(e.plugins?Object.keys(e.plugins):[]),s=this._customSensors;return F`
       <div class="section">
         <div class="section-title">Agent Configuration</div>
 
@@ -1353,18 +1372,18 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <span style="font-size: 12px; color: #666; margin-left: 4px;">seconds</span>
         </div>
 
-        ${t.length>0?H`
+        ${t.length>0?F`
           <div class="config-row">
             <span class="config-label">Active plugins</span>
             <div class="plugins-list">
-              ${t.map(e=>H`<span class="plugin-badge">${e}</span>`)}
+              ${t.map(e=>F`<span class="plugin-badge">${e}</span>`)}
             </div>
           </div>
         `:""}
 
         <div style="margin-bottom: 10px;">
           <div class="section-title" style="margin-bottom: 8px;">Custom Sensors</div>
-          ${Object.keys(s).length>0?H`
+          ${Object.keys(s).length>0?F`
             <table class="sensor-table">
               <thead>
                 <tr>
@@ -1372,7 +1391,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
                 </tr>
               </thead>
               <tbody>
-                ${Object.entries(s).map(([e,t])=>H`
+                ${Object.entries(s).map(([e,t])=>F`
                   <tr>
                     <td>${e}</td>
                     <td>${t.command}</td>
@@ -1388,15 +1407,15 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
                 `)}
               </tbody>
             </table>
-          `:H`<div style="font-size: 13px; color: #555; margin-bottom: 10px;">No custom sensors</div>`}
+          `:F`<div style="font-size: 13px; color: #555; margin-bottom: 10px;">No custom sensors</div>`}
 
-          ${this._showAddSensor||this._editSensorKey?this._renderSensorForm():H`
+          ${this._showAddSensor||this._editSensorKey?this._renderSensorForm():F`
             <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
               @click=${this._startAddSensor}>+ Add Sensor</button>
           `}
         </div>
 
-        ${this.device.allowed_commands&&this.device.allowed_commands.length>0?H`
+        ${this.device.allowed_commands&&this.device.allowed_commands.length>0?F`
           <div class="config-row" style="margin-bottom: 0;">
             <span class="config-label" style="color: #666;">Allowed commands</span>
             <div style="font-size: 12px; color: #666;">${(this.device.allowed_commands||[]).join(", ")}</div>
@@ -1407,17 +1426,17 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <button class="push-btn" ?disabled=${this._pushing} @click=${this._pushConfig}>
             ${this._pushing?"Pushing...":"Push Config"}
           </button>
-          ${this._lastPushed?H`
+          ${this._lastPushed?F`
             <span class="push-status">Last pushed: ${this._lastPushed}</span>
           `:""}
-          ${this._pushStatus?H`
+          ${this._pushStatus?F`
             <span class="push-status ${"Config synced"===this._pushStatus?"synced":"pending"}">
               ${this._pushStatus}
             </span>
           `:""}
         </div>
       </div>
-    `}_renderSensorForm(){const e=this._sensorForm;return H`
+    `}_renderSensorForm(){const e=this._sensorForm;return F`
       <div class="sensor-form">
         <div class="sensor-form-grid">
           <input type="text" placeholder="Name (e.g. ping_gw)"
@@ -1438,7 +1457,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <button class="form-btn cancel" @click=${this._cancelSensorForm}>Cancel</button>
         </div>
       </div>
-    `}_startAddSensor(){this._showAddSensor=!0,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}_editSensor(e,t){this._editSensorKey=e,this._showAddSensor=!1,this._sensorForm={name:e,command:t.command,interval:t.interval||30,unit:t.unit||""}}_removeSensor(e){const t={...this._customSensors};delete t[e],this._customSensors=t,this._localChanges=!0}_saveSensor(){const{name:e,command:t,interval:s,unit:i}=this._sensorForm;if(!e.trim()||!t.trim())return;const o={...this._customSensors};this._editSensorKey&&this._editSensorKey!==e&&delete o[this._editSensorKey],o[e.trim()]={command:t,interval:s||30,unit:i},this._customSensors=o,this._localChanges=!0,this._cancelSensorForm()}_cancelSensorForm(){this._showAddSensor=!1,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}async _pushConfig(){this._pushing=!0,this._pushStatus="";try{const e={interval:this._configInterval,plugins:{custom_command:{commands:this._customSensors}},commands:this._serverCommands};console.log("Pushing config:",e);const t=await async function(e,t){return(await fetch(`${he}/api/devices/${e}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})).json()}(this.deviceId,e);console.log("Push result:",t),t&&t.detail?this._pushStatus=`Push failed: ${t.detail}`:(this._lastPushed=(new Date).toLocaleTimeString(),this._localChanges=!1,this._pushStatus="Config synced")}catch(e){console.error("Push config error:",e),this._pushStatus=`Push failed: ${e.message}`}finally{this._pushing=!1}}_renderGroupDialog(){return H`
+    `}_startAddSensor(){this._showAddSensor=!0,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}_editSensor(e,t){this._editSensorKey=e,this._showAddSensor=!1,this._sensorForm={name:e,command:t.command,interval:t.interval||30,unit:t.unit||""}}_removeSensor(e){const t={...this._customSensors};delete t[e],this._customSensors=t,this._localChanges=!0}_saveSensor(){const{name:e,command:t,interval:s,unit:i}=this._sensorForm;if(!e.trim()||!t.trim())return;const o={...this._customSensors};this._editSensorKey&&this._editSensorKey!==e&&delete o[this._editSensorKey],o[e.trim()]={command:t,interval:s||30,unit:i},this._customSensors=o,this._localChanges=!0,this._cancelSensorForm()}_cancelSensorForm(){this._showAddSensor=!1,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}async _pushConfig(){this._pushing=!0,this._pushStatus="";try{const e={interval:this._configInterval,plugins:{custom_command:{commands:this._customSensors}},commands:this._serverCommands};console.log("Pushing config:",e);const t=await async function(e,t){return(await fetch(`${he}/api/devices/${e}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})).json()}(this.deviceId,e);console.log("Push result:",t),t&&t.detail?this._pushStatus=`Push failed: ${t.detail}`:(this._lastPushed=(new Date).toLocaleTimeString(),this._localChanges=!1,this._pushStatus="Config synced")}catch(e){console.error("Push config error:",e),this._pushStatus=`Push failed: ${e.message}`}finally{this._pushing=!1}}_renderGroupDialog(){return F`
       <div class="overlay" @click=${()=>this._showGroupDialog=!1}>
         <div class="dialog" @click=${e=>e.stopPropagation()}>
           <h3>Create Group</h3>
@@ -1604,12 +1623,12 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .cmd-toggle.off .cmd-toggle-knob { left: 2px; }
 
     .loading { padding: 40px; text-align: center; color: #666; }
-  `;constructor(){super(),this._tags=[],this._settings=null,this._groups={},this._devices={},this._loading=!0,this._newTagName="",this._renamingTag=null,this._renameValue="",this._expandedGroup=null,this._newGroupName="",this._editGroupName="",this._editingGroupName=null,this._savingSettings=!1,this._settingsSaved=!1,this._groupSaveStatus={},this._groupPushStatus={}}connectedCallback(){super.connectedCallback(),this._loadAll()}async _loadAll(){this._loading=!0;try{const[e,t,s,i]=await Promise.all([_e().catch(()=>[]),$e().catch(()=>({})),fe().catch(()=>({})),ue().catch(()=>({}))]);this._tags=Array.isArray(e)?e.map(e=>"string"==typeof e?{tag:e,count:0}:e).sort((e,t)=>e.tag.localeCompare(t.tag)):[],this._settings=t,this._groups=s||{},this._devices=i||{}}finally{this._loading=!1}}render(){return this._loading?H`<div class="loading">Loading settings...</div>`:H`
+  `;constructor(){super(),this._tags=[],this._settings=null,this._groups={},this._devices={},this._loading=!0,this._newTagName="",this._renamingTag=null,this._renameValue="",this._expandedGroup=null,this._newGroupName="",this._editGroupName="",this._editingGroupName=null,this._savingSettings=!1,this._settingsSaved=!1,this._groupSaveStatus={},this._groupPushStatus={}}connectedCallback(){super.connectedCallback(),this._loadAll()}async _loadAll(){this._loading=!0;try{const[e,t,s,i]=await Promise.all([_e().catch(()=>[]),$e().catch(()=>({})),fe().catch(()=>({})),ue().catch(()=>({}))]);this._tags=Array.isArray(e)?e.map(e=>"string"==typeof e?{tag:e,count:0}:e).sort((e,t)=>e.tag.localeCompare(t.tag)):[],this._settings=t,this._groups=s||{},this._devices=i||{}}finally{this._loading=!1}}render(){return this._loading?F`<div class="loading">Loading settings...</div>`:F`
       <h2>Settings</h2>
       ${this._renderTagRegistry()}
       ${this._renderGroupPolicies()}
       ${this._renderGlobalDefaults()}
-    `}_renderTagRegistry(){return H`
+    `}_renderTagRegistry(){return F`
       <div class="section">
         <div class="section-title">Tag Registry</div>
         <div class="tag-list">
@@ -1623,10 +1642,10 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <button class="small-btn" @click=${this._createTag}>New Tag</button>
         </div>
       </div>
-    `}_renderTagRow(e){const t=this._renamingTag===e.tag;return H`
+    `}_renderTagRow(e){const t=this._renamingTag===e.tag;return F`
       <div class="tag-row">
         <div class="tag-row-left">
-          ${t?H`
+          ${t?F`
             <div class="rename-row">
               <input class="small-input" type="text" .value=${this._renameValue}
                 @input=${e=>this._renameValue=e.target.value}
@@ -1634,19 +1653,19 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
               <button class="small-btn" @click=${()=>this._saveRename(e.tag)}>Save</button>
               <button class="small-btn cancel" @click=${this._cancelRename}>Cancel</button>
             </div>
-          `:H`
+          `:F`
             <span class="tag-name" @click=${()=>this._startRename(e.tag)}>${e.tag}</span>
             <span class="tag-count">${e.count} device${1!==e.count?"s":""}</span>
           `}
         </div>
-        ${t?"":H`
+        ${t?"":F`
           <div class="tag-row-actions">
             <button class="icon-btn delete" title="Delete tag"
               @click=${()=>this._deleteTag(e.tag)}>Delete</button>
           </div>
         `}
       </div>
-    `}_startRename(e){this._renamingTag=e,this._renameValue=e}_cancelRename(){this._renamingTag=null,this._renameValue=""}async _saveRename(e){const t=this._renameValue.trim();if(t&&t!==e){try{await async function(e,t){return(await fetch(`${he}/api/tags/${encodeURIComponent(e)}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t})})).json()}(e,t),await this._loadAll()}catch(e){console.error("Failed to rename tag:",e)}this._cancelRename()}else this._cancelRename()}async _createTag(){const e=this._newTagName.trim();if(e)try{await ye(e),this._newTagName="",await this._loadAll()}catch(e){console.error("Failed to create tag:",e)}}async _deleteTag(e){const t=this._tags.find(t=>t.tag===e);if(!(t&&t.count>0)||confirm(`"${e}" is used by ${t.count} device(s). Delete anyway?`))try{await async function(e){await fetch(`${he}/api/tags/${encodeURIComponent(e)}`,{method:"DELETE"})}(e),await this._loadAll()}catch(e){console.error("Failed to delete tag:",e)}}_getGroupDiscoveredData(e){const t=e.device_ids||[],s=new Set,i={},o={};for(const e of t){const t=this._devices[e];if(!t)continue;if(t.attributes&&"object"==typeof t.attributes)for(const e of Object.keys(t.attributes))s.add(e);if(Array.isArray(t.allowed_commands))for(const e of t.allowed_commands)e in i||(i[e]="");if(t.server_commands&&"object"==typeof t.server_commands)for(const[e,s]of Object.entries(t.server_commands))i[e]=s||i[e]||"";const a=t.remote_config;if(a&&a.plugins&&a.plugins.custom_command&&a.plugins.custom_command.commands)for(const[e,t]of Object.entries(a.plugins.custom_command.commands))o[e]||(o[e]=t)}return{attributes:Array.from(s).sort(),commands:i,sensors:o}}_renderGroupPolicies(){const e=Object.values(this._groups);return H`
+    `}_startRename(e){this._renamingTag=e,this._renameValue=e}_cancelRename(){this._renamingTag=null,this._renameValue=""}async _saveRename(e){const t=this._renameValue.trim();if(t&&t!==e){try{await async function(e,t){return(await fetch(`${he}/api/tags/${encodeURIComponent(e)}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t})})).json()}(e,t),await this._loadAll()}catch(e){console.error("Failed to rename tag:",e)}this._cancelRename()}else this._cancelRename()}async _createTag(){const e=this._newTagName.trim();if(e)try{await ye(e),this._newTagName="",await this._loadAll()}catch(e){console.error("Failed to create tag:",e)}}async _deleteTag(e){const t=this._tags.find(t=>t.tag===e);if(!(t&&t.count>0)||confirm(`"${e}" is used by ${t.count} device(s). Delete anyway?`))try{await async function(e){await fetch(`${he}/api/tags/${encodeURIComponent(e)}`,{method:"DELETE"})}(e),await this._loadAll()}catch(e){console.error("Failed to delete tag:",e)}}_getGroupDiscoveredData(e){const t=e.device_ids||[],s=new Set,i={},o={};for(const e of t){const t=this._devices[e];if(!t)continue;if(t.attributes&&"object"==typeof t.attributes)for(const e of Object.keys(t.attributes))s.add(e);if(Array.isArray(t.allowed_commands))for(const e of t.allowed_commands)e in i||(i[e]="");if(t.server_commands&&"object"==typeof t.server_commands)for(const[e,s]of Object.entries(t.server_commands))i[e]=s||i[e]||"";const a=t.remote_config;if(a&&a.plugins&&a.plugins.custom_command&&a.plugins.custom_command.commands)for(const[e,t]of Object.entries(a.plugins.custom_command.commands))o[e]||(o[e]=t)}return{attributes:Array.from(s).sort(),commands:i,sensors:o}}_renderGroupPolicies(){const e=Object.values(this._groups);return F`
       <div class="section">
         <div class="section-title">Group Policies</div>
         <div class="group-list">
@@ -1660,7 +1679,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <button class="small-btn" @click=${this._createGroup}>New Group</button>
         </div>
       </div>
-    `}_renderGroup(e){const t=this._expandedGroup===e.id,s=(e.device_ids||[]).length;return e.thresholds,H`
+    `}_renderGroup(e){const t=this._expandedGroup===e.id,s=(e.device_ids||[]).length;return e.thresholds,F`
       <div>
         <div class="group-header" @click=${()=>this._toggleGroup(e.id)}>
           <div class="group-header-left">
@@ -1669,7 +1688,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             <span class="group-member-count">${s} member${1!==s?"s":""}</span>
           </div>
         </div>
-        ${t?H`
+        ${t?F`
           <div class="group-body">
             <div class="group-field">
               <label>Name</label>
@@ -1681,7 +1700,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             <div class="group-field">
               <label>Members</label>
               <div class="members-row">
-                ${(e.device_ids||[]).map(t=>{const s=this._devices[t];return H`
+                ${(e.device_ids||[]).map(t=>{const s=this._devices[t];return F`
                     <span class="member-pill">
                       ${s&&s.device_name||t}
                       <span class="remove" @click=${()=>this._removeMember(e,t)}>&times;</span>
@@ -1709,22 +1728,22 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             <div class="group-footer">
               <button class="group-delete-btn" @click=${()=>this._deleteGroup(e)}>Delete Group</button>
               <button class="group-save-btn" @click=${()=>this._saveGroup(e)}>Save</button>
-              ${"saved"===this._groupSaveStatus[e.id]?H`<span class="group-status-saved">Saved!</span>`:""}
-              ${"error"===this._groupSaveStatus[e.id]?H`<span class="group-status-error">Error</span>`:""}
+              ${"saved"===this._groupSaveStatus[e.id]?F`<span class="group-status-saved">Saved!</span>`:""}
+              ${"error"===this._groupSaveStatus[e.id]?F`<span class="group-status-error">Error</span>`:""}
               <button class="group-save-btn" style="background: #2e7d32;"
                 @click=${()=>this._pushGroupConfig(e)}>Push to Group</button>
-              ${"Pushing..."===this._groupPushStatus[e.id]?H`<span class="group-status-pushing">Pushing...</span>`:""}
-              ${"Pushed!"===this._groupPushStatus[e.id]?H`<span class="group-status-pushed">Pushed!</span>`:""}
-              ${(this._groupPushStatus[e.id]||"").startsWith("Error")?H`<span class="group-status-error">${this._groupPushStatus[e.id]}</span>`:""}
+              ${"Pushing..."===this._groupPushStatus[e.id]?F`<span class="group-status-pushing">Pushing...</span>`:""}
+              ${"Pushed!"===this._groupPushStatus[e.id]?F`<span class="group-status-pushed">Pushed!</span>`:""}
+              ${(this._groupPushStatus[e.id]||"").startsWith("Error")?F`<span class="group-status-error">${this._groupPushStatus[e.id]}</span>`:""}
             </div>
           </div>
         `:""}
       </div>
-    `}_renderGroupCustomCommands(e){const t=e.custom_commands||{},s=Le(e.id),i=this._getGroupDiscoveredData(e).commands,o=Object.keys(i);return H`
-      ${o.length>0?H`
+    `}_renderGroupCustomCommands(e){const t=e.custom_commands||{},s=Le(e.id),i=this._getGroupDiscoveredData(e).commands,o=Object.keys(i);return F`
+      ${o.length>0?F`
         <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Discovered from devices</div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
-          ${o.sort().map(s=>{const o=i[s],a=s in t;return H`
+          ${o.sort().map(s=>{const o=i[s],a=s in t;return F`
               <div style="background: ${a?"#2a1a4a":"#1a1a2e"}; border: 1px solid ${a?"#7e57c2":"#2a2a4a"}; border-radius: 4px; padding: 4px 8px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
                 <div style="display: flex; align-items: center; gap: 6px;">
                   <span style="font-size: 11px; color: ${a?"#ce93d8":"#888"}; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${s}</span>
@@ -1734,16 +1753,16 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
                     </div>
                   </span>
                 </div>
-                ${o?H`<span style="font-size: 9px; color: #7060a0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${o}>${o}</span>`:""}
+                ${o?F`<span style="font-size: 9px; color: #7060a0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${o}>${o}</span>`:""}
               </div>
             `})}
         </div>
       `:""}
 
-      ${Object.keys(t).filter(e=>!o.includes(e)).length>0?H`
+      ${Object.keys(t).filter(e=>!o.includes(e)).length>0?F`
         <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Custom commands</div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
-          ${Object.entries(t).filter(([e])=>!o.includes(e)).map(([t,s])=>H`
+          ${Object.entries(t).filter(([e])=>!o.includes(e)).map(([t,s])=>F`
             <span title=${s} style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
               <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
                 ${t}
@@ -1754,7 +1773,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             </span>
           `)}
         </div>
-      `:0===o.length&&0===Object.keys(t).length?H`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No commands discovered yet.</div>`:""}
+      `:0===o.length&&0===Object.keys(t).length?F`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No commands discovered yet.</div>`:""}
 
       <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add new command</div>
       <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
@@ -1768,25 +1787,25 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           @input=${t=>{Le(e.id).shellCmd=t.target.value,this.requestUpdate()}}>
         <button class="small-btn" @click=${()=>this._addGroupCommand(e)}>Add</button>
       </div>
-    `}_toggleDiscoveredCommand(e,t,s,i){const o={...e.custom_commands||{}};i?o[t]=s||"":delete o[t],this._groups={...this._groups,[e.id]:{...e,custom_commands:o}}}_renderGroupThresholds(e){const t=e.thresholds||{},s=Me(e.id),i=this._getGroupDiscoveredData(e).attributes,o=Object.keys(t).filter(e=>null!=t[e]&&!i.includes(e)),a=[...i,...o];return H`
-      ${a.length>0?H`
+    `}_toggleDiscoveredCommand(e,t,s,i){const o={...e.custom_commands||{}};i?o[t]=s||"":delete o[t],this._groups={...this._groups,[e.id]:{...e,custom_commands:o}}}_renderGroupThresholds(e){const t=e.thresholds||{},s=Me(e.id),i=this._getGroupDiscoveredData(e).attributes,o=Object.keys(t).filter(e=>null!=t[e]&&!i.includes(e)),a=[...i,...o];return F`
+      ${a.length>0?F`
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; margin-bottom: 8px;">
-          ${a.map(s=>{const i=t[s],o=null!=i&&""!==i;return H`
+          ${a.map(s=>{const i=t[s],o=null!=i&&""!==i;return F`
               <div style="display: flex; align-items: center; gap: 6px; background: #12122a; border-radius: 4px; padding: 5px 8px;">
                 <span style="font-size: 11px; color: ${o?"#ccc":"#666"}; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${s}>${s}</span>
-                ${o?H`<span style="font-size: 9px; color: #4fc3f7; margin-right: 2px;" title="Threshold active">●</span>`:""}
+                ${o?F`<span style="font-size: 9px; color: #4fc3f7; margin-right: 2px;" title="Threshold active">●</span>`:""}
                 <input class="threshold-input" type="number" placeholder="—"
                   style="width: 80px; font-size: 12px; padding: 3px 6px; background: #2a2a4a; border-color: ${o?"#4a4a7a":"#2a2a5a"};"
                   .value=${o?String(i):""}
                   @input=${t=>this._updateGroupThreshold(e.id,s,t.target.value)}>
-                ${o?H`
+                ${o?F`
                   <button class="icon-btn delete" style="padding: 2px 4px; font-size: 10px;"
                     @click=${()=>this._removeGroupThreshold(e.id,s)} title="Clear threshold">&times;</button>
                 `:""}
               </div>
             `})}
         </div>
-      `:H`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No attributes discovered from member devices yet.</div>`}
+      `:F`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No attributes discovered from member devices yet.</div>`}
       <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add custom threshold</div>
       <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
         <input class="small-input" type="text" placeholder="Attribute name..."
@@ -1799,24 +1818,24 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           @input=${t=>{Me(e.id).value=t.target.value,this.requestUpdate()}}>
         <button class="small-btn" @click=${()=>this._addGroupThreshold(e)}>Add threshold</button>
       </div>
-    `}_addGroupThreshold(e){const t=Me(e.id),s=(t.attr||"").trim(),i=(t.value||"").trim();s&&""!==i&&(this._updateGroupThreshold(e.id,s,i),t.attr="",t.value="",this.requestUpdate())}_removeGroupThreshold(e,t){const s=this._groups[e];if(!s)return;const i={...s.thresholds||{}};delete i[t],this._groups={...this._groups,[e]:{...s,thresholds:i}}}_renderGroupCustomSensors(e){const t=e.custom_sensors||{},s=Ge(e.id),i=this._getGroupDiscoveredData(e).sensors,o=Object.keys(i);return H`
-      ${o.length>0?H`
+    `}_addGroupThreshold(e){const t=Me(e.id),s=(t.attr||"").trim(),i=(t.value||"").trim();s&&""!==i&&(this._updateGroupThreshold(e.id,s,i),t.attr="",t.value="",this.requestUpdate())}_removeGroupThreshold(e,t){const s=this._groups[e];if(!s)return;const i={...s.thresholds||{}};delete i[t],this._groups={...this._groups,[e]:{...s,thresholds:i}}}_renderGroupCustomSensors(e){const t=e.custom_sensors||{},s=Ge(e.id),i=this._getGroupDiscoveredData(e).sensors,o=Object.keys(i);return F`
+      ${o.length>0?F`
         <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Discovered from devices</div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
-          ${o.sort().map(e=>{const t=i[e];return H`
+          ${o.sort().map(e=>{const t=i[e];return F`
               <span style="font-size: 10px; background: #0e2a2a; color: #4db6ac; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 220px; border: 1px solid #1a3a3a;" title="Reported by member device">
                 <span style="font-weight: 600;">${e}</span>
-                ${t.command?H`<span style="font-size: 9px; color: #40807a; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.command}</span>`:""}
+                ${t.command?F`<span style="font-size: 9px; color: #40807a; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.command}</span>`:""}
                 <span style="font-size: 9px; color: #406060;">${t.interval?t.interval+"s":""} ${t.unit||""}</span>
               </span>
             `})}
         </div>
       `:""}
 
-      ${Object.keys(t).length>0?H`
+      ${Object.keys(t).length>0?F`
         <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Group sensors</div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
-          ${Object.entries(t).map(([t,s])=>H`
+          ${Object.entries(t).map(([t,s])=>F`
             <span style="font-size: 10px; background: #1a3a3a; color: #80cbc4; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 220px;">
               <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
                 ${t}
@@ -1828,7 +1847,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             </span>
           `)}
         </div>
-      `:0===o.length?H`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No custom sensors</div>`:""}
+      `:0===o.length?F`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No custom sensors</div>`:""}
 
       <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add sensor</div>
       <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
@@ -1850,21 +1869,21 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           @input=${t=>{Ge(e.id).unit=t.target.value,this.requestUpdate()}}>
         <button class="small-btn" @click=${()=>this._addGroupSensor(e)}>Add</button>
       </div>
-    `}_addGroupSensor(e){const t=Ge(e.id),s=(t.name||"").trim(),i=(t.command||"").trim();s&&i&&(this._groups={...this._groups,[e.id]:{...e,custom_sensors:{...e.custom_sensors||{},[s]:{command:i,interval:t.interval?Number(t.interval):void 0,unit:t.unit||void 0}}}},t.name="",t.command="",t.interval="",t.unit="",this.requestUpdate())}_removeGroupSensor(e,t){const s={...e.custom_sensors||{}};delete s[t],this._groups={...this._groups,[e.id]:{...e,custom_sensors:s}}}_renderAddMemberDropdown(e){const t=e.device_ids||[],s=Object.entries(this._devices).filter(([e])=>!t.includes(e));return 0===s.length?H``:H`
+    `}_addGroupSensor(e){const t=Ge(e.id),s=(t.name||"").trim(),i=(t.command||"").trim();s&&i&&(this._groups={...this._groups,[e.id]:{...e,custom_sensors:{...e.custom_sensors||{},[s]:{command:i,interval:t.interval?Number(t.interval):void 0,unit:t.unit||void 0}}}},t.name="",t.command="",t.interval="",t.unit="",this.requestUpdate())}_removeGroupSensor(e,t){const s={...e.custom_sensors||{}};delete s[t],this._groups={...this._groups,[e.id]:{...e,custom_sensors:s}}}_renderAddMemberDropdown(e){const t=e.device_ids||[],s=Object.entries(this._devices).filter(([e])=>!t.includes(e));return 0===s.length?F``:F`
       <select class="small-input" style="padding: 3px 8px;"
         @change=${t=>{t.target.value&&(this._addMember(e,t.target.value),t.target.value="")}}>
         <option value="">Add device...</option>
-        ${s.map(([e,t])=>H`
+        ${s.map(([e,t])=>F`
           <option value=${e}>${t.device_name||e}</option>
         `)}
       </select>
-    `}_toggleGroup(e){this._expandedGroup=this._expandedGroup===e?null:e}_updateGroupThreshold(e,t,s){const i=this._groups[e];i&&(this._groups={...this._groups,[e]:{...i,thresholds:{...i.thresholds||{},[t]:""===s?null:Number(s)}}})}async _addMember(e,t){const s=[...e.device_ids||[],t];try{await xe(e.id,{device_ids:s}),await this._loadAll()}catch(e){console.error("Failed to add member:",e)}}async _removeMember(e,t){const s=(e.device_ids||[]).filter(e=>e!==t);try{await xe(e.id,{device_ids:s}),await this._loadAll()}catch(e){console.error("Failed to remove member:",e)}}async _saveGroup(e){const t=this._editingGroupName===e.id?this._editGroupName.trim():e.name,s={};for(const[t,i]of Object.entries(e.thresholds||{}))null==i||isNaN(i)||(s[t]=i);const i=t||e.name;try{await xe(e.id,{name:i,device_ids:e.device_ids||[],custom_commands:e.custom_commands||{},custom_sensors:e.custom_sensors||{},thresholds:s}),this._groups={...this._groups,[e.id]:{...e,name:i,thresholds:s}},this._editingGroupName===e.id&&(this._editingGroupName=null),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"saved"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}catch(t){console.error("Failed to save group:",t),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"error"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}}async _createGroup(){const e=this._newGroupName.trim();if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_");try{await be(t,e,[]),this._newGroupName="",this._expandedGroup=t,await this._loadAll()}catch(e){console.error("Failed to create group:",e)}}async _deleteGroup(e){const t=(e.device_ids||[]).length;if(!(t>0)||confirm(`Delete group "${e.name}"? It has ${t} member(s).`))try{await async function(e){await fetch(`${he}/api/groups/${e}`,{method:"DELETE"})}(e.id),this._expandedGroup===e.id&&(this._expandedGroup=null),await this._loadAll()}catch(e){console.error("Failed to delete group:",e)}}_addGroupCommand(e){const t=Le(e.id),s=(t.name||"").trim(),i=(t.shellCmd||"").trim();s&&i&&(this._groups={...this._groups,[e.id]:{...e,custom_commands:{...e.custom_commands||{},[s]:i}}},t.name="",t.shellCmd="",this.requestUpdate())}_removeGroupCommand(e,t){const s={...e.custom_commands||{}};delete s[t],this._groups={...this._groups,[e.id]:{...e,custom_commands:s}}}async _pushGroupConfig(e){const t={commands:e.custom_commands||{},plugins:{custom_command:{commands:e.custom_sensors||{}}}};this._groupPushStatus={...this._groupPushStatus,[e.id]:"Pushing..."};try{await async function(e,t){return(await fetch(`${he}/api/groups/${e}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})).json()}(e.id,t),this._groupPushStatus={...this._groupPushStatus,[e.id]:"Pushed!"},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}catch(t){console.error("Failed to push group config:",t);const s=t&&t.message?`Error: ${t.message}`:"Error";this._groupPushStatus={...this._groupPushStatus,[e.id]:s},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}}_renderGlobalDefaults(){const e=(this._settings||{}).default_thresholds||{},t=Ue;return H`
+    `}_toggleGroup(e){this._expandedGroup=this._expandedGroup===e?null:e}_updateGroupThreshold(e,t,s){const i=this._groups[e];i&&(this._groups={...this._groups,[e]:{...i,thresholds:{...i.thresholds||{},[t]:""===s?null:Number(s)}}})}async _addMember(e,t){const s=[...e.device_ids||[],t];try{await xe(e.id,{device_ids:s}),await this._loadAll()}catch(e){console.error("Failed to add member:",e)}}async _removeMember(e,t){const s=(e.device_ids||[]).filter(e=>e!==t);try{await xe(e.id,{device_ids:s}),await this._loadAll()}catch(e){console.error("Failed to remove member:",e)}}async _saveGroup(e){const t=this._editingGroupName===e.id?this._editGroupName.trim():e.name,s={};for(const[t,i]of Object.entries(e.thresholds||{}))null==i||isNaN(i)||(s[t]=i);const i=t||e.name;try{await xe(e.id,{name:i,device_ids:e.device_ids||[],custom_commands:e.custom_commands||{},custom_sensors:e.custom_sensors||{},thresholds:s}),this._groups={...this._groups,[e.id]:{...e,name:i,thresholds:s}},this._editingGroupName===e.id&&(this._editingGroupName=null),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"saved"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}catch(t){console.error("Failed to save group:",t),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"error"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}}async _createGroup(){const e=this._newGroupName.trim();if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_");try{await be(t,e,[]),this._newGroupName="",this._expandedGroup=t,await this._loadAll()}catch(e){console.error("Failed to create group:",e)}}async _deleteGroup(e){const t=(e.device_ids||[]).length;if(!(t>0)||confirm(`Delete group "${e.name}"? It has ${t} member(s).`))try{await async function(e){await fetch(`${he}/api/groups/${e}`,{method:"DELETE"})}(e.id),this._expandedGroup===e.id&&(this._expandedGroup=null),await this._loadAll()}catch(e){console.error("Failed to delete group:",e)}}_addGroupCommand(e){const t=Le(e.id),s=(t.name||"").trim(),i=(t.shellCmd||"").trim();s&&i&&(this._groups={...this._groups,[e.id]:{...e,custom_commands:{...e.custom_commands||{},[s]:i}}},t.name="",t.shellCmd="",this.requestUpdate())}_removeGroupCommand(e,t){const s={...e.custom_commands||{}};delete s[t],this._groups={...this._groups,[e.id]:{...e,custom_commands:s}}}async _pushGroupConfig(e){const t={commands:e.custom_commands||{},plugins:{custom_command:{commands:e.custom_sensors||{}}}};this._groupPushStatus={...this._groupPushStatus,[e.id]:"Pushing..."};try{await async function(e,t){return(await fetch(`${he}/api/groups/${e}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})).json()}(e.id,t),this._groupPushStatus={...this._groupPushStatus,[e.id]:"Pushed!"},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}catch(t){console.error("Failed to push group config:",t);const s=t&&t.message?`Error: ${t.message}`:"Error";this._groupPushStatus={...this._groupPushStatus,[e.id]:s},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}}_renderGlobalDefaults(){const e=(this._settings||{}).default_thresholds||{},t=Ue;return F`
       <div class="section">
         <div class="section-title">Global Defaults</div>
 
         <div style="font-size: 11px; color: #888; margin-bottom: 10px;">Default Warning Thresholds</div>
 
-        ${Object.keys(e).filter(t=>null!=e[t]).map(t=>H`
+        ${Object.keys(e).filter(t=>null!=e[t]).map(t=>F`
           <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
             <span style="font-size: 12px; color: #ccc; min-width: 140px;">${t}</span>
             <input class="settings-input" type="number" style="width: 90px;"
@@ -1892,7 +1911,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${this._saveSettings}>
             ${this._savingSettings?"Saving...":"Save Defaults"}
           </button>
-          ${this._settingsSaved?H`<span class="saved-msg">Saved!</span>`:""}
+          ${this._settingsSaved?F`<span class="saved-msg">Saved!</span>`:""}
         </div>
       </div>
     `}_updateDefaultThreshold(e,t){const s=this._settings||{};this._settings={...s,default_thresholds:{...s.default_thresholds||{},[e]:""===t?null:Number(t)}}}_removeDefaultThreshold(e){const t=this._settings||{},s={...t.default_thresholds||{}};delete s[e],this._settings={...t,default_thresholds:s}}_addDefaultThreshold(){const e=(Ue.attr||"").trim(),t=(Ue.value||"").trim();e&&""!==t&&(this._updateDefaultThreshold(e,t),Ue.attr="",Ue.value="",this.requestUpdate())}async _saveSettings(){this._savingSettings=!0,this._settingsSaved=!1;try{await async function(e){return(await fetch(`${he}/api/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})).json()}(this._settings),this._settingsSaved=!0,setTimeout(()=>{this._settingsSaved=!1},2e3)}catch(e){console.error("Failed to save settings:",e)}finally{this._savingSettings=!1}}}customElements.define("settings-view",Ie);class Re extends le{static properties={currentView:{type:String},selectedDevice:{type:String}};static styles=a`
@@ -1921,14 +1940,14 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     }
-  `;constructor(){super(),this.currentView="dashboard",this.selectedDevice=null}connectedCallback(){super.connectedCallback(),ce.connect()}disconnectedCallback(){super.disconnectedCallback(),ce.disconnect()}render(){return H`
+  `;constructor(){super(),this.currentView="dashboard",this.selectedDevice=null}connectedCallback(){super.connectedCallback(),ce.connect()}disconnectedCallback(){super.disconnectedCallback(),ce.disconnect()}render(){return F`
       <nav-bar
         .currentView=${this.currentView}
         @view-change=${this._onViewChange}
       ></nav-bar>
       ${this._renderView()}
       ${this.selectedDevice?this._renderOverlay():""}
-    `}_renderView(){switch(this.currentView){case"topology":return H`<topology-view @device-select=${this._onDeviceSelect}></topology-view>`;case"settings":return H`<settings-view></settings-view>`;default:return H`<dashboard-view @device-select=${this._onDeviceSelect}></dashboard-view>`}}_renderOverlay(){return H`
+    `}_renderView(){switch(this.currentView){case"topology":return F`<topology-view @device-select=${this._onDeviceSelect}></topology-view>`;case"settings":return F`<settings-view></settings-view>`;default:return F`<dashboard-view @device-select=${this._onDeviceSelect}></dashboard-view>`}}_renderOverlay(){return F`
       <div class="overlay" @click=${this._onOverlayClick}>
         <div class="overlay-content" @click=${e=>e.stopPropagation()}>
           <device-detail

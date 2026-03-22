@@ -77,7 +77,17 @@ def create_app():
             else:
                 exposed_attrs = effective.get("ha_exposed_attributes")
 
-            ha_entities.update_device_states(device_id, device, exposed_attrs)
+            # Filter out hidden attributes before exposing to HA
+            hidden = device.get("hidden_attributes", [])
+            if hidden:
+                filtered_device = dict(device)
+                filtered_device["attributes"] = {
+                    k: v for k, v in device.get("attributes", {}).items()
+                    if k not in hidden
+                }
+                ha_entities.update_device_states(device_id, filtered_device, exposed_attrs)
+            else:
+                ha_entities.update_device_states(device_id, device, exposed_attrs)
             loop = asyncio.new_event_loop()
             try:
                 loop.run_until_complete(ws_manager.broadcast({

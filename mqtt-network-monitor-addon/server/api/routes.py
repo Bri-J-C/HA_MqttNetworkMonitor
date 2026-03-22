@@ -85,23 +85,44 @@ def delete_attribute(device_id: str, attr_name: str):
     device = registry.get_device(device_id)
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
-    if not registry.delete_attribute(device_id, attr_name):
-        raise HTTPException(status_code=404, detail="Attribute not found")
-    # Remove HA entity for this attribute
+
+    # Check if it's a custom_command sensor we can actually remove from the client
+    remote_config = device.get("remote_config", {})
+    cc = remote_config.get("plugins", {}).get("custom_command", {}).get("commands", {})
+    is_custom = attr_name in cc
+
+    if is_custom:
+        # Remove from client config and push
+        del cc[attr_name]
+        if mqtt_handler:
+            mqtt_handler.push_config(device_id, remote_config)
+        registry.set_device_settings(device_id, {"remote_config": remote_config})
+        registry.delete_attribute(device_id, attr_name)
+    else:
+        # Built-in attribute — hide it instead
+        hidden = device.get("hidden_attributes", [])
+        if attr_name not in hidden:
+            hidden.append(attr_name)
+            registry.set_device_settings(device_id, {"hidden_attributes": hidden})
+
+    # Remove HA entity either way
     if ha_entity_manager:
         ha_entity_manager._remove_sensor(device_id, attr_name)
         ha_entity_manager._mqtt.publish(f"network_monitor/{device_id}/ha/{attr_name}", "", retain=True)
-    # Push config update to client to stop collecting this sensor
-    if mqtt_handler:
-        # Get current remote config and remove the sensor from custom_command
-        remote_config = device.get("remote_config", {})
-        cc = remote_config.get("plugins", {}).get("custom_command", {}).get("commands", {})
-        if attr_name in cc:
-            del cc[attr_name]
-            # Push updated config without this sensor
-            mqtt_handler.push_config(device_id, remote_config)
-            registry.set_device_settings(device_id, {"remote_config": remote_config})
-    return {"status": "deleted"}
+
+    return {"status": "hidden" if not is_custom else "deleted"}
+
+
+@app.post("/api/devices/{device_id}/attributes/{attr_name}/unhide")
+def unhide_attribute(device_id: str, attr_name: str):
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    hidden = device.get("hidden_attributes", [])
+    if attr_name in hidden:
+        hidden.remove(attr_name)
+        registry.set_device_settings(device_id, {"hidden_attributes": hidden})
+    return {"status": "unhidden"}
 
 
 @app.get("/api/devices/{device_id}/effective-settings")

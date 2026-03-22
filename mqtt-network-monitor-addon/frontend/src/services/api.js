@@ -21,7 +21,13 @@ export async function deleteDevice(id) {
 }
 
 export async function deleteAttribute(deviceId, attrName) {
-  await fetch(`${BASE}/api/devices/${deviceId}/attributes/${attrName}`, { method: 'DELETE' });
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/attributes/${attrName}`, { method: 'DELETE' });
+  return res.json();
+}
+
+export async function unhideAttribute(deviceId, attrName) {
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/attributes/${attrName}/unhide`, { method: 'POST' });
+  return res.json();
 }
 
 export async function fetchTopology() {
