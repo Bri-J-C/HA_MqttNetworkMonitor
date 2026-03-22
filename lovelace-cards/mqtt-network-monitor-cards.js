@@ -151,7 +151,8 @@ class MQTTDeviceStatusCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <ha-card>
         <style>
-          .card-content { padding: 16px; }
+          ha-card { height: 100%; overflow: hidden; }
+          .card-content { padding: 16px; height: 100%; box-sizing: border-box; overflow: hidden; }
           .header {
             display: flex;
             justify-content: space-between;
@@ -218,6 +219,16 @@ class MQTTDeviceStatusCard extends HTMLElement {
 
   getCardSize() {
     return 3;
+  }
+
+  getGridOptions() {
+    return {
+      columns: 6,
+      rows: 3,
+      min_rows: 2,
+      max_rows: 6,
+      min_columns: 3,
+    };
   }
 
   static getConfigElement() {
@@ -427,12 +438,16 @@ class MQTTTopologyCard extends HTMLElement {
           .count-online { color: ${STATUS_COLORS.online}; }
           .count-offline { color: ${STATUS_COLORS.offline}; }
           .count-warning { color: ${STATUS_COLORS.warning}; }
+          ha-card { height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+          .card-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
           .svg-container {
             background: #1a1a2e;
             border-radius: 8px;
             overflow: hidden;
+            flex: 1;
+            min-height: 0;
           }
-          svg { width: 100%; display: block; aspect-ratio: ${(vbW / vbH).toFixed(2)}; }
+          svg { width: 100%; height: 100%; display: block; }
         </style>
         <div class="card-content">
           <div class="header">
@@ -459,9 +474,17 @@ class MQTTTopologyCard extends HTMLElement {
   }
 
   getCardSize() {
-    // HA sections layout: each unit ≈ 50px.
-    // Return a reasonable size so HA allocates enough space.
     return 6;
+  }
+
+  getGridOptions() {
+    return {
+      columns: 12,
+      rows: 4,
+      min_rows: 2,
+      max_rows: 12,
+      min_columns: 6,
+    };
   }
 
   static getConfigElement() {
@@ -633,14 +656,6 @@ class MQTTTopologyEditor extends HTMLElement {
             placeholder="e.g., Home Network">
         </div>
         <div class="field">
-          <label>Height (px)</label>
-          <input id="height-input" type="number"
-            value="${this._config.height || 300}"
-            min="150" max="800" step="50"
-            placeholder="300">
-          <div class="hint">Card height in pixels (default: 300)</div>
-        </div>
-        <div class="field">
           <label>Layout</label>
           ${this._layouts.length > 0 ? `
             <select id="layout-select">
@@ -660,9 +675,6 @@ class MQTTTopologyEditor extends HTMLElement {
 
     this.shadowRoot.getElementById('title-input')
       .addEventListener('input', (e) => this._update('title', e.target.value));
-
-    this.shadowRoot.getElementById('height-input')
-      .addEventListener('input', (e) => this._update('height', parseInt(e.target.value) || 300));
 
     const layoutSelect = this.shadowRoot.getElementById('layout-select');
     const layoutInput = this.shadowRoot.getElementById('layout-input');
