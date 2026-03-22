@@ -371,9 +371,10 @@ class TopologyView extends LitElement {
           @mousemove=${this._onMouseMove}
           @mouseup=${this._onMouseUp}
           @mouseleave=${this._onMouseUp}>
-          ${allEdges.map((edge, i) => this._renderEdge(edge, i))}
+          ${allEdges.map((edge, i) => this._renderEdgeLine(edge, i))}
           ${this._renderLinkPreview()}
           ${nodes.map(node => this._renderNode(node))}
+          ${allEdges.map((edge, i) => this._renderEdgeLabels(edge, i))}
         </svg>
       </div>
 
@@ -424,16 +425,10 @@ class TopologyView extends LitElement {
     `;
   }
 
-  _renderEdge(edge, index) {
+  _edgeGeometry(edge) {
     const from = this.nodePositions[edge.source];
     const to = this.nodePositions[edge.target];
-    if (!from || !to) return svg``;
-
-    const isManual = edge.type === 'manual';
-    const isSelected = isManual && this._selectedEdge === index - (this.topology.edges?.length || 0);
-    const strokeColor = isManual ? '#4fc3f7' : '#555';
-    const strokeWidth = isSelected ? 2.5 : 1.5;
-    const dash = isManual ? 'none' : '4,2';
+    if (!from || !to) return null;
 
     const dx = to.x - from.x;
     const dy = to.y - from.y;
@@ -441,52 +436,90 @@ class TopologyView extends LitElement {
     const ux = dx / len;
     const uy = dy / len;
 
-    // Perpendicular direction — always pick the side that pushes "up" in screen space
-    // If line is mostly horizontal, labels go above; if mostly vertical, labels go to the left
+    // Perpendicular — prefer above the line
     let perpX = -uy;
     let perpY = ux;
-    // Flip if perpendicular points downward (prefer labels above the line)
     if (perpY > 0) { perpX = -perpX; perpY = -perpY; }
 
-    const perpOff = 14; // perpendicular offset from line
+    // Source label: placed along the line, outside the node box (half-width=45, half-height=18)
+    // Find the edge of the box in the direction of the line
+    const boxExitDist = this._boxExitDistance(ux, uy);
+    const labelGap = 8; // gap between box edge and label
 
-    // Source label: placed just outside the source node boundary
-    // Node box is ~45x18, circle is ~22r. Use 55px along line from source center
-    const srcDist = Math.min(55, len * 0.25);
-    const srcLabelX = from.x + ux * srcDist + perpX * perpOff;
-    const srcLabelY = from.y + uy * srcDist + perpY * perpOff;
+    const srcDist = boxExitDist + labelGap;
+    const tgtDist = boxExitDist + labelGap;
 
-    // Target label: placed just outside the target node boundary
-    const tgtDist = Math.min(55, len * 0.25);
-    const tgtLabelX = to.x - ux * tgtDist + perpX * perpOff;
-    const tgtLabelY = to.y - uy * tgtDist + perpY * perpOff;
+    return { from, to, ux, uy, perpX, perpY, len, srcDist, tgtDist };
+  }
 
-    // Mid label
-    const midX = (from.x + to.x) / 2 + perpX * perpOff;
-    const midY = (from.y + to.y) / 2 + perpY * perpOff;
+  _boxExitDistance(ux, uy) {
+    // Node box is 90x36 (half: 45x18). Find where a ray from center
+    // in direction (ux,uy) exits the box.
+    const hw = 48; // slightly larger than half-width for padding
+    const hh = 22; // slightly larger than half-height for padding
+    if (Math.abs(ux) < 0.001) return hh;
+    if (Math.abs(uy) < 0.001) return hw;
+    const tx = hw / Math.abs(ux);
+    const ty = hh / Math.abs(uy);
+    return Math.min(tx, ty);
+  }
+
+  _renderEdgeLine(edge, index) {
+    const geo = this._edgeGeometry(edge);
+    if (!geo) return svg``;
+
+    const isManual = edge.type === 'manual';
+    const isSelected = isManual && this._selectedEdge === index - (this.topology.edges?.length || 0);
+    const strokeColor = isManual ? '#4fc3f7' : '#555';
+    const strokeWidth = isSelected ? 2.5 : 1.5;
+    const dash = isManual ? 'none' : '4,2';
 
     return svg`
-      <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}"
+      <line x1="${geo.from.x}" y1="${geo.from.y}" x2="${geo.to.x}" y2="${geo.to.y}"
         stroke="${strokeColor}" stroke-width="${strokeWidth}"
         stroke-dasharray="${dash}"
         @click=${isManual && this.editMode ? () => this._selectEdge(index - (this.topology.edges?.length || 0)) : null}
         style="${isManual && this.editMode ? 'cursor:pointer' : ''}"/>
+    `;
+  }
+
+  _renderEdgeLabels(edge, index) {
+    if (!edge.label && !edge.sourceLabel && !edge.targetLabel) return svg``;
+
+    const geo = this._edgeGeometry(edge);
+    if (!geo) return svg``;
+
+    const { from, to, ux, uy, perpX, perpY, srcDist, tgtDist } = geo;
+
+    // Source label — outside source node box
+    const srcX = from.x + ux * srcDist;
+    const srcY = from.y + uy * srcDist;
+
+    // Target label — outside target node box
+    const tgtX = to.x - ux * tgtDist;
+    const tgtY = to.y - uy * tgtDist;
+
+    // Mid label — middle of line, offset perpendicular
+    const midX = (from.x + to.x) / 2 + perpX * 14;
+    const midY = (from.y + to.y) / 2 + perpY * 14;
+
+    return svg`
       ${edge.label ? svg`
         <rect x="${midX - edge.label.length * 3 - 3}" y="${midY - 9}"
-          width="${edge.label.length * 6 + 6}" height="13" rx="2" fill="#1a1a2e" opacity="0.85"/>
+          width="${edge.label.length * 6 + 6}" height="13" rx="2" fill="#1a1a2e" opacity="0.9"/>
         <text x="${midX}" y="${midY}" text-anchor="middle"
           fill="#888" font-size="9" style="pointer-events:none">${edge.label}</text>
       ` : svg``}
       ${edge.sourceLabel ? svg`
-        <rect x="${srcLabelX - edge.sourceLabel.length * 2.5 - 3}" y="${srcLabelY - 8}"
-          width="${edge.sourceLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.85"/>
-        <text x="${srcLabelX}" y="${srcLabelY}" text-anchor="middle"
+        <rect x="${srcX - edge.sourceLabel.length * 2.5 - 3}" y="${srcY - 8}"
+          width="${edge.sourceLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>
+        <text x="${srcX}" y="${srcY}" text-anchor="middle"
           fill="#4fc3f7" font-size="8" style="pointer-events:none">${edge.sourceLabel}</text>
       ` : svg``}
       ${edge.targetLabel ? svg`
-        <rect x="${tgtLabelX - edge.targetLabel.length * 2.5 - 3}" y="${tgtLabelY - 8}"
-          width="${edge.targetLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.85"/>
-        <text x="${tgtLabelX}" y="${tgtLabelY}" text-anchor="middle"
+        <rect x="${tgtX - edge.targetLabel.length * 2.5 - 3}" y="${tgtY - 8}"
+          width="${edge.targetLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>
+        <text x="${tgtX}" y="${tgtY}" text-anchor="middle"
           fill="#4fc3f7" font-size="8" style="pointer-events:none">${edge.targetLabel}</text>
       ` : svg``}
     `;

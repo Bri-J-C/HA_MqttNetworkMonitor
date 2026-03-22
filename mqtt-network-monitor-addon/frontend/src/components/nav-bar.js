@@ -47,6 +47,11 @@ class NavBar extends LitElement {
       color: #4fc3f7;
       background: rgba(79,195,247,0.1);
     }
+    .version {
+      font-size: 10px;
+      color: #444;
+      margin-left: auto;
+    }
   `;
 
   render() {
@@ -63,6 +68,7 @@ class NavBar extends LitElement {
             @click=${() => this._navigate('topology')}
           >Topology</button>
         </div>
+        <span class="version">v0.1.0 build ${BUILD_TIME}</span>
       </nav>
     `;
   }
