@@ -238,18 +238,14 @@ class TopologyView extends LitElement {
     super.connectedCallback();
     this._loadTopology();
     this._loadLayouts();
-    // Poll topology and selected device every 5 seconds
+    // Poll to update node statuses (not positions) every refresh interval
     const pollInterval = parseInt(localStorage.getItem('mqtt-monitor-refresh') || '5') * 1000;
     this._pollTimer = setInterval(() => {
-      this._loadTopology();
-      if (this.selectedNode) {
-        this._refreshSelectedDevice();
-      }
+      this._refreshNodeStatuses();
     }, pollInterval);
     wsService.onMessage((data) => {
-      this._loadTopology();
-      if (data.type === 'device_update' && data.device_id === this.selectedNode && data.device) {
-        this._selectedDeviceData = data.device;
+      if (data.type === 'device_update') {
+        this._refreshNodeStatuses();
       }
     });
   }
@@ -259,10 +255,37 @@ class TopologyView extends LitElement {
     if (this._pollTimer) clearInterval(this._pollTimer);
   }
 
-  async _refreshSelectedDevice() {
+  async _refreshNodeStatuses() {
     try {
-      this._selectedDeviceData = await fetchDevice(this.selectedNode);
-    } catch (e) { /* ignore */ }
+      const data = await fetchTopology();
+      if (!data || !data.nodes) return;
+      // Only update node statuses, don't reset positions or edges
+      const statusMap = {};
+      for (const node of data.nodes) {
+        statusMap[node.id] = node.status;
+      }
+      // Update statuses on existing topology nodes
+      if (this.topology && this.topology.nodes) {
+        let changed = false;
+        const updatedNodes = this.topology.nodes.map(n => {
+          if (statusMap[n.id] && statusMap[n.id] !== n.status) {
+            changed = true;
+            return { ...n, status: statusMap[n.id] };
+          }
+          return n;
+        });
+        // Add any new nodes that weren't there before
+        for (const node of data.nodes) {
+          if (!this.topology.nodes.find(n => n.id === node.id)) {
+            updatedNodes.push(node);
+            changed = true;
+          }
+        }
+        if (changed) {
+          this.topology = { ...this.topology, nodes: updatedNodes };
+        }
+      }
+    } catch (e) { /* ignore polling errors */ }
   }
 
   async _loadTopology() {
