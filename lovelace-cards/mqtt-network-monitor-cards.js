@@ -13,52 +13,71 @@ const STATUS_COLORS = {
 
 // ============================================
 // Shared: Auto-discover add-on ingress URL
+// Uses the same pattern as ha-addon-iframe-card:
+// 1. Query supervisor/api for addon info → get ingress_url
+// 2. Create ingress session → set cookie
+// 3. Refresh session periodically
 // ============================================
 
 let _cachedIngressUrl = null;
 let _discoveryPromise = null;
+let _sessionRefreshInterval = null;
 
 async function getIngressUrl(hass) {
   if (_cachedIngressUrl) return _cachedIngressUrl;
   if (_discoveryPromise) return _discoveryPromise;
 
   _discoveryPromise = (async () => {
+    // Step 1: Get addon info via supervisor WebSocket API
     try {
-      // Use HA's built-in hassUrl + supervisor API
       const resp = await hass.callWS({
         type: 'supervisor/api',
         endpoint: `/addons/${ADDON_SLUG}/info`,
         method: 'get',
       });
-      if (resp?.data?.ingress_url) {
-        _cachedIngressUrl = resp.data.ingress_url;
-        return _cachedIngressUrl;
+      const url = resp?.ingress_url || resp?.data?.ingress_url;
+      if (url) {
+        _cachedIngressUrl = url.replace(/\/+$/, '');
+        console.info('MQTT Monitor: Discovered ingress URL:', _cachedIngressUrl);
       }
     } catch (e) {
-      console.warn('MQTT Monitor: WS discovery failed, trying REST', e);
+      console.warn('MQTT Monitor: Supervisor API call failed:', e.message);
     }
 
-    // Fallback: try fetching from supervisor REST API
-    try {
-      const resp = await fetch('/api/hassio/addons/' + ADDON_SLUG + '/info', {
-        headers: { 'Authorization': 'Bearer ' + hass.auth.data.access_token },
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        if (data?.data?.ingress_url) {
-          _cachedIngressUrl = data.data.ingress_url;
-          return _cachedIngressUrl;
-        }
-      }
-    } catch (e) {
-      console.warn('MQTT Monitor: REST discovery failed', e);
+    if (!_cachedIngressUrl) {
+      console.error('MQTT Monitor: Could not discover add-on. Is it installed and running?');
+      return null;
     }
 
-    console.error('MQTT Monitor: Could not discover add-on ingress URL');
-    return null;
+    // Step 2: Create ingress session (sets cookie for browser access)
+    await createIngressSession(hass);
+
+    // Step 3: Refresh session every 60 seconds
+    if (!_sessionRefreshInterval) {
+      _sessionRefreshInterval = setInterval(() => createIngressSession(hass), 60000);
+    }
+
+    return _cachedIngressUrl;
   })();
 
   return _discoveryPromise;
+}
+
+async function createIngressSession(hass) {
+  try {
+    const resp = await hass.callWS({
+      type: 'supervisor/api',
+      endpoint: '/ingress/session',
+      method: 'post',
+    });
+    const session = resp?.session || resp?.data?.session;
+    if (session) {
+      const secure = location.protocol === 'https:' ? ';Secure' : '';
+      document.cookie = `ingress_session=${session};path=/api/hassio_ingress/;SameSite=Strict${secure}`;
+    }
+  } catch (e) {
+    console.warn('MQTT Monitor: Failed to create ingress session:', e.message);
+  }
 }
 
 async function addonFetch(hass, path, serverUrlOverride) {
@@ -69,11 +88,8 @@ async function addonFetch(hass, path, serverUrlOverride) {
   if (!baseUrl) return null;
 
   try {
-    const res = await fetch(baseUrl + path, {
-      headers: hass?.auth?.data?.access_token
-        ? { 'Authorization': 'Bearer ' + hass.auth.data.access_token }
-        : {},
-    });
+    // Ingress session cookie handles auth — no Authorization header needed
+    const res = await fetch(baseUrl + path);
     if (!res.ok) return null;
     return await res.json();
   } catch (e) {
