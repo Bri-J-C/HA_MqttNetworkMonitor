@@ -33,16 +33,19 @@ class DeviceDetail extends LitElement {
     _localChanges: { type: Boolean, state: true },
     _showGroupDialog: { type: Boolean, state: true },
     _newGroupName: { type: String, state: true },
+    _serverCommands: { type: Array, state: true },
+    _newCommand: { type: String, state: true },
   };
 
   static styles = css`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
-    .back {
-      background: none; border: none; color: #4fc3f7; cursor: pointer;
-      font-size: 14px; margin-bottom: 16px; padding: 0;
+    .close-btn {
+      background: none; border: none; color: #666; cursor: pointer;
+      font-size: 20px; padding: 4px 8px; line-height: 1; border-radius: 4px;
+      transition: all 0.15s;
     }
-    .back:hover { text-decoration: underline; }
+    .close-btn:hover { color: #ccc; background: rgba(255,255,255,0.05); }
 
     .header {
       display: flex; justify-content: space-between; align-items: center;
@@ -268,6 +271,8 @@ class DeviceDetail extends LitElement {
     this._localChanges = false;
     this._showGroupDialog = false;
     this._newGroupName = '';
+    this._serverCommands = [];
+    this._newCommand = '';
   }
 
   connectedCallback() {
@@ -286,6 +291,8 @@ class DeviceDetail extends LitElement {
       this.device = await fetchDevice(this.deviceId);
       // Seed local HA overrides from device
       this._haOverrides = { ...(this.device.ha_exposure_overrides || {}) };
+      // Seed server-side commands
+      this._serverCommands = [...(this.device.server_commands || [])];
       // Seed config state from device remote_config if available
       if (this.device.remote_config) {
         this._configInterval = this.device.remote_config.interval || 30;
@@ -315,19 +322,18 @@ class DeviceDetail extends LitElement {
     const statusColor = d.status === 'online' ? '#81c784' : d.status === 'offline' ? '#ef5350' : '#ffb74d';
 
     return html`
-      <button class="back" @click=${() => this.dispatchEvent(new CustomEvent('back'))}>
-        &#8592; Back
-      </button>
-
       <!-- 1. Header -->
       <div class="header">
         <div class="header-left">
           <span class="title">${d.device_name || this.deviceId}</span>
           <span class="device-type">${d.device_type || ''}</span>
         </div>
-        <span class="status-badge" style="background: ${statusColor}20; color: ${statusColor}">
-          ${d.status}
-        </span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="status-badge" style="background: ${statusColor}20; color: ${statusColor}">
+            ${d.status}
+          </span>
+          <button class="close-btn" @click=${() => this.dispatchEvent(new CustomEvent('back'))}>&#10005;</button>
+        </div>
       </div>
 
       <!-- 2. Tags -->
@@ -522,18 +528,21 @@ class DeviceDetail extends LitElement {
   // ── Section 6: Commands ───────────────────────────────────────────────────
 
   _renderCommands() {
-    const allowedCommands = this.device.allowed_commands;
+    // Merge client-side allowed_commands with any server-added commands
+    const clientCommands = this.device.allowed_commands || [];
+    const serverCommands = this._serverCommands || [];
+    const allCommands = [...new Set([...clientCommands, ...serverCommands])];
 
     return html`
       <div class="section">
         <div class="section-title">Commands</div>
-        ${!allowedCommands || allowedCommands.length === 0 ? html`
+        ${allCommands.length === 0 ? html`
           <div class="no-commands">
-            No commands available — configure <code>allowed_commands</code> in the client's config.yaml
+            No commands available — add commands below or configure <code>allowed_commands</code> in the client's config.yaml
           </div>
         ` : html`
           <div class="commands">
-            ${allowedCommands.map(cmd => html`
+            ${allCommands.map(cmd => html`
               <button class="cmd-btn ${isDangerous(cmd) ? 'danger' : ''}"
                 @click=${() => this._sendCmd(cmd)}>
                 ${cmd}
@@ -542,6 +551,29 @@ class DeviceDetail extends LitElement {
           </div>
         `}
         ${this.commandResult ? html`<div class="cmd-result">${this.commandResult}</div>` : ''}
+
+        <div style="margin-top: 10px;">
+          <div style="display: flex; gap: 4px; align-items: center;">
+            <input class="config-input" type="text" placeholder="Add command..."
+              style="width: 160px;"
+              .value=${this._newCommand || ''}
+              @input=${(e) => this._newCommand = e.target.value}
+              @keydown=${(e) => e.key === 'Enter' && this._addServerCommand()}>
+            <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
+              @click=${this._addServerCommand}>Add</button>
+          </div>
+          ${serverCommands.length > 0 ? html`
+            <div style="margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap;">
+              ${serverCommands.map(cmd => html`
+                <span style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 2px 8px; border-radius: 3px; display: flex; align-items: center; gap: 4px;">
+                  ${cmd}
+                  <span style="cursor: pointer; opacity: 0.6;" @click=${() => this._removeServerCommand(cmd)}>&times;</span>
+                </span>
+              `)}
+              <span style="font-size: 9px; color: #555;">server-added commands</span>
+            </div>
+          ` : ''}
+        </div>
       </div>
     `;
   }
@@ -767,6 +799,24 @@ class DeviceDetail extends LitElement {
   }
 
   // ── Command ───────────────────────────────────────────────────────────────
+
+  _addServerCommand() {
+    const cmd = (this._newCommand || '').trim();
+    if (!cmd) return;
+    if (!this._serverCommands.includes(cmd)) {
+      this._serverCommands = [...this._serverCommands, cmd];
+      this._localChanges = true;
+      // Save to device settings
+      updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
+    }
+    this._newCommand = '';
+  }
+
+  _removeServerCommand(cmd) {
+    this._serverCommands = this._serverCommands.filter(c => c !== cmd);
+    this._localChanges = true;
+    updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
+  }
 
   async _sendCmd(command, params = {}) {
     try {

@@ -18,6 +18,26 @@ class NetworkMonitorApp extends LitElement {
       min-height: 100vh;
       background: #1a1a2e;
     }
+    .overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 500;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+    .overlay-content {
+      background: #1a1a2e;
+      border-radius: 12px;
+      border: 1px solid #2a2a4a;
+      width: 100%;
+      max-width: 1000px;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
   `;
 
   constructor() {
@@ -43,18 +63,11 @@ class NetworkMonitorApp extends LitElement {
         @view-change=${this._onViewChange}
       ></nav-bar>
       ${this._renderView()}
+      ${this.selectedDevice ? this._renderOverlay() : ''}
     `;
   }
 
   _renderView() {
-    if (this.selectedDevice) {
-      return html`
-        <device-detail
-          .deviceId=${this.selectedDevice}
-          @back=${() => this.selectedDevice = null}
-        ></device-detail>
-      `;
-    }
     switch (this.currentView) {
       case 'topology':
         return html`<topology-view @device-select=${this._onDeviceSelect}></topology-view>`;
@@ -64,6 +77,23 @@ class NetworkMonitorApp extends LitElement {
       default:
         return html`<dashboard-view @device-select=${this._onDeviceSelect}></dashboard-view>`;
     }
+  }
+
+  _renderOverlay() {
+    return html`
+      <div class="overlay" @click=${this._onOverlayClick}>
+        <div class="overlay-content" @click=${(e) => e.stopPropagation()}>
+          <device-detail
+            .deviceId=${this.selectedDevice}
+            @back=${() => this.selectedDevice = null}
+          ></device-detail>
+        </div>
+      </div>
+    `;
+  }
+
+  _onOverlayClick() {
+    this.selectedDevice = null;
   }
 
   _onViewChange(e) {
