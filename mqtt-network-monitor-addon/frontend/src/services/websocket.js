@@ -7,7 +7,9 @@ export class WebSocketService {
 
   connect() {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${protocol}//${location.host}/api/ws`;
+    const match = location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);
+    const basePath = match ? match[1] : '';
+    const url = `${protocol}//${location.host}${basePath}/api/ws`;
     this._ws = new WebSocket(url);
 
     this._ws.onmessage = (event) => {

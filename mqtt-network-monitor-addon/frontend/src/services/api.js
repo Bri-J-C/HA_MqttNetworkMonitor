@@ -1,4 +1,10 @@
-const BASE = '';
+// Detect ingress base path: when served via HA ingress, the URL looks like
+// /api/hassio_ingress/TOKEN/ — we need to prefix all API calls with that path
+function getBase() {
+  const match = location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);
+  return match ? match[1] : '';
+}
+const BASE = getBase();
 
 export async function fetchDevices() {
   const res = await fetch(`${BASE}/api/devices`);
