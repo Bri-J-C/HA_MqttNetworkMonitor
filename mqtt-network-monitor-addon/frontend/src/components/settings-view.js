@@ -370,9 +370,6 @@ class SettingsView extends LitElement {
     return html`
       <div class="tag-card ${isSelected ? 'selected' : ''}" @click=${() => this._toggleTagSelection(item.tag)}>
         <div class="tag-card-top">
-          <input type="checkbox" .checked=${isSelected}
-            @click=${(e) => e.stopPropagation()}
-            @change=${() => this._toggleTagSelection(item.tag)}>
           <span class="tag-card-name">${item.tag}</span>
         </div>
         <div class="tag-card-count">${count} device${count !== 1 ? 's' : ''}</div>
