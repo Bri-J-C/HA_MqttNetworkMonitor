@@ -115,7 +115,7 @@ class DashboardView extends LitElement {
     this._groups = {};
     this._collapsedGroups = {};
     this._wsUnsub = null;
-    this._refreshInterval = 5;
+    this._refreshInterval = parseInt(localStorage.getItem('mqtt-monitor-refresh') || '5');
     this._pollTimer = null;
   }
 
@@ -226,7 +226,7 @@ class DashboardView extends LitElement {
         <div class="refresh-control">
           <select class="refresh-select"
             .value=${String(this._refreshInterval)}
-            @change=${(e) => { this._refreshInterval = Number(e.target.value); this._startPolling(); }}>
+            @change=${(e) => { this._refreshInterval = Number(e.target.value); localStorage.setItem('mqtt-monitor-refresh', e.target.value); this._startPolling(); }}>
             <option value="1">1s</option>
             <option value="2">2s</option>
             <option value="5">5s</option>

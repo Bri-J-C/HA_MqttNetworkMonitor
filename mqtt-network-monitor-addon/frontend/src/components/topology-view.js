@@ -239,12 +239,13 @@ class TopologyView extends LitElement {
     this._loadTopology();
     this._loadLayouts();
     // Poll topology and selected device every 5 seconds
+    const pollInterval = parseInt(localStorage.getItem('mqtt-monitor-refresh') || '5') * 1000;
     this._pollTimer = setInterval(() => {
       this._loadTopology();
       if (this.selectedNode) {
         this._refreshSelectedDevice();
       }
-    }, 5000);
+    }, pollInterval);
     wsService.onMessage((data) => {
       this._loadTopology();
       if (data.type === 'device_update' && data.device_id === this.selectedNode && data.device) {

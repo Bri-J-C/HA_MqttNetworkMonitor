@@ -76,6 +76,8 @@ class DeviceRegistry:
             device["allowed_commands"] = payload["allowed_commands"]
         if "active_plugins" in payload:
             device["active_plugins"] = payload["active_plugins"]
+        if "collection_interval" in payload:
+            device["collection_interval"] = payload["collection_interval"]
 
         # Derive status
         device["status"] = self._derive_status(device)

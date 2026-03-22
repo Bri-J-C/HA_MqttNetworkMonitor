@@ -104,8 +104,11 @@ class MQTTMonitorClient:
             )
 
     def _sync_active_plugins(self):
-        """Keep MessageBuilder's active_plugins in sync with running plugins."""
+        """Keep MessageBuilder's active_plugins and collection_interval in sync."""
         self._message_builder.active_plugins = [p.name for p in self._plugins]
+        # Report the interval of the first plugin as the collection interval
+        if self._plugins:
+            self._message_builder.collection_interval = self._plugins[0].interval
 
     def _apply_config_update(self, remote_config: dict):
         """Apply remote config changes to running plugins."""

@@ -342,7 +342,8 @@ class DeviceDetail extends LitElement {
 
   _startPolling() {
     if (this._pollTimer) clearInterval(this._pollTimer);
-    this._pollTimer = setInterval(() => this._refreshDevice(), 5000);
+    const interval = parseInt(localStorage.getItem('mqtt-monitor-refresh') || '5') * 1000;
+    this._pollTimer = setInterval(() => this._refreshDevice(), interval);
   }
 
   async _refreshDevice() {
@@ -372,9 +373,9 @@ class DeviceDetail extends LitElement {
       // Seed server-side commands (dict: name → shell_cmd)
       const sc = this.device.server_commands;
       this._serverCommands = (sc && !Array.isArray(sc)) ? { ...sc } : {};
-      // Seed config state from device remote_config if available
+      // Seed config state — prefer live collection_interval from device, fall back to remote_config
+      this._configInterval = this.device.collection_interval || (this.device.remote_config?.interval) || 30;
       if (this.device.remote_config) {
-        this._configInterval = this.device.remote_config.interval || 30;
         const cc = this.device.remote_config.plugins?.custom_command?.commands || {};
         this._customSensors = { ...cc };
       }

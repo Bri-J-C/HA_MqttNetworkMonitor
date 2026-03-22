@@ -8,13 +8,15 @@ TOPIC_PREFIX = "network_monitor"
 
 class MessageBuilder:
     def __init__(self, device_id: str, device_name: str, device_type: str, tags: list[str],
-                 allowed_commands: list[str] | None = None, active_plugins: list[str] | None = None):
+                 allowed_commands: list[str] | None = None, active_plugins: list[str] | None = None,
+                 collection_interval: int | None = None):
         self.device_id = device_id
         self.device_name = device_name
         self.device_type = device_type
         self.tags = tags
         self.allowed_commands = allowed_commands if allowed_commands is not None else []
         self.active_plugins = active_plugins if active_plugins is not None else []
+        self.collection_interval = collection_interval
 
     @property
     def status_topic(self) -> str:
@@ -52,6 +54,7 @@ class MessageBuilder:
             "tags": self.tags,
             "allowed_commands": self.allowed_commands,
             "active_plugins": self.active_plugins,
+            "collection_interval": self.collection_interval,
             "timestamp": int(time.time()),
             "attributes": attributes,
         }
