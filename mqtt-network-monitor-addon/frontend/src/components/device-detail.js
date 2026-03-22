@@ -742,7 +742,7 @@ class DeviceDetail extends LitElement {
 
   _renderAgentConfig() {
     const rc = this.device.remote_config || {};
-    const plugins = rc.plugins ? Object.keys(rc.plugins) : [];
+    const plugins = this.device.active_plugins || (rc.plugins ? Object.keys(rc.plugins) : []);
     const sensors = this._customSensors;
 
     return html`

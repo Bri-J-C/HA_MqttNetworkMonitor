@@ -72,6 +72,8 @@ class DeviceRegistry:
             device["network"] = payload["network"]
         if "allowed_commands" in payload:
             device["allowed_commands"] = payload["allowed_commands"]
+        if "active_plugins" in payload:
+            device["active_plugins"] = payload["active_plugins"]
 
         # Derive status
         device["status"] = self._derive_status(device)

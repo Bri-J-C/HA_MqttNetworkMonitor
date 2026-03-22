@@ -44,6 +44,7 @@ class MQTTMonitorClient:
         registry = PluginRegistry()
         registry.load_builtins()
         self._plugins = registry.create_from_config(config.plugins)
+        self._sync_active_plugins()
 
         self._mqtt.on_connect = self._on_connect
         self._mqtt.on_message = self._on_message
@@ -102,6 +103,10 @@ class MQTTMonitorClient:
                 payload=response_json,
             )
 
+    def _sync_active_plugins(self):
+        """Keep MessageBuilder's active_plugins in sync with running plugins."""
+        self._message_builder.active_plugins = [p.name for p in self._plugins]
+
     def _apply_config_update(self, remote_config: dict):
         """Apply remote config changes to running plugins."""
         if "interval" in remote_config:
@@ -145,6 +150,8 @@ class MQTTMonitorClient:
             self._message_builder.allowed_commands = sorted(
                 self._command_handler.allowed_commands
             )
+
+        self._sync_active_plugins()
 
     def _collect_and_publish(self, plugin):
         try:
