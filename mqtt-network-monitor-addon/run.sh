@@ -1,22 +1,15 @@
-#!/usr/bin/env bash
+#!/usr/bin/with-contenv bashio
 set -e
 
-# Read options from HA add-on config
 export MQTT_BROKER=$(bashio::config 'mqtt_host')
 export MQTT_PORT=$(bashio::config 'mqtt_port')
 export MQTT_USER=$(bashio::config 'mqtt_user')
 export MQTT_PASSWORD=$(bashio::config 'mqtt_password')
 export DATA_DIR="/data"
-export PORT=8099
+export PORT=8100
 
-# If MQTT broker not set, try to use HA's Mosquitto
-if [ -z "$MQTT_BROKER" ]; then
-    if bashio::services.available "mqtt"; then
-        export MQTT_BROKER=$(bashio::services "mqtt" "host")
-        export MQTT_PORT=$(bashio::services "mqtt" "port")
-        export MQTT_USER=$(bashio::services "mqtt" "username")
-        export MQTT_PASSWORD=$(bashio::services "mqtt" "password")
-    fi
-fi
+bashio::log.info "Starting MQTT Network Monitor..."
+bashio::log.info "MQTT Broker: ${MQTT_BROKER}:${MQTT_PORT}"
 
-exec python3 -m server.main
+cd /app
+exec python3 -u -m server.main
