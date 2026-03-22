@@ -330,6 +330,55 @@ class SettingsView extends LitElement {
     }
   }
 
+  // ── Group Discovered Data Helper ──────────────────────────────────────────
+
+  _getGroupDiscoveredData(g) {
+    const memberIds = g.device_ids || [];
+    const attributeSet = new Set();
+    const commandMap = {}; // name → shellCmd or ''
+    const sensors = {};
+
+    for (const did of memberIds) {
+      const dev = this._devices[did];
+      if (!dev) continue;
+
+      // Attributes
+      if (dev.attributes && typeof dev.attributes === 'object') {
+        for (const key of Object.keys(dev.attributes)) {
+          attributeSet.add(key);
+        }
+      }
+
+      // Allowed commands (no shell cmd known)
+      if (Array.isArray(dev.allowed_commands)) {
+        for (const cmd of dev.allowed_commands) {
+          if (!(cmd in commandMap)) commandMap[cmd] = '';
+        }
+      }
+
+      // Server commands (have shell cmd)
+      if (dev.server_commands && typeof dev.server_commands === 'object') {
+        for (const [cmd, shellCmd] of Object.entries(dev.server_commands)) {
+          commandMap[cmd] = shellCmd || commandMap[cmd] || '';
+        }
+      }
+
+      // Sensors from remote_config custom_command
+      const rc = dev.remote_config;
+      if (rc && rc.plugins && rc.plugins.custom_command && rc.plugins.custom_command.commands) {
+        for (const [name, sensor] of Object.entries(rc.plugins.custom_command.commands)) {
+          if (!sensors[name]) sensors[name] = sensor;
+        }
+      }
+    }
+
+    return {
+      attributes: Array.from(attributeSet).sort(),
+      commands: commandMap,
+      sensors,
+    };
+  }
+
   // ── Group Policies ────────────────────────────────────────────────────────
 
   _renderGroupPolicies() {
@@ -420,10 +469,39 @@ class SettingsView extends LitElement {
   _renderGroupCustomCommands(g) {
     const commands = g.custom_commands || {};
     const form = getGroupCmdForm(g.id);
+    const discovered = this._getGroupDiscoveredData(g);
+    const discoveredCmds = discovered.commands; // { name: shellCmd }
+    const discoveredNames = Object.keys(discoveredCmds);
+
     return html`
-      ${Object.keys(commands).length > 0 ? html`
+      ${discoveredNames.length > 0 ? html`
+        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Discovered from devices</div>
+        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
+          ${discoveredNames.sort().map(name => {
+            const shellCmd = discoveredCmds[name];
+            const included = name in commands;
+            return html`
+              <div style="background: ${included ? '#2a1a4a' : '#1a1a2e'}; border: 1px solid ${included ? '#7e57c2' : '#2a2a4a'}; border-radius: 4px; padding: 4px 8px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 11px; color: ${included ? '#ce93d8' : '#888'}; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</span>
+                  <label style="display: flex; align-items: center; gap: 3px; cursor: pointer; flex-shrink: 0; text-transform: none; letter-spacing: 0; font-size: 10px; color: ${included ? '#ce93d8' : '#555'};">
+                    <input type="checkbox" style="margin: 0; cursor: pointer;"
+                      .checked=${included}
+                      @change=${(e) => this._toggleDiscoveredCommand(g, name, shellCmd, e.target.checked)}>
+                    ${included ? 'on' : 'off'}
+                  </label>
+                </div>
+                ${shellCmd ? html`<span style="font-size: 9px; color: #7060a0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${shellCmd}>${shellCmd}</span>` : ''}
+              </div>
+            `;
+          })}
+        </div>
+      ` : ''}
+
+      ${Object.keys(commands).filter(n => !discoveredNames.includes(n)).length > 0 ? html`
+        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Custom commands</div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
-          ${Object.entries(commands).map(([name, shellCmd]) => html`
+          ${Object.entries(commands).filter(([n]) => !discoveredNames.includes(n)).map(([name, shellCmd]) => html`
             <span title=${shellCmd} style="font-size: 10px; background: #3a1e5f; color: #ce93d8; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 200px;">
               <span style="display: flex; align-items: center; gap: 4px; font-weight: 600;">
                 ${name}
@@ -434,7 +512,9 @@ class SettingsView extends LitElement {
             </span>
           `)}
         </div>
-      ` : html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No custom commands</div>`}
+      ` : (discoveredNames.length === 0 && Object.keys(commands).length === 0 ? html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No commands discovered yet.</div>` : '')}
+
+      <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add new command</div>
       <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
         <input class="small-input" type="text" placeholder="Command name..."
           style="width: 130px;"
@@ -449,21 +529,56 @@ class SettingsView extends LitElement {
     `;
   }
 
+  _toggleDiscoveredCommand(g, name, shellCmd, include) {
+    const commands = { ...(g.custom_commands || {}) };
+    if (include) {
+      commands[name] = shellCmd || '';
+    } else {
+      delete commands[name];
+    }
+    this._groups = {
+      ...this._groups,
+      [g.id]: { ...g, custom_commands: commands },
+    };
+  }
+
   _renderGroupThresholds(g) {
     const thresholds = g.thresholds || {};
     const form = getGroupThresholdForm(g.id);
+    const discovered = this._getGroupDiscoveredData(g);
+    const discoveredAttrs = discovered.attributes;
+
+    // Build a unified list: discovered attrs first, then any threshold attrs not in discovered
+    const extraThresholdKeys = Object.keys(thresholds).filter(
+      k => thresholds[k] != null && !discoveredAttrs.includes(k)
+    );
+    const allDisplayAttrs = [...discoveredAttrs, ...extraThresholdKeys];
+
     return html`
-      ${Object.keys(thresholds).filter(k => thresholds[k] != null).map(key => html`
-        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
-          <span style="font-size: 12px; color: #ccc; min-width: 140px;">${key}</span>
-          <input class="threshold-input" type="number" style="width: 90px;"
-            .value=${String(thresholds[key])}
-            @input=${(e) => this._updateGroupThreshold(g.id, key, e.target.value)}>
-          <button class="icon-btn delete"
-            @click=${() => this._removeGroupThreshold(g.id, key)}>Remove</button>
+      ${allDisplayAttrs.length > 0 ? html`
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; margin-bottom: 8px;">
+          ${allDisplayAttrs.map(key => {
+            const val = thresholds[key];
+            const isSet = val != null && val !== '';
+            return html`
+              <div style="display: flex; align-items: center; gap: 6px; background: #12122a; border-radius: 4px; padding: 5px 8px;">
+                <span style="font-size: 11px; color: ${isSet ? '#ccc' : '#666'}; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${key}>${key}</span>
+                ${isSet ? html`<span style="font-size: 9px; color: #4fc3f7; margin-right: 2px;" title="Threshold active">●</span>` : ''}
+                <input class="threshold-input" type="number" placeholder="—"
+                  style="width: 80px; font-size: 12px; padding: 3px 6px; background: #2a2a4a; border-color: ${isSet ? '#4a4a7a' : '#2a2a5a'};"
+                  .value=${isSet ? String(val) : ''}
+                  @input=${(e) => this._updateGroupThreshold(g.id, key, e.target.value)}>
+                ${isSet ? html`
+                  <button class="icon-btn delete" style="padding: 2px 4px; font-size: 10px;"
+                    @click=${() => this._removeGroupThreshold(g.id, key)} title="Clear threshold">&times;</button>
+                ` : ''}
+              </div>
+            `;
+          })}
         </div>
-      `)}
-      <div style="display: flex; gap: 4px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
+      ` : html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No attributes discovered from member devices yet.</div>`}
+      <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add custom threshold</div>
+      <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
         <input class="small-input" type="text" placeholder="Attribute name..."
           style="width: 150px;"
           .value=${form.attr}
@@ -502,8 +617,29 @@ class SettingsView extends LitElement {
   _renderGroupCustomSensors(g) {
     const sensors = g.custom_sensors || {};
     const form = getGroupSensorForm(g.id);
+    const discovered = this._getGroupDiscoveredData(g);
+    const discoveredSensors = discovered.sensors;
+    const discoveredNames = Object.keys(discoveredSensors);
+
     return html`
+      ${discoveredNames.length > 0 ? html`
+        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Discovered from devices</div>
+        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
+          ${discoveredNames.sort().map(name => {
+            const sensor = discoveredSensors[name];
+            return html`
+              <span style="font-size: 10px; background: #0e2a2a; color: #4db6ac; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 220px; border: 1px solid #1a3a3a;" title="Reported by member device">
+                <span style="font-weight: 600;">${name}</span>
+                ${sensor.command ? html`<span style="font-size: 9px; color: #40807a; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sensor.command}</span>` : ''}
+                <span style="font-size: 9px; color: #406060;">${sensor.interval ? sensor.interval + 's' : ''} ${sensor.unit || ''}</span>
+              </span>
+            `;
+          })}
+        </div>
+      ` : ''}
+
       ${Object.keys(sensors).length > 0 ? html`
+        <div style="font-size: 11px; color: #555; margin-bottom: 4px;">Group sensors</div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
           ${Object.entries(sensors).map(([name, sensor]) => html`
             <span style="font-size: 10px; background: #1a3a3a; color: #80cbc4; padding: 4px 8px; border-radius: 3px; display: flex; flex-direction: column; gap: 1px; max-width: 220px;">
@@ -517,7 +653,9 @@ class SettingsView extends LitElement {
             </span>
           `)}
         </div>
-      ` : html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No custom sensors</div>`}
+      ` : (discoveredNames.length === 0 ? html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No custom sensors</div>` : '')}
+
+      <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add sensor</div>
       <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
         <input class="small-input" type="text" placeholder="Sensor name..."
           style="width: 110px;"
