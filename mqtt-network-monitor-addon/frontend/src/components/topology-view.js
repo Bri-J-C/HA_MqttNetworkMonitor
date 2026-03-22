@@ -243,7 +243,7 @@ class TopologyView extends LitElement {
     this._pollTimer = setInterval(() => {
       this._refreshNodeStatuses();
     }, pollInterval);
-    wsService.onMessage((data) => {
+    this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update') {
         this._refreshNodeStatuses();
       }
@@ -252,6 +252,7 @@ class TopologyView extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    if (this._wsUnsub) this._wsUnsub();
     if (this._pollTimer) clearInterval(this._pollTimer);
   }
 

@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import queue
 import sys
 from pathlib import Path
 
@@ -23,6 +24,8 @@ from fastapi import WebSocket, WebSocketDisconnect
 
 logger = logging.getLogger(__name__)
 
+_broadcast_queue: queue.Queue = queue.Queue()
+
 # WebSocket endpoint
 @app.websocket("/api/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -32,6 +35,20 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.receive_text()
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
+
+
+@app.on_event("startup")
+async def start_broadcast_worker():
+    async def worker():
+        while True:
+            try:
+                msg = await asyncio.get_event_loop().run_in_executor(
+                    None, _broadcast_queue.get, True, 0.5
+                )
+                await ws_manager.broadcast(msg)
+            except queue.Empty:
+                await asyncio.sleep(0.1)
+    asyncio.create_task(worker())
 
 
 def create_app():
@@ -88,15 +105,11 @@ def create_app():
                 ha_entities.update_device_states(device_id, filtered_device, exposed_attrs)
             else:
                 ha_entities.update_device_states(device_id, device, exposed_attrs)
-            loop = asyncio.new_event_loop()
-            try:
-                loop.run_until_complete(ws_manager.broadcast({
-                    "type": "device_update",
-                    "device_id": device_id,
-                    "device": device,
-                }))
-            finally:
-                loop.close()
+            _broadcast_queue.put({
+                "type": "device_update",
+                "device_id": device_id,
+                "device": device,
+            })
 
     mqtt_handler.on_device_update(on_device_update)
     init_app(registry, topology_engine, command_sender, mqtt_handler, tag_reg, settings_mgr, ha_entities)

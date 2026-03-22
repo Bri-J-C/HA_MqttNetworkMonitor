@@ -1,6 +1,7 @@
 """Tracks all known devices, their current state, tags, and groups."""
 
 import logging
+import threading
 import time
 from typing import Any
 
@@ -24,6 +25,12 @@ class DeviceRegistry:
             "cpu_temp": 80.0,
         }
         self._settings_resolver = None
+        self._devices_dirty = False
+        self._devices_save_timer = None
+        self._devices_save_lock = threading.Lock()
+        self._groups_dirty = False
+        self._groups_save_timer = None
+        self._groups_save_lock = threading.Lock()
         self._load()
 
     def _load(self):
@@ -34,11 +41,52 @@ class DeviceRegistry:
         if groups:
             self._groups = groups
 
+    def _mark_devices_dirty(self):
+        """Mark devices as needing save. Actual save happens within 5 seconds."""
+        self._devices_dirty = True
+        with self._devices_save_lock:
+            if self._devices_save_timer is None:
+                self._devices_save_timer = threading.Timer(5.0, self._flush_devices)
+                self._devices_save_timer.daemon = True
+                self._devices_save_timer.start()
+
+    def _flush_devices(self):
+        """Actually write devices to disk."""
+        with self._devices_save_lock:
+            self._devices_save_timer = None
+            if self._devices_dirty:
+                self._storage.save(DEVICES_FILE, self._devices)
+                self._devices_dirty = False
+
     def _save_devices(self):
-        self._storage.save(DEVICES_FILE, self._devices)
+        """Debounced save — marks dirty and schedules a flush within 5 seconds."""
+        self._mark_devices_dirty()
+
+    def _mark_groups_dirty(self):
+        """Mark groups as needing save. Actual save happens within 5 seconds."""
+        self._groups_dirty = True
+        with self._groups_save_lock:
+            if self._groups_save_timer is None:
+                self._groups_save_timer = threading.Timer(5.0, self._flush_groups)
+                self._groups_save_timer.daemon = True
+                self._groups_save_timer.start()
+
+    def _flush_groups(self):
+        """Actually write groups to disk."""
+        with self._groups_save_lock:
+            self._groups_save_timer = None
+            if self._groups_dirty:
+                self._storage.save(GROUPS_FILE, self._groups)
+                self._groups_dirty = False
 
     def _save_groups(self):
-        self._storage.save(GROUPS_FILE, self._groups)
+        """Debounced save — marks dirty and schedules a flush within 5 seconds."""
+        self._mark_groups_dirty()
+
+    def flush(self):
+        """Force immediate save of both devices and groups. Call on shutdown."""
+        self._flush_devices()
+        self._flush_groups()
 
     def update_device(self, device_id: str, payload: dict) -> None:
         is_new = device_id not in self._devices

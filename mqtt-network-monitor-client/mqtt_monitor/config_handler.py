@@ -31,9 +31,9 @@ class ConfigHandler:
 
     def _save_remote(self):
         try:
-            self._remote_config_path.write_text(
-                yaml.dump(self._remote_config, default_flow_style=False)
-            )
+            tmp_path = self._remote_config_path.with_suffix('.tmp')
+            tmp_path.write_text(yaml.dump(self._remote_config, default_flow_style=False))
+            tmp_path.replace(self._remote_config_path)
         except Exception as e:
             logger.error(f"Failed to save remote config: {e}")
 

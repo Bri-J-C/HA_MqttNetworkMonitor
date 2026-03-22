@@ -32,7 +32,7 @@ class MQTTMonitorClient:
         )
         self._command_handler = CommandHandler(config.allowed_commands)
         self._plugins = []
-        self._timers: list[threading.Timer] = []
+        self._plugin_timers: dict[str, threading.Timer] = {}
         self._running = False
 
         _config_dir = config_dir if config_dir is not None else Path(".")
@@ -175,10 +175,14 @@ class MQTTMonitorClient:
         if not self._running:
             return
         self._collect_and_publish(plugin)
+        # Cancel existing timer for this plugin before creating a new one
+        old_timer = self._plugin_timers.get(plugin.name)
+        if old_timer:
+            old_timer.cancel()
         timer = threading.Timer(plugin.interval, self._schedule_plugin, [plugin])
         timer.daemon = True
         timer.start()
-        self._timers.append(timer)
+        self._plugin_timers[plugin.name] = timer
 
     def _start_collection(self):
         self._running = True
@@ -192,8 +196,9 @@ class MQTTMonitorClient:
         def shutdown(sig, frame):
             logger.info("Shutting down...")
             self._running = False
-            for timer in self._timers:
+            for timer in self._plugin_timers.values():
                 timer.cancel()
+            self._plugin_timers.clear()
             self._mqtt.publish(
                 self._message_builder.status_topic,
                 payload="offline",
@@ -209,8 +214,9 @@ class MQTTMonitorClient:
 
     def stop(self):
         self._running = False
-        for timer in self._timers:
+        for timer in self._plugin_timers.values():
             timer.cancel()
+        self._plugin_timers.clear()
         self._mqtt.disconnect()
 
 

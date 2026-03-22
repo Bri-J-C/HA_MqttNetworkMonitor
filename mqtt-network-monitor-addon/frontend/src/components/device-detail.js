@@ -328,7 +328,7 @@ class DeviceDetail extends LitElement {
     this._loadDevice();
     this._loadGroups();
     this._startPolling();
-    wsService.onMessage((data) => {
+    this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update' && data.device_id === this.deviceId) {
         this._updateDeviceData(data.device);
       }
@@ -337,6 +337,7 @@ class DeviceDetail extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    if (this._wsUnsub) this._wsUnsub();
     if (this._pollTimer) clearInterval(this._pollTimer);
   }
 

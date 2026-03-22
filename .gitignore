@@ -3,4 +3,15 @@ __pycache__/
 *.pyc
 *.pyo
 .venv/
+venv/
+config.yaml
+config.remote.yaml
+screenshot/
 *.egg-info/
+node_modules/
+.DS_Store
+Thumbs.db
+.env
+.env.local
+*.log
+/data/

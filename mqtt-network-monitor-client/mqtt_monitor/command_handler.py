@@ -2,6 +2,7 @@
 
 import json
 import logging
+import shlex
 import subprocess
 
 logger = logging.getLogger(__name__)
@@ -61,8 +62,9 @@ class CommandHandler:
 
     def _execute(self, command: str, params: dict, request_id: str) -> dict:
         template = self._templates.get(command, command)
+        safe_params = {k: shlex.quote(str(v)) for k, v in params.items()}
         try:
-            shell_cmd = template.format(**params)
+            shell_cmd = template.format(**safe_params)
         except KeyError as e:
             return {
                 "request_id": request_id,

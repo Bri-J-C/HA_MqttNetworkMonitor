@@ -134,6 +134,7 @@ class DashboardView extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    if (this._wsUnsub) this._wsUnsub();
     if (this._pollTimer) clearInterval(this._pollTimer);
   }
 

@@ -33,6 +33,10 @@ export class WebSocketService {
 
   onMessage(callback) {
     this._listeners.push(callback);
+    // Return unsubscribe function
+    return () => {
+      this._listeners = this._listeners.filter(fn => fn !== callback);
+    };
   }
 
   disconnect() {
