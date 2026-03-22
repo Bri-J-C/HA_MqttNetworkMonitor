@@ -153,8 +153,23 @@ def push_device_config(device_id: str, body: dict[str, Any]):
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
     mqtt_handler.push_config(device_id, body)
-    # Store the pushed config on the device record so the frontend can read it back
-    registry.set_device_settings(device_id, {"remote_config": body})
+    # Merge pushed config into existing remote_config (don't replace)
+    existing_rc = device.get("remote_config") or {}
+    merged = {**existing_rc, **body}
+    # Deep merge plugins
+    if "plugins" in existing_rc and "plugins" in body:
+        merged["plugins"] = {**existing_rc.get("plugins", {}), **body["plugins"]}
+        for pname in body["plugins"]:
+            if pname in existing_rc.get("plugins", {}):
+                merged["plugins"][pname] = {**existing_rc["plugins"][pname], **body["plugins"][pname]}
+    elif "plugins" in existing_rc:
+        merged["plugins"] = existing_rc["plugins"]
+    # Deep merge commands
+    if "commands" in existing_rc and "commands" in body:
+        merged["commands"] = {**existing_rc.get("commands", {}), **body["commands"]}
+    elif "commands" in existing_rc:
+        merged["commands"] = existing_rc["commands"]
+    registry.set_device_settings(device_id, {"remote_config": merged})
     return {"status": "pushed", "device_id": device_id}
 
 
