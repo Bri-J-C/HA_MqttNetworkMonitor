@@ -215,6 +215,13 @@ class DeviceRegistry:
             return True
         return False
 
+    def delete_device(self, device_id: str) -> bool:
+        if device_id in self._devices:
+            del self._devices[device_id]
+            self._save_devices()
+            return True
+        return False
+
     def set_warning_thresholds(self, thresholds: dict[str, float]) -> None:
         self._warning_thresholds.update(thresholds)
 

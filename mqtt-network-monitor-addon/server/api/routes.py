@@ -44,6 +44,13 @@ def get_device(device_id: str):
     return device
 
 
+@app.delete("/api/devices/{device_id}")
+def delete_device(device_id: str):
+    if not registry.delete_device(device_id):
+        raise HTTPException(status_code=404, detail="Device not found")
+    return {"status": "deleted"}
+
+
 @app.get("/api/devices/{device_id}/effective-settings")
 def get_effective_settings(device_id: str):
     from server.settings_resolver import resolve_settings

@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import {
-  fetchDevice, sendCommand, addDeviceTags, removeDeviceTag,
+  fetchDevice, deleteDevice, sendCommand, addDeviceTags, removeDeviceTag,
   fetchGroups, createGroup, updateGroup,
   fetchEffectiveSettings, updateDeviceSettings, pushDeviceConfig,
 } from '../services/api.js';
@@ -354,6 +354,8 @@ class DeviceDetail extends LitElement {
           <span class="status-badge" style="background: ${statusColor}20; color: ${statusColor}">
             ${d.status}
           </span>
+          <button class="cmd-btn danger" style="font-size: 11px; padding: 4px 10px;"
+            @click=${this._deleteDevice}>Delete</button>
           <button class="close-btn" @click=${() => this.dispatchEvent(new CustomEvent('back'))}>&#10005;</button>
         </div>
       </div>
@@ -904,6 +906,16 @@ class DeviceDetail extends LitElement {
     this._serverCommands = updated;
     this._localChanges = true;
     updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
+  }
+
+  async _deleteDevice() {
+    if (!confirm(`Delete device "${this.device?.device_name || this.deviceId}"? This removes it from the registry. It will reappear if the client agent is still running.`)) return;
+    try {
+      await deleteDevice(this.deviceId);
+      this.dispatchEvent(new CustomEvent('back'));
+    } catch (e) {
+      console.error('Failed to delete device:', e);
+    }
   }
 
   async _sendCmd(command, params = {}) {

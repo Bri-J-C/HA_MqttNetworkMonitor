@@ -16,6 +16,10 @@ export async function fetchDevice(id) {
   return res.json();
 }
 
+export async function deleteDevice(id) {
+  await fetch(`${BASE}/api/devices/${id}`, { method: 'DELETE' });
+}
+
 export async function fetchTopology() {
   const res = await fetch(`${BASE}/api/topology`);
   return res.json();
