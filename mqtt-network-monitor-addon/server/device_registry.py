@@ -129,16 +129,26 @@ class DeviceRegistry:
         return dict(self._groups)
 
     def create_group(self, group_id: str, name: str, device_ids: list[str] | None = None) -> dict:
+        members = device_ids or []
         self._groups[group_id] = {
             "id": group_id,
             "name": name,
-            "device_ids": device_ids or [],
+            "device_ids": members,
             # Expanded group schema
             "thresholds": {},
             "ha_exposed_attributes": [],
             "custom_sensors": {},
             "custom_commands": {},
         }
+        # Set group_policy on initial members
+        devices_changed = False
+        for did in members:
+            device = self._devices.get(did)
+            if device is not None:
+                device["group_policy"] = group_id
+                devices_changed = True
+        if devices_changed:
+            self._save_devices()
         self._save_groups()
         return self._groups[group_id]
 
@@ -174,6 +184,20 @@ class DeviceRegistry:
         if name is not None:
             group["name"] = name
         if device_ids is not None:
+            old_ids = set(group.get("device_ids") or [])
+            new_ids = set(device_ids)
+            # Devices added to this group: set their group_policy
+            for did in new_ids - old_ids:
+                device = self._devices.get(did)
+                if device is not None:
+                    device["group_policy"] = group_id
+            # Devices removed from this group: clear group_policy if it pointed here
+            for did in old_ids - new_ids:
+                device = self._devices.get(did)
+                if device is not None and device.get("group_policy") == group_id:
+                    device["group_policy"] = None
+            if old_ids != new_ids:
+                self._save_devices()
             group["device_ids"] = device_ids
         if custom_commands is not None:
             group["custom_commands"] = custom_commands

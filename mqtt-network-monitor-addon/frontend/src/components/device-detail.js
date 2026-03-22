@@ -134,6 +134,25 @@ class DeviceDetail extends LitElement {
     .toggle.on .toggle-knob { left: 16px; }
     .toggle.off .toggle-knob { left: 2px; }
 
+    /* Thresholds */
+    .threshold-list {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .threshold-pill {
+      display: flex; align-items: center; gap: 4px;
+      background: #1a1a2e; border-radius: 6px; padding: 5px 10px;
+      font-size: 12px;
+    }
+    .threshold-pill.exceeded {
+      background: rgba(255,183,77,0.12); border: 1px solid rgba(255,183,77,0.3);
+    }
+    .threshold-attr { color: #888; }
+    .threshold-val { color: #4fc3f7; font-weight: 600; }
+    .threshold-pill.exceeded .threshold-val { color: #ffb74d; }
+    .threshold-source {
+      font-size: 10px; color: #555; margin-left: 2px;
+    }
+
     /* Network */
     .network-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -348,6 +367,9 @@ class DeviceDetail extends LitElement {
       <!-- 4. Attributes + HA Exposure -->
       ${this._renderAttributesSection()}
 
+      <!-- 4b. Active Thresholds -->
+      ${this._renderThresholdsSection()}
+
       <!-- 5. Network -->
       ${this._renderNetwork()}
 
@@ -492,6 +514,52 @@ class DeviceDetail extends LitElement {
         <div class="attr-ha-status ${exposed ? 'exposed' : ''}">
           ${exposed ? 'HA sensor active' : 'Not exposed to HA'}
           ${fromGroup ? html` <span style="color: #666;">&#8592; from group</span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Section 4b: Active Thresholds ─────────────────────────────────────────
+
+  _renderThresholdsSection() {
+    const es = this._effectiveSettings;
+    if (!es) return html``;
+    const thresholds = es.thresholds || {};
+    const entries = Object.entries(thresholds).filter(([, v]) => v != null);
+    if (entries.length === 0) return html``;
+
+    const attrs = this.device.attributes || {};
+
+    return html`
+      <div class="section">
+        <div class="section-title">Active Thresholds</div>
+        <div class="threshold-list">
+          ${entries.map(([key, val]) => {
+            const attrData = attrs[key];
+            let currentVal = null;
+            if (attrData != null) {
+              currentVal = typeof attrData === 'object' ? attrData.value : attrData;
+            }
+            const exceeded = currentVal != null && typeof currentVal === 'number' && currentVal > val;
+
+            // Determine source
+            const deviceOverrides = this.device.threshold_overrides || {};
+            const groupId = this.device.group_policy;
+            const group = groupId ? this._groups[groupId] : null;
+            let source = 'global';
+            if (deviceOverrides[key] != null) source = 'device';
+            else if (group && group.thresholds && group.thresholds[key] != null) source = 'group';
+
+            return html`
+              <div class="threshold-pill ${exceeded ? 'exceeded' : ''}">
+                <span class="threshold-attr">${key.replace(/_/g, '\u00A0')}</span>
+                <span style="color: #555;">&nbsp;&gt;&nbsp;</span>
+                <span class="threshold-val">${val}</span>
+                <span class="threshold-source">(${source})</span>
+                ${exceeded ? html`<span style="color: #ffb74d; margin-left: 2px;" title="Currently exceeded">&#9888;</span>` : ''}
+              </div>
+            `;
+          })}
         </div>
       </div>
     `;
@@ -752,11 +820,18 @@ class DeviceDetail extends LitElement {
         },
         commands: this._serverCommands,
       };
-      await pushDeviceConfig(this.deviceId, config);
-      this._lastPushed = new Date().toLocaleTimeString();
-      this._localChanges = false;
-      this._pushStatus = 'Config synced';
+      console.log('Pushing config:', config);
+      const result = await pushDeviceConfig(this.deviceId, config);
+      console.log('Push result:', result);
+      if (result && result.detail) {
+        this._pushStatus = `Push failed: ${result.detail}`;
+      } else {
+        this._lastPushed = new Date().toLocaleTimeString();
+        this._localChanges = false;
+        this._pushStatus = 'Config synced';
+      }
     } catch (e) {
+      console.error('Push config error:', e);
       this._pushStatus = `Push failed: ${e.message}`;
     } finally {
       this._pushing = false;

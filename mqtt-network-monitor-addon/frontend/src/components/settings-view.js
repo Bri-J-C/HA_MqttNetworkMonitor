@@ -883,7 +883,6 @@ class SettingsView extends LitElement {
 
   async _pushGroupConfig(g) {
     const config = {
-      type: 'config_update',
       commands: g.custom_commands || {},
       plugins: {
         custom_command: {
