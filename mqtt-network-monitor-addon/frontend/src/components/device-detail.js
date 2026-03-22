@@ -327,11 +327,41 @@ class DeviceDetail extends LitElement {
     super.connectedCallback();
     this._loadDevice();
     this._loadGroups();
+    this._startPolling();
     wsService.onMessage((data) => {
       if (data.type === 'device_update' && data.device_id === this.deviceId) {
-        this.device = data.device;
+        this._updateDeviceData(data.device);
       }
     });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._pollTimer) clearInterval(this._pollTimer);
+  }
+
+  _startPolling() {
+    if (this._pollTimer) clearInterval(this._pollTimer);
+    this._pollTimer = setInterval(() => this._refreshDevice(), 5000);
+  }
+
+  async _refreshDevice() {
+    try {
+      const device = await fetchDevice(this.deviceId);
+      this._updateDeviceData(device);
+    } catch (e) {
+      // ignore polling errors
+    }
+  }
+
+  _updateDeviceData(device) {
+    if (!device) return;
+    // Update attributes and status without resetting user-edited fields
+    const current = this.device || {};
+    this.device = {
+      ...current,
+      ...device,
+    };
   }
 
   async _loadDevice() {

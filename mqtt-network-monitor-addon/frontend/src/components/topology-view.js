@@ -238,13 +238,30 @@ class TopologyView extends LitElement {
     super.connectedCallback();
     this._loadTopology();
     this._loadLayouts();
+    // Poll topology and selected device every 5 seconds
+    this._pollTimer = setInterval(() => {
+      this._loadTopology();
+      if (this.selectedNode) {
+        this._refreshSelectedDevice();
+      }
+    }, 5000);
     wsService.onMessage((data) => {
       this._loadTopology();
-      // Update selected device data in real-time
       if (data.type === 'device_update' && data.device_id === this.selectedNode && data.device) {
         this._selectedDeviceData = data.device;
       }
     });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._pollTimer) clearInterval(this._pollTimer);
+  }
+
+  async _refreshSelectedDevice() {
+    try {
+      this._selectedDeviceData = await fetchDevice(this.selectedNode);
+    } catch (e) { /* ignore */ }
   }
 
   async _loadTopology() {
