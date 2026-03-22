@@ -525,10 +525,8 @@ class SettingsView extends LitElement {
               <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
                 ${this._groupPushStatus[g.id] === 'Deploying...' ? html`<span class="group-status-pushing">Deploying...</span>` : ''}
                 ${this._groupPushStatus[g.id] === 'Deployed!' ? html`<span class="group-status-pushed">Deployed!</span>` : ''}
-                ${this._groupSaveStatus[g.id] === 'saved' ? html`<span class="group-status-saved">Saved!</span>` : ''}
-                ${(this._groupPushStatus[g.id] || '').startsWith('Error') || this._groupSaveStatus[g.id] === 'error'
-                  ? html`<span class="group-status-error">${this._groupPushStatus[g.id] || 'Error'}</span>` : ''}
-                <button class="group-save-btn" @click=${() => this._updateGroup(g)}>Save</button>
+                ${(this._groupPushStatus[g.id] || '').startsWith('Error')
+                  ? html`<span class="group-status-error">${this._groupPushStatus[g.id]}</span>` : ''}
                 <button class="group-save-btn" style="background: #2e7d32;"
                   @click=${() => this._deployToDevices(g)}>Save &amp; Deploy</button>
               </div>
