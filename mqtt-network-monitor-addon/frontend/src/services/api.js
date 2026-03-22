@@ -143,7 +143,7 @@ export async function renameTag(oldTag, newName) {
   const res = await fetch(`${BASE}/api/tags/${encodeURIComponent(oldTag)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: newName }),
+    body: JSON.stringify({ new_name: newName }),
   });
   return res.json();
 }
