@@ -111,8 +111,40 @@ class DeviceRegistry:
         if device:
             existing = set(device.get("server_tags", []))
             existing.update(tags)
-            device["server_tags"] = list(existing)
+            device["server_tags"] = sorted(existing)
             self._save_devices()
+
+    def remove_server_tag(self, device_id: str, tag: str) -> None:
+        device = self._devices.get(device_id)
+        if device:
+            tags = device.get("server_tags", [])
+            device["server_tags"] = [t for t in tags if t != tag]
+            self._save_devices()
+
+    def set_server_tags(self, device_id: str, tags: list[str]) -> None:
+        device = self._devices.get(device_id)
+        if device:
+            device["server_tags"] = sorted(set(tags))
+            self._save_devices()
+
+    def update_group(self, group_id: str, name: str | None = None,
+                     device_ids: list[str] | None = None) -> dict | None:
+        group = self._groups.get(group_id)
+        if not group:
+            return None
+        if name is not None:
+            group["name"] = name
+        if device_ids is not None:
+            group["device_ids"] = device_ids
+        self._save_groups()
+        return group
+
+    def delete_group(self, group_id: str) -> bool:
+        if group_id in self._groups:
+            del self._groups[group_id]
+            self._save_groups()
+            return True
+        return False
 
     def set_warning_thresholds(self, thresholds: dict[str, float]) -> None:
         self._warning_thresholds.update(thresholds)

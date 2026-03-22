@@ -61,3 +61,41 @@ export async function createGroup(id, name, deviceIds = []) {
   });
   return res.json();
 }
+
+export async function updateGroup(groupId, { name, device_ids }) {
+  const res = await fetch(`${BASE}/api/groups/${groupId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, device_ids }),
+  });
+  return res.json();
+}
+
+export async function deleteGroup(groupId) {
+  await fetch(`${BASE}/api/groups/${groupId}`, { method: 'DELETE' });
+}
+
+export async function setDeviceTags(deviceId, tags) {
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/tags`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tags }),
+  });
+  return res.json();
+}
+
+export async function addDeviceTags(deviceId, tags) {
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/tags/add`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tags }),
+  });
+  return res.json();
+}
+
+export async function removeDeviceTag(deviceId, tag) {
+  const res = await fetch(`${BASE}/api/devices/${deviceId}/tags/${tag}`, {
+    method: 'DELETE',
+  });
+  return res.json();
+}

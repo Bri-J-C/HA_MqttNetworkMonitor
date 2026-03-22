@@ -86,6 +86,54 @@ def create_group(body: dict[str, Any]):
     return registry.create_group(group_id, name, device_ids)
 
 
+@app.put("/api/groups/{group_id}")
+def update_group(group_id: str, body: dict[str, Any]):
+    result = registry.update_group(
+        group_id,
+        name=body.get("name"),
+        device_ids=body.get("device_ids"),
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Group not found")
+    return result
+
+
+@app.delete("/api/groups/{group_id}")
+def delete_group(group_id: str):
+    if not registry.delete_group(group_id):
+        raise HTTPException(status_code=404, detail="Group not found")
+    return {"status": "deleted"}
+
+
+@app.post("/api/devices/{device_id}/tags")
+def set_device_tags(device_id: str, body: dict[str, Any]):
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    tags = body.get("tags", [])
+    registry.set_server_tags(device_id, tags)
+    return {"tags": registry.get_device(device_id).get("server_tags", [])}
+
+
+@app.post("/api/devices/{device_id}/tags/add")
+def add_device_tags(device_id: str, body: dict[str, Any]):
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    tags = body.get("tags", [])
+    registry.add_server_tags(device_id, tags)
+    return {"tags": registry.get_device(device_id).get("server_tags", [])}
+
+
+@app.delete("/api/devices/{device_id}/tags/{tag}")
+def remove_device_tag(device_id: str, tag: str):
+    device = registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    registry.remove_server_tag(device_id, tag)
+    return {"tags": registry.get_device(device_id).get("server_tags", [])}
+
+
 # Serve frontend static files
 frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
