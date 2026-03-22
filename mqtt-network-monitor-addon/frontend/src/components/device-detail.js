@@ -109,10 +109,8 @@ class DeviceDetail extends LitElement {
     }
     .attr-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px; }
     .attr-delete {
-      font-size: 12px; color: #444; cursor: pointer; line-height: 1;
-      opacity: 0; transition: opacity 0.15s;
+      font-size: 14px; color: #555; cursor: pointer; line-height: 1;
     }
-    .attr-tile:hover .attr-delete { opacity: 1; }
     .attr-delete:hover { color: #ef5350; }
     .attr-val {
       font-size: 22px; font-weight: 700; margin-top: 4px; color: #4fc3f7;

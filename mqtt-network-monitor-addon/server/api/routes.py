@@ -91,6 +91,16 @@ def delete_attribute(device_id: str, attr_name: str):
     if ha_entity_manager:
         ha_entity_manager._remove_sensor(device_id, attr_name)
         ha_entity_manager._mqtt.publish(f"network_monitor/{device_id}/ha/{attr_name}", "", retain=True)
+    # Push config update to client to stop collecting this sensor
+    if mqtt_handler:
+        # Get current remote config and remove the sensor from custom_command
+        remote_config = device.get("remote_config", {})
+        cc = remote_config.get("plugins", {}).get("custom_command", {}).get("commands", {})
+        if attr_name in cc:
+            del cc[attr_name]
+            # Push updated config without this sensor
+            mqtt_handler.push_config(device_id, remote_config)
+            registry.set_device_settings(device_id, {"remote_config": remote_config})
     return {"status": "deleted"}
 
 

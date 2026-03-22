@@ -110,11 +110,11 @@ class MQTTMonitorClient:
                 plugin.interval = new_interval
                 logger.info(f"Updated {plugin.name} interval to {new_interval}s")
 
-        # Handle custom_command plugin — create or update with pushed sensors
+        # Handle custom_command plugin — create, update, or remove sensors
         plugins_config = remote_config.get("plugins", {})
         cc_config = plugins_config.get("custom_command", {})
-        cc_commands = cc_config.get("commands", {})
-        if cc_commands:
+        cc_commands = cc_config.get("commands")  # None means not specified, {} means empty
+        if cc_commands is not None:
             from mqtt_monitor.plugins.custom_command import CustomCommandPlugin
             existing = None
             for p in self._plugins:
@@ -123,11 +123,12 @@ class MQTTMonitorClient:
                     break
 
             if existing:
-                existing.commands.update(cc_commands)
+                # Replace commands entirely — this handles removals
+                existing.commands = dict(cc_commands)
                 if "interval" in cc_config:
                     existing.interval = cc_config["interval"]
-                logger.info(f"Updated custom_command plugin: {list(cc_commands.keys())}")
-            else:
+                logger.info(f"Set custom_command sensors: {list(cc_commands.keys()) if cc_commands else '(none)'}")
+            elif cc_commands:
                 new_plugin = CustomCommandPlugin({
                     "commands": cc_commands,
                     "interval": cc_config.get("interval", remote_config.get("interval", 30)),
