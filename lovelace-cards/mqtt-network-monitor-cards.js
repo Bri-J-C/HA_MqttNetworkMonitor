@@ -318,25 +318,21 @@ class MQTTTopologyCard extends HTMLElement {
       if (pos.y < minY) minY = pos.y;
       if (pos.y > maxY) maxY = pos.y;
     }
-    const pad = 80; // padding around content
+    const pad = 50;
     const vbX = minX - pad;
     const vbY = minY - pad;
     const vbW = Math.max((maxX - minX) + pad * 2, 200);
     const vbH = Math.max((maxY - minY) + pad * 2, 150);
 
-    // Scale factor: how much the viewBox shrinks when rendered at card width
-    // We increase font/node sizes to compensate
-    const S = Math.max(vbW / 400, 1); // scale relative to ~400px card width
-    const nodeW = 90 * S;
-    const nodeH = 36 * S;
-    const nodeR = 22 * S;
-    const fontSize = Math.round(12 * S);
-    const fontSizeSm = Math.round(10 * S);
-    const fontSizeLabel = Math.round(11 * S);
-    const fontSizeLabelSm = Math.round(9 * S);
-    const strokeW = 1.5 * S;
-    const labelDist = 55 * S;
-    const labelPerpOff = 16 * S;
+    // Fixed sizes — the SVG viewBox→card scaling handles readability
+    const nodeW = 70;
+    const nodeH = 28;
+    const nodeR = 16;
+    const fontSizeSm = 9;
+    const fontSizeLabelSm = 8;
+    const strokeW = 1.2;
+    const labelDist = 42;
+    const labelPerpOff = 12;
 
     // Render edge lines
     const edgeLinesSvg = allEdges.map(e => {
@@ -345,7 +341,7 @@ class MQTTTopologyCard extends HTMLElement {
       if (!from || !to) return '';
       const isManual = e.type === 'manual' || e.sourceLabel || e.targetLabel || (!e.type);
       const color = isManual ? '#4fc3f7' : '#555';
-      const dash = isManual ? 'none' : `${4*S},${2*S}`;
+      const dash = isManual ? 'none' : '4,2';
       return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${color}" stroke-width="${strokeW}" stroke-dasharray="${dash}"/>`;
     }).join('');
 
@@ -358,18 +354,18 @@ class MQTTTopologyCard extends HTMLElement {
       if (isGateway) {
         return `
           <circle cx="${pos.x}" cy="${pos.y}" r="${nodeR}" fill="${color}22" stroke="${color}" stroke-width="${strokeW}"/>
-          <text x="${pos.x}" y="${pos.y + fontSize * 0.35}" text-anchor="middle" fill="${color}" font-size="${fontSizeSm}">
+          <text x="${pos.x}" y="${pos.y + 3}" text-anchor="middle" fill="${color}" font-size="${fontSizeSm}">
             ${(n.name || n.id).substring(0, 12)}
           </text>
         `;
       }
       return `
-        <rect x="${pos.x - nodeW/2}" y="${pos.y - nodeH/2}" width="${nodeW}" height="${nodeH}" rx="${6*S}"
+        <rect x="${pos.x - nodeW/2}" y="${pos.y - nodeH/2}" width="${nodeW}" height="${nodeH}" rx="4"
           fill="#2a2a4a" stroke="${color}" stroke-width="${strokeW}"/>
-        <text x="${pos.x}" y="${pos.y - nodeH*0.08}" text-anchor="middle" fill="${color}" font-size="${fontSizeSm}">
+        <text x="${pos.x}" y="${pos.y - 2}" text-anchor="middle" fill="${color}" font-size="${fontSizeSm}">
           ${(n.name || n.id).substring(0, 12)}
         </text>
-        <text x="${pos.x}" y="${pos.y + nodeH*0.3}" text-anchor="middle" fill="#666" font-size="${fontSizeSm * 0.8}">${n.status}</text>
+        <text x="${pos.x}" y="${pos.y + 9}" text-anchor="middle" fill="#666" font-size="7">${n.status}</text>
       `;
     }).join('');
 
@@ -389,27 +385,27 @@ class MQTTTopologyCard extends HTMLElement {
       let perpX = -uy, perpY = ux;
       if (perpY > 0) { perpX = -perpX; perpY = -perpY; }
 
-      const bgH = fontSizeLabel + 4;
+      const bgH = fontSizeLabelSm + 3;
 
       if (e.label) {
         const mx = (from.x + to.x) / 2 + perpX * labelPerpOff;
         const my = (from.y + to.y) / 2 + perpY * labelPerpOff;
-        const tw = e.label.length * fontSizeLabel * 0.55 + 8;
-        svg += `<rect x="${mx - tw/2}" y="${my - bgH + 2}" width="${tw}" height="${bgH}" rx="${2*S}" fill="#1a1a2e" opacity="0.9"/>`;
+        const tw = e.label.length * fontSizeLabelSm * 0.55 + 6;
+        svg += `<rect x="${mx - tw/2}" y="${my - bgH + 2}" width="${tw}" height="${bgH}" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
         svg += `<text x="${mx}" y="${my}" text-anchor="middle" fill="#888" font-size="${fontSizeLabelSm}">${e.label}</text>`;
       }
       if (e.sourceLabel) {
         const sx = from.x + ux * labelDist;
         const sy = from.y + uy * labelDist;
-        const tw = e.sourceLabel.length * fontSizeLabelSm * 0.55 + 8;
-        svg += `<rect x="${sx - tw/2}" y="${sy - bgH + 3}" width="${tw}" height="${bgH}" rx="${2*S}" fill="#1a1a2e" opacity="0.9"/>`;
+        const tw = e.sourceLabel.length * fontSizeLabelSm * 0.55 + 6;
+        svg += `<rect x="${sx - tw/2}" y="${sy - bgH + 2}" width="${tw}" height="${bgH}" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
         svg += `<text x="${sx}" y="${sy}" text-anchor="middle" fill="#4fc3f7" font-size="${fontSizeLabelSm}">${e.sourceLabel}</text>`;
       }
       if (e.targetLabel) {
         const tx = to.x - ux * labelDist;
         const ty = to.y - uy * labelDist;
-        const tw = e.targetLabel.length * fontSizeLabelSm * 0.55 + 8;
-        svg += `<rect x="${tx - tw/2}" y="${ty - bgH + 3}" width="${tw}" height="${bgH}" rx="${2*S}" fill="#1a1a2e" opacity="0.9"/>`;
+        const tw = e.targetLabel.length * fontSizeLabelSm * 0.55 + 6;
+        svg += `<rect x="${tx - tw/2}" y="${ty - bgH + 2}" width="${tw}" height="${bgH}" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
         svg += `<text x="${tx}" y="${ty}" text-anchor="middle" fill="#4fc3f7" font-size="${fontSizeLabelSm}">${e.targetLabel}</text>`;
       }
       return svg;
