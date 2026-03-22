@@ -16,17 +16,19 @@ mqtt_handler = None
 tag_registry = None
 settings_manager = None
 settings_resolver = None
+ha_entity_manager = None
 
 
-def init_app(reg, topo, cmd_sender, mqtt_hdlr, tag_reg=None, settings_mgr=None):
+def init_app(reg, topo, cmd_sender, mqtt_hdlr, tag_reg=None, settings_mgr=None, ha_mgr=None):
     global registry, topology, command_sender, mqtt_handler
-    global tag_registry, settings_manager
+    global tag_registry, settings_manager, ha_entity_manager
     registry = reg
     topology = topo
     command_sender = cmd_sender
     mqtt_handler = mqtt_hdlr
     tag_registry = tag_reg
     settings_manager = settings_mgr
+    ha_entity_manager = ha_mgr
 
 
 # ── Devices ────────────────────────────────────────────────────────────────
@@ -46,8 +48,13 @@ def get_device(device_id: str):
 
 @app.delete("/api/devices/{device_id}")
 def delete_device(device_id: str):
-    if not registry.delete_device(device_id):
+    device = registry.get_device(device_id)
+    if not device:
         raise HTTPException(status_code=404, detail="Device not found")
+    # Remove HA entities before deleting from registry
+    if ha_entity_manager:
+        ha_entity_manager.remove_device_entities(device_id, device)
+    registry.delete_device(device_id)
     return {"status": "deleted"}
 
 

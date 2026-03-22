@@ -89,7 +89,7 @@ def create_app():
                 loop.close()
 
     mqtt_handler.on_device_update(on_device_update)
-    init_app(registry, topology_engine, command_sender, mqtt_handler, tag_reg, settings_mgr)
+    init_app(registry, topology_engine, command_sender, mqtt_handler, tag_reg, settings_mgr, ha_entities)
     mqtt_handler.connect()
 
     return app

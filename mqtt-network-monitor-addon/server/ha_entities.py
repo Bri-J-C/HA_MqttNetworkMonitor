@@ -75,6 +75,26 @@ class HAEntityManager:
                 unit=unit,
             )
 
+    def remove_device_entities(self, device_id: str, device: dict) -> None:
+        """Remove ALL HA entities for a device (sensors + binary sensors)."""
+        # Remove availability binary sensor
+        unique_id = f"network_monitor_{device_id}_availability"
+        topic = f"{HA_DISCOVERY_PREFIX}/binary_sensor/{unique_id}/config"
+        self._mqtt.publish(topic, "", retain=True)
+        self._registered_entities.discard(f"{device_id}_availability")
+        logger.info(f"Removed HA binary sensor: {unique_id}")
+
+        # Remove all attribute sensors
+        for attr_name in device.get("attributes", {}):
+            self._remove_sensor(device_id, attr_name)
+
+        # Clear the status retained message
+        self._mqtt.publish(f"network_monitor/{device_id}/status", "", retain=True)
+
+        # Clear any HA state topics
+        for attr_name in device.get("attributes", {}):
+            self._mqtt.publish(f"network_monitor/{device_id}/ha/{attr_name}", "", retain=True)
+
     def _remove_sensor(self, device_id: str, attr_name: str) -> None:
         """Remove a sensor from HA by publishing an empty retained config."""
         entity_key = f"{device_id}_{attr_name}"
