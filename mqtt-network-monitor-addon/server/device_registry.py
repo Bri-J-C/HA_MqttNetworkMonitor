@@ -105,8 +105,16 @@ class DeviceRegistry:
         for attr_name, threshold in thresholds.items():
             if threshold is None:
                 continue
-            attr = attrs.get(attr_name, {})
-            value = attr.get("value")
+            attr = attrs.get(attr_name)
+            if attr is None:
+                continue
+            # Support both {"value": x, "unit": y} and plain values
+            if isinstance(attr, dict):
+                value = attr.get("value")
+            elif isinstance(attr, (int, float)):
+                value = attr
+            else:
+                continue
             if value is not None and isinstance(value, (int, float)) and value > threshold:
                 return "warning"
         return "online"
