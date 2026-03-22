@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, svg, css } from 'lit';
 import { fetchTopology, fetchLayouts, saveLayout, deleteLayout } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
 
@@ -45,10 +45,7 @@ class TopologyView extends LitElement {
       background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4a;
       position: relative; overflow: hidden;
     }
-    svg { width: 100%; height: 500px; }
-    .node { cursor: pointer; }
-    .node:hover rect, .node:hover circle { filter: brightness(1.3); }
-    .node.selected rect, .node.selected circle { stroke-width: 2.5; stroke-dasharray: 4,2; }
+    svg { width: 100%; height: 500px; display: block; }
     .detail-panel {
       background: #2a2a4a; border-radius: 8px; padding: 14px; margin-top: 12px;
     }
@@ -57,15 +54,6 @@ class TopologyView extends LitElement {
       margin-bottom: 10px;
     }
     .detail-name { font-size: 16px; font-weight: 600; }
-    .detail-attrs {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 8px;
-    }
-    .detail-attr {
-      text-align: center;
-    }
-    .detail-attr-label { font-size: 10px; color: #666; }
-    .detail-attr-val { font-size: 16px; font-weight: 600; color: #ccc; }
   `;
 
   constructor() {
@@ -108,7 +96,6 @@ class TopologyView extends LitElement {
     const nodes = this.topology.nodes;
     if (!nodes.length) return;
 
-    // Only set positions for nodes that don't have saved positions
     const saved = this.selectedLayout && this.layouts[this.selectedLayout]
       ? this.layouts[this.selectedLayout].positions || {}
       : {};
@@ -151,7 +138,7 @@ class TopologyView extends LitElement {
           </select>
           <button class="tool-btn ${this.editMode ? 'active' : ''}"
             @click=${() => this.editMode = !this.editMode}>
-            ${this.editMode ? '✓ Done Editing' : '✎ Edit Mode'}
+            ${this.editMode ? 'Done Editing' : 'Edit Mode'}
           </button>
           ${this.editMode ? html`
             <button class="tool-btn" @click=${this._saveCurrentLayout}>Save Layout</button>
@@ -161,9 +148,9 @@ class TopologyView extends LitElement {
           </button>
         </div>
         <div class="toolbar-right">
-          <span class="status-dot" style="color: #81c784">● ${counts.online} online</span>
-          <span class="status-dot" style="color: #ef5350">● ${counts.offline} offline</span>
-          <span class="status-dot" style="color: #ffb74d">● ${counts.warning} warning</span>
+          <span class="status-dot" style="color: #81c784">${counts.online} online</span>
+          <span class="status-dot" style="color: #ef5350">${counts.offline} offline</span>
+          <span class="status-dot" style="color: #ffb74d">${counts.warning} warning</span>
         </div>
       </div>
 
@@ -186,28 +173,31 @@ class TopologyView extends LitElement {
     const color = STATUS_COLORS[node.status] || STATUS_COLORS.unknown;
     const isSelected = this.selectedNode === node.id;
     const isGateway = node.type === 'gateway';
+    const selectedClass = isSelected ? 'selected' : '';
 
     if (isGateway) {
-      return html`
-        <g class="node ${isSelected ? 'selected' : ''}"
+      return svg`
+        <g class="node ${selectedClass}"
           transform="translate(${pos.x}, ${pos.y})"
           @click=${() => this._selectNode(node.id)}
-          @mousedown=${(e) => this.editMode && this._onMouseDown(e, node.id)}>
-          <circle r="20" fill="${color}22" stroke="${color}" stroke-width="1.5"/>
-          <text text-anchor="middle" dy="4" fill="${color}" font-size="10">${node.name.substring(0, 8)}</text>
+          @mousedown=${(e) => this.editMode && this._onMouseDown(e, node.id)}
+          style="cursor:pointer">
+          <circle r="22" fill="${color}22" stroke="${color}" stroke-width="1.5"/>
+          <text text-anchor="middle" dy="4" fill="${color}" font-size="10">${node.name.substring(0, 12)}</text>
         </g>
       `;
     }
 
-    return html`
-      <g class="node ${isSelected ? 'selected' : ''}"
+    return svg`
+      <g class="node ${selectedClass}"
         transform="translate(${pos.x}, ${pos.y})"
         @click=${() => this._selectNode(node.id)}
-        @mousedown=${(e) => this.editMode && this._onMouseDown(e, node.id)}>
-        <rect x="-40" y="-16" width="80" height="32" rx="6"
+        @mousedown=${(e) => this.editMode && this._onMouseDown(e, node.id)}
+        style="cursor:pointer">
+        <rect x="-45" y="-18" width="90" height="36" rx="6"
           fill="#2a2a4a" stroke="${color}" stroke-width="1.5"/>
-        <text text-anchor="middle" dy="-2" fill="${color}" font-size="10">
-          ${(node.name || node.id).substring(0, 10)}
+        <text text-anchor="middle" dy="-3" fill="${color}" font-size="10">
+          ${(node.name || node.id).substring(0, 12)}
         </text>
         <text text-anchor="middle" dy="10" fill="#666" font-size="8">${node.status}</text>
       </g>
@@ -217,18 +207,18 @@ class TopologyView extends LitElement {
   _renderEdge(edge) {
     const from = this.nodePositions[edge.source];
     const to = this.nodePositions[edge.target];
-    if (!from || !to) return '';
+    if (!from || !to) return svg``;
 
-    return html`
+    return svg`
       <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}"
         stroke="#555" stroke-width="1.5"
-        stroke-dasharray=${edge.type === 'auto' ? '4,2' : 'none'}/>
+        stroke-dasharray="${edge.type === 'auto' ? '4,2' : 'none'}"/>
     `;
   }
 
   _renderDetailPanel() {
     const node = this.topology.nodes.find(n => n.id === this.selectedNode);
-    if (!node) return '';
+    if (!node) return html``;
 
     return html`
       <div class="detail-panel">
@@ -236,10 +226,10 @@ class TopologyView extends LitElement {
           <span class="detail-name" style="color: ${STATUS_COLORS[node.status] || '#ccc'}">
             ${node.name}
           </span>
-          <span style="color: #666; font-size: 12px;">${node.type}</span>
+          <span style="color: #666; font-size: 12px;">${node.type} | ${node.status}</span>
         </div>
         <button class="tool-btn" style="margin-top: 4px;"
-          @click=${() => this._viewDevice(node.id)}>View Details →</button>
+          @click=${() => this._viewDevice(node.id)}>View Details</button>
       </div>
     `;
   }
@@ -256,11 +246,11 @@ class TopologyView extends LitElement {
 
   _onMouseDown(e, nodeId) {
     this._dragging = nodeId;
-    const svg = this.shadowRoot.querySelector('svg');
-    const pt = svg.createSVGPoint();
+    const svgEl = this.shadowRoot.querySelector('svg');
+    const pt = svgEl.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
-    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
     const pos = this.nodePositions[nodeId] || { x: 0, y: 0 };
     this._dragOffset = { x: svgP.x - pos.x, y: svgP.y - pos.y };
     e.preventDefault();
@@ -268,11 +258,11 @@ class TopologyView extends LitElement {
 
   _onMouseMove(e) {
     if (!this._dragging) return;
-    const svg = this.shadowRoot.querySelector('svg');
-    const pt = svg.createSVGPoint();
+    const svgEl = this.shadowRoot.querySelector('svg');
+    const pt = svgEl.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
-    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
     this.nodePositions = {
       ...this.nodePositions,
       [this._dragging]: {
