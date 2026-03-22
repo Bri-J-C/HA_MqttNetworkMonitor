@@ -1,0 +1,111 @@
+import { LitElement, html, css } from 'lit';
+
+const STATUS_COLORS = {
+  online: '#81c784',
+  offline: '#ef5350',
+  warning: '#ffb74d',
+  unknown: '#666',
+};
+
+class DeviceCard extends LitElement {
+  static properties = {
+    device: { type: Object },
+    deviceId: { type: String },
+  };
+
+  static styles = css`
+    :host {
+      display: block;
+      background: #2a2a4a;
+      border-radius: 8px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 3px solid var(--status-color, #666);
+    }
+    :host(:hover) {
+      background: #323258;
+      transform: translateY(-1px);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+    .status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .type {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .attrs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .attr {
+      font-size: 11px;
+      color: #aaa;
+    }
+    .attr-value { color: #ccc; }
+    .attr-value.warning { color: #ffb74d; }
+    .tags {
+      display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .tag {
+      font-size: 9px; background: #1e3a5f; color: #4fc3f7;
+      padding: 1px 6px; border-radius: 3px;
+    }
+  `;
+
+  render() {
+    if (!this.device) return html``;
+    const d = this.device;
+    const color = STATUS_COLORS[d.status] || STATUS_COLORS.unknown;
+    const attrs = Object.entries(d.attributes || {}).slice(0, 4);
+    const tags = [...(d.tags || []), ...(d.server_tags || [])];
+
+    this.style.setProperty('--status-color', color);
+
+    return html`
+      <div class="header">
+        <span class="name">${d.device_name || this.deviceId}</span>
+        <span class="status" style="background: ${color}20; color: ${color}">
+          ${d.status === 'online' ? '● ' : d.status === 'offline' ? '● ' : '⚠ '}${d.status}
+        </span>
+      </div>
+      <div class="type">${d.device_type || 'unknown'}</div>
+      ${attrs.length > 0 ? html`
+        <div class="attrs">
+          ${attrs.map(([name, data]) => html`
+            <div class="attr">
+              ${name.replace(/_/g, ' ')}: <span class="attr-value ${this._isWarning(name, data) ? 'warning' : ''}">${data.value}${data.unit}</span>
+            </div>
+          `)}
+        </div>
+      ` : ''}
+      ${tags.length > 0 ? html`
+        <div class="tags">
+          ${tags.map(t => html`<span class="tag">${t}</span>`)}
+        </div>
+      ` : ''}
+    `;
+  }
+
+  _isWarning(name, data) {
+    const thresholds = { cpu_usage: 90, memory_usage: 90, disk_usage: 95, cpu_temp: 80 };
+    return thresholds[name] && data.value > thresholds[name];
+  }
+}
+
+customElements.define('device-card', DeviceCard);

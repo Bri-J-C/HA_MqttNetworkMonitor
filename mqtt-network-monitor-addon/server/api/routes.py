@@ -84,3 +84,9 @@ def create_group(body: dict[str, Any]):
     if not group_id or not name:
         raise HTTPException(status_code=400, detail="Missing 'id' or 'name'")
     return registry.create_group(group_id, name, device_ids)
+
+
+# Serve frontend static files
+frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
