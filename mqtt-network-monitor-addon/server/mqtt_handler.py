@@ -1,0 +1,97 @@
+"""MQTT subscriber — listens for device messages and updates registry."""
+
+import json
+import logging
+import paho.mqtt.client as mqtt
+
+from server.device_registry import DeviceRegistry
+
+logger = logging.getLogger(__name__)
+
+TOPIC_PREFIX = "network_monitor"
+
+
+class MQTTHandler:
+    def __init__(self, registry: DeviceRegistry, broker: str, port: int = 1883,
+                 username: str | None = None, password: str | None = None):
+        self._registry = registry
+        self._broker = broker
+        self._port = port
+        self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        self._on_device_update_callbacks = []
+
+        if username:
+            self._client.username_pw_set(username, password)
+
+        self._client.on_connect = self._on_connect
+        self._client.on_message = self._on_message
+
+    def on_device_update(self, callback):
+        self._on_device_update_callbacks.append(callback)
+
+    def connect(self):
+        self._client.connect(self._broker, self._port)
+        self._client.loop_start()
+        logger.info(f"Connected to MQTT broker at {self._broker}:{self._port}")
+
+    def disconnect(self):
+        self._client.loop_stop()
+        self._client.disconnect()
+
+    def send_command(self, device_id: str, command: str, params: dict | None = None,
+                     request_id: str | None = None) -> str:
+        import uuid
+        request_id = request_id or str(uuid.uuid4())
+        payload = json.dumps({
+            "command": command,
+            "params": params or {},
+            "request_id": request_id,
+        })
+        topic = f"{TOPIC_PREFIX}/{device_id}/command"
+        self._client.publish(topic, payload)
+        logger.info(f"Sent command '{command}' to {device_id} (req: {request_id})")
+        return request_id
+
+    def _on_connect(self, client, userdata, flags, rc, *args):
+        logger.info(f"MQTT connected (rc={rc})")
+        client.subscribe(f"{TOPIC_PREFIX}/+/status")
+        client.subscribe(f"{TOPIC_PREFIX}/+/+")
+        client.subscribe(f"{TOPIC_PREFIX}/+/command/response")
+
+    def _on_message(self, client, userdata, msg):
+        topic_parts = msg.topic.split("/")
+        if len(topic_parts) < 3:
+            return
+
+        device_id = topic_parts[1]
+        subtopic = "/".join(topic_parts[2:])
+
+        if subtopic == "status":
+            status = msg.payload.decode().strip().strip('"')
+            logger.info(f"Device {device_id} status: {status}")
+            self._registry.set_device_status(device_id, status)
+            self._notify_update(device_id)
+
+        elif subtopic == "command/response":
+            try:
+                response = json.loads(msg.payload.decode())
+                logger.info(f"Command response from {device_id}: {response}")
+            except json.JSONDecodeError:
+                logger.error(f"Invalid command response from {device_id}")
+
+        else:
+            # Plugin data
+            try:
+                payload = json.loads(msg.payload.decode())
+                self._registry.update_device(device_id, payload)
+                self._notify_update(device_id)
+                logger.debug(f"Updated device {device_id} from plugin {subtopic}")
+            except json.JSONDecodeError:
+                logger.error(f"Invalid JSON from {device_id}/{subtopic}")
+
+    def _notify_update(self, device_id: str):
+        for callback in self._on_device_update_callbacks:
+            try:
+                callback(device_id)
+            except Exception as e:
+                logger.error(f"Callback error: {e}")
