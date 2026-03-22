@@ -121,7 +121,11 @@ class DeviceRegistry:
         if payload.get("network"):
             device["network"] = payload["network"]
         if "allowed_commands" in payload:
-            device["allowed_commands"] = payload["allowed_commands"]
+            # Store only client-origin commands — filter out server-pushed ones
+            server_cmds = set(device.get("server_commands", {}).keys())
+            device["allowed_commands"] = [
+                c for c in payload["allowed_commands"] if c not in server_cmds
+            ]
         if "active_plugins" in payload:
             device["active_plugins"] = payload["active_plugins"]
         if "collection_interval" in payload:
