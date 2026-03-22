@@ -482,7 +482,6 @@ class MQTTTopologyCard extends HTMLElement {
       columns: 12,
       rows: 8,
       min_rows: 2,
-      max_rows: 8,
       min_columns: 6,
     };
   }
