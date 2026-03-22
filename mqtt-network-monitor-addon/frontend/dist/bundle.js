@@ -83,7 +83,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.1.0 build ${"3/22 15:55"}</span>
+        <span class="version">v0.1.0 build ${"3/22 16:17"}</span>
       </nav>
     `}_navigate(e){this.dispatchEvent(new CustomEvent("view-change",{detail:{view:e}}))}}customElements.define("nav-bar",pe);const he=function(){const e=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);return e?e[1]:""}();async function ue(){return(await fetch(`${he}/api/devices`)).json()}async function ge(e){return(await fetch(`${he}/api/devices/${e}`)).json()}async function me(e){return(await fetch(`${he}/api/topology/layouts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})).json()}async function ve(e,t,s={}){return(await fetch(`${he}/api/devices/${e}/command`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:t,params:s})})).json()}async function fe(){return(await fetch(`${he}/api/groups`)).json()}async function be(e,t,s=[]){return(await fetch(`${he}/api/groups`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e,name:t,device_ids:s})})).json()}async function xe(e,{name:t,device_ids:s,custom_commands:i,custom_sensors:o,thresholds:a}){return(await fetch(`${he}/api/groups/${e}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t,device_ids:s,custom_commands:i,custom_sensors:o,thresholds:a})})).json()}async function _e(){return(await fetch(`${he}/api/tags`)).json()}async function ye(e){return(await fetch(`${he}/api/tags`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tag:e})})).json()}async function $e(){return(await fetch(`${he}/api/settings`)).json()}async function we(e,t){return(await fetch(`${he}/api/devices/${e}/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})).json()}const ke={online:"#81c784",offline:"#ef5350",warning:"#ffb74d",inferred:"#4fc3f7",unknown:"#666"};class Se extends le{static properties={topology:{type:Object},layouts:{type:Object},selectedLayout:{type:String},editMode:{type:Boolean},linkMode:{type:Boolean},selectedNode:{type:String},nodePositions:{type:Object},manualEdges:{type:Array},_dragging:{type:String,state:!0},_linkSource:{type:String,state:!0},_error:{type:String,state:!0},_loading:{type:Boolean,state:!0},_selectedEdge:{type:Number,state:!0},_selectedDeviceData:{type:Object,state:!0},_commandResult:{type:String,state:!0},_dirty:{type:Boolean,state:!0},_showSaveDialog:{type:Boolean,state:!0},_showLabelDialog:{type:Boolean,state:!0},_labelEdgeIndex:{type:Number,state:!0},hideAutoEdges:{type:Boolean}};static styles=a`
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
@@ -953,6 +953,12 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       font-size: 10px; color: #555; margin-top: 4px;
     }
     .attr-ha-status.exposed { color: #4fc3f7; }
+    .attr-tile.exceeded { border: 1px solid #ffb74d; }
+    .attr-val.exceeded-val { color: #ffb74d; }
+    .attr-threshold {
+      font-size: 9px; color: #666; margin-top: 3px;
+    }
+    .attr-threshold.exceeded { color: #ffb74d; }
 
     /* Toggle switch */
     .toggle-wrap { cursor: pointer; flex-shrink: 0; }
@@ -1129,11 +1135,8 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       <!-- 3. Group Policy -->
       ${this._renderGroupPolicy()}
 
-      <!-- 4. Attributes + HA Exposure -->
+      <!-- 4. Attributes + HA Exposure + Thresholds -->
       ${this._renderAttributesSection()}
-
-      <!-- 4b. Active Thresholds -->
-      ${this._renderThresholdsSection()}
 
       <!-- 5. Network -->
       ${this._renderNetwork()}
@@ -1201,8 +1204,8 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           ${e.map(([e,t])=>this._renderAttrTile(e,t))}
         </div>
       </div>
-    `}_isExposed(e){if(void 0!==this._haOverrides[e])return this._haOverrides[e];const t=this._effectiveSettings;return void 0===t?.ha_exposure_overrides?.[e]||t.ha_exposure_overrides[e]}_fromGroup(e){if(void 0!==this._haOverrides[e])return!1;const t=this._effectiveSettings;return void 0!==t?.ha_exposure_overrides?.[e]}_renderAttrTile(e,t){const s=this._isExposed(e),i=this._fromGroup(e);return F`
-      <div class="attr-tile ${s?"":"dimmed"}">
+    `}_isExposed(e){if(void 0!==this._haOverrides[e])return this._haOverrides[e];const t=this._effectiveSettings;return void 0===t?.ha_exposure_overrides?.[e]||t.ha_exposure_overrides[e]}_fromGroup(e){if(void 0!==this._haOverrides[e])return!1;const t=this._effectiveSettings;return void 0!==t?.ha_exposure_overrides?.[e]}_getThresholdForAttr(e){const t=this._effectiveSettings;if(!t)return null;const s=(t.thresholds||{})[e];if(null==s)return null;const i=this.device.threshold_overrides||{},o=this.device.group_policy,a=o?this._groups[o]:null;let n="global";return null!=i[e]?n="device":a&&a.thresholds&&null!=a.thresholds[e]&&(n="group"),{value:s,source:n}}_renderAttrTile(e,t){const s=this._isExposed(e),i=this._fromGroup(e),o=this._getThresholdForAttr(e),a=null!=t.value?t.value:null,n=o&&null!=a&&"number"==typeof a&&a>o.value;return F`
+      <div class="attr-tile ${s?"":"dimmed"} ${n?"exceeded":""}">
         <div class="attr-tile-top">
           <span class="attr-label">${e.replace(/_/g," ")}</span>
           <span class="toggle-wrap" @click=${()=>this._toggleHaExposure(e)}>
@@ -1211,28 +1214,19 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             </div>
           </span>
         </div>
-        <div class="attr-val ${s?"":"dimmed-val"}">
-          ${null!=t.value?t.value:"—"}
+        <div class="attr-val ${s?"":"dimmed-val"} ${n?"exceeded-val":""}">
+          ${null!=a?a:"—"}
           <span class="attr-unit">${t.unit||""}</span>
         </div>
+        ${o?F`
+          <div class="attr-threshold ${n?"exceeded":""}">
+            ${n?"⚠ ":""}Threshold: ${o.value}${t.unit||""}
+            <span style="color: #555;"> (${o.source})</span>
+          </div>
+        `:""}
         <div class="attr-ha-status ${s?"exposed":""}">
-          ${s?"HA sensor active":"Not exposed to HA"}
-          ${i?F` <span style="color: #666;">&#8592; from group</span>`:""}
-        </div>
-      </div>
-    `}_renderThresholdsSection(){const e=this._effectiveSettings;if(!e)return F``;const t=e.thresholds||{},s=Object.entries(t).filter(([,e])=>null!=e);if(0===s.length)return F``;const i=this.device.attributes||{};return F`
-      <div class="section">
-        <div class="section-title">Active Thresholds</div>
-        <div class="threshold-list">
-          ${s.map(([e,t])=>{const s=i[e];let o=null;null!=s&&(o="object"==typeof s?s.value:s);const a=null!=o&&"number"==typeof o&&o>t,n=this.device.threshold_overrides||{},r=this.device.group_policy,l=r?this._groups[r]:null;let d="global";return null!=n[e]?d="device":l&&l.thresholds&&null!=l.thresholds[e]&&(d="group"),F`
-              <div class="threshold-pill ${a?"exceeded":""}">
-                <span class="threshold-attr">${e.replace(/_/g," ")}</span>
-                <span style="color: #555;">&nbsp;&gt;&nbsp;</span>
-                <span class="threshold-val">${t}</span>
-                <span class="threshold-source">(${d})</span>
-                ${a?F`<span style="color: #ffb74d; margin-left: 2px;" title="Currently exceeded">&#9888;</span>`:""}
-              </div>
-            `})}
+          ${s?"HA":"Not in HA"}
+          ${i?F` <span style="color: #666;">&#8592; group</span>`:""}
         </div>
       </div>
     `}async _toggleHaExposure(e){const t=this._isExposed(e);this._haOverrides={...this._haOverrides,[e]:!t},this._localChanges=!0;try{await we(this.deviceId,{ha_exposure_overrides:this._haOverrides})}catch(e){console.error("Failed to update HA exposure:",e)}}_renderNetwork(){const e=this.device.network||{};return 0===Object.keys(e).length?F``:F`

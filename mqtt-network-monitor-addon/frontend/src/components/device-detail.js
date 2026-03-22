@@ -118,6 +118,12 @@ class DeviceDetail extends LitElement {
       font-size: 10px; color: #555; margin-top: 4px;
     }
     .attr-ha-status.exposed { color: #4fc3f7; }
+    .attr-tile.exceeded { border: 1px solid #ffb74d; }
+    .attr-val.exceeded-val { color: #ffb74d; }
+    .attr-threshold {
+      font-size: 9px; color: #666; margin-top: 3px;
+    }
+    .attr-threshold.exceeded { color: #ffb74d; }
 
     /* Toggle switch */
     .toggle-wrap { cursor: pointer; flex-shrink: 0; }
@@ -366,11 +372,8 @@ class DeviceDetail extends LitElement {
       <!-- 3. Group Policy -->
       ${this._renderGroupPolicy()}
 
-      <!-- 4. Attributes + HA Exposure -->
+      <!-- 4. Attributes + HA Exposure + Thresholds -->
       ${this._renderAttributesSection()}
-
-      <!-- 4b. Active Thresholds -->
-      ${this._renderThresholdsSection()}
 
       <!-- 5. Network -->
       ${this._renderNetwork()}
@@ -495,12 +498,33 @@ class DeviceDetail extends LitElement {
     return es?.ha_exposure_overrides?.[name] !== undefined;
   }
 
+  _getThresholdForAttr(name) {
+    const es = this._effectiveSettings;
+    if (!es) return null;
+    const thresholds = es.thresholds || {};
+    const val = thresholds[name];
+    if (val == null) return null;
+
+    // Determine source
+    const deviceOverrides = this.device.threshold_overrides || {};
+    const groupId = this.device.group_policy;
+    const group = groupId ? this._groups[groupId] : null;
+    let source = 'global';
+    if (deviceOverrides[name] != null) source = 'device';
+    else if (group && group.thresholds && group.thresholds[name] != null) source = 'group';
+
+    return { value: val, source };
+  }
+
   _renderAttrTile(name, data) {
     const exposed = this._isExposed(name);
     const fromGroup = this._fromGroup(name);
+    const threshold = this._getThresholdForAttr(name);
+    const currentVal = data.value != null ? data.value : null;
+    const exceeded = threshold && currentVal != null && typeof currentVal === 'number' && currentVal > threshold.value;
 
     return html`
-      <div class="attr-tile ${exposed ? '' : 'dimmed'}">
+      <div class="attr-tile ${exposed ? '' : 'dimmed'} ${exceeded ? 'exceeded' : ''}">
         <div class="attr-tile-top">
           <span class="attr-label">${name.replace(/_/g, ' ')}</span>
           <span class="toggle-wrap" @click=${() => this._toggleHaExposure(name)}>
@@ -509,59 +533,19 @@ class DeviceDetail extends LitElement {
             </div>
           </span>
         </div>
-        <div class="attr-val ${exposed ? '' : 'dimmed-val'}">
-          ${data.value != null ? data.value : '\u2014'}
+        <div class="attr-val ${exposed ? '' : 'dimmed-val'} ${exceeded ? 'exceeded-val' : ''}">
+          ${currentVal != null ? currentVal : '\u2014'}
           <span class="attr-unit">${data.unit || ''}</span>
         </div>
+        ${threshold ? html`
+          <div class="attr-threshold ${exceeded ? 'exceeded' : ''}">
+            ${exceeded ? '\u26A0 ' : ''}Threshold: ${threshold.value}${data.unit || ''}
+            <span style="color: #555;"> (${threshold.source})</span>
+          </div>
+        ` : ''}
         <div class="attr-ha-status ${exposed ? 'exposed' : ''}">
-          ${exposed ? 'HA sensor active' : 'Not exposed to HA'}
-          ${fromGroup ? html` <span style="color: #666;">&#8592; from group</span>` : ''}
-        </div>
-      </div>
-    `;
-  }
-
-  // ── Section 4b: Active Thresholds ─────────────────────────────────────────
-
-  _renderThresholdsSection() {
-    const es = this._effectiveSettings;
-    if (!es) return html``;
-    const thresholds = es.thresholds || {};
-    const entries = Object.entries(thresholds).filter(([, v]) => v != null);
-    if (entries.length === 0) return html``;
-
-    const attrs = this.device.attributes || {};
-
-    return html`
-      <div class="section">
-        <div class="section-title">Active Thresholds</div>
-        <div class="threshold-list">
-          ${entries.map(([key, val]) => {
-            const attrData = attrs[key];
-            let currentVal = null;
-            if (attrData != null) {
-              currentVal = typeof attrData === 'object' ? attrData.value : attrData;
-            }
-            const exceeded = currentVal != null && typeof currentVal === 'number' && currentVal > val;
-
-            // Determine source
-            const deviceOverrides = this.device.threshold_overrides || {};
-            const groupId = this.device.group_policy;
-            const group = groupId ? this._groups[groupId] : null;
-            let source = 'global';
-            if (deviceOverrides[key] != null) source = 'device';
-            else if (group && group.thresholds && group.thresholds[key] != null) source = 'group';
-
-            return html`
-              <div class="threshold-pill ${exceeded ? 'exceeded' : ''}">
-                <span class="threshold-attr">${key.replace(/_/g, '\u00A0')}</span>
-                <span style="color: #555;">&nbsp;&gt;&nbsp;</span>
-                <span class="threshold-val">${val}</span>
-                <span class="threshold-source">(${source})</span>
-                ${exceeded ? html`<span style="color: #ffb74d; margin-left: 2px;" title="Currently exceeded">&#9888;</span>` : ''}
-              </div>
-            `;
-          })}
+          ${exposed ? 'HA' : 'Not in HA'}
+          ${fromGroup ? html` <span style="color: #666;">&#8592; group</span>` : ''}
         </div>
       </div>
     `;
