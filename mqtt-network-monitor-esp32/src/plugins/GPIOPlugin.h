@@ -2,7 +2,10 @@
 #define MQTT_MONITOR_GPIO_PLUGIN_H
 
 #include "BasePlugin.h"
-#include <vector>
+
+#ifndef MAX_GPIO_PINS
+#define MAX_GPIO_PINS 16
+#endif
 
 struct PinConfig {
     uint8_t pin;
@@ -19,38 +22,44 @@ public:
     const char* name() const override { return "gpio"; }
 
     void addDigitalPin(uint8_t pin, const char* label = nullptr) {
+        if (_pinCount >= MAX_GPIO_PINS) return;
         PinConfig cfg = { pin, false, label };
-        _pins.push_back(cfg);
+        _pins[_pinCount++] = cfg;
         pinMode(pin, INPUT);
     }
 
     void addAnalogPin(uint8_t pin, const char* label = nullptr) {
+        if (_pinCount >= MAX_GPIO_PINS) return;
         PinConfig cfg = { pin, true, label };
-        _pins.push_back(cfg);
+        _pins[_pinCount++] = cfg;
     }
 
-    void collect(JsonObject& attributes) override {
-        for (const auto& cfg : _pins) {
+    int collect(char* buf, int maxLen) override {
+        int n = 0;
+        for (int i = 0; i < _pinCount; i++) {
+            if (i > 0 && n < maxLen - 1) buf[n++] = ',';
             char key[32];
-            if (cfg.label) {
-                snprintf(key, sizeof(key), "%s", cfg.label);
+            if (_pins[i].label) {
+                snprintf(key, sizeof(key), "%s", _pins[i].label);
             } else {
-                snprintf(key, sizeof(key), "pin_%d", cfg.pin);
+                snprintf(key, sizeof(key), "pin_%d", _pins[i].pin);
             }
-
-            JsonObject attr = attributes[key].to<JsonObject>();
-            if (cfg.analog) {
-                attr["value"] = analogRead(cfg.pin);
-                attr["unit"] = "raw";
+            if (_pins[i].analog) {
+                n += snprintf(buf + n, maxLen - n,
+                    "\"%s\":{\"value\":%d,\"unit\":\"raw\"}",
+                    key, analogRead(_pins[i].pin));
             } else {
-                attr["value"] = digitalRead(cfg.pin);
-                attr["unit"] = "";
+                n += snprintf(buf + n, maxLen - n,
+                    "\"%s\":{\"value\":%d,\"unit\":\"\"}",
+                    key, digitalRead(_pins[i].pin));
             }
         }
+        return n;
     }
 
 private:
-    std::vector<PinConfig> _pins;
+    PinConfig _pins[MAX_GPIO_PINS];
+    int _pinCount = 0;
 };
 
 #endif

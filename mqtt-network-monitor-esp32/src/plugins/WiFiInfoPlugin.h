@@ -14,26 +14,28 @@ public:
 
     bool hasNetworkInfo() const override { return true; }
 
-    void collect(JsonObject& attributes) override {
-        JsonObject rssi = attributes["wifi_rssi"].to<JsonObject>();
-        rssi["value"] = WiFi.RSSI();
-        rssi["unit"] = "dBm";
-
-        JsonObject channel = attributes["wifi_channel"].to<JsonObject>();
-        channel["value"] = WiFi.channel();
-        channel["unit"] = "";
-
-        JsonObject ip = attributes["ip_address"].to<JsonObject>();
-        ip["value"] = WiFi.localIP().toString();
-        ip["unit"] = "";
+    int collect(char* buf, int maxLen) override {
+        int n = 0;
+        n += snprintf(buf + n, maxLen - n,
+            "\"wifi_rssi\":{\"value\":%d,\"unit\":\"dBm\"}",
+            WiFi.RSSI());
+        n += snprintf(buf + n, maxLen - n,
+            ",\"wifi_channel\":{\"value\":%d,\"unit\":\"\"}",
+            WiFi.channel());
+        n += snprintf(buf + n, maxLen - n,
+            ",\"ip_address\":{\"value\":\"%s\",\"unit\":\"\"}",
+            WiFi.localIP().toString().c_str());
+        return n;
     }
 
-    void getNetworkInfo(JsonObject& network) override {
-        network["ip"] = WiFi.localIP().toString();
-        network["mac"] = WiFi.macAddress();
-        network["gateway"] = WiFi.gatewayIP().toString();
-        network["subnet"] = WiFi.subnetMask().toString();
-        network["interface"] = "wifi";
+    int getNetworkInfo(char* buf, int maxLen) override {
+        return snprintf(buf, maxLen,
+            "\"ip\":\"%s\",\"mac\":\"%s\",\"gateway\":\"%s\","
+            "\"subnet\":\"%s\",\"interface\":\"wifi\"",
+            WiFi.localIP().toString().c_str(),
+            WiFi.macAddress().c_str(),
+            WiFi.gatewayIP().toString().c_str(),
+            WiFi.subnetMask().toString().c_str());
     }
 };
 

@@ -1,7 +1,7 @@
 {
   "name": "MQTTNetworkMonitor",
-  "version": "0.1.0",
-  "description": "Lightweight MQTT client for ESP32 network monitoring",
+  "version": "0.2.0",
+  "description": "Ultra-lightweight MQTT client for ESP32 network monitoring",
   "keywords": "mqtt, monitoring, esp32, homeassistant",
   "repository": {
     "type": "git",

@@ -3,6 +3,10 @@
  *
  * Monitors system stats, WiFi info, and GPIO pins.
  * Publishes to MQTT broker for the Network Monitor add-on.
+ *
+ * Memory config (optional — set BEFORE #include <MQTTMonitor.h>):
+ *   #define MQTT_MONITOR_BUF_SIZE 256   // cut to 256 for very tight devices
+ *   #define MAX_GPIO_PINS 8             // fewer pins if you need the RAM back
  */
 
 #include <WiFi.h>
@@ -23,9 +27,9 @@ const char* MQTT_PASS = nullptr;
 
 // Create monitor and plugins
 MQTTMonitor monitor("esp-garden", "Garden Sensor", "esp32");
-SystemPlugin sysPlugin(30);       // Every 30 seconds
-WiFiInfoPlugin wifiPlugin(60);    // Every 60 seconds
-GPIOPlugin gpioPlugin(5);         // Every 5 seconds
+SystemPlugin  sysPlugin(30);   // Every 30 seconds
+WiFiInfoPlugin wifiPlugin(60); // Every 60 seconds
+GPIOPlugin    gpioPlugin(5);   // Every 5 seconds
 
 void setup() {
     Serial.begin(115200);
