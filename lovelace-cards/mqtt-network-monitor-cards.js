@@ -295,35 +295,58 @@ class MQTTTopologyCard extends HTMLElement {
       warning: nodes.filter(n => n.status === 'warning').length,
     };
 
-    // Use the same coordinate space as the editor (900x500)
-    // SVG viewBox handles scaling to fit the card width
-    const VB_W = 900;
-    const VB_H = 500;
+    // Get saved positions or auto-layout
     const savedPositions = layout?.positions || {};
     const positions = { ...savedPositions };
-
-    // Auto-position nodes that don't have saved positions
     const cols = Math.ceil(Math.sqrt(nodes.length));
     nodes.forEach((node, i) => {
       if (!positions[node.id]) {
         const col = i % cols;
         const row = Math.floor(i / cols);
         positions[node.id] = {
-          x: 100 + col * (700 / Math.max(cols, 1)),
-          y: 80 + row * 100,
+          x: 80 + col * 160,
+          y: 60 + row * 100,
         };
       }
     });
 
-    // Render edges (lines first, then labels on top)
+    // Calculate bounding box of all node positions, then build viewBox to fit
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const pos of Object.values(positions)) {
+      if (pos.x < minX) minX = pos.x;
+      if (pos.x > maxX) maxX = pos.x;
+      if (pos.y < minY) minY = pos.y;
+      if (pos.y > maxY) maxY = pos.y;
+    }
+    const pad = 80; // padding around content
+    const vbX = minX - pad;
+    const vbY = minY - pad;
+    const vbW = Math.max((maxX - minX) + pad * 2, 200);
+    const vbH = Math.max((maxY - minY) + pad * 2, 150);
+
+    // Scale factor: how much the viewBox shrinks when rendered at card width
+    // We increase font/node sizes to compensate
+    const S = Math.max(vbW / 400, 1); // scale relative to ~400px card width
+    const nodeW = 90 * S;
+    const nodeH = 36 * S;
+    const nodeR = 22 * S;
+    const fontSize = Math.round(12 * S);
+    const fontSizeSm = Math.round(10 * S);
+    const fontSizeLabel = Math.round(11 * S);
+    const fontSizeLabelSm = Math.round(9 * S);
+    const strokeW = 1.5 * S;
+    const labelDist = 55 * S;
+    const labelPerpOff = 16 * S;
+
+    // Render edge lines
     const edgeLinesSvg = allEdges.map(e => {
       const from = positions[e.source];
       const to = positions[e.target];
       if (!from || !to) return '';
       const isManual = e.type === 'manual' || e.sourceLabel || e.targetLabel || (!e.type);
       const color = isManual ? '#4fc3f7' : '#555';
-      const dash = isManual ? 'none' : '4,2';
-      return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${color}" stroke-width="1.5" stroke-dasharray="${dash}"/>`;
+      const dash = isManual ? 'none' : `${4*S},${2*S}`;
+      return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${color}" stroke-width="${strokeW}" stroke-dasharray="${dash}"/>`;
     }).join('');
 
     // Render nodes
@@ -332,30 +355,30 @@ class MQTTTopologyCard extends HTMLElement {
       if (!pos) return '';
       const color = STATUS_COLORS[n.status] || STATUS_COLORS.unknown;
       const isGateway = n.type === 'gateway';
-
       if (isGateway) {
         return `
-          <circle cx="${pos.x}" cy="${pos.y}" r="22" fill="${color}22" stroke="${color}" stroke-width="1.5"/>
-          <text x="${pos.x}" y="${pos.y + 4}" text-anchor="middle" fill="${color}" font-size="10">
+          <circle cx="${pos.x}" cy="${pos.y}" r="${nodeR}" fill="${color}22" stroke="${color}" stroke-width="${strokeW}"/>
+          <text x="${pos.x}" y="${pos.y + fontSize * 0.35}" text-anchor="middle" fill="${color}" font-size="${fontSizeSm}">
             ${(n.name || n.id).substring(0, 12)}
           </text>
         `;
       }
       return `
-        <rect x="${pos.x - 45}" y="${pos.y - 18}" width="90" height="36" rx="6"
-          fill="#2a2a4a" stroke="${color}" stroke-width="1.5"/>
-        <text x="${pos.x}" y="${pos.y - 3}" text-anchor="middle" fill="${color}" font-size="10">
+        <rect x="${pos.x - nodeW/2}" y="${pos.y - nodeH/2}" width="${nodeW}" height="${nodeH}" rx="${6*S}"
+          fill="#2a2a4a" stroke="${color}" stroke-width="${strokeW}"/>
+        <text x="${pos.x}" y="${pos.y - nodeH*0.08}" text-anchor="middle" fill="${color}" font-size="${fontSizeSm}">
           ${(n.name || n.id).substring(0, 12)}
         </text>
-        <text x="${pos.x}" y="${pos.y + 10}" text-anchor="middle" fill="#666" font-size="8">${n.status}</text>
+        <text x="${pos.x}" y="${pos.y + nodeH*0.3}" text-anchor="middle" fill="#666" font-size="${fontSizeSm * 0.8}">${n.status}</text>
       `;
     }).join('');
 
-    // Render edge labels on top of nodes
+    // Render edge labels on top
     const edgeLabelsSvg = allEdges.map(e => {
       const from = positions[e.source];
       const to = positions[e.target];
       if (!from || !to) return '';
+      if (!e.label && !e.sourceLabel && !e.targetLabel) return '';
 
       let svg = '';
       const dx = to.x - from.x;
@@ -366,29 +389,33 @@ class MQTTTopologyCard extends HTMLElement {
       let perpX = -uy, perpY = ux;
       if (perpY > 0) { perpX = -perpX; perpY = -perpY; }
 
+      const bgH = fontSizeLabel + 4;
+
       if (e.label) {
-        const mx = (from.x + to.x) / 2 + perpX * 14;
-        const my = (from.y + to.y) / 2 + perpY * 14;
-        svg += `<rect x="${mx - e.label.length * 3 - 3}" y="${my - 9}" width="${e.label.length * 6 + 6}" height="13" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
-        svg += `<text x="${mx}" y="${my}" text-anchor="middle" fill="#888" font-size="9">${e.label}</text>`;
+        const mx = (from.x + to.x) / 2 + perpX * labelPerpOff;
+        const my = (from.y + to.y) / 2 + perpY * labelPerpOff;
+        const tw = e.label.length * fontSizeLabel * 0.55 + 8;
+        svg += `<rect x="${mx - tw/2}" y="${my - bgH + 2}" width="${tw}" height="${bgH}" rx="${2*S}" fill="#1a1a2e" opacity="0.9"/>`;
+        svg += `<text x="${mx}" y="${my}" text-anchor="middle" fill="#888" font-size="${fontSizeLabelSm}">${e.label}</text>`;
       }
       if (e.sourceLabel) {
-        const sx = from.x + ux * 55;
-        const sy = from.y + uy * 55;
-        svg += `<rect x="${sx - e.sourceLabel.length * 2.5 - 3}" y="${sy - 8}" width="${e.sourceLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
-        svg += `<text x="${sx}" y="${sy}" text-anchor="middle" fill="#4fc3f7" font-size="8">${e.sourceLabel}</text>`;
+        const sx = from.x + ux * labelDist;
+        const sy = from.y + uy * labelDist;
+        const tw = e.sourceLabel.length * fontSizeLabelSm * 0.55 + 8;
+        svg += `<rect x="${sx - tw/2}" y="${sy - bgH + 3}" width="${tw}" height="${bgH}" rx="${2*S}" fill="#1a1a2e" opacity="0.9"/>`;
+        svg += `<text x="${sx}" y="${sy}" text-anchor="middle" fill="#4fc3f7" font-size="${fontSizeLabelSm}">${e.sourceLabel}</text>`;
       }
       if (e.targetLabel) {
-        const tx = to.x - ux * 55;
-        const ty = to.y - uy * 55;
-        svg += `<rect x="${tx - e.targetLabel.length * 2.5 - 3}" y="${ty - 8}" width="${e.targetLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
-        svg += `<text x="${tx}" y="${ty}" text-anchor="middle" fill="#4fc3f7" font-size="8">${e.targetLabel}</text>`;
+        const tx = to.x - ux * labelDist;
+        const ty = to.y - uy * labelDist;
+        const tw = e.targetLabel.length * fontSizeLabelSm * 0.55 + 8;
+        svg += `<rect x="${tx - tw/2}" y="${ty - bgH + 3}" width="${tw}" height="${bgH}" rx="${2*S}" fill="#1a1a2e" opacity="0.9"/>`;
+        svg += `<text x="${tx}" y="${ty}" text-anchor="middle" fill="#4fc3f7" font-size="${fontSizeLabelSm}">${e.targetLabel}</text>`;
       }
       return svg;
     }).join('');
 
     const layoutName = layout ? layout.name : 'Auto Discovery';
-    const cardHeight = this._config.height || 300;
 
     this.shadowRoot.innerHTML = `
       <ha-card>
@@ -409,7 +436,7 @@ class MQTTTopologyCard extends HTMLElement {
             border-radius: 8px;
             overflow: hidden;
           }
-          svg { width: 100%; height: ${cardHeight}px; }
+          svg { width: 100%; height: auto; display: block; }
         </style>
         <div class="card-content">
           <div class="header">
@@ -424,7 +451,7 @@ class MQTTTopologyCard extends HTMLElement {
             </span>
           </div>
           <div class="svg-container">
-            <svg viewBox="0 0 ${VB_W} ${VB_H}">
+            <svg viewBox="${vbX} ${vbY} ${vbW} ${vbH}">
               ${edgeLinesSvg}
               ${nodesSvg}
               ${edgeLabelsSvg}
@@ -436,8 +463,7 @@ class MQTTTopologyCard extends HTMLElement {
   }
 
   getCardSize() {
-    const h = this._config?.height || 300;
-    return Math.ceil(h / 50) + 1;
+    return 4;
   }
 
   static getConfigElement() {
