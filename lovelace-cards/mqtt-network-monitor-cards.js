@@ -295,76 +295,100 @@ class MQTTTopologyCard extends HTMLElement {
       warning: nodes.filter(n => n.status === 'warning').length,
     };
 
-    // Use saved positions from layout, or auto-layout
+    // Use the same coordinate space as the editor (900x500)
+    // SVG viewBox handles scaling to fit the card width
+    const VB_W = 900;
+    const VB_H = 500;
     const savedPositions = layout?.positions || {};
-    const width = 280;
-    const height = Math.max(180, Math.ceil(nodes.length / 4) * 60 + 40);
-    const cols = Math.ceil(Math.sqrt(nodes.length));
     const positions = { ...savedPositions };
 
-    // Auto-position any nodes not in the saved layout
+    // Auto-position nodes that don't have saved positions
+    const cols = Math.ceil(Math.sqrt(nodes.length));
     nodes.forEach((node, i) => {
       if (!positions[node.id]) {
         const col = i % cols;
         const row = Math.floor(i / cols);
         positions[node.id] = {
-          x: 30 + col * ((width - 60) / Math.max(cols - 1, 1)),
-          y: 30 + row * 50,
+          x: 100 + col * (700 / Math.max(cols, 1)),
+          y: 80 + row * 100,
         };
       }
     });
 
-    // Scale saved positions to fit the card's viewBox
-    // Saved positions are from the full editor (900x500), scale to card size
-    const scaledPositions = {};
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const [id, pos] of Object.entries(positions)) {
-      if (pos.x < minX) minX = pos.x;
-      if (pos.x > maxX) maxX = pos.x;
-      if (pos.y < minY) minY = pos.y;
-      if (pos.y > maxY) maxY = pos.y;
-    }
-    const rangeX = (maxX - minX) || 1;
-    const rangeY = (maxY - minY) || 1;
-    const padding = 25;
-    for (const [id, pos] of Object.entries(positions)) {
-      scaledPositions[id] = {
-        x: padding + ((pos.x - minX) / rangeX) * (width - padding * 2),
-        y: padding + ((pos.y - minY) / rangeY) * (height - padding * 2),
-      };
-    }
-
-    const edgesSvg = allEdges.map(e => {
-      const from = scaledPositions[e.source];
-      const to = scaledPositions[e.target];
+    // Render edges (lines first, then labels on top)
+    const edgeLinesSvg = allEdges.map(e => {
+      const from = positions[e.source];
+      const to = positions[e.target];
       if (!from || !to) return '';
       const isManual = e.type === 'manual' || e.sourceLabel || e.targetLabel || (!e.type);
-      const color = isManual ? 'var(--primary-color, #4fc3f7)' : 'var(--divider-color, #555)';
+      const color = isManual ? '#4fc3f7' : '#555';
       const dash = isManual ? 'none' : '4,2';
-      let labelSvg = '';
-      if (e.label) {
-        const mx = (from.x + to.x) / 2;
-        const my = (from.y + to.y) / 2;
-        labelSvg += `<text x="${mx}" y="${my - 4}" text-anchor="middle" fill="var(--secondary-text-color, #888)" font-size="6">${e.label}</text>`;
-      }
-      return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${color}" stroke-width="1" stroke-dasharray="${dash}"/>${labelSvg}`;
+      return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${color}" stroke-width="1.5" stroke-dasharray="${dash}"/>`;
     }).join('');
 
+    // Render nodes
     const nodesSvg = nodes.map(n => {
-      const pos = scaledPositions[n.id];
+      const pos = positions[n.id];
       if (!pos) return '';
       const color = STATUS_COLORS[n.status] || STATUS_COLORS.unknown;
+      const isGateway = n.type === 'gateway';
+
+      if (isGateway) {
+        return `
+          <circle cx="${pos.x}" cy="${pos.y}" r="22" fill="${color}22" stroke="${color}" stroke-width="1.5"/>
+          <text x="${pos.x}" y="${pos.y + 4}" text-anchor="middle" fill="${color}" font-size="10">
+            ${(n.name || n.id).substring(0, 12)}
+          </text>
+        `;
+      }
       return `
-        <circle cx="${pos.x}" cy="${pos.y}" r="${n.type === 'gateway' ? 10 : 7}"
-          fill="${color}" opacity="0.8"/>
-        <text x="${pos.x}" y="${pos.y + 18}" text-anchor="middle"
-          fill="var(--secondary-text-color, #999)" font-size="7">
-          ${(n.name || n.id).substring(0, 10)}
+        <rect x="${pos.x - 45}" y="${pos.y - 18}" width="90" height="36" rx="6"
+          fill="#2a2a4a" stroke="${color}" stroke-width="1.5"/>
+        <text x="${pos.x}" y="${pos.y - 3}" text-anchor="middle" fill="${color}" font-size="10">
+          ${(n.name || n.id).substring(0, 12)}
         </text>
+        <text x="${pos.x}" y="${pos.y + 10}" text-anchor="middle" fill="#666" font-size="8">${n.status}</text>
       `;
     }).join('');
 
+    // Render edge labels on top of nodes
+    const edgeLabelsSvg = allEdges.map(e => {
+      const from = positions[e.source];
+      const to = positions[e.target];
+      if (!from || !to) return '';
+
+      let svg = '';
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      let perpX = -uy, perpY = ux;
+      if (perpY > 0) { perpX = -perpX; perpY = -perpY; }
+
+      if (e.label) {
+        const mx = (from.x + to.x) / 2 + perpX * 14;
+        const my = (from.y + to.y) / 2 + perpY * 14;
+        svg += `<rect x="${mx - e.label.length * 3 - 3}" y="${my - 9}" width="${e.label.length * 6 + 6}" height="13" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
+        svg += `<text x="${mx}" y="${my}" text-anchor="middle" fill="#888" font-size="9">${e.label}</text>`;
+      }
+      if (e.sourceLabel) {
+        const sx = from.x + ux * 55;
+        const sy = from.y + uy * 55;
+        svg += `<rect x="${sx - e.sourceLabel.length * 2.5 - 3}" y="${sy - 8}" width="${e.sourceLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
+        svg += `<text x="${sx}" y="${sy}" text-anchor="middle" fill="#4fc3f7" font-size="8">${e.sourceLabel}</text>`;
+      }
+      if (e.targetLabel) {
+        const tx = to.x - ux * 55;
+        const ty = to.y - uy * 55;
+        svg += `<rect x="${tx - e.targetLabel.length * 2.5 - 3}" y="${ty - 8}" width="${e.targetLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
+        svg += `<text x="${tx}" y="${ty}" text-anchor="middle" fill="#4fc3f7" font-size="8">${e.targetLabel}</text>`;
+      }
+      return svg;
+    }).join('');
+
     const layoutName = layout ? layout.name : 'Auto Discovery';
+    const cardHeight = this._config.height || 300;
 
     this.shadowRoot.innerHTML = `
       <ha-card>
@@ -380,7 +404,12 @@ class MQTTTopologyCard extends HTMLElement {
           .count-online { color: ${STATUS_COLORS.online}; }
           .count-offline { color: ${STATUS_COLORS.offline}; }
           .count-warning { color: ${STATUS_COLORS.warning}; }
-          svg { width: 100%; height: auto; }
+          .svg-container {
+            background: #1a1a2e;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+          svg { width: 100%; height: ${cardHeight}px; }
         </style>
         <div class="card-content">
           <div class="header">
@@ -394,17 +423,21 @@ class MQTTTopologyCard extends HTMLElement {
               ${counts.warning ? ` · <span class="count-warning">${counts.warning} warning</span>` : ''}
             </span>
           </div>
-          <svg viewBox="0 0 ${width} ${height}">
-            ${edgesSvg}
-            ${nodesSvg}
-          </svg>
+          <div class="svg-container">
+            <svg viewBox="0 0 ${VB_W} ${VB_H}">
+              ${edgeLinesSvg}
+              ${nodesSvg}
+              ${edgeLabelsSvg}
+            </svg>
+          </div>
         </div>
       </ha-card>
     `;
   }
 
   getCardSize() {
-    return 3;
+    const h = this._config?.height || 300;
+    return Math.ceil(h / 50) + 1;
   }
 
   static getConfigElement() {
@@ -576,6 +609,14 @@ class MQTTTopologyEditor extends HTMLElement {
             placeholder="e.g., Home Network">
         </div>
         <div class="field">
+          <label>Height (px)</label>
+          <input id="height-input" type="number"
+            value="${this._config.height || 300}"
+            min="150" max="800" step="50"
+            placeholder="300">
+          <div class="hint">Card height in pixels (default: 300)</div>
+        </div>
+        <div class="field">
           <label>Layout</label>
           ${this._layouts.length > 0 ? `
             <select id="layout-select">
@@ -595,6 +636,9 @@ class MQTTTopologyEditor extends HTMLElement {
 
     this.shadowRoot.getElementById('title-input')
       .addEventListener('input', (e) => this._update('title', e.target.value));
+
+    this.shadowRoot.getElementById('height-input')
+      .addEventListener('input', (e) => this._update('height', parseInt(e.target.value) || 300));
 
     const layoutSelect = this.shadowRoot.getElementById('layout-select');
     const layoutInput = this.shadowRoot.getElementById('layout-input');
