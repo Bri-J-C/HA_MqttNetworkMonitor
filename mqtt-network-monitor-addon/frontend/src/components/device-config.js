@@ -2,30 +2,23 @@ import { LitElement, html, css } from 'lit';
 
 /**
  * device-config — agent configuration: collection interval, active plugins,
- * custom sensors table, push config.
+ * custom sensors table.
  *
  * Properties:
  *   device         {Object}  — full device record
  *   configInterval {Number}  — current collection interval value
  *   customSensors  {Object}  — sensor map (name → {command, interval, unit})
- *   pushing        {Boolean} — true while a push request is in flight
- *   pushStatus     {String}  — status text after push
- *   lastPushed     {String}  — time string of last successful push
  *
  * Events fired:
  *   interval-changed   {value}                    — user edited interval input
  *   sensor-save        {key, sensor, oldKey}       — user saved add/edit sensor form
  *   sensor-remove      {key}                       — user removed a sensor
- *   push-config        {}                          — user clicked Push Config
  */
 class DeviceConfig extends LitElement {
   static properties = {
     device:         { type: Object },
     configInterval: { type: Number },
     customSensors:  { type: Object },
-    pushing:        { type: Boolean },
-    pushStatus:     { type: String },
-    lastPushed:     { type: String },
     _showAddSensor: { type: Boolean, state: true },
     _editSensorKey: { type: String,  state: true },
     _sensorForm:    { type: Object,  state: true },
@@ -197,19 +190,6 @@ class DeviceConfig extends LitElement {
           </div>
         ` : ''}
 
-        <div class="push-row">
-          <button class="push-btn" ?disabled=${this.pushing} @click=${this._onPush}>
-            ${this.pushing ? 'Pushing...' : 'Push Config'}
-          </button>
-          ${this.lastPushed ? html`
-            <span class="push-status">Last pushed: ${this.lastPushed}</span>
-          ` : ''}
-          ${this.pushStatus ? html`
-            <span class="push-status ${this.pushStatus === 'Config synced' ? 'synced' : 'pending'}">
-              ${this.pushStatus}
-            </span>
-          ` : ''}
-        </div>
       </div>
     `;
   }
@@ -280,9 +260,6 @@ class DeviceConfig extends LitElement {
     this.dispatchEvent(new CustomEvent('sensor-remove', { detail: { key }, bubbles: true, composed: true }));
   }
 
-  _onPush() {
-    this.dispatchEvent(new CustomEvent('push-config', { bubbles: true, composed: true }));
-  }
 }
 
 customElements.define('device-config', DeviceConfig);

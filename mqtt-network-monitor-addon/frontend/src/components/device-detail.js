@@ -20,9 +20,6 @@ class DeviceDetail extends LitElement {
     _haOverrides:       { type: Object,  state: true },
     _configInterval:    { type: Number,  state: true },
     _customSensors:     { type: Object,  state: true },
-    _pushing:           { type: Boolean, state: true },
-    _pushStatus:        { type: String,  state: true },
-    _lastPushed:        { type: String,  state: true },
     _showGroupDialog:   { type: Boolean, state: true },
     _newGroupName:      { type: String,  state: true },
     _serverCommands:    { type: Object,  state: true },
@@ -129,9 +126,6 @@ class DeviceDetail extends LitElement {
     this._haOverrides       = {};
     this._configInterval    = 30;
     this._customSensors     = {};
-    this._pushing           = false;
-    this._pushStatus        = '';
-    this._lastPushed        = '';
     this._showGroupDialog   = false;
     this._newGroupName      = '';
     this._serverCommands    = {};
@@ -264,9 +258,6 @@ class DeviceDetail extends LitElement {
         .device=${this.device}
         .configInterval=${this._configInterval}
         .customSensors=${this._customSensors}
-        .pushing=${this._pushing}
-        .pushStatus=${this._pushStatus}
-        .lastPushed=${this._lastPushed}
         @interval-changed=${(e) => this._onIntervalChange(e.detail.value)}
         @sensor-save=${(e) => this._saveSensor(e.detail)}
         @sensor-remove=${(e) => this._removeSensor(e.detail.key)}
