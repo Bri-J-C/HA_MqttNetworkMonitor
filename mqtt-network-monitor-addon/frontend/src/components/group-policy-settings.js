@@ -568,73 +568,70 @@ class GroupPolicySettings extends LitElement {
 
   _renderGroupThresholds(g) {
     const thresholds = g.thresholds || {};
-    const form = getGroupThresholdForm(g.id);
     const discovered = this._getGroupDiscoveredData(g);
     const discoveredAttrs = discovered.attributes;
 
-    const extraThresholdKeys = Object.keys(thresholds).filter(
+    // Show discovered attributes + any thresholds for attributes not in discovered
+    const extraKeys = Object.keys(thresholds).filter(
       k => thresholds[k] != null && !discoveredAttrs.includes(k)
     );
-    const allDisplayAttrs = [...discoveredAttrs, ...extraThresholdKeys];
+    const allAttrs = [...discoveredAttrs, ...extraKeys];
+
+    if (allAttrs.length === 0) {
+      return html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No attributes discovered from member devices yet.</div>`;
+    }
 
     return html`
-      ${allDisplayAttrs.length > 0 ? html`
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; margin-bottom: 8px;">
-          ${allDisplayAttrs.map(key => {
-            const val = thresholds[key];
-            const isSet = val != null && val !== '';
-            return html`
-              <div style="display: flex; align-items: center; gap: 6px; background: #12122a; border-radius: 4px; padding: 5px 8px;">
-                <span style="font-size: 11px; color: ${isSet ? '#ccc' : '#666'}; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${key}>${key}</span>
-                ${isSet ? html`<span style="font-size: 9px; color: #4fc3f7; margin-right: 2px;" title="Threshold active">●</span>` : ''}
-                <input class="threshold-input" type="number" placeholder="—"
-                  style="width: 80px; font-size: 12px; padding: 3px 6px; background: #2a2a4a; border-color: ${isSet ? '#4a4a7a' : '#2a2a5a'};"
-                  .value=${isSet ? String(val) : ''}
-                  @input=${(e) => this._updateGroupThreshold(g.id, key, e.target.value)}>
-                ${isSet ? html`
-                  <button class="icon-btn delete" style="padding: 2px 4px; font-size: 10px;"
-                    @click=${() => this._removeGroupThreshold(g.id, key)} title="Clear threshold">&times;</button>
-                ` : ''}
-              </div>
-            `;
-          })}
-        </div>
-      ` : html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No attributes discovered from member devices yet.</div>`}
-      <div style="font-size: 11px; color: #555; margin-bottom: 4px; margin-top: 4px;">Add custom threshold</div>
-      <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-        <input class="small-input" type="text" placeholder="Attribute name..."
-          style="width: 150px;"
-          .value=${form.attr}
-          @input=${(e) => { getGroupThresholdForm(g.id).attr = e.target.value; this.requestUpdate(); }}>
-        <input class="small-input" type="number" placeholder="Value..."
-          style="width: 90px;"
-          .value=${form.value}
-          @input=${(e) => { getGroupThresholdForm(g.id).value = e.target.value; this.requestUpdate(); }}>
-        <button class="small-btn" @click=${() => this._addGroupThreshold(g)}>Add threshold</button>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px;">
+        ${allAttrs.map(key => {
+          const t = thresholds[key];
+          const hasThreshold = t != null;
+          const op = hasThreshold && typeof t === 'object' ? (t.op || '>') : '>';
+          const val = hasThreshold ? (typeof t === 'object' ? t.value : t) : null;
+
+          return html`
+            <div style="display: flex; align-items: center; gap: 4px; background: #12122a; border-radius: 6px; padding: 6px 8px; ${hasThreshold ? 'border: 1px solid #2a2a5a;' : ''}">
+              <span style="font-size: 11px; color: #ccc; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${key}>
+                ${key.replace(/_/g, ' ')}
+              </span>
+              <span style="font-size: 9px; color: #666;">Warn</span>
+              <select style="background: transparent; border: 1px solid #3a3a5a; border-radius: 3px; color: #aaa; padding: 2px; font-size: 10px; width: 36px;"
+                .value=${op}
+                @change=${(e) => this._updateGroupThreshold(g.id, key, val, e.target.value)}>
+                <option value=">">&gt;</option>
+                <option value="<">&lt;</option>
+                <option value=">=">&gt;=</option>
+                <option value="<=">&lt;=</option>
+                <option value="==">==</option>
+                <option value="!=">!=</option>
+              </select>
+              <input class="threshold-input" type="number" placeholder="\u2014"
+                style="width: 55px; font-size: 11px; padding: 2px 4px; background: transparent; border: 1px solid #3a3a5a; border-radius: 3px; color: #aaa; text-align: center;"
+                .value=${val != null ? String(val) : ''}
+                @change=${(e) => this._updateGroupThreshold(g.id, key, e.target.value, op)}>
+              ${hasThreshold ? html`
+                <span style="font-size: 12px; color: #555; cursor: pointer;" title="Clear"
+                  @click=${() => this._removeGroupThreshold(g.id, key)}>&times;</span>
+              ` : ''}
+            </div>
+          `;
+        })}
       </div>
     `;
   }
 
-  _addGroupThreshold(g) {
-    const form = getGroupThresholdForm(g.id);
-    const attr = (form.attr || '').trim();
-    const value = (form.value || '').trim();
-    if (!attr || value === '') return;
-    this._updateGroupThreshold(g.id, attr, value);
-    form.attr = '';
-    form.value = '';
-    this.requestUpdate();
-  }
-
-  _updateGroupThreshold(groupId, key, value) {
+  _updateGroupThreshold(groupId, key, value, op = '>') {
     const group = this._groups[groupId];
     if (!group) return;
+    const thresholds = { ...(group.thresholds || {}) };
+    if (value === '' || value == null) {
+      delete thresholds[key];
+    } else {
+      thresholds[key] = { op, value: Number(value) };
+    }
     this._groups = {
       ...this._groups,
-      [groupId]: {
-        ...group,
-        thresholds: { ...(group.thresholds || {}), [key]: value === '' ? null : Number(value) },
-      },
+      [groupId]: { ...group, thresholds },
     };
   }
 
