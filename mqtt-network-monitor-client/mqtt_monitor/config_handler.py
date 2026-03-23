@@ -70,11 +70,9 @@ class ConfigHandler:
             for plugin_name, plugin_config in data["plugins"].items():
                 self._remote_config["plugins"][plugin_name] = plugin_config
 
-        # Update commands
+        # Replace commands entirely (handles removals)
         if "commands" in data:
-            if "commands" not in self._remote_config:
-                self._remote_config["commands"] = {}
-            self._remote_config["commands"].update(data["commands"])
+            self._remote_config["commands"] = dict(data["commands"])
 
         if self._on_config_applied:
             self._on_config_applied(self._remote_config)
