@@ -198,3 +198,11 @@ export async function pushGroupConfig(groupId, config) {
     body: JSON.stringify(config),
   });
 }
+
+export async function checkGroupConflicts(groupId, newDeviceId = null) {
+  return apiCall(`${BASE}/api/groups/${groupId}/check-conflicts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newDeviceId ? { new_device_id: newDeviceId } : {}),
+  });
+}
