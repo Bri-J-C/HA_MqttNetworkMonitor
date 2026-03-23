@@ -1,10 +1,9 @@
 import { LitElement, html, css } from 'lit';
 import {
   fetchGroups, createGroup, updateGroup, deleteGroup,
-  sendGroupCommand, pushGroupConfig, checkGroupConflicts,
+  sendGroupCommand, pushGroupConfig,
   fetchDevices, updateDeviceSettings,
 } from '../services/api.js';
-import './conflict-dialog.js';
 
 // Per-group ephemeral state for threshold add row
 const _groupThresholdForms = {}; // groupId → { attr: '', value: '' }
@@ -32,11 +31,6 @@ class GroupPolicySettings extends LitElement {
     _editingGroupSensor: { type: Object, state: true }, // { groupId, name } or null
     _showAddGroupSensor: { type: Object, state: true }, // { groupId } or null
     _groupSensorForm: { type: Object, state: true },    // { name, command, interval, unit }
-    // Conflict dialog state
-    _conflictDialogConflicts: { type: Array, state: true },
-    _conflictDialogTitle: { type: String, state: true },
-    _conflictDialogAction: { type: String, state: true },
-    _conflictDialogPendingFn: { type: Object, state: true }, // Function to call on confirm
   };
 
   static styles = css`
@@ -202,11 +196,6 @@ class GroupPolicySettings extends LitElement {
     this._editingGroupSensor = null;
     this._showAddGroupSensor = null;
     this._groupSensorForm = { name: '', command: '', interval: '', unit: '' };
-    // Conflict dialog
-    this._conflictDialogConflicts = [];
-    this._conflictDialogTitle = '';
-    this._conflictDialogAction = '';
-    this._conflictDialogPendingFn = null;
   }
 
   connectedCallback() {
@@ -244,28 +233,7 @@ class GroupPolicySettings extends LitElement {
           <button class="small-btn" @click=${this._createGroup}>New Group</button>
         </div>
       </div>
-      ${this._conflictDialogConflicts.length > 0 ? html`
-        <conflict-dialog
-          .conflicts=${this._conflictDialogConflicts}
-          .title=${this._conflictDialogTitle}
-          .action=${this._conflictDialogAction}
-          @confirm=${this._onConflictConfirm}
-          @cancel=${this._onConflictCancel}>
-        </conflict-dialog>
-      ` : ''}
     `;
-  }
-
-  _onConflictConfirm() {
-    const fn = this._conflictDialogPendingFn;
-    this._conflictDialogConflicts = [];
-    this._conflictDialogPendingFn = null;
-    if (fn) fn();
-  }
-
-  _onConflictCancel() {
-    this._conflictDialogConflicts = [];
-    this._conflictDialogPendingFn = null;
   }
 
   _renderGroup(g) {
@@ -329,7 +297,7 @@ class GroupPolicySettings extends LitElement {
                 ${(this._groupPushStatus[g.id] || '').startsWith('Error')
                   ? html`<span class="group-status-error">${this._groupPushStatus[g.id]}</span>` : ''}
                 <button class="group-save-btn" style="background: #2e7d32;"
-                  @click=${() => this._deployToDevices(g)}>Save &amp; Deploy</button>
+                  @click=${() => this._deployToDevices(g)}>Deploy to Devices</button>
               </div>
             </div>
           </div>
@@ -480,17 +448,14 @@ class GroupPolicySettings extends LitElement {
     this._groupCmdForm = { name: '', shell: '' };
   }
 
-  _saveGroupCmd(g) {
-    const name = (this._groupCmdForm.name || '').trim();
-    const shell = (this._groupCmdForm.shell || '').trim();
+  async _saveGroupCmd(g) {
+    const name = this._groupCmdForm?.name?.trim();
+    const shell = this._groupCmdForm?.shell?.trim();
     if (!name || !shell) return;
-    this._groups = {
-      ...this._groups,
-      [g.id]: {
-        ...g,
-        custom_commands: { ...(g.custom_commands || {}), [name]: shell },
-      },
-    };
+    const latest = this._getLatestGroup(g);
+    const updatedCmds = { ...(latest.custom_commands || {}), [name]: shell };
+    await updateGroup(g.id, { custom_commands: updatedCmds });
+    await this._loadAll();
     this._cancelGroupCmdForm();
   }
 
@@ -715,24 +680,19 @@ class GroupPolicySettings extends LitElement {
     this._groupSensorForm = { name: '', command: '', interval: '', unit: '' };
   }
 
-  _saveGroupSensor(g) {
-    const name = (this._groupSensorForm.name || '').trim();
-    const command = (this._groupSensorForm.command || '').trim();
+  async _saveGroupSensor(g) {
+    const name = this._groupSensorForm?.name?.trim();
+    const command = this._groupSensorForm?.command?.trim();
     if (!name || !command) return;
-    this._groups = {
-      ...this._groups,
-      [g.id]: {
-        ...g,
-        custom_sensors: {
-          ...(g.custom_sensors || {}),
-          [name]: {
-            command,
-            interval: this._groupSensorForm.interval ? Number(this._groupSensorForm.interval) : undefined,
-            unit: this._groupSensorForm.unit || undefined,
-          },
-        },
-      },
+    const sensor = {
+      command,
+      unit: this._groupSensorForm?.unit || '',
+      interval: parseInt(this._groupSensorForm?.interval) || undefined,
     };
+    const latest = this._getLatestGroup(g);
+    const updatedSensors = { ...(latest.custom_sensors || {}), [name]: sensor };
+    await updateGroup(g.id, { custom_sensors: updatedSensors });
+    await this._loadAll();
     this._cancelGroupSensorForm();
   }
 
@@ -770,24 +730,6 @@ class GroupPolicySettings extends LitElement {
   }
 
   async _addMember(g, deviceId) {
-    // Check for conflicts before adding the device
-    try {
-      const result = await checkGroupConflicts(g.id, deviceId);
-      if (result && result.conflict_count > 0) {
-        const deviceName = (this._devices[deviceId] && this._devices[deviceId].device_name) || deviceId;
-        this._conflictDialogTitle = `Adding "${deviceName}" to group "${g.name}"`;
-        this._conflictDialogAction = 'Add Device';
-        this._conflictDialogConflicts = result.conflicts;
-        this._conflictDialogPendingFn = () => this._doAddMember(g, deviceId);
-        return;
-      }
-    } catch (e) {
-      console.error('Conflict check failed, proceeding anyway:', e);
-    }
-    await this._doAddMember(g, deviceId);
-  }
-
-  async _doAddMember(g, deviceId) {
     const deviceIds = [...(g.device_ids || []), deviceId];
     try {
       await updateGroup(g.id, { device_ids: deviceIds });
@@ -880,51 +822,20 @@ class GroupPolicySettings extends LitElement {
 
   async _deployToDevices(g) {
     await this._updateGroup(g);
-
-    // Check for conflicts before deploying to all devices
-    try {
-      const result = await checkGroupConflicts(g.id);
-      if (result && result.conflict_count > 0) {
-        this._conflictDialogTitle = `Deploying group "${g.name}" to ${result.device_count} device${result.device_count !== 1 ? 's' : ''}`;
-        this._conflictDialogAction = 'Deploy';
-        this._conflictDialogConflicts = result.conflicts;
-        this._conflictDialogPendingFn = () => this._doDeploy(g);
-        return;
-      }
-    } catch (e) {
-      console.error('Conflict check failed, proceeding anyway:', e);
-    }
     await this._doDeploy(g);
   }
 
   async _doDeploy(g) {
     const latest = this._groups[g.id] || g;
-    const config = {
-      commands: latest.custom_commands || {},
-      plugins: {
-        custom_command: {
-          commands: latest.custom_sensors || {},
-        },
-      },
-    };
-    const hiddenCmds = latest.hidden_commands || [];
-    if (hiddenCmds.length > 0) {
-      for (const did of (latest.device_ids || [])) {
-        try {
-          await updateDeviceSettings(did, { hidden_commands: hiddenCmds });
-        } catch (e) { console.error(`Failed to set hidden_commands on ${did}:`, e); }
-      }
-    }
-
-    console.log('Deploy to group:', g.id, 'config:', JSON.stringify(config));
     this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Deploying...' };
     try {
-      const result = await pushGroupConfig(g.id, config);
+      const result = await pushGroupConfig(latest.id, {});
       console.log('Deploy result:', result);
       this._groupPushStatus = { ...this._groupPushStatus, [g.id]: 'Deployed!' };
       setTimeout(() => {
         this._groupPushStatus = { ...this._groupPushStatus, [g.id]: '' };
       }, 3000);
+      await this._loadAll();
     } catch (e) {
       console.error('Failed to deploy group config:', e);
       const msg = e && e.message ? `Error: ${e.message}` : 'Error';
