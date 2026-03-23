@@ -71,6 +71,7 @@ def create_app():
 
     storage = Storage(data_dir)
     registry = DeviceRegistry(storage)
+    registry.migrate_config_fields()
     topology_engine = TopologyEngine(registry, storage)
     mqtt_handler = MQTTHandler(registry, mqtt_broker, mqtt_port, mqtt_user, mqtt_pass)
     ha_entities = HAEntityManager(mqtt_handler._client)

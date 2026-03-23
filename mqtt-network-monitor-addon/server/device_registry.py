@@ -385,6 +385,43 @@ class DeviceRegistry:
         if changed:
             self._save_devices()
 
+    def migrate_config_fields(self):
+        """One-time migration: extract server_sensors, config_interval, and commands
+        from remote_config into top-level fields. Idempotent — safe to re-run."""
+        changed = False
+        for device_id, device in self._devices.items():
+            rc = device.get("remote_config") or {}
+            if not rc:
+                continue
+
+            # Extract sensors if not already set
+            if not device.get("server_sensors"):
+                rc_sensors = (rc.get("plugins") or {}).get("custom_command", {}).get("commands", {})
+                if rc_sensors:
+                    device["server_sensors"] = dict(rc_sensors)
+                    changed = True
+
+            # Extract interval if not already set
+            if device.get("config_interval") is None and "interval" in rc:
+                device["config_interval"] = rc["interval"]
+                changed = True
+
+            # Extract commands not already in server_commands
+            rc_commands = rc.get("commands") or {}
+            if rc_commands:
+                existing = device.get("server_commands") or {}
+                merged = dict(existing)
+                for name, shell in rc_commands.items():
+                    if name not in merged:
+                        merged[name] = shell
+                        changed = True
+                if merged != existing:
+                    device["server_commands"] = merged
+
+        if changed:
+            self._save_devices()
+            logger.info("Migrated config fields from remote_config to top-level fields")
+
     def set_device_settings(self, device_id: str, settings: dict) -> dict | None:
         """Update group_policy, ha_exposure_overrides, and/or threshold_overrides for a device."""
         device = self._devices.get(device_id)
