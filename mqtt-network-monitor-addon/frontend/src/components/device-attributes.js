@@ -45,7 +45,7 @@ class DeviceAttributes extends LitElement {
       background: #1a1a2e; border-radius: 8px; padding: 12px;
       position: relative; transition: opacity 0.2s;
     }
-    .attr-tile.dimmed { opacity: 0.45; }
+    /* dimmed class no longer reduces opacity — toggle is sufficient */
     .attr-tile-top {
       display: flex; justify-content: space-between; align-items: flex-start;
       margin-bottom: 6px;
@@ -62,7 +62,7 @@ class DeviceAttributes extends LitElement {
       font-size: 22px; font-weight: 700; margin-top: 4px; color: #4fc3f7;
       transition: color 0.2s;
     }
-    .attr-val.dimmed-val { color: #555; }
+    /* dimmed-val no longer changes color — toggle is sufficient */
     .attr-unit { font-size: 12px; color: #888; font-weight: 400; }
     .attr-tile.exceeded { border: 1px solid #ffb74d; }
     .attr-val.exceeded-val { color: #ffb74d; }

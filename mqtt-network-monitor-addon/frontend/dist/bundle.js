@@ -86,7 +86,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.1.0 build ${"3/22 21:19"}</span>
+        <span class="version">v0.1.0 build ${"3/22 21:24"}</span>
       </nav>
     `}_navigate(e){this.dispatchEvent(new CustomEvent("view-change",{detail:{view:e}}))}}customElements.define("nav-bar",pe);const he=function(){const e=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);return e?e[1]:""}();async function ue(e,t={}){const s=await fetch(e,t);if(!s.ok){const e=await s.text().catch(()=>s.statusText);throw new Error(`API error ${s.status}: ${e}`)}const o=s.headers.get("content-type");return o&&o.includes("application/json")?s.json():null}async function ge(e=0){return ue(e>0?`${he}/api/devices?since=${e}`:`${he}/api/devices`)}async function me(e){return ue(`${he}/api/devices/${e}`)}async function be(){return ue(`${he}/api/topology`)}async function fe(e){return ue(`${he}/api/topology/layouts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})}async function ve(){return ue(`${he}/api/groups`)}async function _e(e,t,s=[]){return ue(`${he}/api/groups`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e,name:t,device_ids:s})})}async function xe(e,{name:t,device_ids:s,custom_commands:o,custom_sensors:i,thresholds:a,hidden_commands:n}){return ue(`${he}/api/groups/${e}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t,device_ids:s,custom_commands:o,custom_sensors:i,thresholds:a,hidden_commands:n})})}async function ye(){return ue(`${he}/api/tags`)}async function $e(e){return ue(`${he}/api/tags`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tag:e})})}async function we(e){return ue(`${he}/api/tags/${encodeURIComponent(e)}`,{method:"DELETE"})}async function ke(e){return ue(`${he}/api/devices/${e}/effective-settings`)}async function Se(e,t){return ue(`${he}/api/devices/${e}/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function Ce(e,t){return ue(`${he}/api/devices/${e}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function Ee(e,t=null){return ue(`${he}/api/groups/${e}/check-conflicts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t?{new_device_id:t}:{})})}class Ae extends le{static properties={selectedTags:{type:Array},_allTags:{type:Array,state:!0},_open:{type:Boolean,state:!0},_showCreate:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_creating:{type:Boolean,state:!0}};static styles=a`
     :host { display: inline-block; position: relative; }
@@ -210,7 +210,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       background: #1a1a2e; border-radius: 8px; padding: 12px;
       position: relative; transition: opacity 0.2s;
     }
-    .attr-tile.dimmed { opacity: 0.45; }
+    /* dimmed class no longer reduces opacity — toggle is sufficient */
     .attr-tile-top {
       display: flex; justify-content: space-between; align-items: flex-start;
       margin-bottom: 6px;
@@ -227,7 +227,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       font-size: 22px; font-weight: 700; margin-top: 4px; color: #4fc3f7;
       transition: color 0.2s;
     }
-    .attr-val.dimmed-val { color: #555; }
+    /* dimmed-val no longer changes color — toggle is sufficient */
     .attr-unit { font-size: 12px; color: #888; font-weight: 400; }
     .attr-tile.exceeded { border: 1px solid #ffb74d; }
     .attr-val.exceeded-val { color: #ffb74d; }
