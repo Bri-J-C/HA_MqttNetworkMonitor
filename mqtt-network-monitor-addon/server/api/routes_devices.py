@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import Any
 from server.api import state
+from server.config_assembler import assemble_and_push
 
 router = APIRouter(prefix="/api/devices", tags=["devices"])
 
@@ -158,6 +159,87 @@ def update_device_settings(device_id: str, body: dict[str, Any]):
     if not result:
         raise HTTPException(status_code=404, detail="Device not found")
     return result
+
+
+@router.post("/{device_id}/server-commands")
+def add_server_command(device_id: str, body: dict[str, Any]):
+    device = state.registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    name = body.get("name")
+    shell = body.get("shell")
+    if not name or not shell:
+        raise HTTPException(status_code=400, detail="Missing 'name' or 'shell'")
+    cmds = dict(device.get("server_commands") or {})
+    cmds[name] = shell
+    state.registry.set_device_settings(device_id, {"server_commands": cmds})
+    if state.mqtt_handler:
+        assemble_and_push(device_id, state.registry, state.mqtt_handler)
+    return state.registry.get_device(device_id)
+
+
+@router.delete("/{device_id}/server-commands/{cmd_name}")
+def remove_server_command(device_id: str, cmd_name: str):
+    device = state.registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    cmds = dict(device.get("server_commands") or {})
+    cmds.pop(cmd_name, None)
+    state.registry.set_device_settings(device_id, {"server_commands": cmds})
+    if state.mqtt_handler:
+        assemble_and_push(device_id, state.registry, state.mqtt_handler)
+    if state.ha_entity_manager:
+        state.ha_entity_manager._remove_sensor(device_id, cmd_name)
+    return state.registry.get_device(device_id)
+
+
+@router.post("/{device_id}/server-sensors")
+def add_server_sensor(device_id: str, body: dict[str, Any]):
+    device = state.registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    name = body.get("name")
+    command = body.get("command")
+    if not name or not command:
+        raise HTTPException(status_code=400, detail="Missing 'name' or 'command'")
+    sensor = {"command": command, "unit": body.get("unit", "")}
+    if "interval" in body:
+        sensor["interval"] = body["interval"]
+    sensors = dict(device.get("server_sensors") or {})
+    sensors[name] = sensor
+    state.registry.set_device_settings(device_id, {"server_sensors": sensors})
+    if state.mqtt_handler:
+        assemble_and_push(device_id, state.registry, state.mqtt_handler)
+    return state.registry.get_device(device_id)
+
+
+@router.delete("/{device_id}/server-sensors/{sensor_name}")
+def remove_server_sensor(device_id: str, sensor_name: str):
+    device = state.registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    sensors = dict(device.get("server_sensors") or {})
+    sensors.pop(sensor_name, None)
+    state.registry.set_device_settings(device_id, {"server_sensors": sensors})
+    if state.mqtt_handler:
+        assemble_and_push(device_id, state.registry, state.mqtt_handler)
+    if state.ha_entity_manager:
+        state.ha_entity_manager._remove_sensor(device_id, sensor_name)
+    return state.registry.get_device(device_id)
+
+
+@router.put("/{device_id}/config-interval")
+def set_config_interval(device_id: str, body: dict[str, Any]):
+    device = state.registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    interval = body.get("interval")
+    if interval is None:
+        raise HTTPException(status_code=400, detail="Missing 'interval'")
+    state.registry.set_device_settings(device_id, {"config_interval": interval})
+    if state.mqtt_handler:
+        assemble_and_push(device_id, state.registry, state.mqtt_handler)
+    return state.registry.get_device(device_id)
 
 
 @router.post("/{device_id}/push-config")
