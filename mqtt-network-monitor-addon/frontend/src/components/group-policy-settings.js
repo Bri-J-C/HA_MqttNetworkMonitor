@@ -383,15 +383,11 @@ class GroupPolicySettings extends LitElement {
 
   _renderGroupCustomCommands(g) {
     const commands = g.custom_commands || {};
-    const discovered = this._getGroupDiscoveredData(g);
-    const discoveredCmds = discovered.commands;
-    const allCmds = { ...discoveredCmds };
-    for (const [name, shell] of Object.entries(commands)) {
-      allCmds[name] = shell || allCmds[name] || '';
-    }
+    // Only show group-defined commands — device commands are managed on the device detail page
+    const cmdEntries = Object.entries(commands).sort(([a], [b]) => a.localeCompare(b));
     const hiddenCmds = g.hidden_commands || [];
-    const visibleCmds = Object.entries(allCmds).filter(([n]) => !hiddenCmds.includes(n)).sort(([a], [b]) => a.localeCompare(b));
-    const hiddenEntries = Object.entries(allCmds).filter(([n]) => hiddenCmds.includes(n));
+    const visibleCmds = cmdEntries.filter(([n]) => !hiddenCmds.includes(n));
+    const hiddenEntries = cmdEntries.filter(([n]) => hiddenCmds.includes(n));
 
     const isEditingCmd = this._editingGroupCmd && this._editingGroupCmd.groupId === g.id;
     const isAddingCmd = this._showAddGroupCmd && this._showAddGroupCmd.groupId === g.id;
@@ -400,35 +396,23 @@ class GroupPolicySettings extends LitElement {
       ${visibleCmds.length > 0 ? html`
         <table class="sensor-table">
           <thead>
-            <tr><th>Name</th><th>Shell Command</th><th>Source</th><th></th></tr>
+            <tr><th>Name</th><th>Shell Command</th><th></th></tr>
           </thead>
           <tbody>
-            ${visibleCmds.map(([name, shellCmd]) => {
-              const isGroupDefined = name in commands;
-              const isDiscovered = name in discoveredCmds;
-              const source = isGroupDefined ? 'group' : 'device';
-              return html`
-                <tr>
-                  <td style="font-family: monospace;">${name}</td>
-                  <td style="font-family: monospace; font-size: 11px; color: ${isGroupDefined ? '#ccc' : '#888'};">${shellCmd || '\u2014'}</td>
-                  <td style="font-size: 10px; color: ${source === 'group' ? '#4fc3f7' : '#888'};">${source}</td>
-                  <td>
-                    ${source === 'group' ? html`
-                      <div class="sensor-actions">
-                        <button class="sensor-btn edit"
-                          @click=${() => this._startEditGroupCmd(g.id, name, shellCmd)}>Edit</button>
-                        <button class="sensor-btn remove"
-                          @click=${() => this._removeGroupCommand(g, name)}>Remove</button>
-                        <button class="sensor-btn remove" title="Hide"
-                          @click=${() => this._hideGroupCommand(g, name)}>Hide</button>
-                      </div>
-                    ` : html`
-                      <span style="font-size: 10px; color: #555; font-style: italic;">from client config</span>
-                    `}
-                  </td>
-                </tr>
-              `;
-            })}
+            ${visibleCmds.map(([name, shellCmd]) => html`
+              <tr>
+                <td style="font-family: monospace;">${name}</td>
+                <td style="font-family: monospace; font-size: 11px;">${shellCmd || '\u2014'}</td>
+                <td>
+                  <div class="sensor-actions">
+                    <button class="sensor-btn edit"
+                      @click=${() => this._startEditGroupCmd(g.id, name, shellCmd)}>Edit</button>
+                    <button class="sensor-btn remove"
+                      @click=${() => this._removeGroupCommand(g, name)}>Remove</button>
+                  </div>
+                </td>
+              </tr>
+            `)}
           </tbody>
         </table>
       ` : html`
