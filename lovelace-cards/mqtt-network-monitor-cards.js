@@ -1,22 +1,108 @@
 /**
- * MQTT Network Monitor — Lovelace Cards
+ * MQTT Network Monitor — Lovelace Cards v2.0.0
  * Auto-discovers the add-on's ingress URL — no server_url config needed.
+ *
+ * Cards:
+ *   - mqtt-device-status-card: Single device status, attributes, thresholds, tags
+ *   - mqtt-topology-card: Mini network topology map
  */
 
 const ADDON_SLUG = 'local_mqtt_network_monitor';
-const STATUS_COLORS = {
-  online: '#81c784',
-  offline: '#ef5350',
-  warning: '#ffb74d',
-  unknown: '#666',
+const CARD_VERSION = '2.0.0';
+
+// ── Color scheme (matches the add-on dark theme) ─────────────────────────
+const COLORS = {
+  bg:          '#0a0a1a',
+  cardBg:      'rgba(255,255,255,0.05)',
+  tileBg:      'rgba(255,255,255,0.04)',
+  text:        '#fff',
+  textSec:     'rgba(255,255,255,0.5)',
+  accent:      '#00D4FF',
+  section:     '#238ecc',
+  online:      '#04d65c',
+  offline:     '#ef5350',
+  warning:     '#ffb74d',
+  critical:    '#ef5350',
+  unknown:     '#666',
+  tagBg:       'rgba(0,212,255,0.12)',
+  tagText:     '#00D4FF',
 };
+
+const STATUS_COLORS = {
+  online:  COLORS.online,
+  offline: COLORS.offline,
+  warning: COLORS.warning,
+  unknown: COLORS.unknown,
+};
+
+// ── Device-type icons (SVG paths, 16x16 viewBox) ─────────────────────────
+const DEVICE_ICONS = {
+  linux: '<path d="M8 1C5.5 1 4 3 4 5c0 1.2.5 2.2 1.2 3C4 8.8 3 10 3 11.5c0 1.4.8 2.5 2 2.5h6c1.2 0 2-1.1 2-2.5 0-1.5-1-2.7-2.2-3.5C11.5 7.2 12 6.2 12 5c0-2-1.5-4-4-4zm-1.5 5a1 1 0 100-2 1 1 0 000 2zm3 0a1 1 0 100-2 1 1 0 000 2zM6 9.5c0 0 .5 1 2 1s2-1 2-1" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>',
+  windows: '<rect x="2" y="2" width="5.5" height="5.5" rx=".5" fill="currentColor"/><rect x="8.5" y="2" width="5.5" height="5.5" rx=".5" fill="currentColor"/><rect x="2" y="8.5" width="5.5" height="5.5" rx=".5" fill="currentColor"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx=".5" fill="currentColor"/>',
+  raspberry_pi: '<circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" fill="currentColor"/><line x1="8" y1="2" x2="8" y2="5" stroke="currentColor" stroke-width="1.2"/><line x1="8" y1="11" x2="8" y2="14" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="8" x2="5" y2="8" stroke="currentColor" stroke-width="1.2"/><line x1="11" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.2"/>',
+  esp32: '<rect x="3" y="4" width="10" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="4" x2="5" y2="2" stroke="currentColor" stroke-width="1"/><line x1="8" y1="4" x2="8" y2="2" stroke="currentColor" stroke-width="1"/><line x1="11" y1="4" x2="11" y2="2" stroke="currentColor" stroke-width="1"/><line x1="5" y1="12" x2="5" y2="14" stroke="currentColor" stroke-width="1"/><line x1="8" y1="12" x2="8" y2="14" stroke="currentColor" stroke-width="1"/><line x1="11" y1="12" x2="11" y2="14" stroke="currentColor" stroke-width="1"/>',
+  gateway: '<path d="M8 2L14 8L8 14L2 8Z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" fill="currentColor"/>',
+  default: '<rect x="3" y="2" width="10" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" stroke-width="1" opacity=".5"/><line x1="5" y1="7.5" x2="11" y2="7.5" stroke="currentColor" stroke-width="1" opacity=".5"/><circle cx="8" cy="11" r="1" fill="currentColor"/>',
+};
+
+function deviceIcon(type) {
+  return DEVICE_ICONS[type] || DEVICE_ICONS.default;
+}
+
+// ── Attribute formatting helpers ─────────────────────────────────────────
+function formatValue(value, unit) {
+  if (value === null || value === undefined) return '\u2014';
+  if (typeof value === 'number') {
+    // Large byte values → human-readable
+    if (unit === 'bytes' && value > 1024) {
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let i = 0;
+      let v = value;
+      while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+      return v.toFixed(i > 1 ? 1 : 0) + ' ' + units[i];
+    }
+    // Round to 1 decimal for readability
+    if (!Number.isInteger(value)) {
+      return value.toFixed(1);
+    }
+  }
+  return String(value);
+}
+
+function formatUnit(value, unit) {
+  if (value === null || value === undefined) return '';
+  if (unit === 'bytes') return ''; // already formatted by formatValue
+  return unit || '';
+}
+
+function friendlyName(name) {
+  return name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ── Threshold evaluation ─────────────────────────────────────────────────
+function evalThreshold(value, threshold) {
+  if (value === null || value === undefined || threshold === undefined || threshold === null) return false;
+  if (typeof value !== 'number') return false;
+  let op = '>';
+  let tVal = threshold;
+  if (typeof threshold === 'object' && threshold !== null) {
+    op = threshold.op || '>';
+    tVal = threshold.value;
+  }
+  if (tVal === null || tVal === undefined) return false;
+  switch (op) {
+    case '>':  return value > tVal;
+    case '<':  return value < tVal;
+    case '>=': return value >= tVal;
+    case '<=': return value <= tVal;
+    case '==': return value === tVal;
+    case '!=': return value !== tVal;
+    default:   return value > tVal;
+  }
+}
 
 // ============================================
 // Shared: Auto-discover add-on ingress URL
-// Uses the same pattern as ha-addon-iframe-card:
-// 1. Query supervisor/api for addon info → get ingress_url
-// 2. Create ingress session → set cookie
-// 3. Refresh session periodically
 // ============================================
 
 let _cachedIngressUrl = null;
@@ -28,7 +114,6 @@ async function getIngressUrl(hass) {
   if (_discoveryPromise) return _discoveryPromise;
 
   _discoveryPromise = (async () => {
-    // Step 1: Get addon info via supervisor WebSocket API
     try {
       const resp = await hass.callWS({
         type: 'supervisor/api',
@@ -38,21 +123,18 @@ async function getIngressUrl(hass) {
       const url = resp?.ingress_url || resp?.data?.ingress_url;
       if (url) {
         _cachedIngressUrl = url.replace(/\/+$/, '');
-        console.info('MQTT Monitor: Discovered ingress URL:', _cachedIngressUrl);
       }
     } catch (e) {
-      console.warn('MQTT Monitor: Supervisor API call failed:', e.message);
+      console.warn('MQTT Monitor Cards: Supervisor API call failed:', e.message);
     }
 
     if (!_cachedIngressUrl) {
-      console.error('MQTT Monitor: Could not discover add-on. Is it installed and running?');
+      // Reset promise so we can retry on next hass update
+      _discoveryPromise = null;
       return null;
     }
 
-    // Step 2: Create ingress session (sets cookie for browser access)
     await createIngressSession(hass);
-
-    // Step 3: Refresh session every 60 seconds
     if (!_sessionRefreshInterval) {
       _sessionRefreshInterval = setInterval(() => createIngressSession(hass), 60000);
     }
@@ -76,7 +158,7 @@ async function createIngressSession(hass) {
       document.cookie = `ingress_session=${session};path=/api/hassio_ingress/;SameSite=Strict${secure}`;
     }
   } catch (e) {
-    console.warn('MQTT Monitor: Failed to create ingress session:', e.message);
+    console.warn('MQTT Monitor Cards: Failed to create ingress session:', e.message);
   }
 }
 
@@ -88,7 +170,6 @@ async function addonFetch(hass, path, serverUrlOverride) {
   if (!baseUrl) return null;
 
   try {
-    // Ingress session cookie handles auth — no Authorization header needed
     const res = await fetch(baseUrl + path);
     if (!res.ok) return null;
     return await res.json();
@@ -97,18 +178,30 @@ async function addonFetch(hass, path, serverUrlOverride) {
   }
 }
 
+
 // ============================================
 // Device Status Card
 // ============================================
 
 class MQTTDeviceStatusCard extends HTMLElement {
+  constructor() {
+    super();
+    this._device = null;
+    this._effectiveSettings = null;
+    this._loading = true;
+    this._error = null;
+    this._fetchInFlight = false;
+    this.attachShadow({ mode: 'open' });
+  }
+
   set hass(hass) {
     this._hass = hass;
     if (!this._config) return;
-    // Throttle renders to avoid hammering the API
-    if (!this._lastRender || Date.now() - this._lastRender > 5000) {
-      this._lastRender = Date.now();
-      this._render();
+    // Throttle API fetches to every 10s, but allow immediate first render
+    const now = Date.now();
+    if (!this._lastFetch || now - this._lastFetch > 10000) {
+      this._lastFetch = now;
+      this._fetchData();
     }
   }
 
@@ -117,103 +210,327 @@ class MQTTDeviceStatusCard extends HTMLElement {
       throw new Error('Please define a device_id');
     }
     this._config = config;
+    this._device = null;
+    this._loading = true;
+    this._renderCard();
   }
 
-  async _render() {
-    const device = await addonFetch(
-      this._hass,
-      `/api/devices/${this._config.device_id}`,
-      this._config.server_url
-    );
+  async _fetchData() {
+    if (this._fetchInFlight) return;
+    this._fetchInFlight = true;
 
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
+    try {
+      const [device, settings] = await Promise.all([
+        addonFetch(this._hass, `/api/devices/${this._config.device_id}`, this._config.server_url),
+        addonFetch(this._hass, `/api/devices/${this._config.device_id}/effective-settings`, this._config.server_url),
+      ]);
+
+      this._loading = false;
+      this._device = device;
+      this._effectiveSettings = settings;
+      this._error = !device ? 'not_found' : null;
+    } catch (e) {
+      this._loading = false;
+      this._error = 'fetch_error';
     }
+    this._fetchInFlight = false;
+    this._renderCard();
+  }
 
-    if (!device) {
-      this.shadowRoot.innerHTML = `
+  _renderCard() {
+    const root = this.shadowRoot;
+
+    // Loading state
+    if (this._loading && !this._device) {
+      root.innerHTML = `
         <ha-card>
-          <div style="padding: 16px; color: var(--secondary-text-color, #999);">
-            Device "${this._config.device_id}" not found.
-            ${!_cachedIngressUrl ? '<br><small>Add-on may not be running.</small>' : ''}
+          <style>${this._baseStyles()}</style>
+          <div class="card-wrap">
+            <div class="loading">
+              <div class="loading-pulse"></div>
+              <span>Connecting to add-on...</span>
+            </div>
           </div>
-        </ha-card>
-      `;
+        </ha-card>`;
       return;
     }
 
-    const color = STATUS_COLORS[device.status] || STATUS_COLORS.unknown;
-    const attrs = Object.entries(device.attributes || {});
-    const displayAttrs = this._config.attributes
-      ? attrs.filter(([name]) => this._config.attributes.includes(name))
-      : attrs.slice(0, 6);
-
-    this.shadowRoot.innerHTML = `
-      <ha-card>
-        <style>
-          ha-card { height: 100%; overflow: hidden; }
-          .card-content { padding: 16px; height: 100%; box-sizing: border-box; overflow: hidden; }
-          .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-          }
-          .name { font-size: 16px; font-weight: 600; color: var(--primary-text-color); }
-          .status {
-            padding: 3px 10px; border-radius: 10px; font-size: 12px;
-            background: ${color}22; color: ${color};
-          }
-          .type { font-size: 11px; color: var(--secondary-text-color, #999); margin-bottom: 10px; }
-          .attrs {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 8px;
-          }
-          .attr {
-            background: var(--card-background-color, rgba(0,0,0,0.1));
-            border-radius: 6px; padding: 10px; text-align: center;
-          }
-          .attr-label {
-            font-size: 10px; color: var(--secondary-text-color, #999);
-            text-transform: uppercase;
-          }
-          .attr-value {
-            font-size: 18px; font-weight: 700;
-            color: var(--primary-color, #4fc3f7); margin-top: 4px;
-          }
-          .attr-unit { font-size: 11px; color: var(--secondary-text-color, #999); }
-          .tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
-          .tag {
-            font-size: 9px; padding: 1px 6px; border-radius: 3px;
-            background: var(--primary-color, #4fc3f7)22;
-            color: var(--primary-color, #4fc3f7);
-          }
-        </style>
-        <div class="card-content">
-          <div class="header">
-            <span class="name">${device.device_name || this._config.device_id}</span>
-            <span class="status">${device.status}</span>
+    // Error state
+    if (!this._device) {
+      const msg = !_cachedIngressUrl
+        ? 'Add-on not reachable. Is it installed and running?'
+        : `Device "${this._config.device_id}" not found.`;
+      root.innerHTML = `
+        <ha-card>
+          <style>${this._baseStyles()}</style>
+          <div class="card-wrap">
+            <div class="error-state">
+              <svg width="24" height="24" viewBox="0 0 16 16" style="color:${COLORS.textSec}">
+                ${deviceIcon('default')}
+              </svg>
+              <span>${msg}</span>
+            </div>
           </div>
-          <div class="type">${device.device_type || ''}</div>
-          ${(device.tags && device.tags.length) ? `
+        </ha-card>`;
+      return;
+    }
+
+    const d = this._device;
+    const color = STATUS_COLORS[d.status] || STATUS_COLORS.unknown;
+    const thresholds = this._effectiveSettings?.thresholds || {};
+
+    // Determine which attributes to show
+    const allAttrs = Object.entries(d.attributes || {});
+    const hidden = d.hidden_attributes || [];
+    const configAttrs = this._config.attributes; // user-specified in card config
+    const pinned = d.card_attributes || [];
+
+    let displayAttrs;
+    if (configAttrs && configAttrs.length > 0) {
+      // Card config overrides everything
+      displayAttrs = configAttrs
+        .map(name => allAttrs.find(([n]) => n === name))
+        .filter(Boolean);
+    } else if (pinned.length > 0) {
+      // Use server-side pinned attributes
+      displayAttrs = pinned
+        .map(name => allAttrs.find(([n]) => n === name))
+        .filter(Boolean);
+    } else {
+      // Fallback: first 4 visible, non-string-heavy attributes
+      displayAttrs = allAttrs
+        .filter(([name]) => !hidden.includes(name))
+        .slice(0, 4);
+    }
+
+    // Evaluate threshold status for border indicator
+    let worstStatus = 'ok'; // ok, warn, crit
+    for (const [name, data] of displayAttrs) {
+      const th = thresholds[name];
+      if (th && evalThreshold(data.value, th)) {
+        worstStatus = 'warn';
+      }
+      // Check crit thresholds (device-level)
+      const critTh = (d.crit_threshold_overrides || {})[name];
+      if (critTh && evalThreshold(data.value, critTh)) {
+        worstStatus = 'crit';
+      }
+    }
+
+    // Merge tags
+    const tags = [...new Set([...(d.tags || []), ...(d.server_tags || [])])];
+
+    // Status icon
+    const statusDot = d.status === 'online' ? '\u25CF' : d.status === 'offline' ? '\u25CF' : '\u26A0';
+
+    const borderColor = worstStatus === 'crit' ? COLORS.critical
+                       : worstStatus === 'warn' ? COLORS.warning
+                       : color;
+
+    root.innerHTML = `
+      <ha-card>
+        <style>${this._baseStyles()}${this._cardStyles()}</style>
+        <div class="card-wrap ${d.status === 'offline' ? 'offline' : ''}" style="border-left: 3px solid ${borderColor}">
+          <div class="header">
+            <div class="header-left">
+              <svg class="device-icon" width="18" height="18" viewBox="0 0 16 16" style="color:${color}">
+                ${deviceIcon(d.device_type)}
+              </svg>
+              <div class="header-text">
+                <span class="name">${this._escHtml(d.device_name || this._config.device_id)}</span>
+                <span class="type">${this._escHtml(d.device_type || 'unknown')}</span>
+              </div>
+            </div>
+            <span class="status-badge" style="background:${color}18;color:${color}">
+              ${statusDot} ${d.status || 'unknown'}
+            </span>
+          </div>
+
+          ${displayAttrs.length > 0 ? `
+            <div class="attrs">
+              ${displayAttrs.map(([name, data]) => {
+                const th = thresholds[name];
+                const critTh = (d.crit_threshold_overrides || {})[name];
+                const isCrit = critTh && evalThreshold(data.value, critTh);
+                const isWarn = !isCrit && th && evalThreshold(data.value, th);
+                const valColor = isCrit ? COLORS.critical : isWarn ? COLORS.warning : COLORS.accent;
+                const fmtVal = formatValue(data.value, data.unit);
+                const fmtUnit = formatUnit(data.value, data.unit);
+                return `
+                  <div class="attr ${isCrit ? 'attr-crit' : isWarn ? 'attr-warn' : ''}">
+                    <div class="attr-label">${this._escHtml(friendlyName(name))}</div>
+                    <div class="attr-value" style="color:${valColor}">
+                      ${this._escHtml(fmtVal)}${fmtUnit ? `<span class="attr-unit">${this._escHtml(fmtUnit)}</span>` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : `
+            <div class="no-attrs">No attributes available</div>
+          `}
+
+          ${tags.length > 0 ? `
             <div class="tags">
-              ${device.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+              ${tags.map(t => `<span class="tag">${this._escHtml(t)}</span>`).join('')}
             </div>
           ` : ''}
-          <div class="attrs">
-            ${displayAttrs.map(([name, data]) => `
-              <div class="attr">
-                <div class="attr-label">${name.replace(/_/g, ' ')}</div>
-                <div class="attr-value">
-                  ${data.value != null ? data.value : '—'}
-                  <span class="attr-unit">${data.unit || ''}</span>
-                </div>
-              </div>
-            `).join('')}
-          </div>
+
+          ${d.last_seen ? `
+            <div class="last-seen">Last seen: ${this._relativeTime(d.last_seen)}</div>
+          ` : ''}
         </div>
       </ha-card>
+    `;
+
+    // Click handler — navigate to add-on
+    const wrap = root.querySelector('.card-wrap');
+    wrap.style.cursor = 'pointer';
+    wrap.addEventListener('click', () => this._openAddon());
+  }
+
+  _openAddon() {
+    if (_cachedIngressUrl) {
+      // Navigate to the add-on ingress page
+      const path = _cachedIngressUrl.replace(/^\/api\/hassio_ingress\//, '');
+      window.open(_cachedIngressUrl, '_blank');
+    }
+  }
+
+  _relativeTime(ts) {
+    const now = Date.now() / 1000;
+    const diff = now - ts;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  }
+
+  _escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  _baseStyles() {
+    return `
+      ha-card {
+        height: 100%;
+        overflow: hidden;
+        background: ${COLORS.cardBg} !important;
+        border: none !important;
+        border-radius: 12px !important;
+      }
+      .card-wrap {
+        padding: 16px;
+        height: 100%;
+        box-sizing: border-box;
+        border-radius: 12px;
+        transition: background 0.2s, transform 0.15s;
+      }
+      .card-wrap:hover {
+        background: rgba(255,255,255,0.03);
+      }
+      .loading {
+        display: flex; align-items: center; gap: 12px;
+        color: ${COLORS.textSec}; font-size: 13px;
+        padding: 20px 0;
+      }
+      .loading-pulse {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: ${COLORS.accent};
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+      }
+      .error-state {
+        display: flex; align-items: center; gap: 12px;
+        color: ${COLORS.textSec}; font-size: 13px;
+        padding: 16px 0;
+      }
+    `;
+  }
+
+  _cardStyles() {
+    return `
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .header-left {
+        display: flex; align-items: center; gap: 10px;
+        min-width: 0;
+      }
+      .device-icon {
+        flex-shrink: 0;
+      }
+      .header-text {
+        display: flex; flex-direction: column; min-width: 0;
+      }
+      .name {
+        font-size: 14px; font-weight: 600; color: ${COLORS.text};
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .type {
+        font-size: 11px; color: ${COLORS.textSec};
+        text-transform: capitalize;
+      }
+      .status-badge {
+        font-size: 11px; padding: 3px 10px; border-radius: 12px;
+        white-space: nowrap; font-weight: 500;
+        flex-shrink: 0;
+      }
+      .offline { opacity: 0.6; }
+      .attrs {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .attr {
+        background: ${COLORS.tileBg};
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        border: 1px solid transparent;
+        transition: border-color 0.2s;
+      }
+      .attr-warn { border-color: ${COLORS.warning}30; }
+      .attr-crit { border-color: ${COLORS.critical}30; }
+      .attr-label {
+        font-size: 9px; color: ${COLORS.textSec};
+        text-transform: uppercase; letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .attr-value {
+        font-size: 20px; font-weight: 700;
+        line-height: 1.2;
+      }
+      .attr-unit {
+        font-size: 11px; color: ${COLORS.textSec};
+        font-weight: 400; margin-left: 2px;
+      }
+      .no-attrs {
+        color: ${COLORS.textSec}; font-size: 12px;
+        text-align: center; padding: 16px 0;
+      }
+      .tags {
+        display: flex; gap: 4px; flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+      .tag {
+        font-size: 9px; padding: 2px 8px; border-radius: 4px;
+        background: ${COLORS.tagBg}; color: ${COLORS.tagText};
+        font-weight: 500; letter-spacing: 0.3px;
+      }
+      .last-seen {
+        font-size: 10px; color: ${COLORS.textSec};
+        text-align: right;
+      }
     `;
   }
 
@@ -240,61 +557,84 @@ class MQTTDeviceStatusCard extends HTMLElement {
   }
 }
 
+
 // ============================================
 // Mini Topology Card
 // ============================================
 
 class MQTTTopologyCard extends HTMLElement {
+  constructor() {
+    super();
+    this._loading = true;
+    this.attachShadow({ mode: 'open' });
+  }
+
   set hass(hass) {
     this._hass = hass;
     if (!this._config) return;
-    if (!this._lastRender || Date.now() - this._lastRender > 10000) {
-      this._lastRender = Date.now();
-      this._render();
+    if (!this._lastFetch || Date.now() - this._lastFetch > 15000) {
+      this._lastFetch = Date.now();
+      this._fetchAndRender();
     }
   }
 
   setConfig(config) {
     this._config = config;
+    this._loading = true;
+    this._renderLoading();
   }
 
-  async _render() {
-    const topo = await addonFetch(this._hass, '/api/topology', this._config.server_url);
-    const layouts = await addonFetch(this._hass, '/api/topology/layouts', this._config.server_url);
+  _renderLoading() {
+    this.shadowRoot.innerHTML = `
+      <ha-card>
+        <style>
+          ha-card { background: ${COLORS.cardBg} !important; border: none !important; border-radius: 12px !important;
+                    height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+          .loading { display: flex; align-items: center; justify-content: center; gap: 10px;
+                     color: ${COLORS.textSec}; font-size: 13px; padding: 40px 16px; }
+          .dot { width: 6px; height: 6px; border-radius: 50%; background: ${COLORS.accent};
+                 animation: pulse 1.5s ease-in-out infinite; }
+          @keyframes pulse { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1.2)} }
+        </style>
+        <div class="loading"><div class="dot"></div> Loading topology...</div>
+      </ha-card>`;
+  }
 
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
+  async _fetchAndRender() {
+    const [topo, layouts] = await Promise.all([
+      addonFetch(this._hass, '/api/topology', this._config.server_url),
+      addonFetch(this._hass, '/api/topology/layouts', this._config.server_url),
+    ]);
 
-    if (!topo || !topo.nodes.length) {
+    this._loading = false;
+
+    if (!topo || !topo.nodes || !topo.nodes.length) {
       this.shadowRoot.innerHTML = `
         <ha-card>
-          <div style="padding: 16px; color: var(--secondary-text-color, #999);">
-            No devices found.
-            ${!_cachedIngressUrl ? '<br><small>Add-on may not be running.</small>' : ''}
+          <style>
+            ha-card { background: ${COLORS.cardBg} !important; border: none !important; border-radius: 12px !important; }
+            .empty { padding: 24px 16px; color: ${COLORS.textSec}; font-size: 13px; text-align: center; }
+          </style>
+          <div class="empty">
+            ${!_cachedIngressUrl ? 'Add-on not reachable.' : 'No devices discovered yet.'}
           </div>
-        </ha-card>
-      `;
+        </ha-card>`;
       return;
     }
 
-    // Find the selected layout (by config or default)
+    // Find layout
     let layout = null;
     if (layouts) {
       if (this._config.layout) {
-        // Try by ID first, then by name
         layout = layouts[this._config.layout] ||
           Object.values(layouts).find(l => l.name === this._config.layout);
       }
       if (!layout) {
-        // Fall back to the default layout
         layout = Object.values(layouts).find(l => l.isDefault);
       }
     }
 
     const nodes = topo.nodes;
-
-    // Determine which edges to show
     const hideAutoEdges = layout?.hideAutoEdges || false;
     const autoEdges = hideAutoEdges ? [] : (topo.edges || []);
     const manualEdges = layout?.manualEdges || [];
@@ -306,22 +646,20 @@ class MQTTTopologyCard extends HTMLElement {
       warning: nodes.filter(n => n.status === 'warning').length,
     };
 
-    // Get saved positions or auto-layout
+    // Positions
     const savedPositions = layout?.positions || {};
     const positions = { ...savedPositions };
     const cols = Math.ceil(Math.sqrt(nodes.length));
     nodes.forEach((node, i) => {
       if (!positions[node.id]) {
-        const col = i % cols;
-        const row = Math.floor(i / cols);
         positions[node.id] = {
-          x: 80 + col * 160,
-          y: 60 + row * 100,
+          x: 80 + (i % cols) * 160,
+          y: 60 + Math.floor(i / cols) * 100,
         };
       }
     });
 
-    // Calculate bounding box of all node positions, then build viewBox to fit
+    // Bounding box
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const pos of Object.values(positions)) {
       if (pos.x < minX) minX = pos.x;
@@ -329,95 +667,77 @@ class MQTTTopologyCard extends HTMLElement {
       if (pos.y < minY) minY = pos.y;
       if (pos.y > maxY) maxY = pos.y;
     }
-    const pad = 50;
+    const pad = 60;
     const vbX = minX - pad;
     const vbY = minY - pad;
     const vbW = Math.max((maxX - minX) + pad * 2, 200);
     const vbH = Math.max((maxY - minY) + pad * 2, 150);
 
-    // Fixed sizes — the SVG viewBox→card scaling handles readability
-    const nodeW = 70;
-    const nodeH = 28;
-    const nodeR = 16;
-    const fontSizeSm = 9;
-    const fontSizeLabelSm = 8;
-    const strokeW = 1.2;
-    const labelDist = 42;
-    const labelPerpOff = 12;
+    const nodeW = 80, nodeH = 32, nodeR = 18;
+    const fontSz = 9, labelFontSz = 8, strokeW = 1.5;
 
-    // Render edge lines
-    const edgeLinesSvg = allEdges.map(e => {
-      const from = positions[e.source];
-      const to = positions[e.target];
+    // Edge lines
+    const edgesSvg = allEdges.map(e => {
+      const from = positions[e.source], to = positions[e.target];
       if (!from || !to) return '';
       const isManual = e.type === 'manual' || e.sourceLabel || e.targetLabel || (!e.type);
-      const color = isManual ? '#4fc3f7' : '#555';
-      const dash = isManual ? 'none' : '4,2';
-      return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${color}" stroke-width="${strokeW}" stroke-dasharray="${dash}"/>`;
+      const col = isManual ? COLORS.accent : '#444';
+      const dash = isManual ? 'none' : '4,3';
+      return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${col}" stroke-width="${strokeW}" stroke-dasharray="${dash}" opacity="0.6"/>`;
     }).join('');
 
-    // Render nodes
+    // Nodes
     const nodesSvg = nodes.map(n => {
       const pos = positions[n.id];
       if (!pos) return '';
-      const color = STATUS_COLORS[n.status] || STATUS_COLORS.unknown;
-      const isGateway = n.type === 'gateway';
-      if (isGateway) {
+      const col = STATUS_COLORS[n.status] || STATUS_COLORS.unknown;
+      const label = (n.name || n.id).substring(0, 14);
+      const isGw = n.type === 'gateway';
+
+      if (isGw) {
         return `
-          <circle cx="${pos.x}" cy="${pos.y}" r="${nodeR}" fill="${color}22" stroke="${color}" stroke-width="${strokeW}"/>
-          <text x="${pos.x}" y="${pos.y + 3}" text-anchor="middle" fill="${color}" font-size="${fontSizeSm}">
-            ${(n.name || n.id).substring(0, 12)}
-          </text>
-        `;
+          <g>
+            <circle cx="${pos.x}" cy="${pos.y}" r="${nodeR}" fill="${col}15" stroke="${col}" stroke-width="${strokeW}"/>
+            <text x="${pos.x}" y="${pos.y + 3}" text-anchor="middle" fill="${col}" font-size="${fontSz}" font-weight="600"
+              font-family="-apple-system,BlinkMacSystemFont,sans-serif">${label}</text>
+          </g>`;
       }
       return `
-        <rect x="${pos.x - nodeW/2}" y="${pos.y - nodeH/2}" width="${nodeW}" height="${nodeH}" rx="4"
-          fill="#2a2a4a" stroke="${color}" stroke-width="${strokeW}"/>
-        <text x="${pos.x}" y="${pos.y - 2}" text-anchor="middle" fill="${color}" font-size="${fontSizeSm}">
-          ${(n.name || n.id).substring(0, 12)}
-        </text>
-        <text x="${pos.x}" y="${pos.y + 9}" text-anchor="middle" fill="#666" font-size="7">${n.status}</text>
-      `;
+        <g>
+          <rect x="${pos.x - nodeW/2}" y="${pos.y - nodeH/2}" width="${nodeW}" height="${nodeH}" rx="6"
+            fill="#12122a" stroke="${col}" stroke-width="${strokeW}"/>
+          <text x="${pos.x}" y="${pos.y - 1}" text-anchor="middle" fill="#fff" font-size="${fontSz}" font-weight="500"
+            font-family="-apple-system,BlinkMacSystemFont,sans-serif">${label}</text>
+          <text x="${pos.x}" y="${pos.y + 11}" text-anchor="middle" fill="${col}" font-size="7"
+            font-family="-apple-system,BlinkMacSystemFont,sans-serif">${n.status}</text>
+        </g>`;
     }).join('');
 
-    // Render edge labels on top
+    // Edge labels
     const edgeLabelsSvg = allEdges.map(e => {
-      const from = positions[e.source];
-      const to = positions[e.target];
+      const from = positions[e.source], to = positions[e.target];
       if (!from || !to) return '';
       if (!e.label && !e.sourceLabel && !e.targetLabel) return '';
-
       let svg = '';
-      const dx = to.x - from.x;
-      const dy = to.y - from.y;
-      const len = Math.sqrt(dx * dx + dy * dy) || 1;
-      const ux = dx / len;
-      const uy = dy / len;
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const len = Math.sqrt(dx*dx + dy*dy) || 1;
+      const ux = dx/len, uy = dy/len;
       let perpX = -uy, perpY = ux;
       if (perpY > 0) { perpX = -perpX; perpY = -perpY; }
-
-      const bgH = fontSizeLabelSm + 3;
-
+      const bgH = labelFontSz + 4;
+      const renderLabel = (x, y, text, color) => {
+        const tw = text.length * labelFontSz * 0.55 + 8;
+        return `<rect x="${x-tw/2}" y="${y-bgH+2}" width="${tw}" height="${bgH}" rx="3" fill="#0a0a1a" opacity="0.9"/>` +
+               `<text x="${x}" y="${y}" text-anchor="middle" fill="${color}" font-size="${labelFontSz}" font-family="-apple-system,sans-serif">${text}</text>`;
+      };
       if (e.label) {
-        const mx = (from.x + to.x) / 2 + perpX * labelPerpOff;
-        const my = (from.y + to.y) / 2 + perpY * labelPerpOff;
-        const tw = e.label.length * fontSizeLabelSm * 0.55 + 6;
-        svg += `<rect x="${mx - tw/2}" y="${my - bgH + 2}" width="${tw}" height="${bgH}" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
-        svg += `<text x="${mx}" y="${my}" text-anchor="middle" fill="#888" font-size="${fontSizeLabelSm}">${e.label}</text>`;
+        svg += renderLabel((from.x+to.x)/2 + perpX*12, (from.y+to.y)/2 + perpY*12, e.label, '#888');
       }
       if (e.sourceLabel) {
-        const sx = from.x + ux * labelDist;
-        const sy = from.y + uy * labelDist;
-        const tw = e.sourceLabel.length * fontSizeLabelSm * 0.55 + 6;
-        svg += `<rect x="${sx - tw/2}" y="${sy - bgH + 2}" width="${tw}" height="${bgH}" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
-        svg += `<text x="${sx}" y="${sy}" text-anchor="middle" fill="#4fc3f7" font-size="${fontSizeLabelSm}">${e.sourceLabel}</text>`;
+        svg += renderLabel(from.x + ux*42, from.y + uy*42, e.sourceLabel, COLORS.accent);
       }
       if (e.targetLabel) {
-        const tx = to.x - ux * labelDist;
-        const ty = to.y - uy * labelDist;
-        const tw = e.targetLabel.length * fontSizeLabelSm * 0.55 + 6;
-        svg += `<rect x="${tx - tw/2}" y="${ty - bgH + 2}" width="${tw}" height="${bgH}" rx="2" fill="#1a1a2e" opacity="0.9"/>`;
-        svg += `<text x="${tx}" y="${ty}" text-anchor="middle" fill="#4fc3f7" font-size="${fontSizeLabelSm}">${e.targetLabel}</text>`;
+        svg += renderLabel(to.x - ux*42, to.y - uy*42, e.targetLabel, COLORS.accent);
       }
       return svg;
     }).join('');
@@ -427,43 +747,60 @@ class MQTTTopologyCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <ha-card>
         <style>
-          .card-content { padding: 12px; }
+          ha-card {
+            background: ${COLORS.cardBg} !important; border: none !important;
+            border-radius: 12px !important;
+            height: 100%; overflow: hidden; display: flex; flex-direction: column;
+          }
+          .card-content { padding: 14px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
           .header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
           }
-          .title { font-size: 14px; font-weight: 600; color: var(--primary-text-color); }
-          .subtitle { font-size: 10px; color: var(--secondary-text-color, #666); }
-          .counts { font-size: 10px; color: var(--secondary-text-color, #999); }
-          .count-online { color: ${STATUS_COLORS.online}; }
-          .count-offline { color: ${STATUS_COLORS.offline}; }
-          .count-warning { color: ${STATUS_COLORS.warning}; }
-          ha-card { height: 100%; overflow: hidden; display: flex; flex-direction: column; }
-          .card-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+          .title { font-size: 14px; font-weight: 600; color: ${COLORS.text}; }
+          .subtitle { font-size: 10px; color: ${COLORS.textSec}; margin-top: 1px; }
+          .counts { display: flex; gap: 10px; font-size: 11px; }
+          .count { display: flex; align-items: center; gap: 4px; }
+          .count-dot { width: 6px; height: 6px; border-radius: 50%; }
           .svg-container {
-            background: #1a1a2e;
-            border-radius: 8px;
-            overflow: hidden;
-            flex: 1;
-            min-height: 0;
+            background: #0d0d20; border-radius: 10px; overflow: hidden;
+            flex: 1; min-height: 0; cursor: pointer;
           }
+          .svg-container:hover { background: #10102a; }
           svg { width: 100%; height: 100%; display: block; }
         </style>
         <div class="card-content">
           <div class="header">
             <div>
-              <span class="title">${this._config.title || 'Network'}</span>
+              <div class="title">${this._config.title || 'Network'}</div>
               <div class="subtitle">${layoutName}</div>
             </div>
-            <span class="counts">
-              <span class="count-online">${counts.online} online</span>
-              · <span class="count-offline">${counts.offline} offline</span>
-              ${counts.warning ? ` · <span class="count-warning">${counts.warning} warning</span>` : ''}
-            </span>
+            <div class="counts">
+              <span class="count">
+                <span class="count-dot" style="background:${COLORS.online}"></span>
+                <span style="color:${COLORS.online}">${counts.online}</span>
+              </span>
+              <span class="count">
+                <span class="count-dot" style="background:${COLORS.offline}"></span>
+                <span style="color:${COLORS.offline}">${counts.offline}</span>
+              </span>
+              ${counts.warning ? `
+                <span class="count">
+                  <span class="count-dot" style="background:${COLORS.warning}"></span>
+                  <span style="color:${COLORS.warning}">${counts.warning}</span>
+                </span>
+              ` : ''}
+            </div>
           </div>
           <div class="svg-container">
             <svg viewBox="${vbX} ${vbY} ${vbW} ${vbH}">
-              ${edgeLinesSvg}
+              <defs>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="2" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              ${edgesSvg}
               ${nodesSvg}
               ${edgeLabelsSvg}
             </svg>
@@ -471,6 +808,14 @@ class MQTTTopologyCard extends HTMLElement {
         </div>
       </ha-card>
     `;
+
+    // Click to open add-on
+    const svgContainer = this.shadowRoot.querySelector('.svg-container');
+    if (svgContainer && _cachedIngressUrl) {
+      svgContainer.addEventListener('click', () => {
+        window.open(_cachedIngressUrl, '_blank');
+      });
+    }
   }
 
   getCardSize() {
@@ -495,11 +840,67 @@ class MQTTTopologyCard extends HTMLElement {
   }
 }
 
+
 // ============================================
 // Card Editors
 // ============================================
 
+const EDITOR_STYLES = `
+  .form { padding: 16px; }
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;
+    color: var(--primary-text-color, ${COLORS.text});
+  }
+  .field select, .field input {
+    width: 100%; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--divider-color, rgba(255,255,255,0.1));
+    background: var(--card-background-color, ${COLORS.tileBg});
+    color: var(--primary-text-color, ${COLORS.text});
+    font-size: 14px; box-sizing: border-box;
+    outline: none; transition: border-color 0.2s;
+  }
+  .field select:focus, .field input:focus {
+    border-color: ${COLORS.accent};
+  }
+  .hint { font-size: 11px; color: var(--secondary-text-color, ${COLORS.textSec}); margin-top: 4px; }
+  .section-title {
+    font-size: 11px; color: ${COLORS.section}; text-transform: uppercase;
+    letter-spacing: 1px; margin: 16px 0 8px 0; font-weight: 600;
+  }
+  .device-preview {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    background: rgba(0,212,255,0.06); border-radius: 8px; margin-top: 8px;
+    font-size: 12px; color: ${COLORS.accent};
+  }
+  .attr-chips {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+  }
+  .attr-chip {
+    font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--card-background-color, ${COLORS.tileBg});
+    color: var(--primary-text-color, ${COLORS.text});
+    transition: all 0.15s;
+  }
+  .attr-chip.selected {
+    background: ${COLORS.accent}20;
+    border-color: ${COLORS.accent};
+    color: ${COLORS.accent};
+  }
+  .attr-chip:hover { border-color: ${COLORS.accent}80; }
+`;
+
+
 class MQTTDeviceStatusEditor extends HTMLElement {
+  constructor() {
+    super();
+    this._devices = [];
+    this._selectedDeviceAttrs = [];
+    this._devicesLoaded = false;
+    this.attachShadow({ mode: 'open' });
+  }
+
   set hass(hass) {
     this._hass = hass;
     if (this._config && !this._devicesLoaded) {
@@ -509,7 +910,6 @@ class MQTTDeviceStatusEditor extends HTMLElement {
 
   setConfig(config) {
     this._config = { ...config };
-    this._devices = [];
     this._devicesLoaded = false;
     this._render();
   }
@@ -521,71 +921,120 @@ class MQTTDeviceStatusEditor extends HTMLElement {
       this._devices = Object.entries(data).map(([id, d]) => ({
         id,
         name: d.device_name || id,
+        type: d.device_type || 'unknown',
+        status: d.status || 'unknown',
+        attributes: Object.keys(d.attributes || {}),
+        card_attributes: d.card_attributes || [],
+        hidden_attributes: d.hidden_attributes || [],
       }));
+
+      // Load selected device's available attributes
+      if (this._config.device_id) {
+        const dev = this._devices.find(d => d.id === this._config.device_id);
+        if (dev) {
+          this._selectedDeviceAttrs = dev.attributes.filter(
+            a => !dev.hidden_attributes.includes(a)
+          );
+        }
+      }
       this._render();
     }
   }
 
   _render() {
-    if (!this.shadowRoot) this.attachShadow({ mode: 'open' });
+    const root = this.shadowRoot;
     const currentId = this._config.device_id || '';
+    const currentAttrs = this._config.attributes || [];
+    const selectedDevice = this._devices.find(d => d.id === currentId);
 
-    this.shadowRoot.innerHTML = `
-      <style>
-        .form { padding: 16px; }
-        .field { margin-bottom: 12px; }
-        .field label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 14px; }
-        .field select, .field input {
-          width: 100%; padding: 8px; border-radius: 4px;
-          border: 1px solid var(--divider-color, #ccc);
-          background: var(--card-background-color, #fff);
-          color: var(--primary-text-color);
-          font-size: 14px; box-sizing: border-box;
-        }
-        .hint { font-size: 11px; color: var(--secondary-text-color, #999); margin-top: 2px; }
-      </style>
+    root.innerHTML = `
+      <style>${EDITOR_STYLES}</style>
       <div class="form">
         <div class="field">
           <label>Device</label>
           ${this._devices.length > 0 ? `
             <select id="device-select">
               <option value="">Select a device...</option>
-              ${this._devices.map(d =>
-                `<option value="${d.id}" ${d.id === currentId ? 'selected' : ''}>${d.name} (${d.id})</option>`
-              ).join('')}
+              ${this._devices.map(d => {
+                const statusIcon = d.status === 'online' ? '\u25CF' : '\u25CB';
+                return `<option value="${d.id}" ${d.id === currentId ? 'selected' : ''}>${statusIcon} ${d.name} (${d.id})</option>`;
+              }).join('')}
             </select>
           ` : `
             <input id="device-input" type="text" value="${currentId}" placeholder="e.g., pi-garage">
-            <div class="hint">Device ID from your client config</div>
+            <div class="hint">Device ID from your client config. Devices will appear once the add-on connects.</div>
           `}
+          ${selectedDevice ? `
+            <div class="device-preview">
+              <svg width="14" height="14" viewBox="0 0 16 16">${deviceIcon(selectedDevice.type)}</svg>
+              ${selectedDevice.name} &middot; ${selectedDevice.type} &middot;
+              <span style="color:${STATUS_COLORS[selectedDevice.status] || COLORS.unknown}">${selectedDevice.status}</span>
+            </div>
+          ` : ''}
         </div>
+
         <div class="field">
-          <label>Attributes (optional)</label>
+          <label>Attributes to display</label>
           <input id="attrs-input" type="text"
-            value="${(this._config.attributes || []).join(', ')}"
-            placeholder="Leave empty to show all. e.g., cpu_usage, memory_usage">
-          <div class="hint">Comma-separated list of attributes to display</div>
+            value="${currentAttrs.join(', ')}"
+            placeholder="Leave empty for pinned/default attributes">
+          <div class="hint">Comma-separated. Empty = use device's pinned attributes or first 4.</div>
+          ${this._selectedDeviceAttrs.length > 0 ? `
+            <div class="section-title">Available attributes (click to toggle)</div>
+            <div class="attr-chips">
+              ${this._selectedDeviceAttrs.map(a => `
+                <span class="attr-chip ${currentAttrs.includes(a) ? 'selected' : ''}" data-attr="${a}">
+                  ${friendlyName(a)}
+                </span>
+              `).join('')}
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
 
     // Bind events
-    const deviceSelect = this.shadowRoot.getElementById('device-select');
-    const deviceInput = this.shadowRoot.getElementById('device-input');
-    const attrsInput = this.shadowRoot.getElementById('attrs-input');
+    const deviceSelect = root.getElementById('device-select');
+    const deviceInput = root.getElementById('device-input');
+    const attrsInput = root.getElementById('attrs-input');
 
     if (deviceSelect) {
-      deviceSelect.addEventListener('change', (e) => this._update('device_id', e.target.value));
+      deviceSelect.addEventListener('change', (e) => {
+        this._update('device_id', e.target.value);
+        // Update available attrs
+        const dev = this._devices.find(d => d.id === e.target.value);
+        this._selectedDeviceAttrs = dev
+          ? dev.attributes.filter(a => !dev.hidden_attributes.includes(a))
+          : [];
+        this._render();
+      });
     }
     if (deviceInput) {
-      deviceInput.addEventListener('input', (e) => this._update('device_id', e.target.value));
+      deviceInput.addEventListener('change', (e) => this._update('device_id', e.target.value));
     }
     if (attrsInput) {
-      attrsInput.addEventListener('input', (e) => {
+      attrsInput.addEventListener('change', (e) => {
         const attrs = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
         this._update('attributes', attrs.length ? attrs : undefined);
       });
     }
+
+    // Attribute chip clicks
+    root.querySelectorAll('.attr-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const attr = chip.dataset.attr;
+        let attrs = [...(this._config.attributes || [])];
+        const idx = attrs.indexOf(attr);
+        if (idx >= 0) {
+          attrs.splice(idx, 1);
+        } else {
+          attrs.push(attr);
+        }
+        this._config.attributes = attrs.length ? attrs : undefined;
+        this._update('attributes', this._config.attributes);
+        this._render();
+      });
+    });
   }
 
   _update(key, value) {
@@ -601,7 +1050,15 @@ class MQTTDeviceStatusEditor extends HTMLElement {
   }
 }
 
+
 class MQTTTopologyEditor extends HTMLElement {
+  constructor() {
+    super();
+    this._layouts = [];
+    this._layoutsLoaded = false;
+    this.attachShadow({ mode: 'open' });
+  }
+
   set hass(hass) {
     this._hass = hass;
     if (this._config && !this._layoutsLoaded) {
@@ -611,7 +1068,6 @@ class MQTTTopologyEditor extends HTMLElement {
 
   setConfig(config) {
     this._config = { ...config };
-    this._layouts = [];
     this._layoutsLoaded = false;
     this._render();
   }
@@ -630,58 +1086,46 @@ class MQTTTopologyEditor extends HTMLElement {
   }
 
   _render() {
-    if (!this.shadowRoot) this.attachShadow({ mode: 'open' });
+    const root = this.shadowRoot;
     const currentLayout = this._config.layout || '';
 
-    this.shadowRoot.innerHTML = `
-      <style>
-        .form { padding: 16px; }
-        .field { margin-bottom: 12px; }
-        .field label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 14px; }
-        .field select, .field input {
-          width: 100%; padding: 8px; border-radius: 4px;
-          border: 1px solid var(--divider-color, #ccc);
-          background: var(--card-background-color, #fff);
-          color: var(--primary-text-color);
-          font-size: 14px; box-sizing: border-box;
-        }
-        .hint { font-size: 11px; color: var(--secondary-text-color, #999); margin-top: 2px; }
-      </style>
+    root.innerHTML = `
+      <style>${EDITOR_STYLES}</style>
       <div class="form">
         <div class="field">
-          <label>Title</label>
+          <label>Card Title</label>
           <input id="title-input" type="text"
             value="${this._config.title || ''}"
             placeholder="e.g., Home Network">
         </div>
         <div class="field">
-          <label>Layout</label>
+          <label>Topology Layout</label>
           ${this._layouts.length > 0 ? `
             <select id="layout-select">
-              <option value="" ${!currentLayout ? 'selected' : ''}>Default (or auto-discovery)</option>
+              <option value="" ${!currentLayout ? 'selected' : ''}>Default (auto-discovery)</option>
               ${this._layouts.map(l =>
                 `<option value="${l.id}" ${l.id === currentLayout ? 'selected' : ''}>${l.name}${l.isDefault ? ' (default)' : ''}</option>`
               ).join('')}
             </select>
-            <div class="hint">Layouts are created in the add-on's Topology editor</div>
+            <div class="hint">Layouts are created in the add-on's Topology page</div>
           ` : `
             <input id="layout-input" type="text" value="${currentLayout}" placeholder="Layout ID (optional)">
-            <div class="hint">Create layouts in the add-on's Topology editor</div>
+            <div class="hint">Create and arrange layouts in the add-on's Topology page</div>
           `}
         </div>
       </div>
     `;
 
-    this.shadowRoot.getElementById('title-input')
-      .addEventListener('input', (e) => this._update('title', e.target.value));
+    root.getElementById('title-input')
+      .addEventListener('change', (e) => this._update('title', e.target.value));
 
-    const layoutSelect = this.shadowRoot.getElementById('layout-select');
-    const layoutInput = this.shadowRoot.getElementById('layout-input');
+    const layoutSelect = root.getElementById('layout-select');
+    const layoutInput = root.getElementById('layout-input');
     if (layoutSelect) {
       layoutSelect.addEventListener('change', (e) => this._update('layout', e.target.value || undefined));
     }
     if (layoutInput) {
-      layoutInput.addEventListener('input', (e) => this._update('layout', e.target.value || undefined));
+      layoutInput.addEventListener('change', (e) => this._update('layout', e.target.value || undefined));
     }
   }
 
@@ -698,6 +1142,7 @@ class MQTTTopologyEditor extends HTMLElement {
   }
 }
 
+
 // ============================================
 // Register Cards
 // ============================================
@@ -712,15 +1157,20 @@ window.customCards.push(
   {
     type: 'mqtt-device-status-card',
     name: 'MQTT Device Status',
-    description: 'Shows status and attributes for a single MQTT-monitored device',
+    description: 'Device status card with live attributes, threshold indicators, and tags',
     preview: true,
+    documentationURL: 'https://github.com/user/mqtt-network-monitor',
   },
   {
     type: 'mqtt-topology-card',
     name: 'MQTT Network Topology',
-    description: 'Shows a compact network topology overview',
+    description: 'Compact interactive network topology overview',
     preview: true,
+    documentationURL: 'https://github.com/user/mqtt-network-monitor',
   }
 );
 
-console.info('%c MQTT Network Monitor Cards v0.1.0 ', 'background: #4fc3f7; color: #1a1a2e; font-weight: bold;');
+console.info(
+  `%c MQTT Network Monitor Cards v${CARD_VERSION} `,
+  'background: #00D4FF; color: #0a0a1a; font-weight: bold; border-radius: 4px;'
+);
