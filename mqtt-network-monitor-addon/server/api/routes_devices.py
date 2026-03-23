@@ -64,6 +64,10 @@ def delete_attribute(device_id: str, attr_name: str):
     cc = remote_config.get("plugins", {}).get("custom_command", {}).get("commands", {})
     is_custom = attr_name in cc
 
+    # Check if any active plugin owns this attribute
+    plugin_attrs = device.get("_plugin_attrs", {})
+    has_plugin_owner = any(attr_name in attrs for attrs in plugin_attrs.values())
+
     if is_custom:
         # Remove from client config and push
         del cc[attr_name]
@@ -71,19 +75,31 @@ def delete_attribute(device_id: str, attr_name: str):
             state.mqtt_handler.push_config(device_id, remote_config)
         state.registry.set_device_settings(device_id, {"remote_config": remote_config})
         state.registry.delete_attribute(device_id, attr_name)
-    else:
-        # Built-in attribute — hide it instead
+        status = "deleted"
+    elif has_plugin_owner:
+        # Active plugin attribute — hide it (will reappear if we delete)
         hidden = device.get("hidden_attributes", [])
         if attr_name not in hidden:
             hidden.append(attr_name)
             state.registry.set_device_settings(device_id, {"hidden_attributes": hidden})
+        status = "hidden"
+    else:
+        # Orphan attribute — no plugin owns it, just delete
+        state.registry.delete_attribute(device_id, attr_name)
+        status = "deleted"
 
     # Remove HA entity either way
     if state.ha_entity_manager:
         state.ha_entity_manager._remove_sensor(device_id, attr_name)
         state.ha_entity_manager._mqtt.publish(f"network_monitor/{device_id}/ha/{attr_name}", "", retain=True)
 
-    return {"status": "hidden" if not is_custom else "deleted"}
+    # Also remove from card_attributes if pinned
+    card_attrs = device.get("card_attributes", [])
+    if attr_name in card_attrs:
+        card_attrs.remove(attr_name)
+        state.registry.set_device_settings(device_id, {"card_attributes": card_attrs})
+
+    return {"status": status}
 
 
 @router.post("/{device_id}/attributes/{attr_name}/unhide")
