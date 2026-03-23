@@ -98,6 +98,10 @@ class MQTTHandler:
             except json.JSONDecodeError:
                 logger.error(f"Invalid config response from {device_id}")
 
+        elif subtopic == "config":
+            # Server's own config push echoed back — ignore
+            return
+
         else:
             # Plugin data
             raw = msg.payload.decode().strip()
