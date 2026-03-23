@@ -97,12 +97,13 @@ class DeviceRegistry:
                 "status": "online",
                 "server_tags": [],
                 "groups": [],
-                # New fields
                 "group_policy": None,
                 "ha_exposure_overrides": {},
                 "threshold_overrides": {},
                 "allowed_commands": [],
                 "server_commands": {},
+                "server_sensors": {},
+                "config_interval": None,
                 "hidden_attributes": [],
                 "hidden_commands": [],
             }
@@ -235,11 +236,11 @@ class DeviceRegistry:
             "id": group_id,
             "name": name,
             "device_ids": members,
-            # Expanded group schema
             "thresholds": {},
             "ha_exposed_attributes": [],
             "custom_sensors": {},
             "custom_commands": {},
+            "interval": None,
         }
         # Set group_policy on initial members
         devices_changed = False
@@ -279,7 +280,8 @@ class DeviceRegistry:
                      custom_commands: dict | None = None,
                      custom_sensors: dict | None = None,
                      thresholds: dict | None = None,
-                     hidden_commands: list | None = None) -> dict | None:
+                     hidden_commands: list | None = None,
+                     interval: int | None = ...) -> dict | None:
         group = self._groups.get(group_id)
         if not group:
             return None
@@ -308,6 +310,8 @@ class DeviceRegistry:
             group["thresholds"] = thresholds
         if hidden_commands is not None:
             group["hidden_commands"] = hidden_commands
+        if interval is not ...:
+            group["interval"] = interval
         self._save_groups()
         return group
 
@@ -386,7 +390,10 @@ class DeviceRegistry:
         device = self._devices.get(device_id)
         if not device:
             return None
-        allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides", "server_commands", "remote_config", "hidden_attributes", "hidden_commands", "card_attributes"}
+        allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides",
+                        "server_commands", "remote_config", "hidden_attributes",
+                        "hidden_commands", "card_attributes", "server_sensors",
+                        "config_interval", "allowed_commands"}
         for key in allowed_keys:
             if key in settings:
                 device[key] = settings[key]
