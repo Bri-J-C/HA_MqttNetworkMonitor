@@ -107,7 +107,7 @@ class MQTTHandler:
                 payload = json.loads(raw)
                 if not payload or not isinstance(payload, dict):
                     return  # Empty or invalid payload
-                self._registry.update_device(device_id, payload)
+                self._registry.update_device(device_id, payload, plugin_name=subtopic)
                 self._notify_update(device_id)
                 logger.debug(f"Updated device {device_id} from plugin {subtopic}")
             except json.JSONDecodeError:

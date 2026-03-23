@@ -88,7 +88,7 @@ class DeviceRegistry:
         self._flush_devices()
         self._flush_groups()
 
-    def update_device(self, device_id: str, payload: dict) -> None:
+    def update_device(self, device_id: str, payload: dict, plugin_name: str | None = None) -> None:
         is_new = device_id not in self._devices
         if is_new:
             self._devices[device_id] = {
@@ -113,11 +113,29 @@ class DeviceRegistry:
         device["device_type"] = payload.get("device_type", "unknown")
         device["tags"] = payload.get("tags", [])
         device["last_seen"] = time.time()
-        # Merge attributes instead of replacing — each plugin publishes its own subset
+        # Per-plugin attribute tracking: replace attributes from the publishing plugin,
+        # keep attributes from other plugins. This ensures removed sensors disappear.
         incoming_attrs = payload.get("attributes", {})
-        existing_attrs = device.get("attributes", {})
-        existing_attrs.update(incoming_attrs)
-        device["attributes"] = existing_attrs
+        if plugin_name:
+            # Track which plugin owns which attributes
+            plugin_attrs = device.get("_plugin_attrs", {})
+            # Remove old attributes that this plugin previously owned
+            old_keys = plugin_attrs.get(plugin_name, [])
+            existing_attrs = device.get("attributes", {})
+            for key in old_keys:
+                if key not in incoming_attrs:
+                    existing_attrs.pop(key, None)
+            # Add/update incoming attributes
+            existing_attrs.update(incoming_attrs)
+            device["attributes"] = existing_attrs
+            # Update ownership tracking
+            plugin_attrs[plugin_name] = list(incoming_attrs.keys())
+            device["_plugin_attrs"] = plugin_attrs
+        else:
+            # No plugin name (legacy) — merge as before
+            existing_attrs = device.get("attributes", {})
+            existing_attrs.update(incoming_attrs)
+            device["attributes"] = existing_attrs
         if payload.get("network"):
             device["network"] = payload["network"]
         if "allowed_commands" in payload:
