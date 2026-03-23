@@ -510,13 +510,15 @@ class GroupPolicySettings extends LitElement {
     this._cancelGroupCmdForm();
   }
 
-  _removeGroupCommand(g, name) {
+  async _removeGroupCommand(g, name) {
     const updated = { ...(g.custom_commands || {}) };
     delete updated[name];
     this._groups = {
       ...this._groups,
       [g.id]: { ...g, custom_commands: updated },
     };
+    // Reload devices so discovered commands list is fresh
+    await this._loadAll();
   }
 
   _hideGroupCommand(g, name) {
