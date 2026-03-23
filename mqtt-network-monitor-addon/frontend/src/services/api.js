@@ -206,3 +206,42 @@ export async function checkGroupConflicts(groupId, newDeviceId = null) {
     body: JSON.stringify(newDeviceId ? { new_device_id: newDeviceId } : {}),
   });
 }
+
+// Device server commands
+export async function addServerCommand(deviceId, name, shell) {
+  return apiCall(`${BASE}/api/devices/${deviceId}/server-commands`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, shell }),
+  });
+}
+
+export async function removeServerCommand(deviceId, name) {
+  return apiCall(`${BASE}/api/devices/${deviceId}/server-commands/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+}
+
+// Device server sensors
+export async function addServerSensor(deviceId, name, sensor) {
+  return apiCall(`${BASE}/api/devices/${deviceId}/server-sensors`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, ...sensor }),
+  });
+}
+
+export async function removeServerSensor(deviceId, name) {
+  return apiCall(`${BASE}/api/devices/${deviceId}/server-sensors/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+}
+
+// Device config interval
+export async function setDeviceInterval(deviceId, interval) {
+  return apiCall(`${BASE}/api/devices/${deviceId}/config-interval`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ interval }),
+  });
+}

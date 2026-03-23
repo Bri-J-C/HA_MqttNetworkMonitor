@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import {
   fetchDevice, deleteDevice, deleteAttribute, unhideAttribute, hideCommand, unhideCommand, sendCommand, addDeviceTags, removeDeviceTag,
   fetchGroups, createGroup, updateGroup,
-  fetchEffectiveSettings, updateDeviceSettings, pushDeviceConfig,
+  fetchEffectiveSettings, updateDeviceSettings,
 } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
 import './tag-picker.js';
@@ -23,7 +23,6 @@ class DeviceDetail extends LitElement {
     _pushing:           { type: Boolean, state: true },
     _pushStatus:        { type: String,  state: true },
     _lastPushed:        { type: String,  state: true },
-    _localChanges:      { type: Boolean, state: true },
     _showGroupDialog:   { type: Boolean, state: true },
     _newGroupName:      { type: String,  state: true },
     _serverCommands:    { type: Object,  state: true },
@@ -133,7 +132,6 @@ class DeviceDetail extends LitElement {
     this._pushing           = false;
     this._pushStatus        = '';
     this._lastPushed        = '';
-    this._localChanges      = false;
     this._showGroupDialog   = false;
     this._newGroupName      = '';
     this._serverCommands    = {};
@@ -183,11 +181,9 @@ class DeviceDetail extends LitElement {
       this._haOverrides    = { ...(this.device.ha_exposure_overrides || {}) };
       const sc = this.device.server_commands;
       this._serverCommands = (sc && !Array.isArray(sc)) ? { ...sc } : {};
-      this._configInterval = this.device.collection_interval || (this.device.remote_config?.interval) || 30;
-      if (this.device.remote_config) {
-        const cc = this.device.remote_config.plugins?.custom_command?.commands || {};
-        this._customSensors = { ...cc };
-      }
+      this._configInterval = this.device.config_interval ?? this.device.collection_interval ?? (this.device.remote_config?.interval) ?? 30;
+      const ss = this.device.server_sensors;
+      this._customSensors = (ss && typeof ss === 'object') ? { ...ss } : {};
       try {
         this._effectiveSettings = await fetchEffectiveSettings(this.deviceId);
       } catch (_) {}
@@ -271,10 +267,9 @@ class DeviceDetail extends LitElement {
         .pushing=${this._pushing}
         .pushStatus=${this._pushStatus}
         .lastPushed=${this._lastPushed}
-        @interval-changed=${(e) => { this._configInterval = e.detail.value; this._localChanges = true; }}
+        @interval-changed=${(e) => this._onIntervalChange(e.detail.value)}
         @sensor-save=${(e) => this._saveSensor(e.detail)}
         @sensor-remove=${(e) => this._removeSensor(e.detail.key)}
-        @push-config=${() => this._pushConfig()}
       ></device-config>
 
       ${this._showGroupDialog ? this._renderGroupDialog() : ''}
@@ -457,7 +452,6 @@ class DeviceDetail extends LitElement {
           ? this._effectiveSettings.ha_exposure_overrides[name]
           : true);
     this._haOverrides  = { ...this._haOverrides, [name]: !current };
-    this._localChanges = true;
     try {
       await updateDeviceSettings(this.deviceId, { ha_exposure_overrides: this._haOverrides });
     } catch (e) {
@@ -528,77 +522,38 @@ class DeviceDetail extends LitElement {
   }
 
   async _saveServerCommand({ name, shell }) {
-    this._serverCommands = { ...this._serverCommands, [name]: shell };
-    this._localChanges   = true;
-    // Update UI immediately
-    this.requestUpdate();
-    // Save and push in background
-    await updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
-    pushDeviceConfig(this.deviceId, {
-      interval: this._configInterval,
-      plugins:  { custom_command: { commands: this._customSensors } },
-      commands: this._serverCommands,
-    });
+    const { addServerCommand } = await import('../services/api.js');
+    await addServerCommand(this.deviceId, name, shell);
+    await this._loadDevice();
   }
 
   async _removeServerCommand(name) {
-    const updated = { ...this._serverCommands };
-    delete updated[name];
-    this._serverCommands = updated;
-    this._localChanges   = true;
-    await updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
-    // Push FULL config so the client receives a complete replacement
-    await pushDeviceConfig(this.deviceId, {
-      interval: this._configInterval,
-      plugins:  { custom_command: { commands: this._customSensors } },
-      commands: updated,
-    });
-    // Reload device to get updated allowed_commands
+    const { removeServerCommand } = await import('../services/api.js');
+    await removeServerCommand(this.deviceId, name);
     await this._loadDevice();
   }
 
   // ── Config event handlers ──────────────────────────────────────────────────
 
-  _saveSensor({ key, sensor, oldKey }) {
-    const updated = { ...this._customSensors };
-    if (oldKey && oldKey !== key) delete updated[oldKey];
-    updated[key]        = sensor;
-    this._customSensors = updated;
-    this._localChanges  = true;
-  }
-
-  _removeSensor(key) {
-    const updated = { ...this._customSensors };
-    delete updated[key];
-    this._customSensors = updated;
-    this._localChanges  = true;
-  }
-
-  async _pushConfig() {
-    this._pushing    = true;
-    this._pushStatus = '';
-    try {
-      const config = {
-        interval: this._configInterval,
-        plugins:  { custom_command: { commands: this._customSensors } },
-        commands: this._serverCommands,
-      };
-      console.log('Pushing config:', config);
-      const result = await pushDeviceConfig(this.deviceId, config);
-      console.log('Push result:', result);
-      if (result && result.detail) {
-        this._pushStatus = `Push failed: ${result.detail}`;
-      } else {
-        this._lastPushed   = new Date().toLocaleTimeString();
-        this._localChanges = false;
-        this._pushStatus   = 'Config synced';
-      }
-    } catch (e) {
-      console.error('Push config error:', e);
-      this._pushStatus = `Push failed: ${e.message}`;
-    } finally {
-      this._pushing = false;
+  async _saveSensor({ key, sensor, oldKey }) {
+    const { addServerSensor, removeServerSensor } = await import('../services/api.js');
+    if (oldKey && oldKey !== key) {
+      await removeServerSensor(this.deviceId, oldKey);
     }
+    await addServerSensor(this.deviceId, key, sensor);
+    await this._loadDevice();
+  }
+
+  async _removeSensor(key) {
+    const { removeServerSensor } = await import('../services/api.js');
+    await removeServerSensor(this.deviceId, key);
+    await this._loadDevice();
+  }
+
+  async _onIntervalChange(value) {
+    const { setDeviceInterval } = await import('../services/api.js');
+    await setDeviceInterval(this.deviceId, value);
+    await this._loadDevice();
   }
 
   // ── Device delete ──────────────────────────────────────────────────────────
