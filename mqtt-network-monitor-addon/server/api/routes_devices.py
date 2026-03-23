@@ -60,7 +60,11 @@ def delete_attribute(device_id: str, attr_name: str):
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
 
-    # Check if it's a custom_command sensor we can actually remove from the client
+    # Check if it's a server-defined sensor
+    server_sensors = device.get("server_sensors") or {}
+    is_server_sensor = attr_name in server_sensors
+
+    # Check if it's a custom_command sensor in remote_config (legacy)
     remote_config = device.get("remote_config", {})
     cc = remote_config.get("plugins", {}).get("custom_command", {}).get("commands", {})
     is_custom = attr_name in cc
@@ -69,8 +73,17 @@ def delete_attribute(device_id: str, attr_name: str):
     plugin_attrs = device.get("_plugin_attrs", {})
     has_plugin_owner = any(attr_name in attrs for attrs in plugin_attrs.values())
 
-    if is_custom:
-        # Remove from client config and push
+    if is_server_sensor:
+        # Remove from server_sensors and re-push via assembler
+        sensors = dict(server_sensors)
+        del sensors[attr_name]
+        state.registry.set_device_settings(device_id, {"server_sensors": sensors})
+        if state.mqtt_handler:
+            assemble_and_push(device_id, state.registry, state.mqtt_handler)
+        state.registry.delete_attribute(device_id, attr_name)
+        status = "deleted"
+    elif is_custom:
+        # Legacy: remove from client config and push
         del cc[attr_name]
         if state.mqtt_handler:
             state.mqtt_handler.push_config(device_id, remote_config)
@@ -78,14 +91,12 @@ def delete_attribute(device_id: str, attr_name: str):
         state.registry.delete_attribute(device_id, attr_name)
         status = "deleted"
     elif has_plugin_owner:
-        # Active plugin attribute — hide it (will reappear if we delete)
         hidden = device.get("hidden_attributes", [])
         if attr_name not in hidden:
             hidden.append(attr_name)
             state.registry.set_device_settings(device_id, {"hidden_attributes": hidden})
         status = "hidden"
     else:
-        # Orphan attribute — no plugin owns it, just delete
         state.registry.delete_attribute(device_id, attr_name)
         status = "deleted"
 
