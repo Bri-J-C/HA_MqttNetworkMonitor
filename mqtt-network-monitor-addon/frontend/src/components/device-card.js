@@ -72,7 +72,21 @@ class DeviceCard extends LitElement {
     if (!this.device) return html``;
     const d = this.device;
     const color = STATUS_COLORS[d.status] || STATUS_COLORS.unknown;
-    const attrs = Object.entries(d.attributes || {}).slice(0, 4);
+    const allAttrs = Object.entries(d.attributes || {});
+    const hidden = d.hidden_attributes || [];
+    const pinned = d.card_attributes || [];
+    let attrs;
+    if (pinned.length > 0) {
+      // Show pinned attributes in their pinned order
+      attrs = pinned
+        .map(name => allAttrs.find(([n]) => n === name))
+        .filter(Boolean);
+    } else {
+      // Default: first 4 visible attributes
+      attrs = allAttrs
+        .filter(([name]) => !hidden.includes(name))
+        .slice(0, 4);
+    }
     const tags = [...(d.tags || []), ...(d.server_tags || [])];
     const displayName = d.device_name || this.deviceId;
 

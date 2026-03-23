@@ -240,10 +240,12 @@ class DeviceDetail extends LitElement {
         .effectiveSettings=${this._effectiveSettings}
         .haOverrides=${this._haOverrides}
         .groups=${this._groups}
+        .cardAttributes=${this.device?.card_attributes || []}
         @attribute-deleted=${(e) => this._deleteAttribute(e.detail.name)}
         @attribute-unhidden=${(e) => this._unhideAttribute(e.detail.name)}
         @ha-exposure-toggled=${(e) => this._toggleHaExposure(e.detail.name)}
         @threshold-changed=${(e) => this._setThreshold(e.detail.name, e.detail.value, e.detail.op)}
+        @pin-attribute=${(e) => this._toggleCardAttribute(e.detail)}
       ></device-attributes>
 
       <!-- 5. Network -->
@@ -427,6 +429,12 @@ class DeviceDetail extends LitElement {
     if (!confirm(`Hide attribute "${name}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`)) return;
     try {
       await deleteAttribute(this.deviceId, name);
+      // If the hidden attribute was pinned, remove it from card_attributes
+      const cardAttrs = this.device?.card_attributes || [];
+      if (cardAttrs.includes(name)) {
+        const updated = cardAttrs.filter(n => n !== name);
+        await updateDeviceSettings(this.deviceId, { card_attributes: updated });
+      }
       await this._loadDevice();
     } catch (e) {
       console.error('Failed to hide attribute:', e);
@@ -470,6 +478,22 @@ class DeviceDetail extends LitElement {
       this._effectiveSettings = await fetchEffectiveSettings(this.deviceId);
     } catch (e) {
       console.error('Failed to set threshold:', e);
+    }
+  }
+
+  async _toggleCardAttribute({ name, pinned }) {
+    const current = [...(this.device?.card_attributes || [])];
+    let updated;
+    if (pinned) {
+      updated = [...current, name];
+    } else {
+      updated = current.filter(n => n !== name);
+    }
+    try {
+      await updateDeviceSettings(this.deviceId, { card_attributes: updated });
+      this.device = { ...this.device, card_attributes: updated };
+    } catch (e) {
+      console.error('Failed to update card attributes:', e);
     }
   }
 

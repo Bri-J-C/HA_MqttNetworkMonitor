@@ -8,12 +8,14 @@ import { LitElement, html, css } from 'lit';
  *   effectiveSettings {Object}  — merged settings from group/global
  *   haOverrides       {Object}  — local HA-exposure overrides (name → bool)
  *   groups            {Object}  — groups map (id → group)
+ *   cardAttributes    {Array}   — list of attribute names pinned to the device card
  *
  * Events fired:
  *   attribute-deleted     {name}          — user clicked delete on an attribute
  *   attribute-unhidden    {name}          — user clicked show on a hidden attribute
  *   ha-exposure-toggled   {name}          — user toggled HA-exposure toggle
  *   threshold-changed     {name, value, op} — user edited a threshold
+ *   pin-attribute         {name, pinned}  — user toggled pin on an attribute
  */
 class DeviceAttributes extends LitElement {
   static properties = {
@@ -21,6 +23,7 @@ class DeviceAttributes extends LitElement {
     effectiveSettings: { type: Object },
     haOverrides:       { type: Object },
     groups:            { type: Object },
+    cardAttributes:    { type: Array },
     _showHidden:       { type: Boolean, state: true },
   };
 
@@ -80,6 +83,14 @@ class DeviceAttributes extends LitElement {
     .threshold-inline:focus { outline: none; border-color: #4fc3f7; color: #e0e0e0; }
     .threshold-inline::placeholder { color: #444; }
 
+    /* Pin icon */
+    .attr-pin {
+      font-size: 10px; cursor: pointer; opacity: 0.3;
+      transition: opacity 0.15s; line-height: 1; user-select: none;
+    }
+    .attr-pin:hover { opacity: 0.7; }
+    .attr-pin.pinned { opacity: 1; }
+
     /* Toggle switch */
     .toggle-wrap { cursor: pointer; flex-shrink: 0; }
     .toggle {
@@ -102,6 +113,7 @@ class DeviceAttributes extends LitElement {
     this.effectiveSettings = null;
     this.haOverrides       = {};
     this.groups            = {};
+    this.cardAttributes    = [];
     this._showHidden       = false;
   }
 
@@ -215,11 +227,15 @@ class DeviceAttributes extends LitElement {
     const exceeded          = this._checkThreshold(currentVal, effectiveThreshold);
     const currentOp         = this._getThresholdOp(name);
     const currentThreshVal  = this._getThresholdVal(name);
+    const isPinned          = (this.cardAttributes || []).includes(name);
 
     return html`
       <div class="attr-tile ${exposed ? '' : 'dimmed'} ${exceeded ? 'exceeded' : ''}">
         <div class="attr-tile-top">
           <span class="attr-label">${name.replace(/_/g, ' ')}
+            <span class="attr-pin ${isPinned ? 'pinned' : ''}"
+              title="${isPinned ? 'Unpin from card' : 'Pin to card'}"
+              @click=${(e) => { e.stopPropagation(); this._togglePin(name); }}>&#x1F4CC;</span>
             <span class="attr-delete" title="Remove attribute"
               @click=${() => this._onDelete(name)}>&times;</span>
           </span>
@@ -282,6 +298,13 @@ class DeviceAttributes extends LitElement {
 
   _onThresholdChange(name, value, op) {
     this.dispatchEvent(new CustomEvent('threshold-changed', { detail: { name, value, op }, bubbles: true, composed: true }));
+  }
+
+  _togglePin(name) {
+    this.dispatchEvent(new CustomEvent('pin-attribute', {
+      detail: { name, pinned: !(this.cardAttributes || []).includes(name) },
+      bubbles: true, composed: true,
+    }));
   }
 }
 
