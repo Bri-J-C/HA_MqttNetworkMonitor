@@ -182,11 +182,12 @@ def group_push_config(group_id: str, body: dict[str, Any]):
                 updated_server_commands = dict(device.get("server_commands") or {})
                 updated_remote_config = dict(device.get("remote_config") or {})
 
+                updated_threshold_overrides = dict(device.get("threshold_overrides") or {})
+
                 for conflict in device_conflicts:
                     if conflict["type"] == "command":
                         updated_server_commands.pop(conflict["name"], None)
                     elif conflict["type"] == "sensor":
-                        # Remove conflicting sensor from device's remote_config
                         rc_plugins = dict((updated_remote_config.get("plugins") or {}))
                         rc_cc = dict((rc_plugins.get("custom_command") or {}))
                         rc_commands = dict((rc_cc.get("commands") or {}))
@@ -194,11 +195,14 @@ def group_push_config(group_id: str, body: dict[str, Any]):
                         rc_cc["commands"] = rc_commands
                         rc_plugins["custom_command"] = rc_cc
                         updated_remote_config["plugins"] = rc_plugins
-                    # threshold conflicts: group wins via cascade, no cleanup needed
+                    elif conflict["type"] == "threshold":
+                        # Remove device-level override so group threshold takes effect
+                        updated_threshold_overrides.pop(conflict["name"], None)
 
                 state.registry.set_device_settings(device_id, {
                     "server_commands": updated_server_commands,
                     "remote_config": updated_remote_config,
+                    "threshold_overrides": updated_threshold_overrides,
                 })
 
             state.mqtt_handler.push_config(device_id, body)

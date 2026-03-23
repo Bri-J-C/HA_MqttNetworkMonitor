@@ -406,21 +406,25 @@ class GroupPolicySettings extends LitElement {
             ${visibleCmds.map(([name, shellCmd]) => {
               const isGroupDefined = name in commands;
               const isDiscovered = name in discoveredCmds;
-              const source = isGroupDefined && isDiscovered ? 'both' : isGroupDefined ? 'group' : 'device';
+              const source = isGroupDefined ? 'group' : 'device';
               return html`
                 <tr>
                   <td style="font-family: monospace;">${name}</td>
                   <td style="font-family: monospace; font-size: 11px; color: ${isGroupDefined ? '#ccc' : '#888'};">${shellCmd || '\u2014'}</td>
-                  <td style="font-size: 10px; color: #666;">${source}</td>
+                  <td style="font-size: 10px; color: ${source === 'group' ? '#4fc3f7' : '#888'};">${source}</td>
                   <td>
-                    <div class="sensor-actions">
-                      <button class="sensor-btn edit"
-                        @click=${() => this._startEditGroupCmd(g.id, name, shellCmd)}>Edit</button>
-                      <button class="sensor-btn remove"
-                        @click=${() => this._removeGroupCommand(g, name)}>Remove</button>
-                      <button class="sensor-btn remove" title="Hide"
-                        @click=${() => this._hideGroupCommand(g, name)}>Hide</button>
-                    </div>
+                    ${source === 'group' ? html`
+                      <div class="sensor-actions">
+                        <button class="sensor-btn edit"
+                          @click=${() => this._startEditGroupCmd(g.id, name, shellCmd)}>Edit</button>
+                        <button class="sensor-btn remove"
+                          @click=${() => this._removeGroupCommand(g, name)}>Remove</button>
+                        <button class="sensor-btn remove" title="Hide"
+                          @click=${() => this._hideGroupCommand(g, name)}>Hide</button>
+                      </div>
+                    ` : html`
+                      <span style="font-size: 10px; color: #555; font-style: italic;">from client config</span>
+                    `}
                   </td>
                 </tr>
               `;

@@ -86,7 +86,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.1.0 build ${"3/22 20:33"}</span>
+        <span class="version">v0.1.0 build ${"3/22 20:37"}</span>
       </nav>
     `}_navigate(e){this.dispatchEvent(new CustomEvent("view-change",{detail:{view:e}}))}}customElements.define("nav-bar",pe);const he=function(){const e=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);return e?e[1]:""}();async function ue(e,t={}){const s=await fetch(e,t);if(!s.ok){const e=await s.text().catch(()=>s.statusText);throw new Error(`API error ${s.status}: ${e}`)}const o=s.headers.get("content-type");return o&&o.includes("application/json")?s.json():null}async function ge(e=0){return ue(e>0?`${he}/api/devices?since=${e}`:`${he}/api/devices`)}async function me(e){return ue(`${he}/api/devices/${e}`)}async function be(){return ue(`${he}/api/topology`)}async function fe(e){return ue(`${he}/api/topology/layouts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})}async function ve(){return ue(`${he}/api/groups`)}async function _e(e,t,s=[]){return ue(`${he}/api/groups`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e,name:t,device_ids:s})})}async function xe(e,{name:t,device_ids:s,custom_commands:o,custom_sensors:i,thresholds:a,hidden_commands:n}){return ue(`${he}/api/groups/${e}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t,device_ids:s,custom_commands:o,custom_sensors:i,thresholds:a,hidden_commands:n})})}async function ye(){return ue(`${he}/api/tags`)}async function $e(e){return ue(`${he}/api/tags`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tag:e})})}async function we(e){return ue(`${he}/api/tags/${encodeURIComponent(e)}`,{method:"DELETE"})}async function ke(e){return ue(`${he}/api/devices/${e}/effective-settings`)}async function Se(e,t){return ue(`${he}/api/devices/${e}/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function Ce(e,t){return ue(`${he}/api/devices/${e}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function Ee(e,t=null){return ue(`${he}/api/groups/${e}/check-conflicts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t?{new_device_id:t}:{})})}class Ae extends le{static properties={selectedTags:{type:Array},_allTags:{type:Array,state:!0},_open:{type:Boolean,state:!0},_showCreate:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_creating:{type:Boolean,state:!0}};static styles=a`
     :host { display: inline-block; position: relative; }
@@ -2021,27 +2021,31 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         `:""}
       </div>
-    `}_getGroupDiscoveredData(e){const t=e.device_ids||[],s=new Set,o={},i={};for(const e of t){const t=this._devices[e];if(!t)continue;if(t.attributes&&"object"==typeof t.attributes)for(const e of Object.keys(t.attributes))s.add(e);if(Array.isArray(t.allowed_commands))for(const e of t.allowed_commands)e in o||(o[e]="");const a=t.remote_config;if(a&&a.plugins&&a.plugins.custom_command&&a.plugins.custom_command.commands)for(const[e,t]of Object.entries(a.plugins.custom_command.commands))i[e]||(i[e]=t)}return{attributes:Array.from(s).sort(),commands:o,sensors:i}}_renderGroupCustomCommands(e){const t=e.custom_commands||{},s=this._getGroupDiscoveredData(e).commands,o={...s};for(const[e,s]of Object.entries(t))o[e]=s||o[e]||"";const i=e.hidden_commands||[],a=Object.entries(o).filter(([e])=>!i.includes(e)).sort(([e],[t])=>e.localeCompare(t)),n=Object.entries(o).filter(([e])=>i.includes(e)),r=this._editingGroupCmd&&this._editingGroupCmd.groupId===e.id,l=this._showAddGroupCmd&&this._showAddGroupCmd.groupId===e.id;return H`
-      ${a.length>0?H`
+    `}_getGroupDiscoveredData(e){const t=e.device_ids||[],s=new Set,o={},i={};for(const e of t){const t=this._devices[e];if(!t)continue;if(t.attributes&&"object"==typeof t.attributes)for(const e of Object.keys(t.attributes))s.add(e);if(Array.isArray(t.allowed_commands))for(const e of t.allowed_commands)e in o||(o[e]="");const a=t.remote_config;if(a&&a.plugins&&a.plugins.custom_command&&a.plugins.custom_command.commands)for(const[e,t]of Object.entries(a.plugins.custom_command.commands))i[e]||(i[e]=t)}return{attributes:Array.from(s).sort(),commands:o,sensors:i}}_renderGroupCustomCommands(e){const t=e.custom_commands||{},s={...this._getGroupDiscoveredData(e).commands};for(const[e,o]of Object.entries(t))s[e]=o||s[e]||"";const o=e.hidden_commands||[],i=Object.entries(s).filter(([e])=>!o.includes(e)).sort(([e],[t])=>e.localeCompare(t)),a=Object.entries(s).filter(([e])=>o.includes(e)),n=this._editingGroupCmd&&this._editingGroupCmd.groupId===e.id,r=this._showAddGroupCmd&&this._showAddGroupCmd.groupId===e.id;return H`
+      ${i.length>0?H`
         <table class="sensor-table">
           <thead>
             <tr><th>Name</th><th>Shell Command</th><th>Source</th><th></th></tr>
           </thead>
           <tbody>
-            ${a.map(([o,i])=>{const a=o in t;return H`
+            ${i.map(([s,o])=>{const i=s in t,a=i?"group":"device";return H`
                 <tr>
-                  <td style="font-family: monospace;">${o}</td>
-                  <td style="font-family: monospace; font-size: 11px; color: ${a?"#ccc":"#888"};">${i||"—"}</td>
-                  <td style="font-size: 10px; color: #666;">${a&&o in s?"both":a?"group":"device"}</td>
+                  <td style="font-family: monospace;">${s}</td>
+                  <td style="font-family: monospace; font-size: 11px; color: ${i?"#ccc":"#888"};">${o||"—"}</td>
+                  <td style="font-size: 10px; color: ${"group"===a?"#4fc3f7":"#888"};">${a}</td>
                   <td>
-                    <div class="sensor-actions">
-                      <button class="sensor-btn edit"
-                        @click=${()=>this._startEditGroupCmd(e.id,o,i)}>Edit</button>
-                      <button class="sensor-btn remove"
-                        @click=${()=>this._removeGroupCommand(e,o)}>Remove</button>
-                      <button class="sensor-btn remove" title="Hide"
-                        @click=${()=>this._hideGroupCommand(e,o)}>Hide</button>
-                    </div>
+                    ${"group"===a?H`
+                      <div class="sensor-actions">
+                        <button class="sensor-btn edit"
+                          @click=${()=>this._startEditGroupCmd(e.id,s,o)}>Edit</button>
+                        <button class="sensor-btn remove"
+                          @click=${()=>this._removeGroupCommand(e,s)}>Remove</button>
+                        <button class="sensor-btn remove" title="Hide"
+                          @click=${()=>this._hideGroupCommand(e,s)}>Hide</button>
+                      </div>
+                    `:H`
+                      <span style="font-size: 10px; color: #555; font-style: italic;">from client config</span>
+                    `}
                   </td>
                 </tr>
               `})}
@@ -2051,15 +2055,15 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         <div style="font-size: 12px; color: #555; margin-bottom: 8px;">No commands</div>
       `}
 
-      ${n.length>0?H`
+      ${a.length>0?H`
         <div style="margin-top: 6px;">
           <div style="font-size: 10px; color: #555; margin-bottom: 4px; cursor: pointer;"
             @click=${()=>{e._showHiddenCmds=!e._showHiddenCmds,this.requestUpdate()}}>
-            ${e._showHiddenCmds?"▾":"▸"} ${n.length} hidden
+            ${e._showHiddenCmds?"▾":"▸"} ${a.length} hidden
           </div>
           ${e._showHiddenCmds?H`
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-              ${n.map(([t])=>H`
+              ${a.map(([t])=>H`
                 <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
                   ${t}
                   <span style="cursor: pointer; color: #4fc3f7; font-size: 10px;"
@@ -2071,12 +2075,12 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         </div>
       `:""}
 
-      ${r||l?H`
+      ${n||r?H`
         <div class="sensor-form">
           <div class="sensor-form-grid" style="grid-template-columns: 1fr 2fr;">
             <input type="text" placeholder="Command name"
               .value=${this._groupCmdForm.name}
-              ?disabled=${!!r}
+              ?disabled=${!!n}
               @input=${e=>this._groupCmdForm={...this._groupCmdForm,name:e.target.value}}>
             <input type="text" placeholder="Shell command"
               .value=${this._groupCmdForm.shell}
@@ -2084,7 +2088,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
               @keydown=${t=>"Enter"===t.key&&this._saveGroupCmd(e)}>
           </div>
           <div class="sensor-form-actions">
-            <button class="form-btn save" @click=${()=>this._saveGroupCmd(e)}>${r?"Update":"Add"}</button>
+            <button class="form-btn save" @click=${()=>this._saveGroupCmd(e)}>${n?"Update":"Add"}</button>
             <button class="form-btn cancel" @click=${this._cancelGroupCmdForm}>Cancel</button>
           </div>
         </div>
