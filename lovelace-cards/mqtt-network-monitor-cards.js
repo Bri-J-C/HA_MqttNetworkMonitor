@@ -369,12 +369,13 @@ class MQTTDeviceStatusCard extends HTMLElement {
   }
 
   _openAddon() {
+    // Navigate to the add-on ingress within HA using HA's navigation
     if (_cachedIngressUrl) {
-      // Navigate to the add-on panel within HA
-      const slug = _cachedIngressUrl.match(/hassio_ingress\/([^/]+)/)?.[1];
-      if (slug) {
-        window.location.href = `/hassio/ingress/${slug}`;
-      }
+      // HA ingress URLs are like /api/hassio_ingress/{token}/
+      // Navigate using HA's built-in location-changed pattern
+      const event = new Event('location-changed');
+      history.pushState({}, '', _cachedIngressUrl);
+      window.dispatchEvent(event);
     }
   }
 
@@ -594,8 +595,8 @@ class MQTTTopologyCard extends HTMLElement {
     nodes.forEach((node, i) => {
       if (!positions[node.id]) {
         positions[node.id] = {
-          x: 100 + (i % cols) * 180,
-          y: 80 + Math.floor(i / cols) * 120,
+          x: 120 + (i % cols) * 200,
+          y: 80 + Math.floor(i / cols) * 130,
         };
       }
     });
@@ -608,14 +609,18 @@ class MQTTTopologyCard extends HTMLElement {
       if (pos.y < minY) minY = pos.y;
       if (pos.y > maxY) maxY = pos.y;
     }
-    const pad = 80;
+    // Scale everything relative to node count for best fit
+    const nodeCount = nodes.length;
+    const pad = 60;
+    const contentW = Math.max((maxX - minX), 1);
+    const contentH = Math.max((maxY - minY), 1);
     const vbX = minX - pad;
     const vbY = minY - pad;
-    const vbW = Math.max((maxX - minX) + pad * 2, 300);
-    const vbH = Math.max((maxY - minY) + pad * 2, 200);
+    const vbW = contentW + pad * 2;
+    const vbH = contentH + pad * 2;
 
-    const nodeW = 100, nodeH = 38, nodeR = 22;
-    const fontSz = 10, labelFontSz = 9, strokeW = 1.5;
+    const nodeW = 110, nodeH = 40, nodeR = 24;
+    const fontSz = 11, labelFontSz = 9, strokeW = 1.5;
 
     // Edge lines
     const edgesSvg = allEdges.map(e => {
@@ -691,9 +696,9 @@ class MQTTTopologyCard extends HTMLElement {
           ha-card {
             background: ${COLORS.cardBg} !important; border: none !important;
             border-radius: 12px !important;
-            height: 100%; overflow: hidden; display: flex; flex-direction: column;
+            overflow: hidden;
           }
-          .card-content { padding: 14px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+          .card-content { padding: 14px; }
           .header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 10px;
@@ -705,11 +710,10 @@ class MQTTTopologyCard extends HTMLElement {
           .count-dot { width: 6px; height: 6px; border-radius: 50%; }
           .svg-container {
             background: #0d0d20; border-radius: 10px; overflow: hidden;
-            flex: 1; min-height: 200px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; padding: 8px;
           }
           .svg-container:hover { background: #10102a; }
-          svg { width: 100%; height: 100%; display: block; }
+          svg { width: 100%; height: auto; display: block; }
         </style>
         <div class="card-content">
           <div class="header">
@@ -755,8 +759,8 @@ class MQTTTopologyCard extends HTMLElement {
     const svgContainer = this.shadowRoot.querySelector('.svg-container');
     if (svgContainer && _cachedIngressUrl) {
       svgContainer.addEventListener('click', () => {
-        const slug = _cachedIngressUrl.match(/hassio_ingress\/([^/]+)/)?.[1];
-        if (slug) window.location.href = `/hassio/ingress/${slug}`;
+        history.pushState({}, '', _cachedIngressUrl);
+        window.dispatchEvent(new Event('location-changed'));
       });
     }
   }
@@ -933,6 +937,14 @@ class MQTTDeviceStatusEditor extends HTMLElement {
             </div>
           ` : ''}
         </div>
+
+        <div class="field">
+          <label>Poll interval (seconds)</label>
+          <input id="poll-input" type="number" min="5" max="300"
+            value="${this._config.poll_interval || 10}"
+            placeholder="10">
+          <div class="hint">How often to refresh data from the add-on (default: 10s)</div>
+        </div>
       </div>
     `;
 
@@ -959,6 +971,14 @@ class MQTTDeviceStatusEditor extends HTMLElement {
       attrsInput.addEventListener('change', (e) => {
         const attrs = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
         this._update('attributes', attrs.length ? attrs : undefined);
+      });
+    }
+
+    const pollInput = root.getElementById('poll-input');
+    if (pollInput) {
+      pollInput.addEventListener('change', (e) => {
+        const val = parseInt(e.target.value);
+        this._update('poll_interval', val && val >= 5 ? val : undefined);
       });
     }
 
