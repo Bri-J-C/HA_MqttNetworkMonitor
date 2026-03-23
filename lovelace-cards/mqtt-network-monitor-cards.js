@@ -197,9 +197,10 @@ class MQTTDeviceStatusCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (!this._config) return;
-    // Throttle API fetches to every 10s, but allow immediate first render
+    // Throttle API fetches — configurable via poll_interval (seconds), default 10
+    const interval = (this._config.poll_interval || 10) * 1000;
     const now = Date.now();
-    if (!this._lastFetch || now - this._lastFetch > 10000) {
+    if (!this._lastFetch || now - this._lastFetch > interval) {
       this._lastFetch = now;
       this._fetchData();
     }
@@ -369,9 +370,11 @@ class MQTTDeviceStatusCard extends HTMLElement {
 
   _openAddon() {
     if (_cachedIngressUrl) {
-      // Navigate to the add-on ingress page
-      const path = _cachedIngressUrl.replace(/^\/api\/hassio_ingress\//, '');
-      window.open(_cachedIngressUrl, '_blank');
+      // Navigate to the add-on panel within HA
+      const slug = _cachedIngressUrl.match(/hassio_ingress\/([^/]+)/)?.[1];
+      if (slug) {
+        window.location.href = `/hassio/ingress/${slug}`;
+      }
     }
   }
 
@@ -478,7 +481,7 @@ class MQTTDeviceStatusCard extends HTMLElement {
 
   getGridOptions() {
     return {
-      columns: 6,
+      columns: 7,
       rows: 3,
       min_rows: 2,
       max_rows: 6,
@@ -591,8 +594,8 @@ class MQTTTopologyCard extends HTMLElement {
     nodes.forEach((node, i) => {
       if (!positions[node.id]) {
         positions[node.id] = {
-          x: 80 + (i % cols) * 160,
-          y: 60 + Math.floor(i / cols) * 100,
+          x: 100 + (i % cols) * 180,
+          y: 80 + Math.floor(i / cols) * 120,
         };
       }
     });
@@ -605,14 +608,14 @@ class MQTTTopologyCard extends HTMLElement {
       if (pos.y < minY) minY = pos.y;
       if (pos.y > maxY) maxY = pos.y;
     }
-    const pad = 60;
+    const pad = 80;
     const vbX = minX - pad;
     const vbY = minY - pad;
-    const vbW = Math.max((maxX - minX) + pad * 2, 200);
-    const vbH = Math.max((maxY - minY) + pad * 2, 150);
+    const vbW = Math.max((maxX - minX) + pad * 2, 300);
+    const vbH = Math.max((maxY - minY) + pad * 2, 200);
 
-    const nodeW = 80, nodeH = 32, nodeR = 18;
-    const fontSz = 9, labelFontSz = 8, strokeW = 1.5;
+    const nodeW = 100, nodeH = 38, nodeR = 22;
+    const fontSz = 10, labelFontSz = 9, strokeW = 1.5;
 
     // Edge lines
     const edgesSvg = allEdges.map(e => {
@@ -702,7 +705,8 @@ class MQTTTopologyCard extends HTMLElement {
           .count-dot { width: 6px; height: 6px; border-radius: 50%; }
           .svg-container {
             background: #0d0d20; border-radius: 10px; overflow: hidden;
-            flex: 1; min-height: 0; cursor: pointer;
+            flex: 1; min-height: 200px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
           }
           .svg-container:hover { background: #10102a; }
           svg { width: 100%; height: 100%; display: block; }
@@ -731,7 +735,7 @@ class MQTTTopologyCard extends HTMLElement {
             </div>
           </div>
           <div class="svg-container">
-            <svg viewBox="${vbX} ${vbY} ${vbW} ${vbH}">
+            <svg viewBox="${vbX} ${vbY} ${vbW} ${vbH}" preserveAspectRatio="xMidYMid meet">
               <defs>
                 <filter id="glow">
                   <feGaussianBlur stdDeviation="2" result="blur"/>
@@ -751,7 +755,8 @@ class MQTTTopologyCard extends HTMLElement {
     const svgContainer = this.shadowRoot.querySelector('.svg-container');
     if (svgContainer && _cachedIngressUrl) {
       svgContainer.addEventListener('click', () => {
-        window.open(_cachedIngressUrl, '_blank');
+        const slug = _cachedIngressUrl.match(/hassio_ingress\/([^/]+)/)?.[1];
+        if (slug) window.location.href = `/hassio/ingress/${slug}`;
       });
     }
   }
