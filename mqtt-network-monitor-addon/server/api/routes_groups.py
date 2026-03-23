@@ -32,6 +32,7 @@ def update_group(group_id: str, body: dict[str, Any]):
         custom_commands=body.get("custom_commands"),
         custom_sensors=body.get("custom_sensors"),
         thresholds=body.get("thresholds"),
+        crit_thresholds=body.get("crit_thresholds"),
         hidden_commands=body.get("hidden_commands"),
         interval=body.get("interval", ...),
     )

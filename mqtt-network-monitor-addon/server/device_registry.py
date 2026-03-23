@@ -280,6 +280,7 @@ class DeviceRegistry:
                      custom_commands: dict | None = None,
                      custom_sensors: dict | None = None,
                      thresholds: dict | None = None,
+                     crit_thresholds: dict | None = None,
                      hidden_commands: list | None = None,
                      interval: int | None = ...) -> dict | None:
         group = self._groups.get(group_id)
@@ -308,6 +309,8 @@ class DeviceRegistry:
             group["custom_sensors"] = custom_sensors
         if thresholds is not None:
             group["thresholds"] = thresholds
+        if crit_thresholds is not None:
+            group["crit_thresholds"] = crit_thresholds
         if hidden_commands is not None:
             group["hidden_commands"] = hidden_commands
         if interval is not ...:
@@ -428,9 +431,9 @@ class DeviceRegistry:
         if not device:
             return None
         allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides",
-                        "server_commands", "remote_config", "hidden_attributes",
-                        "hidden_commands", "card_attributes", "server_sensors",
-                        "config_interval", "allowed_commands"}
+                        "crit_threshold_overrides", "server_commands", "remote_config",
+                        "hidden_attributes", "hidden_commands", "card_attributes",
+                        "server_sensors", "config_interval", "allowed_commands"}
         for key in allowed_keys:
             if key in settings:
                 device[key] = settings[key]
