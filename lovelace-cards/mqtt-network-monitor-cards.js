@@ -362,21 +362,6 @@ class MQTTDeviceStatusCard extends HTMLElement {
       </ha-card>
     `;
 
-    // Click handler — navigate to add-on
-    const wrap = root.querySelector('.card-wrap');
-    wrap.style.cursor = 'pointer';
-    wrap.addEventListener('click', () => this._openAddon());
-  }
-
-  _openAddon() {
-    // Navigate to the add-on ingress within HA using HA's navigation
-    if (_cachedIngressUrl) {
-      // HA ingress URLs are like /api/hassio_ingress/{token}/
-      // Navigate using HA's built-in location-changed pattern
-      const event = new Event('location-changed');
-      history.pushState({}, '', _cachedIngressUrl);
-      window.dispatchEvent(event);
-    }
   }
 
   _relativeTime(ts) {
@@ -407,12 +392,6 @@ class MQTTDeviceStatusCard extends HTMLElement {
         height: 100%;
         box-sizing: border-box;
         border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      .card-wrap:hover {
-        background: rgba(255,255,255,0.08);
-        transform: translateY(-1px);
       }
       .loading {
         display: flex; align-items: center; gap: 12px;
@@ -710,9 +689,8 @@ class MQTTTopologyCard extends HTMLElement {
           .count-dot { width: 6px; height: 6px; border-radius: 50%; }
           .svg-container {
             background: #0d0d20; border-radius: 10px; overflow: hidden;
-            cursor: pointer; padding: 8px;
+            padding: 8px;
           }
-          .svg-container:hover { background: #10102a; }
           svg { width: 100%; height: auto; display: block; }
         </style>
         <div class="card-content">
@@ -755,14 +733,6 @@ class MQTTTopologyCard extends HTMLElement {
       </ha-card>
     `;
 
-    // Click to open add-on
-    const svgContainer = this.shadowRoot.querySelector('.svg-container');
-    if (svgContainer && _cachedIngressUrl) {
-      svgContainer.addEventListener('click', () => {
-        history.pushState({}, '', _cachedIngressUrl);
-        window.dispatchEvent(new Event('location-changed'));
-      });
-    }
   }
 
   getCardSize() {
