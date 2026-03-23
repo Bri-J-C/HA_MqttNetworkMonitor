@@ -129,8 +129,12 @@ class DeviceAttributes extends LitElement {
   _getThresholdForAttr(name) {
     const es = this.effectiveSettings;
     if (!es) return null;
-    const val = (es.thresholds || {})[name];
-    if (val == null) return null;
+    const raw = (es.thresholds || {})[name];
+    if (raw == null) return null;
+
+    // Extract numeric value — threshold can be {op, value} or plain number
+    const numericVal = typeof raw === 'object' ? raw.value : raw;
+    if (numericVal == null) return null;
 
     const deviceOverrides = this.device?.threshold_overrides || {};
     const groupId = this.device?.group_policy;
@@ -139,7 +143,7 @@ class DeviceAttributes extends LitElement {
     if (deviceOverrides[name] != null)                              source = 'device';
     else if (group?.thresholds?.[name] != null)                    source = 'group';
 
-    return { value: val, source };
+    return { value: numericVal, source };
   }
 
   _checkThreshold(currentVal, threshold) {
@@ -181,7 +185,7 @@ class DeviceAttributes extends LitElement {
 
   render() {
     if (!this.device) return html``;
-    const allAttrs    = Object.entries(this.device.attributes || {});
+    const allAttrs    = Object.entries(this.device.attributes || {}).sort(([a], [b]) => a.localeCompare(b));
     const hidden      = this.device.hidden_attributes || [];
     const visibleAttrs = allAttrs.filter(([name]) => !hidden.includes(name));
     const hiddenAttrs  = allAttrs.filter(([name]) =>  hidden.includes(name));

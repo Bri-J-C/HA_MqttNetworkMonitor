@@ -530,15 +530,15 @@ class DeviceDetail extends LitElement {
   async _saveServerCommand({ name, shell }) {
     this._serverCommands = { ...this._serverCommands, [name]: shell };
     this._localChanges   = true;
+    // Update UI immediately
+    this.requestUpdate();
+    // Save and push in background
     await updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
-    // Push FULL config so the client receives a complete replacement
-    await pushDeviceConfig(this.deviceId, {
+    pushDeviceConfig(this.deviceId, {
       interval: this._configInterval,
       plugins:  { custom_command: { commands: this._customSensors } },
       commands: this._serverCommands,
     });
-    // Force re-render so child device-commands component sees the new data
-    this.requestUpdate();
   }
 
   async _removeServerCommand(name) {

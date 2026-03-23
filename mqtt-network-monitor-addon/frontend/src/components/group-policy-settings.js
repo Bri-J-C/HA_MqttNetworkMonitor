@@ -631,39 +631,11 @@ class GroupPolicySettings extends LitElement {
 
   _renderGroupCustomSensors(g) {
     const sensors = g.custom_sensors || {};
-    const discovered = this._getGroupDiscoveredData(g);
-    const discoveredSensors = discovered.sensors;
-    const discoveredNames = Object.keys(discoveredSensors).sort();
 
     const isEditingSensor = this._editingGroupSensor && this._editingGroupSensor.groupId === g.id;
     const isAddingSensor = this._showAddGroupSensor && this._showAddGroupSensor.groupId === g.id;
 
     return html`
-      ${discoveredNames.length > 0 ? html`
-        <div class="subsection-label">Discovered from devices</div>
-        <table class="sensor-table">
-          <thead>
-            <tr><th>Name</th><th>Command</th><th>Interval</th><th>Unit</th><th></th></tr>
-          </thead>
-          <tbody>
-            ${discoveredNames.map(name => {
-              const s = discoveredSensors[name];
-              return html`
-                <tr>
-                  <td style="font-family: monospace;">${name}</td>
-                  <td style="font-family: monospace; font-size: 11px; color: #888;">${s.command || '—'}</td>
-                  <td style="color: #888;">${s.interval ? s.interval + 's' : '—'}</td>
-                  <td style="color: #888;">${s.unit || '—'}</td>
-                  <td></td>
-                </tr>
-              `;
-            })}
-          </tbody>
-        </table>
-      ` : ''}
-
-      <div class="subsection-label" style="margin-top: 10px;">Group sensors</div>
-
       ${Object.keys(sensors).length > 0 ? html`
         <table class="sensor-table">
           <thead>
