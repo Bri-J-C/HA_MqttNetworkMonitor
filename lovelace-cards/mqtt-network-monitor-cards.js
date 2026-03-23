@@ -323,29 +323,17 @@ class MQTTDeviceStatusCard extends HTMLElement {
     // Status icon
     const statusDot = d.status === 'online' ? '\u25CF' : d.status === 'offline' ? '\u25CF' : '\u26A0';
 
-    const borderColor = worstStatus === 'crit' ? COLORS.critical
-                       : worstStatus === 'warn' ? COLORS.warning
-                       : color;
-
     root.innerHTML = `
       <ha-card>
         <style>${this._baseStyles()}${this._cardStyles()}</style>
-        <div class="card-wrap ${d.status === 'offline' ? 'offline' : ''}" style="border-left: 3px solid ${borderColor}">
+        <div class="card-wrap" style="border-left: 3px solid ${color}">
           <div class="header">
-            <div class="header-left">
-              <svg class="device-icon" width="18" height="18" viewBox="0 0 16 16" style="color:${color}">
-                ${deviceIcon(d.device_type)}
-              </svg>
-              <div class="header-text">
-                <span class="name">${this._escHtml(d.device_name || this._config.device_id)}</span>
-                <span class="type">${this._escHtml(d.device_type || 'unknown')}</span>
-              </div>
-            </div>
-            <span class="status-badge" style="background:${color}18;color:${color}">
+            <span class="name">${this._escHtml(d.device_name || this._config.device_id)}</span>
+            <span class="status-badge" style="background:${color}20;color:${color}">
               ${statusDot} ${d.status || 'unknown'}
             </span>
           </div>
-
+          <div class="type">${this._escHtml(d.device_type || 'unknown')}</div>
           ${displayAttrs.length > 0 ? `
             <div class="attrs">
               ${displayAttrs.map(([name, data]) => {
@@ -353,31 +341,21 @@ class MQTTDeviceStatusCard extends HTMLElement {
                 const critTh = (d.crit_threshold_overrides || {})[name];
                 const isCrit = critTh && evalThreshold(data.value, critTh);
                 const isWarn = !isCrit && th && evalThreshold(data.value, th);
-                const valColor = isCrit ? COLORS.critical : isWarn ? COLORS.warning : COLORS.accent;
-                const fmtVal = formatValue(data.value, data.unit);
-                const fmtUnit = formatUnit(data.value, data.unit);
+                const valClass = isCrit ? 'crit' : isWarn ? 'warning' : '';
+                const val = data.value != null ? data.value : '\u2014';
+                const unit = data.unit || '';
                 return `
-                  <div class="attr ${isCrit ? 'attr-crit' : isWarn ? 'attr-warn' : ''}">
-                    <div class="attr-label">${this._escHtml(friendlyName(name))}</div>
-                    <div class="attr-value" style="color:${valColor}">
-                      ${this._escHtml(fmtVal)}${fmtUnit ? `<span class="attr-unit">${this._escHtml(fmtUnit)}</span>` : ''}
-                    </div>
+                  <div class="attr">
+                    ${this._escHtml(name.replace(/_/g, ' '))}: <span class="attr-value ${valClass}">${this._escHtml(String(val))}${unit}</span>
                   </div>
                 `;
               }).join('')}
             </div>
-          ` : `
-            <div class="no-attrs">No attributes available</div>
-          `}
-
+          ` : ''}
           ${tags.length > 0 ? `
             <div class="tags">
               ${tags.map(t => `<span class="tag">${this._escHtml(t)}</span>`).join('')}
             </div>
-          ` : ''}
-
-          ${d.last_seen ? `
-            <div class="last-seen">Last seen: ${this._relativeTime(d.last_seen)}</div>
           ` : ''}
         </div>
       </ha-card>
@@ -421,14 +399,16 @@ class MQTTDeviceStatusCard extends HTMLElement {
         border-radius: 12px !important;
       }
       .card-wrap {
-        padding: 16px;
+        padding: 14px;
         height: 100%;
         box-sizing: border-box;
-        border-radius: 12px;
-        transition: background 0.2s, transform 0.15s;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
       }
       .card-wrap:hover {
-        background: rgba(255,255,255,0.03);
+        background: rgba(255,255,255,0.08);
+        transform: translateY(-1px);
       }
       .loading {
         display: flex; align-items: center; gap: 12px;
@@ -458,78 +438,36 @@ class MQTTDeviceStatusCard extends HTMLElement {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
-      }
-      .header-left {
-        display: flex; align-items: center; gap: 10px;
-        min-width: 0;
-      }
-      .device-icon {
-        flex-shrink: 0;
-      }
-      .header-text {
-        display: flex; flex-direction: column; min-width: 0;
+        margin-bottom: 4px;
       }
       .name {
-        font-size: 14px; font-weight: 600; color: ${COLORS.text};
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      }
-      .type {
-        font-size: 11px; color: ${COLORS.textSec};
-        text-transform: capitalize;
+        font-size: 14px; font-weight: 600; color: #fff;
       }
       .status-badge {
-        font-size: 11px; padding: 3px 10px; border-radius: 12px;
-        white-space: nowrap; font-weight: 500;
-        flex-shrink: 0;
+        font-size: 11px; padding: 2px 8px; border-radius: 10px;
       }
-      .offline { opacity: 0.6; }
-      .attrs {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 6px;
-        margin-bottom: 10px;
-      }
-      .attr {
-        background: ${COLORS.tileBg};
-        border-radius: 8px;
-        padding: 10px;
-        text-align: center;
-        border: 1px solid transparent;
-        transition: border-color 0.2s;
-      }
-      .attr-warn { border-color: ${COLORS.warning}30; }
-      .attr-crit { border-color: ${COLORS.critical}30; }
-      .attr-label {
-        font-size: 9px; color: ${COLORS.textSec};
-        text-transform: uppercase; letter-spacing: 0.5px;
-        margin-bottom: 4px;
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      }
-      .attr-value {
-        font-size: 20px; font-weight: 700;
-        line-height: 1.2;
-      }
-      .attr-unit {
-        font-size: 11px; color: ${COLORS.textSec};
-        font-weight: 400; margin-left: 2px;
-      }
-      .no-attrs {
-        color: ${COLORS.textSec}; font-size: 12px;
-        text-align: center; padding: 16px 0;
-      }
-      .tags {
-        display: flex; gap: 4px; flex-wrap: wrap;
+      .type {
+        font-size: 11px; color: rgba(255,255,255,0.5);
         margin-bottom: 8px;
       }
-      .tag {
-        font-size: 9px; padding: 2px 8px; border-radius: 4px;
-        background: ${COLORS.tagBg}; color: ${COLORS.tagText};
-        font-weight: 500; letter-spacing: 0.3px;
+      .attrs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
       }
-      .last-seen {
-        font-size: 10px; color: ${COLORS.textSec};
-        text-align: right;
+      .attr {
+        font-size: 11px;
+        color: rgba(255,255,255,0.5);
+      }
+      .attr-value { color: rgba(255,255,255,0.8); }
+      .attr-value.warning { color: #ffb74d; }
+      .attr-value.crit { color: #ef5350; }
+      .tags {
+        display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap;
+      }
+      .tag {
+        font-size: 9px; background: rgba(0,212,255,0.15); color: #00D4FF;
+        padding: 1px 6px; border-radius: 3px;
       }
     `;
   }
