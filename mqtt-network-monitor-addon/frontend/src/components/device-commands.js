@@ -20,11 +20,11 @@ class DeviceCommands extends LitElement {
 
   static styles = css`
     .section {
-      background: #2a2a4a; border-radius: 8px; padding: 16px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
     }
     .section-title {
-      font-size: 12px; color: #666; text-transform: uppercase;
+      font-size: 12px; color: #238ecc; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 12px; font-weight: 600;
     }
     .commands { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -32,31 +32,31 @@ class DeviceCommands extends LitElement {
       display: inline-flex; position: relative;
     }
     .cmd-btn {
-      background: #3a3a5a; border: none; color: #ccc; padding: 8px 14px;
+      background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.8); padding: 8px 14px;
       border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s;
     }
-    .cmd-btn:hover { background: #4a4a6a; }
+    .cmd-btn:hover { background: rgba(255,255,255,0.15); }
     .cmd-btn.danger { background: #5a2a2a; color: #ef5350; }
     .cmd-btn.danger:hover { background: #6a3a3a; }
     .cmd-eye {
       position: absolute; top: -4px; right: -4px;
-      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 50%;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
       width: 16px; height: 16px; display: flex; align-items: center;
       justify-content: center; cursor: pointer; font-size: 9px;
-      color: #666; transition: all 0.15s; line-height: 1;
+      color: #fff; transition: all 0.15s; line-height: 1;
     }
-    .cmd-eye:hover { color: #4fc3f7; border-color: #4fc3f7; background: #1a2a3e; }
+    .cmd-eye:hover { color: #00D4FF; border-color: #00D4FF; background: rgba(0,212,255,0.1); }
     .cmd-result {
-      margin-top: 8px; padding: 8px 12px; background: #1a1a2e;
-      border-radius: 4px; font-size: 12px; color: #aaa; font-family: monospace;
+      margin-top: 8px; padding: 8px 12px; background: #0d0d1f;
+      border-radius: 4px; font-size: 12px; color: #fff; font-family: monospace;
     }
     .sensor-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     .sensor-table th {
-      text-align: left; font-size: 10px; color: #666; text-transform: uppercase;
-      letter-spacing: 0.5px; padding: 6px 8px; border-bottom: 1px solid #3a3a5a;
+      text-align: left; font-size: 10px; color: #fff; text-transform: uppercase;
+      letter-spacing: 0.5px; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     .sensor-table td {
-      font-size: 12px; color: #ccc; padding: 7px 8px; border-bottom: 1px solid #2a2a4a;
+      font-size: 12px; color: rgba(255,255,255,0.8); padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     .sensor-table td.mono { font-family: monospace; font-size: 11px; }
     .sensor-table tr:last-child td { border-bottom: none; }
@@ -65,34 +65,34 @@ class DeviceCommands extends LitElement {
       background: none; border: none; cursor: pointer; font-size: 11px;
       padding: 2px 6px; border-radius: 3px; transition: all 0.15s;
     }
-    .sensor-btn.edit   { color: #4fc3f7; }
-    .sensor-btn.edit:hover  { background: rgba(79,195,247,0.1); }
-    .sensor-btn.remove { color: #666; }
+    .sensor-btn.edit   { color: #00D4FF; }
+    .sensor-btn.edit:hover  { background: rgba(0,212,255,0.1); }
+    .sensor-btn.remove { color: #fff; }
     .sensor-btn.remove:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
     .sensor-form {
-      background: #1a1a2e; border-radius: 6px; padding: 14px; margin-bottom: 12px;
+      background: #0d0d1f; border-radius: 6px; padding: 14px; margin-bottom: 12px;
     }
     .sensor-form-grid {
       display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-bottom: 10px;
     }
     .sensor-form-grid input {
-      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 4px;
-      color: #e0e0e0; padding: 5px 8px; font-size: 12px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      color: #fff; padding: 5px 8px; font-size: 12px;
     }
-    .sensor-form-grid input:focus { outline: none; border-color: #4fc3f7; }
-    .sensor-form-grid input::placeholder { color: #555; }
+    .sensor-form-grid input:focus { outline: none; border-color: #00D4FF; }
+    .sensor-form-grid input::placeholder { color: #fff; }
     .sensor-form-actions { display: flex; gap: 6px; }
     .form-btn {
       border: none; padding: 5px 14px; border-radius: 4px; cursor: pointer; font-size: 12px;
     }
-    .form-btn.save   { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
-    .form-btn.cancel { background: #3a3a5a; color: #aaa; }
+    .form-btn.save   { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
+    .form-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
     .add-btn {
-      background: none; border: 1px dashed #3a3a5a; color: #666; padding: 6px 14px;
+      background: none; border: 1px dashed rgba(255,255,255,0.1); color: #fff; padding: 6px 14px;
       border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.15s;
       margin-top: 8px;
     }
-    .add-btn:hover { border-color: #4fc3f7; color: #4fc3f7; }
+    .add-btn:hover { border-color: #00D4FF; color: #00D4FF; }
   `;
 
   constructor() {
@@ -135,7 +135,7 @@ class DeviceCommands extends LitElement {
         ${this.commandResult ? html`<div class="cmd-result">${this.commandResult}</div>` : ''}
 
         ${serverNames.length > 0 ? html`
-          <div style="margin-top: 8px; font-size: 11px; color: #555; margin-bottom: 6px;">Server-managed commands</div>
+          <div style="margin-top: 8px; font-size: 11px; color: #fff; margin-bottom: 6px;">Server-managed commands</div>
           <table class="sensor-table">
             <thead><tr><th>Name</th><th>Shell Command</th><th></th></tr></thead>
             <tbody>
@@ -178,16 +178,16 @@ class DeviceCommands extends LitElement {
 
         ${hiddenList.length > 0 ? html`
           <div style="margin-top: 12px;">
-            <div style="font-size: 10px; color: #555; margin-bottom: 6px; cursor: pointer;"
+            <div style="font-size: 10px; color: #fff; margin-bottom: 6px; cursor: pointer;"
               @click=${() => this._showHiddenCmds = !this._showHiddenCmds}>
               ${this._showHiddenCmds ? '\u25BE' : '\u25B8'} ${hiddenList.length} hidden
             </div>
             ${this._showHiddenCmds ? html`
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 ${hiddenList.map(cmd => html`
-                  <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 11px; background: #0d0d1f; color: #fff; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px;">
                     ${cmd}
-                    <span style="cursor: pointer; color: #4fc3f7; font-size: 10px;"
+                    <span style="cursor: pointer; color: #00D4FF; font-size: 10px;"
                       @click=${() => this._onUnhide(cmd)}>show</span>
                   </span>
                 `)}

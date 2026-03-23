@@ -15,11 +15,11 @@ class TagRegistrySettings extends LitElement {
     :host { display: block; }
 
     .section {
-      background: #2a2a4a; border-radius: 8px; padding: 20px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 20px;
       margin-bottom: 20px;
     }
     .section-title {
-      font-size: 12px; color: #666; text-transform: uppercase;
+      font-size: 12px; color: #238ecc; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 16px; font-weight: 600;
     }
 
@@ -28,52 +28,52 @@ class TagRegistrySettings extends LitElement {
       gap: 8px; margin-bottom: 8px;
     }
     .tag-card {
-      background: #1a1a2e; border-radius: 8px; padding: 12px;
-      border: 1px solid #2a2a4a; cursor: pointer; transition: all 0.15s;
+      background: #0d0d1f; border-radius: 8px; padding: 12px;
+      border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: all 0.15s;
     }
-    .tag-card:hover { border-color: #3a3a5a; background: #1a1a30; }
-    .tag-card.selected { border-color: #4fc3f7; background: #1a2a3e; }
+    .tag-card:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+    .tag-card.selected { border-color: #00D4FF; background: rgba(0,212,255,0.1); }
     .tag-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .tag-card-name { font-size: 14px; color: #ccc; font-weight: 600; }
-    .tag-card-count { font-size: 11px; color: #666; margin-bottom: 8px; }
+    .tag-card-name { font-size: 14px; color: rgba(255,255,255,0.8); font-weight: 600; }
+    .tag-card-count { font-size: 11px; color: #fff; margin-bottom: 8px; }
     .tag-card-actions { display: flex; gap: 4px; }
     .icon-btn {
       background: none; border: none; cursor: pointer; font-size: 12px;
       padding: 2px 8px; border-radius: 4px; transition: all 0.15s;
     }
-    .icon-btn.delete { color: #666; }
+    .icon-btn.delete { color: #fff; }
     .icon-btn.delete:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
     .sensor-btn {
       background: none; border: none; cursor: pointer; font-size: 11px;
       padding: 2px 8px; border-radius: 4px;
     }
-    .sensor-btn.edit { color: #4fc3f7; }
-    .sensor-btn.edit:hover { background: rgba(79,195,247,0.1); }
-    .sensor-btn.remove { color: #666; }
+    .sensor-btn.edit { color: #00D4FF; }
+    .sensor-btn.edit:hover { background: rgba(0,212,255,0.1); }
+    .sensor-btn.remove { color: #fff; }
     .sensor-btn.remove:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
-    .sensor-form { background: #12122a; border-radius: 6px; padding: 10px; margin-top: 6px; }
+    .sensor-form { background: rgba(255,255,255,0.03); border-radius: 6px; padding: 10px; margin-top: 6px; }
     .sensor-form-grid { display: grid; gap: 6px; margin-bottom: 6px; }
     .sensor-form-grid input {
-      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 4px;
-      color: #e0e0e0; padding: 6px 8px; font-size: 12px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      color: #fff; padding: 6px 8px; font-size: 12px;
     }
-    .sensor-form-grid input:focus { outline: none; border-color: #4fc3f7; }
+    .sensor-form-grid input:focus { outline: none; border-color: #00D4FF; }
     .sensor-form-actions { display: flex; gap: 6px; }
     .form-btn { border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    .form-btn.save { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
-    .form-btn.cancel { background: #3a3a5a; color: #aaa; }
+    .form-btn.save { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
+    .form-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
     .small-input {
-      background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 4px;
-      color: #e0e0e0; padding: 4px 10px; font-size: 12px;
+      background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      color: #fff; padding: 4px 10px; font-size: 12px;
     }
-    .small-input:focus { outline: none; border-color: #4fc3f7; }
+    .small-input:focus { outline: none; border-color: #00D4FF; }
     .small-btn {
-      background: #4fc3f7; border: none; color: #1a1a2e; padding: 4px 12px;
+      background: #00D4FF; border: none; color: #0d0d1f; padding: 4px 12px;
       border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;
     }
-    .small-btn:hover { background: #81d4fa; }
-    .small-btn.cancel { background: #3a3a5a; color: #aaa; }
-    .small-btn.cancel:hover { background: #4a4a6a; }
+    .small-btn:hover { background: #33DDFF; }
+    .small-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
+    .small-btn.cancel:hover { background: rgba(255,255,255,0.15); }
     .add-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
   `;
 
@@ -111,12 +111,12 @@ class TagRegistrySettings extends LitElement {
       <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div class="section-title" style="margin-bottom: 0;">Tag Registry</div>
-          <span style="font-size: 10px; color: #555;">Server-managed tags only</span>
+          <span style="font-size: 10px; color: #fff;">Server-managed tags only</span>
         </div>
 
         ${selectedCount > 0 ? html`
-          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; padding: 8px 12px; background: #12122a; border-radius: 6px;">
-            <span style="font-size: 12px; color: #ccc;">${selectedCount} selected</span>
+          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+            <span style="font-size: 12px; color: rgba(255,255,255,0.8);">${selectedCount} selected</span>
             <button class="small-btn cancel" style="font-size: 11px; padding: 3px 10px;"
               @click=${this._deleteSelectedTags}>Delete Selected</button>
             <button class="small-btn cancel" style="font-size: 11px; padding: 3px 10px;"
@@ -128,11 +128,11 @@ class TagRegistrySettings extends LitElement {
           <div class="tag-grid">
             ${this._tags.map(item => this._renderTagCard(item))}
           </div>
-        ` : html`<div style="color: #555; font-size: 13px; margin-bottom: 12px;">No tags created yet</div>`}
+        ` : html`<div style="color: #fff; font-size: 13px; margin-bottom: 12px;">No tags created yet</div>`}
 
         ${this._renamingTag ? html`
           <div class="sensor-form" style="margin-top: 12px;">
-            <div style="font-size: 11px; color: #888; margin-bottom: 6px;">Rename "${this._renamingTag}"</div>
+            <div style="font-size: 11px; color: #fff; margin-bottom: 6px;">Rename "${this._renamingTag}"</div>
             <div class="sensor-form-grid" style="grid-template-columns: 1fr;">
               <input type="text" .value=${this._renameValue}
                 @input=${(e) => this._renameValue = e.target.value}

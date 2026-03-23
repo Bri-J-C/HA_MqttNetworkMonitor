@@ -4,10 +4,10 @@ import { wsService } from '../services/websocket.js';
 import './device-detail.js';
 
 const STATUS_COLORS = {
-  online: '#81c784',
+  online: '#04d65c',
   offline: '#ef5350',
   warning: '#ffb74d',
-  inferred: '#4fc3f7',
+  inferred: '#00D4FF',
   unknown: '#666',
 };
 
@@ -38,36 +38,36 @@ class TopologyView extends LitElement {
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
     .toolbar {
       display: flex; justify-content: space-between; align-items: center;
-      background: #2a2a4a; padding: 8px 14px; border-radius: 8px;
+      background: rgba(255,255,255,0.05); padding: 8px 14px; border-radius: 8px;
       margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
     }
     .toolbar-left { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .toolbar-right { display: flex; gap: 8px; font-size: 11px; }
     select {
-      background: #3a3a5a; color: #ccc; border: 1px solid #555;
+      background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.1);
       border-radius: 4px; padding: 4px 8px; font-size: 12px;
     }
     .tool-btn {
-      background: none; border: none; color: #aaa; cursor: pointer;
+      background: none; border: none; color: #fff; cursor: pointer;
       font-size: 12px; padding: 4px 10px; border-radius: 4px; transition: all 0.2s;
     }
-    .tool-btn:hover { background: rgba(255,255,255,0.05); color: #ccc; }
-    .tool-btn.active { color: #4fc3f7; background: rgba(79,195,247,0.1); }
+    .tool-btn:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+    .tool-btn.active { color: #00D4FF; background: rgba(0,212,255,0.1); }
     .tool-btn.link-mode { color: #ffb74d; }
-    .tool-btn.link-mode.active { color: #1a1a2e; background: #ffb74d; }
+    .tool-btn.link-mode.active { color: #0d0d1f; background: #ffb74d; }
     .tool-btn.danger { color: #ef5350; }
     .tool-btn.danger:hover { background: rgba(239,83,80,0.1); }
-    .tool-btn.save { color: #81c784; }
+    .tool-btn.save { color: #04d65c; }
     .tool-btn.save:hover { background: rgba(129,199,132,0.15); color: #a5d6a7; }
     .status-dot { font-size: 11px; }
-    .separator { color: #444; }
+    .separator { color: #666; }
     .canvas-container {
-      background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4a;
+      background: #0d0d1f; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);
       position: relative; overflow: hidden;
     }
     svg { width: 100%; height: 500px; display: block; }
     .detail-panel {
-      background: #2a2a4a; border-radius: 8px; padding: 14px; margin-top: 12px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 14px; margin-top: 12px;
     }
     .detail-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -79,33 +79,33 @@ class TopologyView extends LitElement {
       padding: 8px 14px; margin-bottom: 12px; font-size: 12px; color: #ffb74d;
     }
     .edge-panel {
-      background: #2a2a4a; border-radius: 8px; padding: 14px; margin-top: 12px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 14px; margin-top: 12px;
     }
     .edge-panel-header {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 10px;
     }
     .edge-label-input {
-      background: #3a3a5a; border: 1px solid #555; border-radius: 4px;
-      color: #ccc; padding: 4px 8px; font-size: 12px; width: 200px;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      color: rgba(255,255,255,0.8); padding: 4px 8px; font-size: 12px; width: 200px;
     }
     .edge-list {
       margin-top: 8px;
     }
     .edge-item {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 0; border-bottom: 1px solid #3a3a5a; font-size: 12px; color: #aaa;
+      padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 12px; color: #fff;
     }
     .edge-item:last-child { border-bottom: none; }
     .device-panel {
-      background: #2a2a4a; border-radius: 8px; padding: 16px; margin-top: 12px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px; margin-top: 12px;
     }
     .device-header {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 12px;
     }
     .device-title { font-size: 18px; font-weight: 700; }
-    .device-type { font-size: 12px; color: #666; }
+    .device-type { font-size: 12px; color: #fff; }
     .device-status-badge {
       padding: 3px 10px; border-radius: 10px; font-size: 12px;
     }
@@ -113,7 +113,7 @@ class TopologyView extends LitElement {
       margin-top: 14px;
     }
     .device-section-title {
-      font-size: 11px; color: #666; text-transform: uppercase;
+      font-size: 11px; color: #fff; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 8px;
     }
     .attr-grid {
@@ -121,52 +121,52 @@ class TopologyView extends LitElement {
       gap: 8px;
     }
     .attr-item {
-      background: #1a1a2e; border-radius: 6px; padding: 10px; text-align: center;
+      background: #0d0d1f; border-radius: 6px; padding: 10px; text-align: center;
     }
-    .attr-label { font-size: 10px; color: #666; text-transform: uppercase; }
-    .attr-val { font-size: 18px; font-weight: 700; color: #4fc3f7; margin-top: 2px; }
-    .attr-unit { font-size: 11px; color: #888; }
+    .attr-label { font-size: 10px; color: #fff; text-transform: uppercase; }
+    .attr-val { font-size: 18px; font-weight: 700; color: #00D4FF; margin-top: 2px; }
+    .attr-unit { font-size: 11px; color: #fff; }
     .attr-val.warning { color: #ffb74d; }
     .network-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 6px;
     }
-    .net-item { font-size: 12px; color: #aaa; }
-    .net-label { color: #666; }
+    .net-item { font-size: 12px; color: #fff; }
+    .net-label { color: #fff; }
     .tags-row { display: flex; gap: 6px; flex-wrap: wrap; }
     .tag-badge {
       font-size: 10px; padding: 2px 8px; border-radius: 4px;
-      background: #1e3a5f; color: #4fc3f7;
+      background: rgba(0,212,255,0.15); color: #00D4FF;
     }
-    .tag-badge.server { background: #3a1e5f; color: #ce93d8; }
+    .tag-badge.server { background: rgba(99,102,241,0.15); color: #6366F1; }
     .commands-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .cmd-btn {
-      background: #3a3a5a; border: none; color: #ccc; padding: 6px 14px;
+      background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.8); padding: 6px 14px;
       border-radius: 5px; cursor: pointer; font-size: 12px; transition: all 0.2s;
     }
-    .cmd-btn:hover { background: #4a4a6a; }
+    .cmd-btn:hover { background: rgba(255,255,255,0.15); }
     .cmd-btn.danger { background: #5a2a2a; color: #ef5350; }
     .cmd-btn.danger:hover { background: #6a3a3a; }
     .cmd-result {
-      margin-top: 6px; padding: 6px 10px; background: #1a1a2e;
-      border-radius: 4px; font-size: 11px; color: #aaa; font-family: monospace;
+      margin-top: 6px; padding: 6px 10px; background: #0d0d1f;
+      border-radius: 4px; font-size: 11px; color: #fff; font-family: monospace;
     }
     .close-btn {
-      background: none; border: none; color: #666; cursor: pointer;
+      background: none; border: none; color: #fff; cursor: pointer;
       font-size: 18px; padding: 0 4px; line-height: 1;
     }
-    .close-btn:hover { color: #ccc; }
+    .close-btn:hover { color: rgba(255,255,255,0.8); }
     .save-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.6); display: flex; align-items: center;
       justify-content: center; z-index: 1000;
     }
     .save-dialog {
-      background: #2a2a4a; border-radius: 12px; padding: 24px;
-      min-width: 320px; max-width: 400px; border: 1px solid #3a3a5a;
+      background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px;
+      min-width: 320px; max-width: 400px; border: 1px solid rgba(255,255,255,0.1);
     }
-    .save-dialog h3 { color: #e0e0e0; margin-bottom: 8px; font-size: 16px; }
-    .save-dialog p { color: #888; font-size: 13px; margin-bottom: 20px; }
+    .save-dialog h3 { color: #fff; margin-bottom: 8px; font-size: 16px; }
+    .save-dialog p { color: #fff; font-size: 13px; margin-bottom: 20px; }
     .save-dialog-buttons {
       display: flex; gap: 8px; justify-content: flex-end;
     }
@@ -174,36 +174,36 @@ class TopologyView extends LitElement {
       border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer;
       font-size: 13px; transition: all 0.2s;
     }
-    .dialog-btn.save { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
-    .dialog-btn.save:hover { background: #81d4fa; }
-    .dialog-btn.discard { background: #3a3a5a; color: #ef5350; }
+    .dialog-btn.save { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
+    .dialog-btn.save:hover { background: #33DDFF; }
+    .dialog-btn.discard { background: rgba(255,255,255,0.1); color: #ef5350; }
     .dialog-btn.discard:hover { background: #4a3a3a; }
-    .dialog-btn.cancel { background: #3a3a5a; color: #aaa; }
-    .dialog-btn.cancel:hover { background: #4a4a6a; }
+    .dialog-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
+    .dialog-btn.cancel:hover { background: rgba(255,255,255,0.15); }
     .dirty-indicator {
       font-size: 11px; color: #ffb74d; margin-left: 4px;
     }
     .label-dialog {
-      background: #2a2a4a; border-radius: 12px; padding: 24px;
-      min-width: 360px; max-width: 440px; border: 1px solid #3a3a5a;
+      background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px;
+      min-width: 360px; max-width: 440px; border: 1px solid rgba(255,255,255,0.1);
     }
-    .label-dialog h3 { color: #e0e0e0; margin-bottom: 4px; font-size: 16px; }
-    .label-dialog .subtitle { color: #666; font-size: 12px; margin-bottom: 16px; }
+    .label-dialog h3 { color: #fff; margin-bottom: 4px; font-size: 16px; }
+    .label-dialog .subtitle { color: #fff; font-size: 12px; margin-bottom: 16px; }
     .label-field { margin-bottom: 14px; }
     .label-field label {
-      display: block; font-size: 11px; color: #888; text-transform: uppercase;
+      display: block; font-size: 11px; color: #fff; text-transform: uppercase;
       letter-spacing: 0.5px; margin-bottom: 4px;
     }
     .label-field input {
-      width: 100%; background: #1a1a2e; border: 1px solid #3a3a5a;
-      border-radius: 6px; color: #e0e0e0; padding: 8px 12px; font-size: 13px;
+      width: 100%; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; color: #fff; padding: 8px 12px; font-size: 13px;
       box-sizing: border-box;
     }
     .label-field input:focus {
-      outline: none; border-color: #4fc3f7;
+      outline: none; border-color: #00D4FF;
     }
     .label-field .hint {
-      font-size: 10px; color: #555; margin-top: 3px;
+      font-size: 10px; color: #fff; margin-top: 3px;
     }
   `;
 
@@ -367,7 +367,7 @@ class TopologyView extends LitElement {
 
   render() {
     if (this._loading && !this.topology.nodes.length) {
-      return html`<div style="padding: 40px; text-align: center; color: #888;">Loading topology...</div>`;
+      return html`<div style="padding: 40px; text-align: center; color: #fff;">Loading topology...</div>`;
     }
     if (this._error) {
       return html`<div style="padding: 40px; text-align: center; color: #ef5350;">${this._error}</div>`;
@@ -417,7 +417,7 @@ class TopologyView extends LitElement {
           ` : ''}
         </div>
         <div class="toolbar-right">
-          <span class="status-dot" style="color: #81c784">${counts.online} online</span>
+          <span class="status-dot" style="color: #04d65c">${counts.online} online</span>
           <span class="status-dot" style="color: #ef5350">${counts.offline} offline</span>
           <span class="status-dot" style="color: #ffb74d">${counts.warning} warning</span>
         </div>
@@ -480,7 +480,7 @@ class TopologyView extends LitElement {
         @mousedown=${(e) => this.editMode && !this.linkMode && this._onMouseDown(e, node.id)}
         style="cursor:pointer">
         <rect x="-45" y="-18" width="90" height="36" rx="6"
-          fill="#2a2a4a" stroke="${glowColor}" stroke-width="${strokeWidth}"
+          fill="rgba(255,255,255,0.05)" stroke="${glowColor}" stroke-width="${strokeWidth}"
           stroke-dasharray="${strokeDash}"/>
         <text text-anchor="middle" dy="-3" fill="${glowColor}" font-size="10">
           ${(node.name || node.id).substring(0, 12)}
@@ -535,7 +535,7 @@ class TopologyView extends LitElement {
 
     const isManual = edge.type === 'manual';
     const isSelected = isManual && this._selectedEdge === index - (this.topology.edges?.length || 0);
-    const strokeColor = isManual ? '#4fc3f7' : '#555';
+    const strokeColor = isManual ? '#00D4FF' : '#555';
     const strokeWidth = isSelected ? 2.5 : 1.5;
     const dash = isManual ? 'none' : '4,2';
 
@@ -571,21 +571,21 @@ class TopologyView extends LitElement {
     return svg`
       ${edge.label ? svg`
         <rect x="${midX - edge.label.length * 3 - 3}" y="${midY - 9}"
-          width="${edge.label.length * 6 + 6}" height="13" rx="2" fill="#1a1a2e" opacity="0.9"/>
+          width="${edge.label.length * 6 + 6}" height="13" rx="2" fill="#0d0d1f" opacity="0.9"/>
         <text x="${midX}" y="${midY}" text-anchor="middle"
           fill="#888" font-size="9" style="pointer-events:none">${edge.label}</text>
       ` : svg``}
       ${edge.sourceLabel ? svg`
         <rect x="${srcX - edge.sourceLabel.length * 2.5 - 3}" y="${srcY - 8}"
-          width="${edge.sourceLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>
+          width="${edge.sourceLabel.length * 5 + 6}" height="12" rx="2" fill="#0d0d1f" opacity="0.9"/>
         <text x="${srcX}" y="${srcY}" text-anchor="middle"
-          fill="#4fc3f7" font-size="8" style="pointer-events:none">${edge.sourceLabel}</text>
+          fill="#00D4FF" font-size="8" style="pointer-events:none">${edge.sourceLabel}</text>
       ` : svg``}
       ${edge.targetLabel ? svg`
         <rect x="${tgtX - edge.targetLabel.length * 2.5 - 3}" y="${tgtY - 8}"
-          width="${edge.targetLabel.length * 5 + 6}" height="12" rx="2" fill="#1a1a2e" opacity="0.9"/>
+          width="${edge.targetLabel.length * 5 + 6}" height="12" rx="2" fill="#0d0d1f" opacity="0.9"/>
         <text x="${tgtX}" y="${tgtY}" text-anchor="middle"
-          fill="#4fc3f7" font-size="8" style="pointer-events:none">${edge.targetLabel}</text>
+          fill="#00D4FF" font-size="8" style="pointer-events:none">${edge.targetLabel}</text>
       ` : svg``}
     `;
   }
@@ -607,12 +607,12 @@ class TopologyView extends LitElement {
     const node = this.topology.nodes.find(n => n.id === this.selectedNode);
     if (!node || node.type === 'gateway') {
       return html`
-        <div style="background: #2a2a4a; border-radius: 8px; padding: 14px; margin-top: 12px;">
+        <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 14px; margin-top: 12px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 16px; font-weight: 600; color: #4fc3f7;">${node ? node.name : this.selectedNode}</span>
+            <span style="font-size: 16px; font-weight: 600; color: #00D4FF;">${node ? node.name : this.selectedNode}</span>
             <button class="tool-btn" @click=${() => { this.selectedNode = null; }}>✕</button>
           </div>
-          <div style="color: #666; font-size: 12px; margin-top: 4px;">${node ? node.type : 'unknown'}</div>
+          <div style="color: #fff; font-size: 12px; margin-top: 4px;">${node ? node.type : 'unknown'}</div>
         </div>
       `;
     }
@@ -629,17 +629,17 @@ class TopologyView extends LitElement {
     return html`
       <div class="edge-panel">
         <div class="edge-panel-header">
-          <span style="font-size: 13px; color: #ccc; font-weight: 600;">Manual Links</span>
+          <span style="font-size: 13px; color: rgba(255,255,255,0.8); font-weight: 600;">Manual Links</span>
         </div>
         <div class="edge-list">
           ${this.manualEdges.map((edge, i) => html`
             <div class="edge-item">
               <span>
                 ${this._getNodeName(edge.source)}
-                ${edge.sourceLabel ? html`<span style="color: #4fc3f7; font-size: 10px;"> [${edge.sourceLabel}]</span>` : ''}
-                <span style="color: #666;"> &#8594; </span>
-                ${edge.label ? html`<span style="color: #888; font-size: 10px;">(${edge.label})</span><span style="color: #666;"> &#8594; </span>` : ''}
-                ${edge.targetLabel ? html`<span style="color: #4fc3f7; font-size: 10px;">[${edge.targetLabel}] </span>` : ''}
+                ${edge.sourceLabel ? html`<span style="color: #00D4FF; font-size: 10px;"> [${edge.sourceLabel}]</span>` : ''}
+                <span style="color: #fff;"> &#8594; </span>
+                ${edge.label ? html`<span style="color: #fff; font-size: 10px;">(${edge.label})</span><span style="color: #fff;"> &#8594; </span>` : ''}
+                ${edge.targetLabel ? html`<span style="color: #00D4FF; font-size: 10px;">[${edge.targetLabel}] </span>` : ''}
                 ${this._getNodeName(edge.target)}
               </span>
               <span style="display: flex; gap: 4px;">

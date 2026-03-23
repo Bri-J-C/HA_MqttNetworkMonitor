@@ -27,22 +27,22 @@ class DashboardView extends LitElement {
       display: flex; gap: 6px;
     }
     .filter-btn {
-      background: #2a2a4a; border: none; color: #aaa; padding: 6px 14px;
+      background: rgba(255,255,255,0.05); border: none; color: #fff; padding: 6px 14px;
       border-radius: 16px; cursor: pointer; font-size: 13px; transition: all 0.2s;
     }
-    .filter-btn:hover { background: #3a3a5a; color: #ccc; }
-    .filter-btn.active { background: #4fc3f7; color: #1a1a2e; }
+    .filter-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+    .filter-btn.active { background: #00D4FF; color: #0d0d1f; }
 
     .view-toggle {
       margin-left: auto; display: flex; gap: 4px;
-      background: #2a2a4a; border-radius: 16px; padding: 3px;
+      background: rgba(255,255,255,0.05); border-radius: 16px; padding: 3px;
     }
     .view-btn {
-      background: none; border: none; color: #888; padding: 4px 14px;
+      background: none; border: none; color: #fff; padding: 4px 14px;
       border-radius: 13px; cursor: pointer; font-size: 13px; transition: all 0.2s;
     }
-    .view-btn.active { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
-    .view-btn:not(.active):hover { color: #ccc; }
+    .view-btn.active { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
+    .view-btn:not(.active):hover { color: rgba(255,255,255,0.8); }
 
     .active-tags {
       display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
@@ -50,16 +50,16 @@ class DashboardView extends LitElement {
     }
     .active-tag {
       display: flex; align-items: center; gap: 4px;
-      background: #1e3a5f; color: #4fc3f7; padding: 4px 10px;
+      background: rgba(0,212,255,0.15); color: #00D4FF; padding: 4px 10px;
       border-radius: 12px; font-size: 12px;
     }
     .active-tag .remove {
       cursor: pointer; font-size: 14px; line-height: 1;
-      color: #4fc3f7; opacity: 0.6; transition: opacity 0.15s;
+      color: #00D4FF; opacity: 0.6; transition: opacity 0.15s;
     }
     .active-tag .remove:hover { opacity: 1; }
     .clear-all {
-      background: none; border: none; color: #888; font-size: 12px;
+      background: none; border: none; color: #fff; font-size: 12px;
       cursor: pointer; padding: 4px 8px; transition: color 0.15s;
     }
     .clear-all:hover { color: #ef5350; }
@@ -73,35 +73,35 @@ class DashboardView extends LitElement {
       display: flex; align-items: center; gap: 4px;
     }
     .refresh-select {
-      background: #2a2a4a; border: 1px solid #3a3a5a; color: #aaa;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;
       padding: 4px 8px; border-radius: 12px; font-size: 11px; cursor: pointer;
     }
-    .refresh-select:focus { outline: none; border-color: #4fc3f7; }
+    .refresh-select:focus { outline: none; border-color: #00D4FF; }
     .empty {
-      text-align: center; padding: 60px; color: #666;
+      text-align: center; padding: 60px; color: #fff;
     }
 
     /* By Group view */
     .group-section { margin-bottom: 16px; }
     .group-section-header {
       display: flex; align-items: center; gap: 10px;
-      background: #2a2a4a; border-radius: 8px; padding: 10px 16px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 10px 16px;
       cursor: pointer; user-select: none; margin-bottom: 8px;
       transition: background 0.15s;
     }
-    .group-section-header:hover { background: #323258; }
-    .group-chevron { font-size: 10px; color: #555; transition: transform 0.2s; }
+    .group-section-header:hover { background: rgba(255,255,255,0.08); }
+    .group-chevron { font-size: 10px; color: #fff; transition: transform 0.2s; }
     .group-chevron.open { transform: rotate(90deg); }
-    .group-section-name { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+    .group-section-name { font-size: 14px; font-weight: 600; color: #fff; }
     .group-health {
-      margin-left: auto; font-size: 12px; color: #888;
+      margin-left: auto; font-size: 12px; color: #fff;
       display: flex; gap: 10px;
     }
     .health-dot { display: flex; align-items: center; gap: 4px; }
-    .group-device-count { font-size: 11px; color: #666; }
+    .group-device-count { font-size: 11px; color: #fff; }
     .group-body { padding: 0; }
     .ungrouped-header {
-      font-size: 11px; color: #555; text-transform: uppercase;
+      font-size: 11px; color: #fff; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 8px; margin-top: 4px;
     }
   `;
@@ -330,7 +330,7 @@ class DashboardView extends LitElement {
           <span class="group-section-name">${g.name}</span>
           <span class="group-device-count">${devices.length} device${devices.length !== 1 ? 's' : ''}</span>
           <div class="group-health">
-            <span class="health-dot" style="color: #81c784">
+            <span class="health-dot" style="color: #04d65c">
               ${onlineCount}/${total} online
             </span>
           </div>
@@ -338,7 +338,7 @@ class DashboardView extends LitElement {
         ${!isCollapsed ? html`
           <div class="group-body">
             ${devices.length === 0
-              ? html`<div style="color: #555; font-size: 13px; padding: 8px 4px;">No devices match current filters</div>`
+              ? html`<div style="color: #fff; font-size: 13px; padding: 8px 4px;">No devices match current filters</div>`
               : html`
                 <div class="grid">
                   ${devices.map(([id, device]) => html`

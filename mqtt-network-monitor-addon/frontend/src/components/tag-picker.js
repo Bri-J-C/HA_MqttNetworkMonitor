@@ -25,68 +25,68 @@ class TagPicker extends LitElement {
     :host { display: inline-block; position: relative; }
 
     .trigger {
-      background: #2a2a4a; border: 1px solid #3a3a5a; color: #aaa;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;
       padding: 6px 14px; border-radius: 16px; cursor: pointer; font-size: 13px;
       transition: all 0.2s; display: flex; align-items: center; gap: 6px;
       user-select: none;
     }
-    .trigger:hover { background: #3a3a5a; color: #ccc; border-color: #4a4a6a; }
-    .trigger.has-selected { border-color: #4fc3f7; color: #4fc3f7; }
+    .trigger:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.15); }
+    .trigger.has-selected { border-color: #00D4FF; color: #00D4FF; }
     .arrow { font-size: 10px; }
 
     .dropdown {
       position: absolute; top: calc(100% + 4px); left: 0;
-      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
       min-width: 200px; max-height: 280px; overflow-y: auto;
       z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     }
 
     .dropdown-item {
       display: flex; align-items: center; gap: 8px;
-      padding: 8px 14px; cursor: pointer; font-size: 13px; color: #ccc;
+      padding: 8px 14px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.8);
       transition: background 0.15s;
     }
-    .dropdown-item:hover { background: #3a3a5a; }
+    .dropdown-item:hover { background: rgba(255,255,255,0.1); }
     .checkbox {
-      width: 16px; height: 16px; border: 1.5px solid #555; border-radius: 3px;
+      width: 16px; height: 16px; border: 1.5px solid rgba(255,255,255,0.12); border-radius: 3px;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-      font-size: 11px; color: #1a1a2e; transition: all 0.15s;
+      font-size: 11px; color: #0d0d1f; transition: all 0.15s;
     }
     .dropdown-item.checked .checkbox {
-      background: #4fc3f7; border-color: #4fc3f7;
+      background: #00D4FF; border-color: #00D4FF;
     }
 
     .dropdown-divider {
-      border: none; border-top: 1px solid #3a3a5a; margin: 4px 0;
+      border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 4px 0;
     }
 
     .create-row {
       padding: 8px 14px; display: flex; gap: 6px; align-items: center;
     }
     .create-link {
-      font-size: 12px; color: #888; cursor: pointer; transition: color 0.15s;
+      font-size: 12px; color: #fff; cursor: pointer; transition: color 0.15s;
     }
-    .create-link:hover { color: #4fc3f7; }
+    .create-link:hover { color: #00D4FF; }
 
     .create-input {
-      flex: 1; background: #1a1a2e; border: 1px solid #3a3a5a;
-      border-radius: 4px; color: #e0e0e0; padding: 4px 8px;
+      flex: 1; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px; color: #fff; padding: 4px 8px;
       font-size: 12px; min-width: 0;
     }
-    .create-input:focus { outline: none; border-color: #4fc3f7; }
+    .create-input:focus { outline: none; border-color: #00D4FF; }
     .create-btn {
-      background: #4fc3f7; border: none; color: #1a1a2e; padding: 4px 10px;
+      background: #00D4FF; border: none; color: #0d0d1f; padding: 4px 10px;
       border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;
       white-space: nowrap;
     }
     .create-btn:disabled { opacity: 0.5; cursor: default; }
     .cancel-btn {
-      background: none; border: none; color: #666; cursor: pointer;
+      background: none; border: none; color: #fff; cursor: pointer;
       font-size: 16px; line-height: 1; padding: 0 2px;
     }
-    .cancel-btn:hover { color: #ccc; }
+    .cancel-btn:hover { color: rgba(255,255,255,0.8); }
 
-    .empty { padding: 12px 14px; color: #666; font-size: 12px; text-align: center; }
+    .empty { padding: 12px 14px; color: #fff; font-size: 12px; text-align: center; }
   `;
 
   constructor() {

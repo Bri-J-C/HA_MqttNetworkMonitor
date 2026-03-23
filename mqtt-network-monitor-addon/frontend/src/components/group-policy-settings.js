@@ -37,11 +37,11 @@ class GroupPolicySettings extends LitElement {
     :host { display: block; }
 
     .section {
-      background: #2a2a4a; border-radius: 8px; padding: 20px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 20px;
       margin-bottom: 20px;
     }
     .section-title {
-      font-size: 12px; color: #666; text-transform: uppercase;
+      font-size: 12px; color: #238ecc; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 16px; font-weight: 600;
     }
 
@@ -49,56 +49,56 @@ class GroupPolicySettings extends LitElement {
     .group-list { display: flex; flex-direction: column; gap: 8px; }
     .group-header {
       display: flex; align-items: center; justify-content: space-between;
-      background: #1a1a2e; border-radius: 6px; padding: 10px 14px;
+      background: #0d0d1f; border-radius: 6px; padding: 10px 14px;
       cursor: pointer; user-select: none;
     }
-    .group-header:hover { background: #222244; }
+    .group-header:hover { background: rgba(255,255,255,0.06); }
     .group-header-left { display: flex; align-items: center; gap: 10px; }
-    .group-header-name { font-size: 14px; color: #ccc; font-weight: 600; }
-    .group-member-count { font-size: 11px; color: #666; }
-    .chevron { font-size: 10px; color: #555; transition: transform 0.2s; }
+    .group-header-name { font-size: 14px; color: rgba(255,255,255,0.8); font-weight: 600; }
+    .group-member-count { font-size: 11px; color: #fff; }
+    .chevron { font-size: 10px; color: #fff; transition: transform 0.2s; }
     .chevron.open { transform: rotate(90deg); }
     .group-body {
-      background: #1a1a2e; border-radius: 0 0 6px 6px;
-      padding: 14px; margin-top: -4px; border-top: 1px solid #2a2a4a;
+      background: #0d0d1f; border-radius: 0 0 6px 6px;
+      padding: 14px; margin-top: -4px; border-top: 1px solid rgba(255,255,255,0.05);
     }
     .group-field { margin-bottom: 14px; }
     .group-field label {
-      display: block; font-size: 11px; color: #888; text-transform: uppercase;
+      display: block; font-size: 11px; color: #fff; text-transform: uppercase;
       letter-spacing: 0.5px; margin-bottom: 6px;
     }
     .members-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .member-pill {
       display: flex; align-items: center; gap: 4px;
-      background: #2a2a4a; color: #ccc; padding: 3px 10px;
+      background: rgba(0,212,255,0.15); color: #00D4FF; padding: 3px 10px;
       border-radius: 12px; font-size: 12px;
     }
     .member-pill .remove {
-      cursor: pointer; color: #888; font-size: 13px; line-height: 1;
-      transition: color 0.15s;
+      cursor: pointer; color: #00D4FF; font-size: 13px; line-height: 1;
+      opacity: 0.5; transition: all 0.15s;
     }
-    .member-pill .remove:hover { color: #ef5350; }
+    .member-pill .remove:hover { color: #ef5350; opacity: 1; }
     .threshold-input {
-      width: 100%; background: #2a2a4a; border: 1px solid #3a3a5a;
-      border-radius: 4px; color: #e0e0e0; padding: 6px 10px;
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px; color: #fff; padding: 6px 10px;
       font-size: 13px; box-sizing: border-box;
     }
-    .threshold-input:focus { outline: none; border-color: #4fc3f7; }
+    .threshold-input:focus { outline: none; border-color: #00D4FF; }
     .group-footer { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
     .group-save-btn {
-      background: #4fc3f7; border: none; color: #1a1a2e; padding: 6px 16px;
+      background: #00D4FF; border: none; color: #0d0d1f; padding: 6px 16px;
       border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
     }
-    .group-save-btn:hover { background: #81d4fa; }
+    .group-save-btn:hover { background: #33DDFF; }
     .group-delete-btn {
       background: rgba(239,83,80,0.1); border: none; color: #ef5350;
       padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;
     }
     .group-delete-btn:hover { background: rgba(239,83,80,0.2); }
-    .group-status-saved { font-size: 12px; color: #81c784; }
+    .group-status-saved { font-size: 12px; color: #04d65c; }
     .group-status-error { font-size: 12px; color: #ef5350; }
-    .group-status-pushing { font-size: 12px; color: #4fc3f7; }
-    .group-status-pushed { font-size: 12px; color: #81c784; }
+    .group-status-pushing { font-size: 12px; color: #00D4FF; }
+    .group-status-pushed { font-size: 12px; color: #04d65c; }
 
     /* Toggle switch (command discovered) */
     .cmd-toggle-wrap { cursor: pointer; flex-shrink: 0; }
@@ -118,63 +118,63 @@ class GroupPolicySettings extends LitElement {
     /* Sensor / command tables */
     .sensor-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     .sensor-table th {
-      text-align: left; font-size: 10px; color: #666; padding: 6px 8px;
+      text-align: left; font-size: 10px; color: #fff; padding: 6px 8px;
       text-transform: uppercase; letter-spacing: 0.5px;
     }
     .sensor-table td {
-      font-size: 12px; color: #ccc; padding: 6px 8px;
-      border-bottom: 1px solid #2a2a4a;
+      font-size: 12px; color: rgba(255,255,255,0.8); padding: 6px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     .sensor-table tr:last-child td { border-bottom: none; }
     .sensor-btn {
       background: none; border: none; cursor: pointer; font-size: 11px;
       padding: 2px 8px; border-radius: 4px;
     }
-    .sensor-btn.edit { color: #4fc3f7; }
-    .sensor-btn.edit:hover { background: rgba(79,195,247,0.1); }
-    .sensor-btn.remove { color: #666; }
+    .sensor-btn.edit { color: #00D4FF; }
+    .sensor-btn.edit:hover { background: rgba(0,212,255,0.1); }
+    .sensor-btn.remove { color: #fff; }
     .sensor-btn.remove:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
     .sensor-actions { display: flex; gap: 4px; }
-    .sensor-form { background: #12122a; border-radius: 6px; padding: 10px; margin-top: 6px; }
+    .sensor-form { background: rgba(255,255,255,0.03); border-radius: 6px; padding: 10px; margin-top: 6px; }
     .sensor-form-grid { display: grid; gap: 6px; margin-bottom: 6px; }
     .sensor-form-grid input {
-      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 4px;
-      color: #e0e0e0; padding: 6px 8px; font-size: 12px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      color: #fff; padding: 6px 8px; font-size: 12px;
     }
-    .sensor-form-grid input:focus { outline: none; border-color: #4fc3f7; }
+    .sensor-form-grid input:focus { outline: none; border-color: #00D4FF; }
     .sensor-form-actions { display: flex; gap: 6px; }
     .form-btn { border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    .form-btn.save { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
-    .form-btn.cancel { background: #3a3a5a; color: #aaa; }
+    .form-btn.save { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
+    .form-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
 
     .icon-btn {
       background: none; border: none; cursor: pointer; font-size: 12px;
       padding: 2px 8px; border-radius: 4px; transition: all 0.15s;
     }
-    .icon-btn.delete { color: #666; }
+    .icon-btn.delete { color: #fff; }
     .icon-btn.delete:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
 
     .small-input {
-      background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 4px;
-      color: #e0e0e0; padding: 4px 10px; font-size: 12px;
+      background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      color: #fff; padding: 4px 10px; font-size: 12px;
     }
-    .small-input:focus { outline: none; border-color: #4fc3f7; }
+    .small-input:focus { outline: none; border-color: #00D4FF; }
     .small-btn {
-      background: #4fc3f7; border: none; color: #1a1a2e; padding: 4px 12px;
+      background: #00D4FF; border: none; color: #0d0d1f; padding: 4px 12px;
       border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;
     }
-    .small-btn:hover { background: #81d4fa; }
+    .small-btn:hover { background: #33DDFF; }
     .add-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
 
     .subsection-label {
-      font-size: 11px; color: #555; margin-bottom: 6px; margin-top: 8px;
+      font-size: 11px; color: #fff; margin-bottom: 6px; margin-top: 8px;
     }
     .add-cmd-btn {
-      background: none; border: 1px solid #3a3a5a; color: #888;
+      background: none; border: 1px solid rgba(255,255,255,0.1); color: #fff;
       padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
       margin-top: 4px; transition: all 0.15s;
     }
-    .add-cmd-btn:hover { border-color: #4fc3f7; color: #4fc3f7; }
+    .add-cmd-btn:hover { border-color: #00D4FF; color: #00D4FF; }
   `;
 
   constructor() {
@@ -275,7 +275,7 @@ class GroupPolicySettings extends LitElement {
             </div>
 
             <div class="group-field">
-              <label>Warning Thresholds</label>
+              <label>Thresholds</label>
               ${this._renderGroupThresholds(g)}
             </div>
 
@@ -384,21 +384,21 @@ class GroupPolicySettings extends LitElement {
           </tbody>
         </table>
       ` : html`
-        <div style="font-size: 12px; color: #555; margin-bottom: 8px;">No commands</div>
+        <div style="font-size: 12px; color: #fff; margin-bottom: 8px;">No commands</div>
       `}
 
       ${hiddenEntries.length > 0 ? html`
         <div style="margin-top: 6px;">
-          <div style="font-size: 10px; color: #555; margin-bottom: 4px; cursor: pointer;"
+          <div style="font-size: 10px; color: #fff; margin-bottom: 4px; cursor: pointer;"
             @click=${() => { g._showHiddenCmds = !g._showHiddenCmds; this.requestUpdate(); }}>
             ${g._showHiddenCmds ? '\u25BE' : '\u25B8'} ${hiddenEntries.length} hidden
           </div>
           ${g._showHiddenCmds ? html`
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
               ${hiddenEntries.map(([name]) => html`
-                <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 11px; background: #0d0d1f; color: #fff; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
                   ${name}
-                  <span style="cursor: pointer; color: #4fc3f7; font-size: 10px;"
+                  <span style="cursor: pointer; color: #00D4FF; font-size: 10px;"
                     @click=${() => this._unhideGroupCommand(g, name)}>show</span>
                 </span>
               `)}
@@ -514,51 +514,83 @@ class GroupPolicySettings extends LitElement {
 
   _renderGroupThresholds(g) {
     const thresholds = g.thresholds || {};
+    const critThresholds = g.crit_thresholds || {};
     const discovered = this._getGroupDiscoveredData(g);
     const discoveredAttrs = discovered.attributes;
 
-    // Show discovered attributes + any thresholds for attributes not in discovered
     const extraKeys = Object.keys(thresholds).filter(
       k => thresholds[k] != null && !discoveredAttrs.includes(k)
     );
-    const allAttrs = [...discoveredAttrs, ...extraKeys];
+    const critExtraKeys = Object.keys(critThresholds).filter(
+      k => critThresholds[k] != null && !discoveredAttrs.includes(k) && !extraKeys.includes(k)
+    );
+    const allAttrs = [...discoveredAttrs, ...extraKeys, ...critExtraKeys];
 
     if (allAttrs.length === 0) {
-      return html`<div style="font-size: 12px; color: #555; margin-bottom: 6px;">No attributes discovered from member devices yet.</div>`;
+      return html`<div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 6px;">No attributes discovered from member devices yet.</div>`;
     }
 
     return html`
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px;">
         ${allAttrs.map(key => {
           const t = thresholds[key];
-          const hasThreshold = t != null;
-          const op = hasThreshold && typeof t === 'object' ? (t.op || '>') : '>';
-          const val = hasThreshold ? (typeof t === 'object' ? t.value : t) : null;
+          const hasWarn = t != null;
+          const warnOp = hasWarn && typeof t === 'object' ? (t.op || '>') : '>';
+          const warnVal = hasWarn ? (typeof t === 'object' ? t.value : t) : null;
+
+          const ct = critThresholds[key];
+          const hasCrit = ct != null;
+          const critOp = hasCrit && typeof ct === 'object' ? (ct.op || '>') : '>';
+          const critVal = hasCrit ? (typeof ct === 'object' ? ct.value : ct) : null;
 
           return html`
-            <div style="display: flex; align-items: center; gap: 4px; background: #12122a; border-radius: 6px; padding: 6px 8px; ${hasThreshold ? 'border: 1px solid #2a2a5a;' : ''}">
-              <span style="font-size: 11px; color: #ccc; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title=${key}>
+            <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 12px;
+              ${hasCrit ? 'border: 1px solid rgba(239,83,80,0.2);' : hasWarn ? 'border: 1px solid rgba(255,183,77,0.15);' : 'border: 1px solid transparent;'}">
+              <div style="font-size: 12px; color: #fff; margin-bottom: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px;">
                 ${key.replace(/_/g, ' ')}
-              </span>
-              <span style="font-size: 9px; color: #666;">Warn</span>
-              <select style="background: transparent; border: 1px solid #3a3a5a; border-radius: 3px; color: #aaa; padding: 2px; font-size: 10px; width: 36px;"
-                .value=${op}
-                @change=${(e) => this._updateGroupThreshold(g.id, key, val, e.target.value)}>
-                <option value=">">&gt;</option>
-                <option value="<">&lt;</option>
-                <option value=">=">&gt;=</option>
-                <option value="<=">&lt;=</option>
-                <option value="==">==</option>
-                <option value="!=">!=</option>
-              </select>
-              <input class="threshold-input" type="number" placeholder="\u2014"
-                style="width: 55px; font-size: 11px; padding: 2px 4px; background: transparent; border: 1px solid #3a3a5a; border-radius: 3px; color: #aaa; text-align: center;"
-                .value=${val != null ? String(val) : ''}
-                @change=${(e) => this._updateGroupThreshold(g.id, key, e.target.value, op)}>
-              ${hasThreshold ? html`
-                <span style="font-size: 12px; color: #555; cursor: pointer;" title="Clear"
-                  @click=${() => this._removeGroupThreshold(g.id, key)}>&times;</span>
-              ` : ''}
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                <span style="font-size: 11px; color: rgba(255,183,77,0.7); text-transform: uppercase; letter-spacing: 0.5px; width: 34px; font-weight: 600;">warn</span>
+                <select style="background: #0d0d1f; border: none; border-radius: 3px; color: rgba(255,255,255,0.6); padding: 2px; font-size: 11px; width: 38px; appearance: none; -webkit-appearance: none;"
+                  .value=${warnOp}
+                  @change=${(e) => this._updateGroupThreshold(g.id, key, warnVal, e.target.value)}>
+                  <option value=">" style="background: #0d0d1f; color: #fff;">&gt;</option>
+                  <option value="<" style="background: #0d0d1f; color: #fff;">&lt;</option>
+                  <option value=">=" style="background: #0d0d1f; color: #fff;">&gt;=</option>
+                  <option value="<=" style="background: #0d0d1f; color: #fff;">&lt;=</option>
+                  <option value="==" style="background: #0d0d1f; color: #fff;">==</option>
+                  <option value="!=" style="background: #0d0d1f; color: #fff;">!=</option>
+                </select>
+                <input type="number" placeholder="\u2014"
+                  style="width: 55px; font-size: 11px; padding: 3px 4px; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; color: rgba(255,255,255,0.7); text-align: center;"
+                  .value=${warnVal != null ? String(warnVal) : ''}
+                  @change=${(e) => this._updateGroupThreshold(g.id, key, e.target.value, warnOp)}>
+                ${hasWarn ? html`
+                  <span style="font-size: 12px; color: rgba(255,255,255,0.3); cursor: pointer;" title="Clear"
+                    @click=${() => this._removeGroupThreshold(g.id, key)}>&times;</span>
+                ` : ''}
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 11px; color: rgba(239,83,80,0.7); text-transform: uppercase; letter-spacing: 0.5px; width: 34px; font-weight: 600;">crit</span>
+                <select style="background: #0d0d1f; border: none; border-radius: 3px; color: rgba(255,255,255,0.6); padding: 2px; font-size: 11px; width: 38px; appearance: none; -webkit-appearance: none;"
+                  .value=${critOp}
+                  @change=${(e) => this._updateGroupCritThreshold(g.id, key, critVal, e.target.value)}>
+                  <option value=">" style="background: #0d0d1f; color: #fff;">&gt;</option>
+                  <option value="<" style="background: #0d0d1f; color: #fff;">&lt;</option>
+                  <option value=">=" style="background: #0d0d1f; color: #fff;">&gt;=</option>
+                  <option value="<=" style="background: #0d0d1f; color: #fff;">&lt;=</option>
+                  <option value="==" style="background: #0d0d1f; color: #fff;">==</option>
+                  <option value="!=" style="background: #0d0d1f; color: #fff;">!=</option>
+                </select>
+                <input type="number" placeholder="\u2014"
+                  style="width: 55px; font-size: 11px; padding: 3px 4px; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; color: rgba(255,255,255,0.7); text-align: center;"
+                  .value=${critVal != null ? String(critVal) : ''}
+                  @change=${(e) => this._updateGroupCritThreshold(g.id, key, e.target.value, critOp)}>
+                ${hasCrit ? html`
+                  <span style="font-size: 12px; color: rgba(255,255,255,0.3); cursor: pointer;" title="Clear"
+                    @click=${() => this._removeGroupCritThreshold(g.id, key)}>&times;</span>
+                ` : ''}
+              </div>
             </div>
           `;
         })}
@@ -589,6 +621,32 @@ class GroupPolicySettings extends LitElement {
     this._groups = {
       ...this._groups,
       [groupId]: { ...group, thresholds: updated },
+    };
+  }
+
+  _updateGroupCritThreshold(groupId, key, value, op = '>') {
+    const group = this._groups[groupId];
+    if (!group) return;
+    const crit_thresholds = { ...(group.crit_thresholds || {}) };
+    if (value === '' || value == null) {
+      delete crit_thresholds[key];
+    } else {
+      crit_thresholds[key] = { op, value: Number(value) };
+    }
+    this._groups = {
+      ...this._groups,
+      [groupId]: { ...group, crit_thresholds },
+    };
+  }
+
+  _removeGroupCritThreshold(groupId, key) {
+    const group = this._groups[groupId];
+    if (!group) return;
+    const updated = { ...(group.crit_thresholds || {}) };
+    delete updated[key];
+    this._groups = {
+      ...this._groups,
+      [groupId]: { ...group, crit_thresholds: updated },
     };
   }
 
@@ -626,7 +684,7 @@ class GroupPolicySettings extends LitElement {
           </tbody>
         </table>
       ` : html`
-        <div style="font-size: 12px; color: #555; margin-bottom: 8px;">No group sensors defined.</div>
+        <div style="font-size: 12px; color: #fff; margin-bottom: 8px;">No group sensors defined.</div>
       `}
 
       ${(isEditingSensor || isAddingSensor) ? html`
@@ -755,11 +813,19 @@ class GroupPolicySettings extends LitElement {
     const cleanThresholds = {};
     for (const [k, v] of Object.entries(latest.thresholds || {})) {
       if (v == null) continue;
-      // Thresholds can be {op, value} objects or plain numbers
       if (typeof v === 'object' && v.value != null) {
         cleanThresholds[k] = v;
       } else if (typeof v === 'number' && !isNaN(v)) {
         cleanThresholds[k] = v;
+      }
+    }
+    const cleanCritThresholds = {};
+    for (const [k, v] of Object.entries(latest.crit_thresholds || {})) {
+      if (v == null) continue;
+      if (typeof v === 'object' && v.value != null) {
+        cleanCritThresholds[k] = v;
+      } else if (typeof v === 'number' && !isNaN(v)) {
+        cleanCritThresholds[k] = v;
       }
     }
     const savedName = name || latest.name;
@@ -769,6 +835,7 @@ class GroupPolicySettings extends LitElement {
       custom_commands: latest.custom_commands || {},
       custom_sensors: latest.custom_sensors || {},
       thresholds: cleanThresholds,
+      crit_thresholds: cleanCritThresholds,
       hidden_commands: latest.hidden_commands || [],
     };
     console.log('Saving group:', g.id, payload);
@@ -776,7 +843,7 @@ class GroupPolicySettings extends LitElement {
       await updateGroup(g.id, payload);
       this._groups = {
         ...this._groups,
-        [g.id]: { ...latest, name: savedName, thresholds: cleanThresholds },
+        [g.id]: { ...latest, name: savedName, thresholds: cleanThresholds, crit_thresholds: cleanCritThresholds },
       };
       if (this._editingGroupName === g.id) this._editingGroupName = null;
       this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: 'saved' };

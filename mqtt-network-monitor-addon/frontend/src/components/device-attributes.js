@@ -14,7 +14,8 @@ import { LitElement, html, css } from 'lit';
  *   attribute-deleted     {name}          — user clicked delete on an attribute
  *   attribute-unhidden    {name}          — user clicked show on a hidden attribute
  *   ha-exposure-toggled   {name}          — user toggled HA-exposure toggle
- *   threshold-changed     {name, value, op} — user edited a threshold
+ *   threshold-changed     {name, value, op} — user edited a warn threshold
+ *   crit-threshold-changed {name, value, op} — user edited a crit threshold
  *   pin-attribute         {name, pinned}  — user toggled pin on an attribute
  */
 class DeviceAttributes extends LitElement {
@@ -30,11 +31,11 @@ class DeviceAttributes extends LitElement {
   static styles = css`
     /* Attributes + HA exposure */
     .section {
-      background: #2a2a4a; border-radius: 8px; padding: 16px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
     }
     .section-title {
-      font-size: 12px; color: #666; text-transform: uppercase;
+      font-size: 12px; color: #238ecc; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 12px; font-weight: 600;
     }
     .attr-grid {
@@ -42,7 +43,7 @@ class DeviceAttributes extends LitElement {
       gap: 12px;
     }
     .attr-tile {
-      background: #1a1a2e; border-radius: 8px; padding: 12px;
+      background: #0d0d1f; border-radius: 8px; padding: 12px;
       position: relative; transition: opacity 0.2s;
     }
     /* dimmed class no longer reduces opacity — toggle is sufficient */
@@ -51,37 +52,53 @@ class DeviceAttributes extends LitElement {
       margin-bottom: 6px;
     }
     .attr-label {
-      font-size: 10px; color: #666; text-transform: uppercase;
+      font-size: 10px; color: #fff; text-transform: uppercase;
       letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;
     }
     .attr-delete {
-      font-size: 14px; color: #555; cursor: pointer; line-height: 1;
+      font-size: 14px; color: #fff; cursor: pointer; line-height: 1;
     }
     .attr-delete:hover { color: #ef5350; }
     .attr-val {
-      font-size: 22px; font-weight: 700; margin-top: 4px; color: #4fc3f7;
+      font-size: 18px; font-weight: 700; margin-top: 4px; color: #00D4FF;
       transition: color 0.2s;
     }
     /* dimmed-val no longer changes color — toggle is sufficient */
-    .attr-unit { font-size: 12px; color: #888; font-weight: 400; }
+    .attr-unit { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 400; }
     .attr-tile.exceeded { border: 1px solid #ffb74d; }
+    .attr-tile.critical { border: 1px solid #ef5350; }
     .attr-val.exceeded-val { color: #ffb74d; }
+    .attr-val.critical-val { color: #ef5350; }
+    .attr-thresholds {
+      margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex; flex-direction: column; gap: 4px;
+    }
     .attr-threshold-row {
-      display: flex; align-items: center; gap: 4px; margin-top: 4px;
+      display: flex; align-items: center; gap: 4px;
     }
+    .threshold-label {
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.5px; width: 36px; flex-shrink: 0; font-weight: 600;
+    }
+    .threshold-label.warn { color: rgba(255,183,77,0.7); }
+    .threshold-label.crit { color: rgba(239,83,80,0.7); }
     .threshold-op {
-      background: transparent; border: 1px solid #3a3a5a; border-radius: 3px;
-      color: #aaa; padding: 2px 2px; font-size: 10px; cursor: pointer;
-      width: 36px; text-align: center;
+      background: #0d0d1f; border: none; border-radius: 3px;
+      color: rgba(255,255,255,0.5); padding: 2px 4px; font-size: 11px; cursor: pointer;
+      appearance: none; -webkit-appearance: none; -moz-appearance: none;
     }
-    .threshold-op:focus { outline: none; border-color: #4fc3f7; }
+    .threshold-op option { background: #0d0d1f; color: #fff; }
+    .threshold-op:hover, .threshold-op:focus { outline: none; color: #00D4FF; }
     .threshold-inline {
-      width: 50px; background: transparent; border: 1px solid #3a3a5a;
-      border-radius: 3px; color: #aaa; padding: 2px 4px; font-size: 10px;
+      width: 44px; background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5); padding: 2px 2px; font-size: 11px;
       text-align: center;
     }
-    .threshold-inline:focus { outline: none; border-color: #4fc3f7; color: #e0e0e0; }
-    .threshold-inline::placeholder { color: #444; }
+    .threshold-inline:focus { outline: none; border-bottom-color: #00D4FF; color: #fff; }
+    .threshold-inline::placeholder { color: rgba(255,255,255,0.15); }
+    .threshold-source {
+      font-size: 8px; color: rgba(255,255,255,0.2); margin-left: auto;
+    }
 
     /* Pin icon */
     .attr-pin {
@@ -97,7 +114,7 @@ class DeviceAttributes extends LitElement {
       width: 32px; height: 18px; border-radius: 9px; position: relative;
       transition: background 0.2s;
     }
-    .toggle.on  { background: #4fc3f7; }
+    .toggle.on  { background: #00D4FF; }
     .toggle.off { background: #444; }
     .toggle-knob {
       width: 14px; height: 14px; border-radius: 50%; background: #fff;
@@ -181,6 +198,22 @@ class DeviceAttributes extends LitElement {
     return threshold ? threshold.value : null;
   }
 
+  // ── Crit threshold helpers ─────────────────────────────────────────────────
+
+  _getCritThresholdOp(name) {
+    const overrides = this.device?.crit_threshold_overrides || {};
+    const local = overrides[name];
+    if (local != null && typeof local === 'object') return local.op || '>';
+    return '>';
+  }
+
+  _getCritThresholdVal(name) {
+    const overrides = this.device?.crit_threshold_overrides || {};
+    const local = overrides[name];
+    if (local != null) return typeof local === 'object' ? local.value : local;
+    return null;
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   render() {
@@ -200,16 +233,16 @@ class DeviceAttributes extends LitElement {
         </div>
         ${hiddenAttrs.length > 0 ? html`
           <div style="margin-top: 12px;">
-            <div style="font-size: 10px; color: #555; margin-bottom: 6px; cursor: pointer;"
+            <div style="font-size: 10px; color: #fff; margin-bottom: 6px; cursor: pointer;"
               @click=${() => this._showHidden = !this._showHidden}>
               ${this._showHidden ? '▾' : '▸'} ${hiddenAttrs.length} hidden attribute${hiddenAttrs.length !== 1 ? 's' : ''}
             </div>
             ${this._showHidden ? html`
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 ${hiddenAttrs.map(([name]) => html`
-                  <span style="font-size: 11px; background: #1a1a2e; color: #555; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                  <span style="font-size: 11px; background: #0d0d1f; color: #fff; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
                     ${name.replace(/_/g, ' ')}
-                    <span style="cursor: pointer; color: #4fc3f7; font-size: 10px;"
+                    <span style="cursor: pointer; color: #00D4FF; font-size: 10px;"
                       @click=${() => this._onUnhide(name)}>show</span>
                   </span>
                 `)}
@@ -233,8 +266,19 @@ class DeviceAttributes extends LitElement {
     const currentThreshVal  = this._getThresholdVal(name);
     const isPinned          = (this.cardAttributes || []).includes(name);
 
+    // Crit threshold
+    const critOp           = this._getCritThresholdOp(name);
+    const critThreshVal    = this._getCritThresholdVal(name);
+    const critOverrides    = this.device?.crit_threshold_overrides || {};
+    const critEffective    = critOverrides[name] != null ? critOverrides[name] : null;
+    const critical         = this._checkThreshold(currentVal, critEffective);
+
+    // Critical takes priority over warning for styling
+    const tileClass = critical ? 'critical' : (exceeded ? 'exceeded' : '');
+    const valClass  = critical ? 'critical-val' : (exceeded ? 'exceeded-val' : '');
+
     return html`
-      <div class="attr-tile ${exposed ? '' : 'dimmed'} ${exceeded ? 'exceeded' : ''}">
+      <div class="attr-tile ${exposed ? '' : 'dimmed'} ${tileClass}">
         <div class="attr-tile-top">
           <span class="attr-label">${name.replace(/_/g, ' ')}
             <span class="attr-pin ${isPinned ? 'pinned' : ''}"
@@ -255,32 +299,54 @@ class DeviceAttributes extends LitElement {
             </div>
           </span>
         </div>
-        <div class="attr-val ${exposed ? '' : 'dimmed-val'} ${exceeded ? 'exceeded-val' : ''}">
+        <div class="attr-val ${exposed ? '' : 'dimmed-val'} ${valClass}">
           ${currentVal != null ? currentVal : '\u2014'}
           <span class="attr-unit">${data.unit || ''}</span>
         </div>
-        <div class="attr-threshold-row">
-          ${exceeded ? html`<span style="color: #ffb74d; font-size: 11px;">\u26A0</span>` : ''}
-          <span style="font-size: 9px; color: #666;">Warn</span>
-          <select class="threshold-op"
-            aria-label="Warning threshold operator for ${name.replace(/_/g, ' ')}"
-            .value=${currentOp}
-            @change=${(e) => this._onThresholdChange(name, currentThreshVal, e.target.value)}>
-            <option value=">">&gt;</option>
-            <option value="<">&lt;</option>
-            <option value=">=">&gt;=</option>
-            <option value="<=">&lt;=</option>
-            <option value="==">==</option>
-            <option value="!=">!=</option>
-          </select>
-          <input class="threshold-inline" type="number"
-            aria-label="Warning threshold value for ${name.replace(/_/g, ' ')}"
-            placeholder="\u2014"
-            .value=${currentThreshVal != null ? String(currentThreshVal) : ''}
-            @change=${(e) => this._onThresholdChange(name, e.target.value, currentOp)}>
-          ${threshold && threshold.source !== 'device' && localThreshold == null ? html`
-            <span style="font-size: 8px; color: #555;">${threshold.source}</span>
-          ` : ''}
+        <div class="attr-thresholds">
+          <div class="attr-threshold-row">
+            ${exceeded ? html`<span style="color: #ffb74d; font-size: 11px;">\u26A0</span>` : ''}
+            <span class="threshold-label warn">warn</span>
+            <select class="threshold-op"
+              aria-label="Warning threshold operator for ${name.replace(/_/g, ' ')}"
+              .value=${currentOp}
+              @change=${(e) => this._onThresholdChange(name, currentThreshVal, e.target.value)}>
+              <option value=">">&gt;</option>
+              <option value="<">&lt;</option>
+              <option value=">=">&gt;=</option>
+              <option value="<=">&lt;=</option>
+              <option value="==">==</option>
+              <option value="!=">!=</option>
+            </select>
+            <input class="threshold-inline" type="number"
+              aria-label="Warning threshold value for ${name.replace(/_/g, ' ')}"
+              placeholder="\u2014"
+              .value=${currentThreshVal != null ? String(currentThreshVal) : ''}
+              @change=${(e) => this._onThresholdChange(name, e.target.value, currentOp)}>
+            ${threshold && threshold.source !== 'device' && localThreshold == null ? html`
+              <span class="threshold-source">${threshold.source}</span>
+            ` : ''}
+          </div>
+          <div class="attr-threshold-row">
+            ${critical ? html`<span style="color: #ef5350; font-size: 11px;">\u26A0</span>` : ''}
+            <span class="threshold-label crit">crit</span>
+            <select class="threshold-op"
+              aria-label="Critical threshold operator for ${name.replace(/_/g, ' ')}"
+              .value=${critOp}
+              @change=${(e) => this._onCritThresholdChange(name, critThreshVal, e.target.value)}>
+              <option value=">">&gt;</option>
+              <option value="<">&lt;</option>
+              <option value=">=">&gt;=</option>
+              <option value="<=">&lt;=</option>
+              <option value="==">==</option>
+              <option value="!=">!=</option>
+            </select>
+            <input class="threshold-inline" type="number"
+              aria-label="Critical threshold value for ${name.replace(/_/g, ' ')}"
+              placeholder="\u2014"
+              .value=${critThreshVal != null ? String(critThreshVal) : ''}
+              @change=${(e) => this._onCritThresholdChange(name, e.target.value, critOp)}>
+          </div>
         </div>
       </div>
     `;
@@ -302,6 +368,10 @@ class DeviceAttributes extends LitElement {
 
   _onThresholdChange(name, value, op) {
     this.dispatchEvent(new CustomEvent('threshold-changed', { detail: { name, value, op }, bubbles: true, composed: true }));
+  }
+
+  _onCritThresholdChange(name, value, op) {
+    this.dispatchEvent(new CustomEvent('crit-threshold-changed', { detail: { name, value, op }, bubbles: true, composed: true }));
   }
 
   _togglePin(name) {

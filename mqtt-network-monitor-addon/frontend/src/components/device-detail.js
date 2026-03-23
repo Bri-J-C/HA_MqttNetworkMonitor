@@ -29,11 +29,11 @@ class DeviceDetail extends LitElement {
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     .close-btn {
-      background: none; border: none; color: #666; cursor: pointer;
+      background: none; border: none; color: #fff; cursor: pointer;
       font-size: 20px; padding: 4px 8px; line-height: 1; border-radius: 4px;
       transition: all 0.15s;
     }
-    .close-btn:hover { color: #ccc; background: rgba(255,255,255,0.05); }
+    .close-btn:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.05); }
 
     .header {
       display: flex; justify-content: space-between; align-items: center;
@@ -41,54 +41,54 @@ class DeviceDetail extends LitElement {
     }
     .header-left { display: flex; flex-direction: column; gap: 2px; }
     .title       { font-size: 24px; font-weight: 700; }
-    .device-type { font-size: 12px; color: #666; }
+    .device-type { font-size: 12px; color: #fff; }
     .status-badge { padding: 4px 12px; border-radius: 12px; font-size: 13px; }
 
     .section {
-      background: #2a2a4a; border-radius: 8px; padding: 16px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
     }
     .section-title {
-      font-size: 12px; color: #666; text-transform: uppercase;
+      font-size: 12px; color: #238ecc; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 12px; font-weight: 600;
     }
 
     /* Tags */
     .tags-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
     .tag { display: flex; align-items: center; gap: 4px; font-size: 11px; padding: 3px 10px; border-radius: 4px; }
-    .tag.client { background: #1e3a5f; color: #4fc3f7; }
-    .tag.server { background: #3a1e5f; color: #ce93d8; }
+    .tag.client { background: rgba(0,212,255,0.15); color: #00D4FF; }
+    .tag.server { background: rgba(99,102,241,0.15); color: #238ecc; }
     .tag .remove { cursor: pointer; font-size: 13px; line-height: 1; opacity: 0.6; }
     .tag .remove:hover { opacity: 1; }
-    .tag-hint { font-size: 10px; color: #555; margin-top: 8px; }
+    .tag-hint { font-size: 10px; color: #fff; margin-top: 8px; }
 
     /* Group policy */
     .group-policy-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .group-select {
-      background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 6px;
-      color: #e0e0e0; padding: 6px 12px; font-size: 13px; min-width: 200px;
+      background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
+      color: #fff; padding: 6px 12px; font-size: 13px; min-width: 200px;
     }
-    .group-select:focus { outline: none; border-color: #4fc3f7; }
+    .group-select:focus { outline: none; border-color: #00D4FF; }
     .group-threshold-summary {
-      font-size: 11px; color: #666; display: flex; gap: 12px; flex-wrap: wrap;
+      font-size: 11px; color: #fff; display: flex; gap: 12px; flex-wrap: wrap;
       margin-top: 8px;
     }
-    .group-hint { font-size: 10px; color: #555; margin-top: 8px; }
+    .group-hint { font-size: 10px; color: #fff; margin-top: 8px; }
 
     /* Network */
     .network-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 8px;
     }
-    .net-item  { font-size: 13px; color: #aaa; }
-    .net-label { color: #666; margin-right: 8px; }
+    .net-item  { font-size: 13px; color: #fff; }
+    .net-label { color: #fff; margin-right: 8px; }
 
     /* Shared cmd-btn used in header and group policy */
     .cmd-btn {
-      background: #3a3a5a; border: none; color: #ccc; padding: 8px 16px;
+      background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.8); padding: 8px 16px;
       border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s;
     }
-    .cmd-btn:hover        { background: #4a4a6a; }
+    .cmd-btn:hover        { background: rgba(255,255,255,0.15); }
     .cmd-btn.danger       { background: #5a2a2a; color: #ef5350; }
     .cmd-btn.danger:hover { background: #6a3a3a; }
 
@@ -99,22 +99,22 @@ class DeviceDetail extends LitElement {
       justify-content: center; z-index: 1000;
     }
     .dialog {
-      background: #2a2a4a; border-radius: 12px; padding: 24px;
-      min-width: 320px; border: 1px solid #3a3a5a;
+      background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px;
+      min-width: 320px; border: 1px solid rgba(255,255,255,0.1);
     }
-    .dialog h3 { color: #e0e0e0; margin-bottom: 12px; font-size: 16px; margin-top: 0; }
+    .dialog h3 { color: #fff; margin-bottom: 12px; font-size: 16px; margin-top: 0; }
     .dialog-field { margin-bottom: 12px; }
-    .dialog-field label { display: block; font-size: 11px; color: #888; margin-bottom: 4px; }
+    .dialog-field label { display: block; font-size: 11px; color: #fff; margin-bottom: 4px; }
     .dialog-field input {
-      width: 100%; background: #1a1a2e; border: 1px solid #3a3a5a;
-      border-radius: 6px; color: #e0e0e0; padding: 8px 12px; font-size: 13px;
+      width: 100%; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; color: #fff; padding: 8px 12px; font-size: 13px;
       box-sizing: border-box;
     }
-    .dialog-field input:focus { outline: none; border-color: #4fc3f7; }
+    .dialog-field input:focus { outline: none; border-color: #00D4FF; }
     .dialog-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
     .dialog-btn { border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-    .dialog-btn.save   { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
-    .dialog-btn.cancel { background: #3a3a5a; color: #aaa; }
+    .dialog-btn.save   { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
+    .dialog-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
   `;
 
   constructor() {
@@ -197,9 +197,9 @@ class DeviceDetail extends LitElement {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   render() {
-    if (!this.device) return html`<div style="padding: 40px; text-align: center; color: #888;">Loading...</div>`;
+    if (!this.device) return html`<div style="padding: 40px; text-align: center; color: #fff;">Loading...</div>`;
     const d = this.device;
-    const statusColor = d.status === 'online' ? '#81c784' : d.status === 'offline' ? '#ef5350' : '#ffb74d';
+    const statusColor = d.status === 'online' ? '#04d65c' : d.status === 'offline' ? '#ef5350' : '#ffb74d';
 
     return html`
       <!-- 1. Header -->
@@ -235,6 +235,7 @@ class DeviceDetail extends LitElement {
         @attribute-unhidden=${(e) => this._unhideAttribute(e.detail.name)}
         @ha-exposure-toggled=${(e) => this._toggleHaExposure(e.detail.name)}
         @threshold-changed=${(e) => this._setThreshold(e.detail.name, e.detail.value, e.detail.op)}
+        @crit-threshold-changed=${(e) => this._setCritThreshold(e.detail.name, e.detail.value, e.detail.op)}
         @pin-attribute=${(e) => this._toggleCardAttribute(e.detail)}
       ></device-attributes>
 
@@ -335,7 +336,7 @@ class DeviceDetail extends LitElement {
         ${currentGroup && Object.keys(groupThresholds).length > 0 ? html`
           <div class="group-threshold-summary">
             ${Object.entries(groupThresholds).map(([k, v]) => html`
-              <span><span style="color: #888;">${k.replace(/_/g, ' ')}:</span> ${v}</span>
+              <span><span style="color: #fff;">${k.replace(/_/g, ' ')}:</span> ${v}</span>
             `)}
           </div>
         ` : ''}
@@ -463,6 +464,21 @@ class DeviceDetail extends LitElement {
       this._effectiveSettings = await fetchEffectiveSettings(this.deviceId);
     } catch (e) {
       console.error('Failed to set threshold:', e);
+    }
+  }
+
+  async _setCritThreshold(name, value, op) {
+    const overrides = { ...(this.device.crit_threshold_overrides || {}) };
+    if (value === '' || value == null) {
+      delete overrides[name];
+    } else {
+      overrides[name] = { op: op || '>', value: Number(value) };
+    }
+    try {
+      await updateDeviceSettings(this.deviceId, { crit_threshold_overrides: overrides });
+      this.device = { ...this.device, crit_threshold_overrides: overrides };
+    } catch (e) {
+      console.error('Failed to set crit threshold:', e);
     }
   }
 

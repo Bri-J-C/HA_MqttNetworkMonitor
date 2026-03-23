@@ -26,35 +26,35 @@ class DeviceConfig extends LitElement {
 
   static styles = css`
     .section {
-      background: #2a2a4a; border-radius: 8px; padding: 16px;
+      background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
     }
     .section-title {
-      font-size: 12px; color: #666; text-transform: uppercase;
+      font-size: 12px; color: #238ecc; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 12px; font-weight: 600;
     }
 
     .config-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
-    .config-label { font-size: 12px; color: #888; min-width: 120px; }
+    .config-label { font-size: 12px; color: #fff; min-width: 120px; }
     .config-input {
-      background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 4px;
-      color: #e0e0e0; padding: 5px 10px; font-size: 13px; width: 100px;
+      background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      color: #fff; padding: 5px 10px; font-size: 13px; width: 100px;
     }
-    .config-input:focus { outline: none; border-color: #4fc3f7; }
+    .config-input:focus { outline: none; border-color: #00D4FF; }
     .plugins-list { display: flex; gap: 6px; flex-wrap: wrap; }
     .plugin-badge {
-      background: #1a1a2e; color: #888; padding: 3px 10px;
+      background: #0d0d1f; color: #fff; padding: 3px 10px;
       border-radius: 4px; font-size: 11px;
     }
 
     /* Sensor table */
     .sensor-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     .sensor-table th {
-      text-align: left; font-size: 10px; color: #666; text-transform: uppercase;
-      letter-spacing: 0.5px; padding: 6px 8px; border-bottom: 1px solid #3a3a5a;
+      text-align: left; font-size: 10px; color: #fff; text-transform: uppercase;
+      letter-spacing: 0.5px; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     .sensor-table td {
-      font-size: 12px; color: #ccc; padding: 7px 8px; border-bottom: 1px solid #2a2a4a;
+      font-size: 12px; color: rgba(255,255,255,0.8); padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);
       font-family: monospace;
     }
     .sensor-table tr:last-child td { border-bottom: none; }
@@ -63,37 +63,37 @@ class DeviceConfig extends LitElement {
       background: none; border: none; cursor: pointer; font-size: 11px;
       padding: 2px 6px; border-radius: 3px; transition: all 0.15s;
     }
-    .sensor-btn.edit   { color: #4fc3f7; }
-    .sensor-btn.edit:hover  { background: rgba(79,195,247,0.1); }
-    .sensor-btn.remove { color: #666; }
+    .sensor-btn.edit   { color: #00D4FF; }
+    .sensor-btn.edit:hover  { background: rgba(0,212,255,0.1); }
+    .sensor-btn.remove { color: #fff; }
     .sensor-btn.remove:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
 
     /* Sensor form */
     .sensor-form {
-      background: #1a1a2e; border-radius: 6px; padding: 14px; margin-bottom: 12px;
+      background: #0d0d1f; border-radius: 6px; padding: 14px; margin-bottom: 12px;
     }
     .sensor-form-grid {
       display: grid; grid-template-columns: 1fr 2fr 80px 80px; gap: 8px; margin-bottom: 10px;
     }
     .sensor-form-grid input {
-      background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 4px;
-      color: #e0e0e0; padding: 5px 8px; font-size: 12px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      color: #fff; padding: 5px 8px; font-size: 12px;
     }
-    .sensor-form-grid input:focus { outline: none; border-color: #4fc3f7; }
-    .sensor-form-grid input::placeholder { color: #555; }
+    .sensor-form-grid input:focus { outline: none; border-color: #00D4FF; }
+    .sensor-form-grid input::placeholder { color: #fff; }
     .sensor-form-actions { display: flex; gap: 6px; }
     .form-btn {
       border: none; padding: 5px 14px; border-radius: 4px; cursor: pointer; font-size: 12px;
     }
-    .form-btn.save   { background: #4fc3f7; color: #1a1a2e; font-weight: 600; }
-    .form-btn.cancel { background: #3a3a5a; color: #aaa; }
+    .form-btn.save   { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
+    .form-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
 
     /* cmd-btn (used for Add Sensor button) */
     .cmd-btn {
-      background: #3a3a5a; border: none; color: #ccc; padding: 8px 16px;
+      background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.8); padding: 8px 16px;
       border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s;
     }
-    .cmd-btn:hover { background: #4a4a6a; }
+    .cmd-btn:hover { background: rgba(255,255,255,0.15); }
 
     /* Push config */
     .push-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
@@ -104,8 +104,8 @@ class DeviceConfig extends LitElement {
     }
     .push-btn:hover    { background: #388e3c; }
     .push-btn:disabled { opacity: 0.5; cursor: default; }
-    .push-status        { font-size: 12px; color: #888; }
-    .push-status.synced { color: #81c784; }
+    .push-status        { font-size: 12px; color: #fff; }
+    .push-status.synced { color: #04d65c; }
     .push-status.pending{ color: #ffb74d; }
   `;
 
@@ -137,7 +137,7 @@ class DeviceConfig extends LitElement {
           <input class="config-input" type="number" min="5"
             .value=${String(this.configInterval)}
             @input=${(e) => this._onIntervalChange(Number(e.target.value))}>
-          <span style="font-size: 12px; color: #666; margin-left: 4px;">seconds</span>
+          <span style="font-size: 12px; color: #fff; margin-left: 4px;">seconds</span>
         </div>
 
         ${plugins.length > 0 ? html`
@@ -175,7 +175,7 @@ class DeviceConfig extends LitElement {
                 `)}
               </tbody>
             </table>
-          ` : html`<div style="font-size: 13px; color: #555; margin-bottom: 10px;">No custom sensors</div>`}
+          ` : html`<div style="font-size: 13px; color: #fff; margin-bottom: 10px;">No custom sensors</div>`}
 
           ${this._showAddSensor || this._editSensorKey ? this._renderSensorForm() : html`
             <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
@@ -185,8 +185,8 @@ class DeviceConfig extends LitElement {
 
         ${this.device.allowed_commands?.length > 0 ? html`
           <div class="config-row" style="margin-bottom: 0;">
-            <span class="config-label" style="color: #666;">Allowed commands</span>
-            <div style="font-size: 12px; color: #666;">${(this.device.allowed_commands || []).join(', ')}</div>
+            <span class="config-label" style="color: #fff;">Allowed commands</span>
+            <div style="font-size: 12px; color: #fff;">${(this.device.allowed_commands || []).join(', ')}</div>
           </div>
         ` : ''}
 

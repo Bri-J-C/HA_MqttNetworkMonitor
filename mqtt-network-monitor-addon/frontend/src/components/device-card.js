@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 
 const STATUS_COLORS = {
-  online: '#81c784',
+  online: '#04d65c',
   offline: '#ef5350',
   warning: '#ffb74d',
   unknown: '#666',
@@ -16,7 +16,7 @@ class DeviceCard extends LitElement {
   static styles = css`
     :host {
       display: block;
-      background: #2a2a4a;
+      background: rgba(255,255,255,0.05);
       border-radius: 8px;
       padding: 14px;
       cursor: pointer;
@@ -24,7 +24,7 @@ class DeviceCard extends LitElement {
       border-left: 3px solid var(--status-color, #666);
     }
     :host(:hover) {
-      background: #323258;
+      background: rgba(255,255,255,0.08);
       transform: translateY(-1px);
     }
     .header {
@@ -36,7 +36,7 @@ class DeviceCard extends LitElement {
     .name {
       font-size: 14px;
       font-weight: 600;
-      color: #e0e0e0;
+      color: #fff;
     }
     .status {
       font-size: 11px;
@@ -45,7 +45,7 @@ class DeviceCard extends LitElement {
     }
     .type {
       font-size: 11px;
-      color: #666;
+      color: rgba(255,255,255,0.5);
       margin-bottom: 8px;
     }
     .attrs {
@@ -55,15 +55,15 @@ class DeviceCard extends LitElement {
     }
     .attr {
       font-size: 11px;
-      color: #aaa;
+      color: rgba(255,255,255,0.5);
     }
-    .attr-value { color: #ccc; }
+    .attr-value { color: rgba(255,255,255,0.8); }
     .attr-value.warning { color: #ffb74d; }
     .tags {
       display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap;
     }
     .tag {
-      font-size: 9px; background: #1e3a5f; color: #4fc3f7;
+      font-size: 9px; background: rgba(0,212,255,0.15); color: #00D4FF;
       padding: 1px 6px; border-radius: 3px;
     }
   `;

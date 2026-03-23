@@ -8,8 +8,8 @@ class NavBar extends LitElement {
   static styles = css`
     :host {
       display: block;
-      background: #16213e;
-      border-bottom: 1px solid #2a2a4a;
+      background: #0d0d1f;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     nav {
       display: flex;
@@ -22,7 +22,7 @@ class NavBar extends LitElement {
     .logo {
       font-size: 18px;
       font-weight: 700;
-      color: #4fc3f7;
+      color: #00D4FF;
       margin-right: 32px;
     }
     .nav-links {
@@ -32,7 +32,7 @@ class NavBar extends LitElement {
     button {
       background: none;
       border: none;
-      color: #888;
+      color: #fff;
       padding: 8px 16px;
       border-radius: 6px;
       cursor: pointer;
@@ -40,16 +40,16 @@ class NavBar extends LitElement {
       transition: all 0.2s;
     }
     button:hover {
-      color: #ccc;
+      color: rgba(255,255,255,0.8);
       background: rgba(255,255,255,0.05);
     }
     button.active {
-      color: #4fc3f7;
-      background: rgba(79,195,247,0.1);
+      color: #00D4FF;
+      background: rgba(0,212,255,0.1);
     }
     .version {
       font-size: 10px;
-      color: #444;
+      color: #666;
       margin-left: auto;
     }
   `;

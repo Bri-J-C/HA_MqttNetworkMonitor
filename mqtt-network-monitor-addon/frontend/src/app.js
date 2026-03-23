@@ -16,7 +16,7 @@ class NetworkMonitorApp extends LitElement {
     :host {
       display: block;
       min-height: 100vh;
-      background: #1a1a2e;
+      background: #0a0a1a;
     }
     .overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -29,9 +29,9 @@ class NetworkMonitorApp extends LitElement {
       overflow-y: auto;
     }
     .overlay-content {
-      background: #1a1a2e;
+      background: #0d0d1f;
       border-radius: 12px;
-      border: 1px solid #2a2a4a;
+      border: 1px solid rgba(255,255,255,0.05);
       width: 100%;
       max-width: 1000px;
       max-height: calc(100vh - 80px);

@@ -31,9 +31,9 @@ class ConflictDialog extends LitElement {
     }
 
     .dialog {
-      background: #2a2a4a; border-radius: 12px; padding: 24px;
+      background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px;
       min-width: 560px; max-width: 760px; width: 90vw;
-      border: 1px solid #3a3a5a; display: flex; flex-direction: column; gap: 16px;
+      border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 16px;
     }
 
     .dialog-header {
@@ -44,10 +44,10 @@ class ConflictDialog extends LitElement {
     }
     .header-text { flex: 1; }
     .dialog-title {
-      font-size: 16px; font-weight: 600; color: #e0e0e0; margin-bottom: 4px;
+      font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px;
     }
     .dialog-subtitle {
-      font-size: 13px; color: #888;
+      font-size: 13px; color: rgba(255,255,255,0.5);
     }
 
     .conflict-table {
@@ -55,13 +55,13 @@ class ConflictDialog extends LitElement {
       font-size: 12px;
     }
     .conflict-table th {
-      text-align: left; font-size: 10px; color: #666; padding: 6px 8px;
+      text-align: left; font-size: 10px; color: rgba(255,255,255,0.5); padding: 6px 8px;
       text-transform: uppercase; letter-spacing: 0.5px;
-      border-bottom: 1px solid #3a3a5a;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     .conflict-table td {
-      color: #ccc; padding: 6px 8px;
-      border-bottom: 1px solid #222240;
+      color: rgba(255,255,255,0.8); padding: 6px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
       vertical-align: top;
     }
     .conflict-table tr:last-child td { border-bottom: none; }
@@ -70,15 +70,15 @@ class ConflictDialog extends LitElement {
       display: inline-block; padding: 1px 6px; border-radius: 3px;
       font-size: 10px; font-weight: 600; text-transform: uppercase;
     }
-    .type-command { background: rgba(79,195,247,0.15); color: #4fc3f7; }
-    .type-sensor  { background: rgba(129,196,132,0.15); color: #81c784; }
+    .type-command { background: rgba(0,212,255,0.15); color: #00D4FF; }
+    .type-sensor  { background: rgba(129,196,132,0.15); color: #04d65c; }
     .type-threshold { background: rgba(255,183,77,0.15); color: #ffb74d; }
 
-    .action-text { font-size: 11px; color: #666; font-style: italic; }
+    .action-text { font-size: 11px; color: rgba(255,255,255,0.5); font-style: italic; }
 
     .scroll-area {
       max-height: 320px; overflow-y: auto;
-      border: 1px solid #3a3a5a; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
     }
 
     .dialog-footer {
@@ -88,8 +88,8 @@ class ConflictDialog extends LitElement {
       border: none; padding: 8px 18px; border-radius: 6px;
       cursor: pointer; font-size: 13px; transition: all 0.2s;
     }
-    .btn-cancel { background: #3a3a5a; color: #aaa; }
-    .btn-cancel:hover { background: #4a4a6a; }
+    .btn-cancel { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+    .btn-cancel:hover { background: rgba(255,255,255,0.15); }
     .btn-proceed { background: #ef5350; color: #fff; font-weight: 600; }
     .btn-proceed:hover { background: #f06666; }
   `;
@@ -156,10 +156,10 @@ class ConflictDialog extends LitElement {
                     </td>
                     <td class="mono">${c.name}</td>
                     <td class="mono">
-                      ${c.type === 'command' ? html`<span style="color:#aaa;">shell:</span> ` : ''}${c.device_value}
+                      ${c.type === 'command' ? html`<span style="color:rgba(255,255,255,0.5);">shell:</span> ` : ''}${c.device_value}
                     </td>
                     <td class="mono">
-                      ${c.type === 'command' ? html`<span style="color:#aaa;">shell:</span> ` : ''}${c.group_value}
+                      ${c.type === 'command' ? html`<span style="color:rgba(255,255,255,0.5);">shell:</span> ` : ''}${c.group_value}
                     </td>
                   </tr>
                 `)}
