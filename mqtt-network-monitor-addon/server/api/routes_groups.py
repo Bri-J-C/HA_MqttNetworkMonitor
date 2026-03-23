@@ -7,12 +7,17 @@ from server.api import state
 router = APIRouter(prefix="/api/groups", tags=["groups"])
 
 
-def _build_conflicts(group: dict, devices: dict, candidate_device_id: str | None = None) -> list[dict]:
-    """Compare group policy against member devices and return a list of conflict records.
+def _format_threshold(val) -> str:
+    """Format a threshold value for display."""
+    if isinstance(val, dict):
+        op = val.get("op", ">")
+        v = val.get("value", "?")
+        return f"{op} {v}"
+    return f"> {val}"
 
-    If candidate_device_id is provided, check only that device (for pre-add checks).
-    Otherwise check all current members.
-    """
+
+def _build_conflicts(group: dict, devices: dict, candidate_device_id: str | None = None) -> list[dict]:
+    """Compare group policy against member devices and return a list of conflict records."""
     device_ids = [candidate_device_id] if candidate_device_id else group.get("device_ids", [])
     group_commands = group.get("custom_commands") or {}
     group_sensors = group.get("custom_sensors") or {}
@@ -25,7 +30,7 @@ def _build_conflicts(group: dict, devices: dict, candidate_device_id: str | None
             continue
         device_name = device.get("device_name") or device_id
 
-        # Check commands: group custom_commands vs device server_commands
+        # Commands: group vs device server_commands
         device_server_commands = device.get("server_commands") or {}
         for cmd_name, group_shell in group_commands.items():
             if cmd_name in device_server_commands:
@@ -38,10 +43,10 @@ def _build_conflicts(group: dict, devices: dict, candidate_device_id: str | None
                         "name": cmd_name,
                         "device_value": device_shell,
                         "group_value": group_shell,
-                        "action": "Group version will replace device version",
+                        "action": "Group command will replace device command",
                     })
 
-        # Check sensors: group custom_sensors vs device remote_config.plugins.custom_command.commands
+        # Sensors: group vs device remote_config
         remote_config = device.get("remote_config") or {}
         plugins = remote_config.get("plugins") or {}
         custom_command_cfg = plugins.get("custom_command") or {}
@@ -49,8 +54,8 @@ def _build_conflicts(group: dict, devices: dict, candidate_device_id: str | None
         for sensor_name, group_sensor in group_sensors.items():
             if sensor_name in device_sensors:
                 device_sensor = device_sensors[sensor_name]
-                device_cmd = device_sensor.get("command") if isinstance(device_sensor, dict) else str(device_sensor)
-                group_cmd = group_sensor.get("command") if isinstance(group_sensor, dict) else str(group_sensor)
+                device_cmd = device_sensor.get("command", "?") if isinstance(device_sensor, dict) else str(device_sensor)
+                group_cmd = group_sensor.get("command", "?") if isinstance(group_sensor, dict) else str(group_sensor)
                 if device_cmd != group_cmd:
                     conflicts.append({
                         "device_id": device_id,
@@ -59,10 +64,10 @@ def _build_conflicts(group: dict, devices: dict, candidate_device_id: str | None
                         "name": sensor_name,
                         "device_value": device_cmd,
                         "group_value": group_cmd,
-                        "action": "Group version will replace device version",
+                        "action": "Group sensor will replace device sensor",
                     })
 
-        # Check thresholds: group thresholds vs device threshold_overrides
+        # Thresholds: group vs device overrides
         device_thresholds = device.get("threshold_overrides") or {}
         for threshold_name, group_val in group_thresholds.items():
             if threshold_name in device_thresholds:
@@ -73,8 +78,8 @@ def _build_conflicts(group: dict, devices: dict, candidate_device_id: str | None
                         "device_name": device_name,
                         "type": "threshold",
                         "name": threshold_name,
-                        "device_value": f"> {device_val}",
-                        "group_value": f"> {group_val}",
+                        "device_value": _format_threshold(device_val),
+                        "group_value": _format_threshold(group_val),
                         "action": "Group threshold will take priority",
                     })
 

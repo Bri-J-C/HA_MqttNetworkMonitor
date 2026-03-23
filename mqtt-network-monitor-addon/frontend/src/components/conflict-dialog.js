@@ -155,8 +155,12 @@ class ConflictDialog extends LitElement {
                       <span class="type-badge ${this._typeClass(c.type)}">${c.type}</span>
                     </td>
                     <td class="mono">${c.name}</td>
-                    <td class="mono">${c.device_value}</td>
-                    <td class="mono">${c.group_value}</td>
+                    <td class="mono">
+                      ${c.type === 'command' ? html`<span style="color:#aaa;">shell:</span> ` : ''}${c.device_value}
+                    </td>
+                    <td class="mono">
+                      ${c.type === 'command' ? html`<span style="color:#aaa;">shell:</span> ` : ''}${c.group_value}
+                    </td>
                   </tr>
                 `)}
               </tbody>
