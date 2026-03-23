@@ -529,21 +529,39 @@ class GroupPolicySettings extends LitElement {
     await this._loadAll();
   }
 
-  _hideGroupCommand(g, name) {
+  async _hideGroupCommand(g, name) {
     const hidden = [...(g.hidden_commands || [])];
     if (!hidden.includes(name)) hidden.push(name);
-    this._groups = {
-      ...this._groups,
-      [g.id]: { ...g, hidden_commands: hidden },
-    };
+    try {
+      await updateGroup(g.id, {
+        name: g.name,
+        device_ids: g.device_ids || [],
+        custom_commands: g.custom_commands || {},
+        custom_sensors: g.custom_sensors || {},
+        thresholds: g.thresholds || {},
+        hidden_commands: hidden,
+      });
+    } catch (e) {
+      console.error('Failed to hide group command:', e);
+    }
+    await this._loadAll();
   }
 
-  _unhideGroupCommand(g, name) {
+  async _unhideGroupCommand(g, name) {
     const hidden = (g.hidden_commands || []).filter(c => c !== name);
-    this._groups = {
-      ...this._groups,
-      [g.id]: { ...g, hidden_commands: hidden },
-    };
+    try {
+      await updateGroup(g.id, {
+        name: g.name,
+        device_ids: g.device_ids || [],
+        custom_commands: g.custom_commands || {},
+        custom_sensors: g.custom_sensors || {},
+        thresholds: g.thresholds || {},
+        hidden_commands: hidden,
+      });
+    } catch (e) {
+      console.error('Failed to unhide group command:', e);
+    }
+    await this._loadAll();
   }
 
   // ── Group Thresholds ──────────────────────────────────────────────────────
@@ -768,13 +786,22 @@ class GroupPolicySettings extends LitElement {
     this._cancelGroupSensorForm();
   }
 
-  _removeGroupSensor(g, name) {
+  async _removeGroupSensor(g, name) {
     const updated = { ...(g.custom_sensors || {}) };
     delete updated[name];
-    this._groups = {
-      ...this._groups,
-      [g.id]: { ...g, custom_sensors: updated },
-    };
+    try {
+      await updateGroup(g.id, {
+        name: g.name,
+        device_ids: g.device_ids || [],
+        custom_commands: g.custom_commands || {},
+        custom_sensors: updated,
+        thresholds: g.thresholds || {},
+        hidden_commands: g.hidden_commands || [],
+      });
+    } catch (e) {
+      console.error('Failed to remove group sensor:', e);
+    }
+    await this._loadAll();
   }
 
   // ── Group Member Management ───────────────────────────────────────────────
