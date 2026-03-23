@@ -513,11 +513,19 @@ class GroupPolicySettings extends LitElement {
   async _removeGroupCommand(g, name) {
     const updated = { ...(g.custom_commands || {}) };
     delete updated[name];
-    this._groups = {
-      ...this._groups,
-      [g.id]: { ...g, custom_commands: updated },
-    };
-    // Reload devices so discovered commands list is fresh
+    // Save to server immediately so reload gets the correct data
+    try {
+      await updateGroup(g.id, {
+        name: g.name,
+        device_ids: g.device_ids || [],
+        custom_commands: updated,
+        custom_sensors: g.custom_sensors || {},
+        thresholds: g.thresholds || {},
+        hidden_commands: g.hidden_commands || [],
+      });
+    } catch (e) {
+      console.error('Failed to remove group command:', e);
+    }
     await this._loadAll();
   }
 
