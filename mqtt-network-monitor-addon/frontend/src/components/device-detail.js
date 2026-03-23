@@ -507,8 +507,12 @@ class DeviceDetail extends LitElement {
     this._serverCommands = { ...this._serverCommands, [name]: shell };
     this._localChanges   = true;
     await updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
-    // Auto-push to client so the command is immediately available
-    await pushDeviceConfig(this.deviceId, { commands: { [name]: shell } });
+    // Push FULL config so the client receives a complete replacement
+    await pushDeviceConfig(this.deviceId, {
+      interval: this._configInterval,
+      plugins:  { custom_command: { commands: this._customSensors } },
+      commands: this._serverCommands,
+    });
     // Force re-render so child device-commands component sees the new data
     this.requestUpdate();
   }
@@ -519,8 +523,12 @@ class DeviceDetail extends LitElement {
     this._serverCommands = updated;
     this._localChanges   = true;
     await updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
-    // Push updated commands to client (removes from whitelist)
-    await pushDeviceConfig(this.deviceId, { commands: updated });
+    // Push FULL config so the client receives a complete replacement
+    await pushDeviceConfig(this.deviceId, {
+      interval: this._configInterval,
+      plugins:  { custom_command: { commands: this._customSensors } },
+      commands: updated,
+    });
     // Reload device to get updated allowed_commands
     await this._loadDevice();
   }

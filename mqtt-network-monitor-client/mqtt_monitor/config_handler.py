@@ -59,21 +59,11 @@ class ConfigHandler:
             return {"status": "rejected", "reason": str(e)}
 
     def _apply(self, data: dict):
-        # Update interval
-        if "interval" in data:
-            self._remote_config["interval"] = data["interval"]
-
-        # Update plugins
-        if "plugins" in data:
-            if "plugins" not in self._remote_config:
-                self._remote_config["plugins"] = {}
-            for plugin_name, plugin_config in data["plugins"].items():
-                self._remote_config["plugins"][plugin_name] = plugin_config
-
-        # Replace commands entirely (handles removals)
-        if "commands" in data:
-            self._remote_config["commands"] = dict(data["commands"])
-
+        # Full replacement of server config — skip the message envelope field
+        self._remote_config = {
+            k: v for k, v in data.items()
+            if k != "type"  # Skip the "type": "config_update" field
+        }
         if self._on_config_applied:
             self._on_config_applied(self._remote_config)
 

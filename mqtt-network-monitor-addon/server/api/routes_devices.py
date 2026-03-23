@@ -1,6 +1,5 @@
 """Device-related REST API endpoints."""
 
-import copy
 from fastapi import APIRouter, HTTPException, Query
 from typing import Any
 from server.api import state
@@ -151,25 +150,8 @@ def push_device_config(device_id: str, body: dict[str, Any]):
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
     state.mqtt_handler.push_config(device_id, body)
-    # Merge pushed config into existing remote_config (don't replace)
-    existing_rc = copy.deepcopy(device.get("remote_config") or {})
-    merged = {**existing_rc, **body}
-    # Deep merge plugins
-    if "plugins" in existing_rc and "plugins" in body:
-        merged["plugins"] = copy.deepcopy(existing_rc.get("plugins", {}))
-        for pname, pconfig in body["plugins"].items():
-            if pname in merged["plugins"] and isinstance(merged["plugins"][pname], dict) and isinstance(pconfig, dict):
-                merged["plugins"][pname] = {**merged["plugins"][pname], **pconfig}
-            else:
-                merged["plugins"][pname] = pconfig
-    elif "plugins" in existing_rc:
-        merged["plugins"] = copy.deepcopy(existing_rc["plugins"])
-    # Deep merge commands
-    if "commands" in existing_rc and "commands" in body:
-        merged["commands"] = {**existing_rc.get("commands", {}), **body["commands"]}
-    elif "commands" in existing_rc:
-        merged["commands"] = existing_rc["commands"]
-    state.registry.set_device_settings(device_id, {"remote_config": merged})
+    # Full replacement — no merge
+    state.registry.set_device_settings(device_id, {"remote_config": body})
     return {"status": "pushed", "device_id": device_id}
 
 
