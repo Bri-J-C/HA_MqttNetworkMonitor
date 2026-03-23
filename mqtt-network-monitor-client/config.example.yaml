@@ -29,6 +29,22 @@ plugins:
       - eth0
       # - wlan0
 
+  # linux_system:
+  #   interval: 300
+  #   attributes:
+  #     - pending_updates
+  #     - security_updates
+  #     - failed_services
+  #     - logged_in_users
+  #     - docker_running
+  #     - kernel_version
+  #     - load_1m
+  #     - swap_usage
+  #   services:
+  #     - nginx
+  #     - mosquitto
+  #     - docker
+
   # custom_command:
   #   commands:
   #     my_metric:

@@ -34,7 +34,9 @@ class PluginRegistry:
         from mqtt_monitor.plugins.system_resources import SystemResourcesPlugin
         from mqtt_monitor.plugins.network_info import NetworkInfoPlugin
         from mqtt_monitor.plugins.custom_command import CustomCommandPlugin
+        from mqtt_monitor.plugins.linux_system import LinuxSystemPlugin
 
         self.register("system_resources", SystemResourcesPlugin)
         self.register("network_info", NetworkInfoPlugin)
         self.register("custom_command", CustomCommandPlugin)
+        self.register("linux_system", LinuxSystemPlugin)
