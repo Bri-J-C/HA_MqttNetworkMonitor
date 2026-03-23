@@ -52,7 +52,20 @@ class SystemResourcesPlugin(BasePlugin):
     @staticmethod
     @collector("uptime")
     def _uptime():
-        return {"value": int(time.time() - psutil.boot_time()), "unit": "seconds"}
+        seconds = int(time.time() - psutil.boot_time())
+        parts = []
+        years, seconds = divmod(seconds, 31536000)
+        months, seconds = divmod(seconds, 2592000)
+        days, seconds = divmod(seconds, 86400)
+        hours, seconds = divmod(seconds, 3600)
+        minutes, seconds = divmod(seconds, 60)
+        if years: parts.append(f"{years}y")
+        if months: parts.append(f"{months}mo")
+        if days: parts.append(f"{days}d")
+        if hours: parts.append(f"{hours}h")
+        if minutes: parts.append(f"{minutes}m")
+        if not parts: parts.append(f"{seconds}s")
+        return {"value": " ".join(parts), "unit": ""}
 
     @staticmethod
     @collector("cpu_temp")
