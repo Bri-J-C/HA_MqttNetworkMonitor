@@ -52,4 +52,10 @@ def delete_tag(tag: str):
     result = state.tag_registry.delete_tag(tag)
     if not result:
         raise HTTPException(status_code=404, detail="Tag not found")
+    # Remove tag from all devices that have it
+    for device_id, device in state.registry.get_all_devices().items():
+        server_tags = device.get("server_tags", [])
+        if tag in server_tags:
+            server_tags = [t for t in server_tags if t != tag]
+            state.registry.set_server_tags(device_id, server_tags)
     return {"status": "deleted"}

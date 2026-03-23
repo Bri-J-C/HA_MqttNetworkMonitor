@@ -509,6 +509,8 @@ class DeviceDetail extends LitElement {
     await updateDeviceSettings(this.deviceId, { server_commands: this._serverCommands });
     // Auto-push to client so the command is immediately available
     await pushDeviceConfig(this.deviceId, { commands: { [name]: shell } });
+    // Force re-render so child device-commands component sees the new data
+    this.requestUpdate();
   }
 
   async _removeServerCommand(name) {

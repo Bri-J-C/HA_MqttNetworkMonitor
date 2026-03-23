@@ -1,5 +1,6 @@
 """Device-related REST API endpoints."""
 
+import copy
 from fastapi import APIRouter, HTTPException, Query
 from typing import Any
 from server.api import state
@@ -151,16 +152,18 @@ def push_device_config(device_id: str, body: dict[str, Any]):
         raise HTTPException(status_code=404, detail="Device not found")
     state.mqtt_handler.push_config(device_id, body)
     # Merge pushed config into existing remote_config (don't replace)
-    existing_rc = device.get("remote_config") or {}
+    existing_rc = copy.deepcopy(device.get("remote_config") or {})
     merged = {**existing_rc, **body}
     # Deep merge plugins
     if "plugins" in existing_rc and "plugins" in body:
-        merged["plugins"] = {**existing_rc.get("plugins", {}), **body["plugins"]}
-        for pname in body["plugins"]:
-            if pname in existing_rc.get("plugins", {}):
-                merged["plugins"][pname] = {**existing_rc["plugins"][pname], **body["plugins"][pname]}
+        merged["plugins"] = copy.deepcopy(existing_rc.get("plugins", {}))
+        for pname, pconfig in body["plugins"].items():
+            if pname in merged["plugins"] and isinstance(merged["plugins"][pname], dict) and isinstance(pconfig, dict):
+                merged["plugins"][pname] = {**merged["plugins"][pname], **pconfig}
+            else:
+                merged["plugins"][pname] = pconfig
     elif "plugins" in existing_rc:
-        merged["plugins"] = existing_rc["plugins"]
+        merged["plugins"] = copy.deepcopy(existing_rc["plugins"])
     # Deep merge commands
     if "commands" in existing_rc and "commands" in body:
         merged["commands"] = {**existing_rc.get("commands", {}), **body["commands"]}

@@ -294,11 +294,18 @@ class DeviceRegistry:
         return group
 
     def delete_group(self, group_id: str) -> bool:
-        if group_id in self._groups:
-            del self._groups[group_id]
-            self._save_groups()
-            return True
-        return False
+        if group_id not in self._groups:
+            return False
+        # Clear group_policy from all member devices
+        group = self._groups[group_id]
+        for did in group.get("device_ids", []):
+            device = self._devices.get(did)
+            if device and device.get("group_policy") == group_id:
+                device["group_policy"] = None
+        self._save_devices()
+        del self._groups[group_id]
+        self._save_groups()
+        return True
 
     def delete_attribute(self, device_id: str, attr_name: str) -> bool:
         device = self._devices.get(device_id)
@@ -312,11 +319,16 @@ class DeviceRegistry:
         return False
 
     def delete_device(self, device_id: str) -> bool:
-        if device_id in self._devices:
-            del self._devices[device_id]
-            self._save_devices()
-            return True
-        return False
+        if device_id not in self._devices:
+            return False
+        # Remove from all groups
+        for group in self._groups.values():
+            if device_id in group.get("device_ids", []):
+                group["device_ids"].remove(device_id)
+        self._save_groups()
+        del self._devices[device_id]
+        self._save_devices()
+        return True
 
     def set_warning_thresholds(self, thresholds: dict[str, float]) -> None:
         self._warning_thresholds.update(thresholds)

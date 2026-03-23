@@ -361,12 +361,8 @@ class GroupPolicySettings extends LitElement {
           if (!(cmd in commandMap)) commandMap[cmd] = '';
         }
       }
-
-      if (dev.server_commands && typeof dev.server_commands === 'object') {
-        for (const [cmd, shellCmd] of Object.entries(dev.server_commands)) {
-          commandMap[cmd] = shellCmd || commandMap[cmd] || '';
-        }
-      }
+      // server_commands are server-managed and not included in discovered —
+      // they would cause group-defined commands to show as "both" incorrectly
 
       const rc = dev.remote_config;
       if (rc && rc.plugins && rc.plugins.custom_command && rc.plugins.custom_command.commands) {
