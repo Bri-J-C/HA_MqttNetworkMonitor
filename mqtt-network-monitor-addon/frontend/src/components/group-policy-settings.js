@@ -495,36 +495,39 @@ class GroupPolicySettings extends LitElement {
   }
 
   async _removeGroupCommand(g, name) {
-    const updated = { ...(g.custom_commands || {}) };
+    const latest = this._getLatestGroup(g);
+    const updated = { ...(latest.custom_commands || {}) };
     delete updated[name];
-    // Save to server immediately so reload gets the correct data
     try {
-      await updateGroup(g.id, {
-        name: g.name,
-        device_ids: g.device_ids || [],
-        custom_commands: updated,
-        custom_sensors: g.custom_sensors || {},
-        thresholds: g.thresholds || {},
-        hidden_commands: g.hidden_commands || [],
-      });
+      await updateGroup(g.id, this._buildGroupPayload(latest, { custom_commands: updated }));
     } catch (e) {
       console.error('Failed to remove group command:', e);
     }
     await this._loadAll();
   }
 
+  _getLatestGroup(g) {
+    return this._groups[g.id] || g;
+  }
+
+  _buildGroupPayload(group, overrides = {}) {
+    return {
+      name: group.name,
+      device_ids: group.device_ids || [],
+      custom_commands: group.custom_commands || {},
+      custom_sensors: group.custom_sensors || {},
+      thresholds: group.thresholds || {},
+      hidden_commands: group.hidden_commands || [],
+      ...overrides,
+    };
+  }
+
   async _hideGroupCommand(g, name) {
-    const hidden = [...(g.hidden_commands || [])];
+    const latest = this._getLatestGroup(g);
+    const hidden = [...(latest.hidden_commands || [])];
     if (!hidden.includes(name)) hidden.push(name);
     try {
-      await updateGroup(g.id, {
-        name: g.name,
-        device_ids: g.device_ids || [],
-        custom_commands: g.custom_commands || {},
-        custom_sensors: g.custom_sensors || {},
-        thresholds: g.thresholds || {},
-        hidden_commands: hidden,
-      });
+      await updateGroup(g.id, this._buildGroupPayload(latest, { hidden_commands: hidden }));
     } catch (e) {
       console.error('Failed to hide group command:', e);
     }
@@ -532,16 +535,10 @@ class GroupPolicySettings extends LitElement {
   }
 
   async _unhideGroupCommand(g, name) {
-    const hidden = (g.hidden_commands || []).filter(c => c !== name);
+    const latest = this._getLatestGroup(g);
+    const hidden = (latest.hidden_commands || []).filter(c => c !== name);
     try {
-      await updateGroup(g.id, {
-        name: g.name,
-        device_ids: g.device_ids || [],
-        custom_commands: g.custom_commands || {},
-        custom_sensors: g.custom_sensors || {},
-        thresholds: g.thresholds || {},
-        hidden_commands: hidden,
-      });
+      await updateGroup(g.id, this._buildGroupPayload(latest, { hidden_commands: hidden }));
     } catch (e) {
       console.error('Failed to unhide group command:', e);
     }
@@ -768,17 +765,11 @@ class GroupPolicySettings extends LitElement {
   }
 
   async _removeGroupSensor(g, name) {
-    const updated = { ...(g.custom_sensors || {}) };
+    const latest = this._getLatestGroup(g);
+    const updated = { ...(latest.custom_sensors || {}) };
     delete updated[name];
     try {
-      await updateGroup(g.id, {
-        name: g.name,
-        device_ids: g.device_ids || [],
-        custom_commands: g.custom_commands || {},
-        custom_sensors: updated,
-        thresholds: g.thresholds || {},
-        hidden_commands: g.hidden_commands || [],
-      });
+      await updateGroup(g.id, this._buildGroupPayload(latest, { custom_sensors: updated }));
     } catch (e) {
       console.error('Failed to remove group sensor:', e);
     }
@@ -849,7 +840,13 @@ class GroupPolicySettings extends LitElement {
     const name = this._editingGroupName === g.id ? this._editGroupName.trim() : latest.name;
     const cleanThresholds = {};
     for (const [k, v] of Object.entries(latest.thresholds || {})) {
-      if (v != null && !isNaN(v)) cleanThresholds[k] = v;
+      if (v == null) continue;
+      // Thresholds can be {op, value} objects or plain numbers
+      if (typeof v === 'object' && v.value != null) {
+        cleanThresholds[k] = v;
+      } else if (typeof v === 'number' && !isNaN(v)) {
+        cleanThresholds[k] = v;
+      }
     }
     const savedName = name || latest.name;
     const payload = {
@@ -865,7 +862,7 @@ class GroupPolicySettings extends LitElement {
       await updateGroup(g.id, payload);
       this._groups = {
         ...this._groups,
-        [g.id]: { ...g, name: savedName, thresholds: cleanThresholds },
+        [g.id]: { ...latest, name: savedName, thresholds: cleanThresholds },
       };
       if (this._editingGroupName === g.id) this._editingGroupName = null;
       this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: 'saved' };
