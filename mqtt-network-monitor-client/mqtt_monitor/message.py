@@ -18,6 +18,7 @@ class MessageBuilder:
         self.active_plugins = active_plugins if active_plugins is not None else []
         self.collection_interval = collection_interval
         self._msg_count = 0
+        self._force_metadata = False
 
     @property
     def status_topic(self) -> str:
@@ -58,10 +59,11 @@ class MessageBuilder:
         }
         # Include metadata every 10th message to reduce per-message payload size
         self._msg_count += 1
-        if self._msg_count % 10 == 1:
+        if self._msg_count % 10 == 1 or self._force_metadata:
             payload["allowed_commands"] = self.allowed_commands
             payload["active_plugins"] = self.active_plugins
             payload["collection_interval"] = self.collection_interval
+            self._force_metadata = False
         if network is not None:
             payload["network"] = network
         return json.dumps(payload, separators=(',', ':'))

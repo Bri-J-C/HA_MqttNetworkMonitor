@@ -165,6 +165,20 @@ class MQTTMonitorClient:
             )
 
         self._sync_active_plugins()
+        self._message_builder._force_metadata = True
+
+        # Reschedule all plugins immediately so changes take effect now
+        if self._running:
+            self._reschedule_all_plugins()
+
+    def _reschedule_all_plugins(self):
+        """Cancel all plugin timers and reschedule immediately."""
+        for timer in self._plugin_timers.values():
+            timer.cancel()
+        self._plugin_timers.clear()
+        for plugin in self._plugins:
+            self._schedule_plugin(plugin)
+        logger.info("Rescheduled all plugins after config update")
 
     def _collect_and_publish(self, plugin):
         try:
