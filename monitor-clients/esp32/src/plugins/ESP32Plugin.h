@@ -65,8 +65,12 @@ public:
             ",\"reset_reason\":{\"value\":\"%s\",\"unit\":\"\"}", reason_str);
         n += snprintf(buf + n, maxLen - n,
             ",\"chip_revision\":{\"value\":%d,\"unit\":\"\"}", chip.revision);
+        // Truncate SDK version to avoid buffer overflow (can be very long)
+        char sdk[24];
+        strncpy(sdk, esp_get_idf_version(), sizeof(sdk) - 1);
+        sdk[sizeof(sdk) - 1] = '\0';
         n += snprintf(buf + n, maxLen - n,
-            ",\"sdk_version\":{\"value\":\"%s\",\"unit\":\"\"}", esp_get_idf_version());
+            ",\"sdk_version\":{\"value\":\"%s\",\"unit\":\"\"}", sdk);
         return n;
     }
 };
