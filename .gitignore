@@ -25,5 +25,10 @@ docs/superpowers/
 
 # Tests (not for public repo)
 tests/
-mqtt-network-monitor-client/tests/
+monitor-clients/python/tests/
 mqtt-network-monitor-addon/tests/
+
+# Removed artifacts
+screenshot/
+CurtainController_Monitor/
+CurtainController_Monitor.ino
