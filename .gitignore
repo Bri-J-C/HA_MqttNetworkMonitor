@@ -16,3 +16,14 @@ Thumbs.db
 *.log
 /data/
 .claude/worktrees/
+
+# Sensitive / private files
+CLAUDE.md
+deploy.sh
+.claude/
+docs/superpowers/
+
+# Tests (not for public repo)
+tests/
+mqtt-network-monitor-client/tests/
+mqtt-network-monitor-addon/tests/
