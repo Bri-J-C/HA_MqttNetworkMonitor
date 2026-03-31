@@ -7,6 +7,10 @@
 #include "plugins/BasePlugin.h"
 #include "JsonParser.h"
 
+#ifdef ESP32
+#include <Preferences.h>
+#endif
+
 // Compile-time size configuration.
 // Override in your sketch BEFORE #include <MQTTMonitor.h>:
 //   #define MQTT_MONITOR_BUF_SIZE 256   // for very constrained devices
@@ -86,6 +90,7 @@ public:
                 _mqttClient->subscribe(_topicBuf);
             }
             Serial.printf("[MQTTMonitor] Shared mode (id=%s)\n", _deviceId);
+            _loadPersistedConfig();
             return;
         }
         _mqttClient->setServer(_brokerHost, _brokerPort);
@@ -93,6 +98,7 @@ public:
         _mqttClient->setCallback([this](char* topic, byte* payload, unsigned int length) {
             _handleMessage(topic, payload, length);
         });
+        _loadPersistedConfig();
         _connect();
     }
 
@@ -139,6 +145,12 @@ public:
     // Callback receives command string only (params parsing left to user if needed).
     void onCommand(void (*callback)(const char* command)) {
         _commandCallback = callback;
+    }
+
+    void enablePersistence() {
+        #ifdef ESP32
+        _persistenceEnabled = true;
+        #endif
     }
 
     // For shared mode: host app calls this from its MQTT callback to forward
@@ -203,6 +215,41 @@ private:
 
     const char* _localCommands[8];
     int _localCmdCount = 0;
+
+    #ifdef ESP32
+    bool _persistenceEnabled = false;
+    #endif
+
+    void _loadPersistedConfig() {
+        #ifdef ESP32
+        if (!_persistenceEnabled) return;
+        Preferences prefs;
+        if (!prefs.begin("mqtt_mon", true)) return;
+
+        unsigned long interval = prefs.getULong("interval", 0);
+        if (interval > 0) {
+            for (int i = 0; i < _pluginCount; i++) {
+                _plugins[i]->setInterval(interval);
+            }
+            Serial.printf("[MQTTMonitor] Loaded persisted interval: %lums\n", interval);
+        }
+        prefs.end();
+        #endif
+    }
+
+    void _savePersistedConfig() {
+        #ifdef ESP32
+        if (!_persistenceEnabled) return;
+        Preferences prefs;
+        if (!prefs.begin("mqtt_mon", false)) return;
+
+        if (_pluginCount > 0) {
+            prefs.putULong("interval", _plugins[0]->getInterval());
+        }
+        prefs.end();
+        Serial.println("[MQTTMonitor] Config persisted to NVS");
+        #endif
+    }
 
     // Shared topic buffer — reused across all methods to avoid stack waste.
     char _topicBuf[MQTT_MONITOR_TOPIC_SIZE];
@@ -366,6 +413,7 @@ private:
 
         _forceMetadata = true;
         _publishConfigResponse("applied", nullptr);
+        _savePersistedConfig();
         Serial.println("[MQTTMonitor] Config update applied");
     }
 
