@@ -17,8 +17,6 @@ class MessageBuilder:
         self.allowed_commands = allowed_commands if allowed_commands is not None else []
         self.active_plugins = active_plugins if active_plugins is not None else []
         self.collection_interval = collection_interval
-        self._msg_count = 0
-        self._force_metadata = False
 
     @property
     def status_topic(self) -> str:
@@ -57,16 +55,22 @@ class MessageBuilder:
             "timestamp": int(time.time()),
             "attributes": attributes,
         }
-        # Include metadata every 10th message to reduce per-message payload size
-        self._msg_count += 1
-        if self._msg_count % 10 == 1 or self._force_metadata:
-            payload["allowed_commands"] = self.allowed_commands
-            payload["active_plugins"] = self.active_plugins
-            payload["collection_interval"] = self.collection_interval
-            self._force_metadata = False
         if network is not None:
             payload["network"] = network
         return json.dumps(payload, separators=(',', ':'))
+
+    def build_metadata_message(self) -> str:
+        """Build a metadata-only message (sent on connect and config change)."""
+        return json.dumps({
+            "device_id": self.device_id,
+            "device_name": self.device_name,
+            "device_type": self.device_type,
+            "tags": self.tags,
+            "timestamp": int(time.time()),
+            "allowed_commands": self.allowed_commands,
+            "active_plugins": self.active_plugins,
+            "collection_interval": self.collection_interval,
+        }, separators=(',', ':'))
 
     def build_command_response(
         self, request_id: str, status: str, output: str

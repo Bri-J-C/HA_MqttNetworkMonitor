@@ -111,6 +111,13 @@ class MQTTMonitorClient:
         if self._plugins:
             self._message_builder.collection_interval = self._plugins[0].interval
 
+    def _publish_metadata(self):
+        """Publish metadata message (allowed_commands, active_plugins, interval)."""
+        message = self._message_builder.build_metadata_message()
+        topic = self._message_builder.topic_for_plugin("metadata")
+        self._mqtt.publish(topic, message)
+        logger.info("Published metadata")
+
     def _apply_config_update(self, remote_config: dict):
         """Apply remote config changes to running plugins."""
         if "interval" in remote_config:
@@ -165,10 +172,10 @@ class MQTTMonitorClient:
             )
 
         self._sync_active_plugins()
-        self._message_builder._force_metadata = True
 
-        # Reschedule all plugins immediately so changes take effect now
+        # Republish metadata immediately so add-on sees the change
         if self._running:
+            self._publish_metadata()
             self._reschedule_all_plugins()
 
     def _reschedule_all_plugins(self):
@@ -199,6 +206,8 @@ class MQTTMonitorClient:
         if not self._running:
             return
         self._collect_and_publish(plugin)
+        if plugin.send_once:
+            return  # Don't schedule recurring timer for send_once plugins
         # Cancel existing timer for this plugin before creating a new one
         old_timer = self._plugin_timers.get(plugin.name)
         if old_timer:
@@ -210,6 +219,8 @@ class MQTTMonitorClient:
 
     def _start_collection(self):
         self._running = True
+        # Publish metadata once on connect
+        self._publish_metadata()
         for plugin in self._plugins:
             self._schedule_plugin(plugin)
 

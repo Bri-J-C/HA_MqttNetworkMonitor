@@ -7,6 +7,7 @@ from typing import Any
 class BasePlugin(ABC):
     name: str
     default_interval: int
+    send_once: bool = False  # Collect once on connect, not on interval
 
     def __init__(self, config: dict[str, Any]):
         self.config = config

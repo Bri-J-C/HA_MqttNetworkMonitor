@@ -88,6 +88,9 @@ public:
                 snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/config",
                          MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
                 _mqttClient->subscribe(_topicBuf);
+
+                _publishMetadata();
+                _publishSendOncePlugins();
             }
             Serial.printf("[MQTTMonitor] Shared mode (id=%s)\n", _deviceId);
             _loadPersistedConfig();
@@ -104,9 +107,14 @@ public:
 
     void loop() {
         if (_shared) {
-            // Shared mode: just publish plugin data if client is connected.
-            // The host app handles WiFi, MQTT connection, and client.loop().
-            if (!_mqttClient->connected()) return;
+            if (!_mqttClient->connected()) { _wasConnected = false; return; }
+            // Publish metadata + sendOnce on first connect or reconnect
+            if (!_wasConnected) {
+                _wasConnected = true;
+                _publishMetadata();
+                _publishSendOncePlugins();
+            }
+            if (_forceMetadata) _publishMetadata();
             for (int i = 0; i < _pluginCount; i++) {
                 if (_plugins[i]->shouldCollect()) {
                     _collectAndPublish(_plugins[i]);
@@ -126,6 +134,7 @@ public:
             _connect();
         }
         _mqttClient->loop();
+        if (_forceMetadata) _publishMetadata();
         for (int i = 0; i < _pluginCount; i++) {
             if (_plugins[i]->shouldCollect()) {
                 _collectAndPublish(_plugins[i]);
@@ -222,8 +231,8 @@ private:
     unsigned long _lastReconnect = 0;
     int _reconnectFailures = 0;
 
-    int _msgCount = 0;
     bool _forceMetadata = false;
+    bool _wasConnected = false;  // Track connection transitions
 
     const char* _localCommands[8];
     int _localCmdCount = 0;
@@ -298,6 +307,9 @@ private:
             snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/config",
                      MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
             _mqttClient->subscribe(_topicBuf);
+
+            _publishMetadata();
+            _publishSendOncePlugins();
         } else {
             _reconnectFailures++;
             Serial.printf("[MQTTMonitor] Connect failed (attempt %d), backoff %lums\n",
@@ -332,35 +344,6 @@ private:
             _deviceId, _deviceName, _deviceType,
             (unsigned long)(millis() / 1000), tagsBuf, attrsBuf);
 
-        // Include metadata every 10th message or when forced
-        _msgCount++;
-        if (_msgCount % 10 == 1 || _forceMetadata) {
-            // allowed_commands
-            pn += snprintf(payload + pn, sizeof(payload) - pn, ",\"allowed_commands\":[");
-            for (int i = 0; i < _allowedCmdCount; i++) {
-                if (i > 0) pn += snprintf(payload + pn, sizeof(payload) - pn, ",");
-                pn += snprintf(payload + pn, sizeof(payload) - pn, "\"%s\"", _allowedCommands[i]);
-            }
-            pn += snprintf(payload + pn, sizeof(payload) - pn, "]");
-
-            // active_plugins
-            pn += snprintf(payload + pn, sizeof(payload) - pn, ",\"active_plugins\":[");
-            for (int i = 0; i < _pluginCount; i++) {
-                if (i > 0) pn += snprintf(payload + pn, sizeof(payload) - pn, ",");
-                pn += snprintf(payload + pn, sizeof(payload) - pn, "\"%s\"", _plugins[i]->name());
-            }
-            pn += snprintf(payload + pn, sizeof(payload) - pn, "]");
-
-            // collection_interval (first plugin's interval in seconds)
-            if (_pluginCount > 0) {
-                pn += snprintf(payload + pn, sizeof(payload) - pn,
-                    ",\"collection_interval\":%lu",
-                    _plugins[0]->getInterval() / 1000);
-            }
-
-            _forceMetadata = false;
-        }
-
         if (networkLen > 0 && pn < (int)sizeof(payload) - 2) {
             pn += snprintf(payload + pn, sizeof(payload) - pn,
                            ",\"network\":{%s}", networkBuf);
@@ -374,6 +357,57 @@ private:
         snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/%s",
                  MQTT_MONITOR_TOPIC_PREFIX, _deviceId, plugin->name());
         _mqttClient->publish(_topicBuf, payload);
+    }
+
+    void _publishMetadata() {
+        if (!_mqttClient->connected()) return;
+
+        char payload[MQTT_MONITOR_BUF_SIZE];
+        int pn = snprintf(payload, sizeof(payload),
+            "{\"device_id\":\"%s\",\"device_name\":\"%s\",\"device_type\":\"%s\","
+            "\"timestamp\":%lu",
+            _deviceId, _deviceName, _deviceType,
+            (unsigned long)(millis() / 1000));
+
+        // allowed_commands
+        pn += snprintf(payload + pn, sizeof(payload) - pn, ",\"allowed_commands\":[");
+        for (int i = 0; i < _allowedCmdCount; i++) {
+            if (i > 0) pn += snprintf(payload + pn, sizeof(payload) - pn, ",");
+            pn += snprintf(payload + pn, sizeof(payload) - pn, "\"%s\"", _allowedCommands[i]);
+        }
+        pn += snprintf(payload + pn, sizeof(payload) - pn, "]");
+
+        // active_plugins
+        pn += snprintf(payload + pn, sizeof(payload) - pn, ",\"active_plugins\":[");
+        for (int i = 0; i < _pluginCount; i++) {
+            if (i > 0) pn += snprintf(payload + pn, sizeof(payload) - pn, ",");
+            pn += snprintf(payload + pn, sizeof(payload) - pn, "\"%s\"", _plugins[i]->name());
+        }
+        pn += snprintf(payload + pn, sizeof(payload) - pn, "]");
+
+        // collection_interval
+        if (_pluginCount > 0) {
+            pn += snprintf(payload + pn, sizeof(payload) - pn,
+                ",\"collection_interval\":%lu",
+                _plugins[0]->getInterval() / 1000);
+        }
+
+        if (pn < (int)sizeof(payload) - 1) payload[pn++] = '}';
+        payload[pn] = '\0';
+
+        snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/metadata",
+                 MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+        _mqttClient->publish(_topicBuf, payload);
+        _forceMetadata = false;
+        Serial.println("[MQTTMonitor] Published metadata");
+    }
+
+    void _publishSendOncePlugins() {
+        for (int i = 0; i < _pluginCount; i++) {
+            if (_plugins[i]->isSendOnce()) {
+                _collectAndPublish(_plugins[i]);
+            }
+        }
     }
 
     void _handleConfig(byte* payload, unsigned int length) {
@@ -423,8 +457,8 @@ private:
             }
         }
 
-        _forceMetadata = true;
         _publishConfigResponse("applied", nullptr);
+        _publishMetadata();
         _savePersistedConfig();
         Serial.println("[MQTTMonitor] Config update applied");
     }

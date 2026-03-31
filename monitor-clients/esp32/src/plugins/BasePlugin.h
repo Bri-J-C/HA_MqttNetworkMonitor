@@ -20,7 +20,12 @@ public:
     void setInterval(unsigned long intervalMs) { _interval = intervalMs; }
     unsigned long getInterval() const { return _interval; }
 
+    // Send-once plugins collect once on MQTT connect, then stay quiet
+    // until the next reconnect. Use for static data (hardware info, etc.)
+    bool isSendOnce() const { return _sendOnce; }
+
     bool shouldCollect() {
+        if (_sendOnce) return false;  // Controlled by MQTTMonitor on connect
         unsigned long now = millis();
         if (now - _lastCollect >= _interval) {
             _lastCollect = now;
@@ -32,6 +37,7 @@ public:
 protected:
     unsigned long _interval = 30000;
     unsigned long _lastCollect = 0;
+    bool _sendOnce = false;
 };
 
 #endif
