@@ -4,6 +4,23 @@
  * Monitors system stats, WiFi info, and GPIO pins.
  * Publishes to MQTT broker for the Network Monitor add-on.
  *
+ * Two usage modes:
+ *   1. Standalone — monitor manages its own MQTT connection (this example)
+ *   2. Shared — pass an existing PubSubClient to piggyback on your app's
+ *      connection (see CurtainController_Monitor)
+ *
+ * Features demonstrated:
+ *   - Standalone mode: monitor manages its own MQTT connection and
+ *     reconnects automatically without app-level intervention
+ *   - Metadata cycling: allowed_commands and active_plugins are included
+ *     in every 10th published message to keep the broker up to date
+ *   - Runtime config updates: interval and allowed_commands can be changed
+ *     at runtime via MQTT without reflashing firmware
+ *   - Config persistence: interval and command settings survive reboots
+ *     via NVS (call monitor.enablePersistence() before monitor.begin())
+ *   - Graceful shutdown: publishes an "offline" status before restarting
+ *     so the add-on reflects the correct device state immediately
+ *
  * Memory config (optional — set BEFORE #include <MQTTMonitor.h>):
  *   #define MQTT_MONITOR_BUF_SIZE 256   // cut to 256 for very tight devices
  *   #define MAX_GPIO_PINS 8             // fewer pins if you need the RAM back
@@ -25,7 +42,7 @@ const int   MQTT_PORT = 1883;
 const char* MQTT_USER = nullptr;  // Set if using auth
 const char* MQTT_PASS = nullptr;
 
-// Create monitor and plugins
+// Standalone mode — monitor manages its own MQTT connection
 MQTTMonitor monitor("esp-garden", "Garden Sensor", "esp32");
 SystemPlugin  sysPlugin(30);   // Every 30 seconds
 WiFiInfoPlugin wifiPlugin(60); // Every 60 seconds
@@ -62,6 +79,7 @@ void setup() {
     // Allow remote reboot
     monitor.addAllowedCommand("reboot");
 
+    monitor.enablePersistence();
     monitor.begin();
 }
 
