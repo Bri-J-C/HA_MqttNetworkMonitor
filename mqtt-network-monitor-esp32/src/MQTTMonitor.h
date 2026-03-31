@@ -77,6 +77,12 @@ public:
                 snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/status",
                          MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
                 _mqttClient->publish(_topicBuf, "online", true);
+                snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/command",
+                         MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+                _mqttClient->subscribe(_topicBuf);
+                snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/config",
+                         MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+                _mqttClient->subscribe(_topicBuf);
             }
             Serial.printf("[MQTTMonitor] Shared mode (id=%s)\n", _deviceId);
             return;
@@ -129,6 +135,35 @@ public:
     // Callback receives command string only (params parsing left to user if needed).
     void onCommand(void (*callback)(const char* command)) {
         _commandCallback = callback;
+    }
+
+    // For shared mode: host app calls this from its MQTT callback to forward
+    // messages on monitor topics. Handles both commands and config updates.
+    // Returns true if the message was handled (topic matched a monitor topic).
+    bool handleMessage(const char* topic, const byte* payload, unsigned int length) {
+        char prefix[MQTT_MONITOR_TOPIC_SIZE];
+        snprintf(prefix, sizeof(prefix), "%s/%s/", MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+        if (strncmp(topic, prefix, strlen(prefix)) != 0) return false;
+
+        const char* subtopic = topic + strlen(prefix);
+
+        if (strcmp(subtopic, "command") == 0) {
+            _handleMessage((char*)topic, (byte*)payload, length);
+            return true;
+        }
+        if (strcmp(subtopic, "config") == 0) {
+            _handleConfig((byte*)payload, length);
+            return true;
+        }
+        return false;
+    }
+
+    void getCommandTopic(char* buf, int bufLen) const {
+        snprintf(buf, bufLen, "%s/%s/command", MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+    }
+
+    void getConfigTopic(char* buf, int bufLen) const {
+        snprintf(buf, bufLen, "%s/%s/config", MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
     }
 
 private:
@@ -219,6 +254,9 @@ private:
             snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/command",
                      MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
             _mqttClient->subscribe(_topicBuf);
+            snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/config",
+                     MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+            _mqttClient->subscribe(_topicBuf);
         } else {
             _reconnectFailures++;
             Serial.printf("[MQTTMonitor] Connect failed (attempt %d), backoff %lums\n",
@@ -297,7 +335,22 @@ private:
         _mqttClient->publish(_topicBuf, payload);
     }
 
+    void _handleConfig(byte* payload, unsigned int length) {
+        // Stub — implemented in Task 5
+    }
+
     void _handleMessage(char* topic, byte* payload, unsigned int length) {
+        // Route config messages
+        char prefix[MQTT_MONITOR_TOPIC_SIZE];
+        snprintf(prefix, sizeof(prefix), "%s/%s/", MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+        if (strncmp(topic, prefix, strlen(prefix)) == 0) {
+            const char* subtopic = topic + strlen(prefix);
+            if (strcmp(subtopic, "config") == 0) {
+                _handleConfig(payload, length);
+                return;
+            }
+        }
+
         char msg[512];
         unsigned int copyLen = length < sizeof(msg) - 1 ? length : sizeof(msg) - 1;
         memcpy(msg, payload, copyLen);
