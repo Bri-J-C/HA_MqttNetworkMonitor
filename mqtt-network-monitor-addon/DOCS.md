@@ -16,7 +16,12 @@ The add-on needs access to your MQTT broker. Set the MQTT host, port, username, 
 
 ### 3. Install Client Agents
 
-Install the Python client on each device you want to monitor:
+Two client implementations are available. See their individual READMEs for full setup details:
+
+- Python (Linux, Windows, macOS): [`../monitor-clients/python/README.md`](../monitor-clients/python/README.md)
+- ESP32 (firmware): [`../monitor-clients/esp32/README.md`](../monitor-clients/esp32/README.md)
+
+**Python quick-start:**
 
 ```bash
 pip install mqtt-network-monitor
@@ -52,6 +57,10 @@ allowed_commands:
 
 Run: `mqtt-monitor config.yaml`
 
+**ESP32 quick-start:**
+
+Flash the firmware and provision Wi-Fi and MQTT credentials via the serial console or the provisioning web page. The device will auto-register with the add-on on first connection. See the ESP32 README for build instructions and supported sensor definitions.
+
 ### 4. Open the Web UI
 
 Click "Open Web UI" on the add-on page, or find "Network Monitor" in the HA sidebar.
@@ -72,14 +81,16 @@ Click "Open Web UI" on the add-on page, or find "Network Monitor" in the HA side
 
 ### Settings Page
 - **Tag Registry** — create and manage server-side tags
-- **Group Policies** — set thresholds, commands, and sensors per group
+- **Group Policies** — per-group overrides for collection interval, warning thresholds, custom sensors pushed to group members, and custom commands pushed to group members
 - **Global Defaults** — default warning thresholds
 
 ### Remote Management
-- Push custom sensors to devices (name + shell command)
-- Push custom commands to devices
-- Change collection intervals remotely
-- All changes apply live without restarting the client
+- **Custom sensors** — each sensor is a name paired with a shell command; the client runs the command on the configured interval and publishes the output as a metric.
+- **Custom commands** — commands are shell-command templates that can be triggered from the UI. The server pushes the command definition to the device; execution happens on the device when triggered.
+- **Collection interval** — the polling interval for any sensor can be changed remotely without restarting the client.
+- **Persistence** — remote changes are written to disk so they survive restarts. The Python client stores them in `config.remote.yaml` alongside the main config; the ESP32 client persists them in NVS (non-volatile storage).
+- **ESP32 limitation** — ESP32 custom sensors are backed by compile-time function pointers registered in firmware. The server can adjust intervals and reassign which registered sensor runs on a given slot, but it cannot push entirely new sensor definitions (i.e. arbitrary shell commands) to an ESP32 device.
+- All other changes apply live without restarting the client.
 
 ### Lovelace Cards
 Two custom cards for your HA dashboards:
