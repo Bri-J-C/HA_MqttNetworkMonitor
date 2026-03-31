@@ -25,9 +25,18 @@
 
 class MQTTMonitor {
 public:
+    // ---- Standalone mode: monitor manages its own MQTT connection ----
     MQTTMonitor(const char* deviceId, const char* deviceName, const char* deviceType)
         : _deviceId(deviceId), _deviceName(deviceName), _deviceType(deviceType),
-          _mqttClient(_wifiClient) {}
+          _ownClient(_wifiClient), _mqttClient(&_ownClient), _shared(false) {}
+
+    // ---- Shared mode: piggyback on an existing PubSubClient ----
+    // No broker config, no WiFi management, no command subscription.
+    // Just publishes plugin data on the caller's connection.
+    MQTTMonitor(const char* deviceId, const char* deviceName, const char* deviceType,
+                PubSubClient& existingClient)
+        : _deviceId(deviceId), _deviceName(deviceName), _deviceType(deviceType),
+          _ownClient(_wifiClient), _mqttClient(&existingClient), _shared(true) {}
 
     void setBroker(const char* host, uint16_t port = 1883) {
         _brokerHost = host;
@@ -61,25 +70,49 @@ public:
             Serial.println("[MQTTMonitor] ERROR: device_id too long (max 64 chars)");
             return;
         }
-        _mqttClient.setServer(_brokerHost, _brokerPort);
-        _mqttClient.setBufferSize(MQTT_MONITOR_BUF_SIZE);
-        _mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
+        if (_shared) {
+            // Shared mode: nothing to set up — the host app owns the connection.
+            // Publish initial online status if already connected.
+            if (_mqttClient->connected()) {
+                snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/status",
+                         MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+                _mqttClient->publish(_topicBuf, "online", true);
+            }
+            Serial.printf("[MQTTMonitor] Shared mode (id=%s)\n", _deviceId);
+            return;
+        }
+        _mqttClient->setServer(_brokerHost, _brokerPort);
+        _mqttClient->setBufferSize(MQTT_MONITOR_BUF_SIZE);
+        _mqttClient->setCallback([this](char* topic, byte* payload, unsigned int length) {
             _handleMessage(topic, payload, length);
         });
         _connect();
     }
 
     void loop() {
+        if (_shared) {
+            // Shared mode: just publish plugin data if client is connected.
+            // The host app handles WiFi, MQTT connection, and client.loop().
+            if (!_mqttClient->connected()) return;
+            for (int i = 0; i < _pluginCount; i++) {
+                if (_plugins[i]->shouldCollect()) {
+                    _collectAndPublish(_plugins[i]);
+                }
+            }
+            return;
+        }
+
+        // Standalone mode: manage our own connection.
         if (WiFi.status() != WL_CONNECTED) {
             Serial.println("[MQTTMonitor] WiFi disconnected, reconnecting...");
             WiFi.reconnect();
             delay(5000);
             return;
         }
-        if (!_mqttClient.connected()) {
+        if (!_mqttClient->connected()) {
             _connect();
         }
-        _mqttClient.loop();
+        _mqttClient->loop();
         for (int i = 0; i < _pluginCount; i++) {
             if (_plugins[i]->shouldCollect()) {
                 _collectAndPublish(_plugins[i]);
@@ -108,7 +141,9 @@ private:
     const char* _password = nullptr;
 
     WiFiClient   _wifiClient;
-    PubSubClient _mqttClient;
+    PubSubClient _ownClient;      // Used only in standalone mode
+    PubSubClient* _mqttClient;    // Points to _ownClient or external client
+    bool _shared;                 // true = using external client
 
     BasePlugin* _plugins[MQTT_MONITOR_MAX_PLUGINS];
     int _pluginCount = 0;
@@ -123,6 +158,9 @@ private:
 
     unsigned long _lastReconnect = 0;
     int _reconnectFailures = 0;
+
+    int _msgCount = 0;
+    bool _forceMetadata = false;
 
     // Shared topic buffer — reused across all methods to avoid stack waste.
     char _topicBuf[MQTT_MONITOR_TOPIC_SIZE];
@@ -165,22 +203,22 @@ private:
         snprintf(clientId, sizeof(clientId), "mqtt-monitor-%s", _deviceId);
 
         if (_username) {
-            _mqttClient.connect(clientId, _username, _password,
+            _mqttClient->connect(clientId, _username, _password,
                                 _topicBuf, 0, true, "offline");
         } else {
-            _mqttClient.connect(clientId, nullptr, nullptr,
+            _mqttClient->connect(clientId, nullptr, nullptr,
                                 _topicBuf, 0, true, "offline");
         }
 
-        if (_mqttClient.connected()) {
+        if (_mqttClient->connected()) {
             Serial.printf("[MQTTMonitor] Connected to %s:%d\n", _brokerHost, _brokerPort);
             _reconnectFailures = 0;
 
-            _mqttClient.publish(_topicBuf, "online", true);
+            _mqttClient->publish(_topicBuf, "online", true);
 
             snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/command",
                      MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
-            _mqttClient.subscribe(_topicBuf);
+            _mqttClient->subscribe(_topicBuf);
         } else {
             _reconnectFailures++;
             Serial.printf("[MQTTMonitor] Connect failed (attempt %d), backoff %lums\n",
@@ -215,6 +253,35 @@ private:
             _deviceId, _deviceName, _deviceType,
             (unsigned long)(millis() / 1000), tagsBuf, attrsBuf);
 
+        // Include metadata every 10th message or when forced
+        _msgCount++;
+        if (_msgCount % 10 == 1 || _forceMetadata) {
+            // allowed_commands
+            pn += snprintf(payload + pn, sizeof(payload) - pn, ",\"allowed_commands\":[");
+            for (int i = 0; i < _allowedCmdCount; i++) {
+                if (i > 0) pn += snprintf(payload + pn, sizeof(payload) - pn, ",");
+                pn += snprintf(payload + pn, sizeof(payload) - pn, "\"%s\"", _allowedCommands[i]);
+            }
+            pn += snprintf(payload + pn, sizeof(payload) - pn, "]");
+
+            // active_plugins
+            pn += snprintf(payload + pn, sizeof(payload) - pn, ",\"active_plugins\":[");
+            for (int i = 0; i < _pluginCount; i++) {
+                if (i > 0) pn += snprintf(payload + pn, sizeof(payload) - pn, ",");
+                pn += snprintf(payload + pn, sizeof(payload) - pn, "\"%s\"", _plugins[i]->name());
+            }
+            pn += snprintf(payload + pn, sizeof(payload) - pn, "]");
+
+            // collection_interval (first plugin's interval in seconds)
+            if (_pluginCount > 0) {
+                pn += snprintf(payload + pn, sizeof(payload) - pn,
+                    ",\"collection_interval\":%lu",
+                    _plugins[0]->getInterval() / 1000);
+            }
+
+            _forceMetadata = false;
+        }
+
         if (networkLen > 0 && pn < (int)sizeof(payload) - 2) {
             pn += snprintf(payload + pn, sizeof(payload) - pn,
                            ",\"network\":{%s}", networkBuf);
@@ -227,7 +294,7 @@ private:
 
         snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/%s",
                  MQTT_MONITOR_TOPIC_PREFIX, _deviceId, plugin->name());
-        _mqttClient.publish(_topicBuf, payload);
+        _mqttClient->publish(_topicBuf, payload);
     }
 
     void _handleMessage(char* topic, byte* payload, unsigned int length) {
@@ -258,7 +325,7 @@ private:
                 "{\"request_id\":\"%s\",\"status\":\"rejected\","
                 "\"output\":\"Command not allowed\"}",
                 requestId);
-            _mqttClient.publish(_topicBuf, respBuf);
+            _mqttClient->publish(_topicBuf, respBuf);
             return;
         }
 
@@ -268,7 +335,7 @@ private:
                 "{\"request_id\":\"%s\",\"status\":\"success\","
                 "\"output\":\"Command executed\"}",
                 requestId);
-            _mqttClient.publish(_topicBuf, respBuf);
+            _mqttClient->publish(_topicBuf, respBuf);
             return;
         }
 
@@ -278,7 +345,7 @@ private:
                 "{\"request_id\":\"%s\",\"status\":\"success\","
                 "\"output\":\"Rebooting...\"}",
                 requestId);
-            _mqttClient.publish(_topicBuf, respBuf);
+            _mqttClient->publish(_topicBuf, respBuf);
             delay(100);
             ESP.restart();
             return;
@@ -288,7 +355,7 @@ private:
             "{\"request_id\":\"%s\",\"status\":\"error\","
             "\"output\":\"No handler for command\"}",
             requestId);
-        _mqttClient.publish(_topicBuf, respBuf);
+        _mqttClient->publish(_topicBuf, respBuf);
     }
 };
 
