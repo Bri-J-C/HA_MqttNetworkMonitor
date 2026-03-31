@@ -182,6 +182,18 @@ public:
         snprintf(buf, bufLen, "%s/%s/config", MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
     }
 
+    // Graceful shutdown: publishes "offline" status and disconnects (standalone only).
+    // Call before ESP.restart() or deep sleep for clean status reporting.
+    void stop() {
+        snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/status",
+                 MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+        _mqttClient->publish(_topicBuf, "offline", true);
+
+        if (!_shared) {
+            _mqttClient->disconnect();
+        }
+    }
+
 private:
     const char* _deviceId;
     const char* _deviceName;
