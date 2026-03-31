@@ -260,3 +260,7 @@ def main():
 
     client = MQTTMonitorClient(config, config_dir=config_path.parent)
     client.run()
+
+
+if __name__ == "__main__":
+    main()
