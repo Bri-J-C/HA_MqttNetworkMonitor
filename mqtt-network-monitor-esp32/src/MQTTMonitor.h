@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include "plugins/BasePlugin.h"
+#include "JsonParser.h"
 
 // Compile-time size configuration.
 // Override in your sketch BEFORE #include <MQTTMonitor.h>:
@@ -130,6 +131,9 @@ public:
         if (_allowedCmdCount < 8) {
             _allowedCommands[_allowedCmdCount++] = command;
         }
+        if (_localCmdCount < 8) {
+            _localCommands[_localCmdCount++] = command;
+        }
     }
 
     // Callback receives command string only (params parsing left to user if needed).
@@ -197,33 +201,11 @@ private:
     int _msgCount = 0;
     bool _forceMetadata = false;
 
+    const char* _localCommands[8];
+    int _localCmdCount = 0;
+
     // Shared topic buffer — reused across all methods to avoid stack waste.
     char _topicBuf[MQTT_MONITOR_TOPIC_SIZE];
-
-    // ---------------------------------------------------------------------------
-    // Minimal JSON parser for incoming command messages.
-    // Extracts "command" and "request_id" string values without ArduinoJson.
-    // ---------------------------------------------------------------------------
-    bool _parseCommand(const char* json, char* command, int cmdLen,
-                       char* requestId, int ridLen) {
-        const char* p = strstr(json, "\"command\":\"");
-        if (!p) return false;
-        p += 11; // skip past "command":"
-        int i = 0;
-        while (*p && *p != '"' && i < cmdLen - 1) command[i++] = *p++;
-        command[i] = '\0';
-
-        p = strstr(json, "\"request_id\":\"");
-        if (p) {
-            p += 14; // skip past "request_id":"
-            i = 0;
-            while (*p && *p != '"' && i < ridLen - 1) requestId[i++] = *p++;
-            requestId[i] = '\0';
-        } else {
-            requestId[0] = '\0';
-        }
-        return true;
-    }
 
     void _connect() {
         unsigned long backoff = 5000UL + (unsigned long)min(_reconnectFailures, 10) * 3000UL;
@@ -336,7 +318,74 @@ private:
     }
 
     void _handleConfig(byte* payload, unsigned int length) {
-        // Stub — implemented in Task 5
+        char msg[512];
+        unsigned int copyLen = length < sizeof(msg) - 1 ? length : sizeof(msg) - 1;
+        memcpy(msg, payload, copyLen);
+        msg[copyLen] = '\0';
+
+        if (!JsonParser::hasStringValue(msg, "type", "config_update")) {
+            _publishConfigResponse("rejected", "Unknown config type");
+            return;
+        }
+
+        // Apply interval change
+        int newInterval;
+        if (JsonParser::getInt(msg, "interval", &newInterval)) {
+            if (newInterval > 0) {
+                for (int i = 0; i < _pluginCount; i++) {
+                    _plugins[i]->setInterval((unsigned long)newInterval * 1000);
+                }
+                Serial.printf("[MQTTMonitor] Config: interval set to %ds\n", newInterval);
+            }
+        }
+
+        // Apply command changes
+        char cmdObj[256];
+        if (JsonParser::getObjectStr(msg, "commands", cmdObj, sizeof(cmdObj))) {
+            // Remove non-local commands not in the new push
+            for (int i = _allowedCmdCount - 1; i >= 0; i--) {
+                bool isLocal = false;
+                for (int j = 0; j < _localCmdCount; j++) {
+                    if (strcmp(_allowedCommands[i], _localCommands[j]) == 0) {
+                        isLocal = true;
+                        break;
+                    }
+                }
+                if (!isLocal) {
+                    char searchKey[80];
+                    snprintf(searchKey, sizeof(searchKey), "\"%s\"", _allowedCommands[i]);
+                    if (!strstr(cmdObj, searchKey)) {
+                        for (int k = i; k < _allowedCmdCount - 1; k++) {
+                            _allowedCommands[k] = _allowedCommands[k + 1];
+                        }
+                        _allowedCmdCount--;
+                    }
+                }
+            }
+        }
+
+        _forceMetadata = true;
+        _publishConfigResponse("applied", nullptr);
+        Serial.println("[MQTTMonitor] Config update applied");
+    }
+
+    void _publishConfigResponse(const char* status, const char* reason) {
+        char respBuf[256];
+        if (reason) {
+            snprintf(respBuf, sizeof(respBuf),
+                "{\"status\":\"%s\",\"reason\":\"%s\"}", status, reason);
+        } else {
+            snprintf(respBuf, sizeof(respBuf),
+                "{\"status\":\"%s\",\"active_config\":{\"interval\":%lu,\"plugins\":%d,\"commands\":%d}}",
+                status,
+                _pluginCount > 0 ? _plugins[0]->getInterval() / 1000 : 0UL,
+                _pluginCount,
+                _allowedCmdCount);
+        }
+
+        snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/config/response",
+                 MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+        _mqttClient->publish(_topicBuf, respBuf);
     }
 
     void _handleMessage(char* topic, byte* payload, unsigned int length) {
@@ -358,7 +407,10 @@ private:
 
         char command[64];
         char requestId[64];
-        if (!_parseCommand(msg, command, sizeof(command), requestId, sizeof(requestId))) return;
+        if (!JsonParser::getString(msg, "command", command, sizeof(command))) return;
+        if (!JsonParser::getString(msg, "request_id", requestId, sizeof(requestId))) {
+            requestId[0] = '\0';
+        }
 
         // Check whitelist.
         bool allowed = false;
