@@ -11,6 +11,9 @@ from pathlib import Path
 
 import uvicorn
 
+from pathlib import Path as _Path
+from fastapi.staticfiles import StaticFiles
+
 from server.api.routes import app, init_app
 from server.api.websocket import ws_manager
 from server.command_sender import CommandSender
@@ -167,6 +170,22 @@ def create_app():
 
     heartbeat_thread = threading.Thread(target=_heartbeat_worker, daemon=True, name="heartbeat-checker")
     heartbeat_thread.start()
+
+    # Mount static files — use a wrapper that ignores WebSocket requests
+    # to prevent Starlette's StaticFiles from throwing AssertionError.
+    frontend_dist = _Path(__file__).parent.parent / "frontend" / "dist"
+    if frontend_dist.exists():
+        from starlette.responses import Response
+
+        class SafeStaticFiles(StaticFiles):
+            async def __call__(self, scope, receive, send):
+                if scope["type"] != "http":
+                    response = Response("Not Found", status_code=404)
+                    await response(scope, receive, send)
+                    return
+                await super().__call__(scope, receive, send)
+
+        app.mount("/", SafeStaticFiles(directory=str(frontend_dist), html=True), name="frontend")
 
     return app
 

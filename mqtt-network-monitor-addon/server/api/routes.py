@@ -5,8 +5,6 @@ init_app() which main.py calls at startup to inject shared dependencies.
 """
 
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 
 from server.api import state
 from server.api.routes_devices import router as devices_router
@@ -43,8 +41,4 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-# ── Serve frontend static files ────────────────────────────────────────────
-
-frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
-if frontend_dist.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+# Static files mount moved to main.py (must be registered after WebSocket route)
