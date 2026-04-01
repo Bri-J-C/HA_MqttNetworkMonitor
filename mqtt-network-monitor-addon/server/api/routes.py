@@ -4,6 +4,7 @@ Wires together sub-routers and exposes the FastAPI app instance plus
 init_app() which main.py calls at startup to inject shared dependencies.
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from server.api import state
@@ -13,7 +14,19 @@ from server.api.routes_tags import router as tags_router
 from server.api.routes_topology import router as topology_router
 from server.api.routes_settings import router as settings_router
 
-app = FastAPI(title="MQTT Network Monitor")
+# Lifespan is set by main.py before the server starts.
+# This placeholder avoids the deprecation warning from FastAPI.
+_lifespan_ref = None
+
+@asynccontextmanager
+async def _lifespan_wrapper(app):
+    if _lifespan_ref:
+        async with _lifespan_ref(app):
+            yield
+    else:
+        yield
+
+app = FastAPI(title="MQTT Network Monitor", lifespan=_lifespan_wrapper)
 
 app.include_router(devices_router)
 app.include_router(groups_router)

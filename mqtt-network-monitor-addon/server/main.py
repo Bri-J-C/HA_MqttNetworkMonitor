@@ -13,6 +13,7 @@ from pathlib import Path, Path as _Path
 import uvicorn
 from fastapi import WebSocket, WebSocketDisconnect
 
+import server.api.routes as _routes_module
 from server.api.routes import app, init_app
 from server.api.websocket import ws_manager
 from server.command_sender import CommandSender
@@ -41,7 +42,7 @@ def _device_hash(device: dict) -> tuple:
 
 
 @asynccontextmanager
-async def lifespan(app):
+async def lifespan(a):
     # Startup: launch broadcast worker
     async def worker():
         while True:
@@ -60,7 +61,7 @@ async def lifespan(app):
     if state.registry:
         state.registry.flush()
 
-app.router.lifespan_context = lifespan
+_routes_module._lifespan_ref = lifespan
 
 
 # WebSocket endpoint
