@@ -32,6 +32,7 @@ class MQTTMonitorClient:
         )
         self._command_handler = CommandHandler(config.allowed_commands)
         self._local_commands = set(config.allowed_commands)  # Commands from config.yaml, never removed by push
+        self._remote_exec_enabled = getattr(config, 'allow_remote_exec', True)
         self._plugins = []
         self._plugin_timers: dict[str, threading.Timer] = {}
         self._running = False
@@ -130,6 +131,9 @@ class MQTTMonitorClient:
         plugins_config = remote_config.get("plugins", {})
         cc_config = plugins_config.get("custom_command", {})
         cc_commands = cc_config.get("commands")  # None means not specified, {} means empty
+        if cc_commands is not None and not self._remote_exec_enabled:
+            logger.warning("Remote exec disabled — ignoring pushed custom_command sensors")
+            cc_commands = None
         if cc_commands is not None:
             from mqtt_monitor.plugins.custom_command import CustomCommandPlugin
             existing = None
@@ -154,7 +158,9 @@ class MQTTMonitorClient:
                     self._schedule_plugin(new_plugin)
                 logger.info(f"Created custom_command plugin with: {list(cc_commands.keys())}")
 
-        if "commands" in remote_config:
+        if "commands" in remote_config and not self._remote_exec_enabled:
+            logger.warning("Remote exec disabled — ignoring pushed commands")
+        elif "commands" in remote_config:
             pushed_cmds = remote_config["commands"]
             # Remove commands that were previously pushed but are no longer in the list
             # Keep commands that came from the original config (self._local_commands)
@@ -205,7 +211,8 @@ class MQTTMonitorClient:
     def _schedule_plugin(self, plugin):
         if not self._running:
             return
-        self._collect_and_publish(plugin)
+        if self._mqtt.is_connected():
+            self._collect_and_publish(plugin)
         if plugin.send_once:
             return  # Don't schedule recurring timer for send_once plugins
         # Cancel existing timer for this plugin before creating a new one

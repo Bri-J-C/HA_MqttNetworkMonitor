@@ -33,6 +33,7 @@ class Config:
     device: DeviceConfig
     plugins: dict[str, dict[str, Any]] = field(default_factory=dict)
     allowed_commands: list[str] = field(default_factory=list)
+    allow_remote_exec: bool = True
 
 
 class ConfigLoader:
@@ -79,6 +80,7 @@ class ConfigLoader:
             device=device_config,
             plugins=raw.get("plugins", {}),
             allowed_commands=raw.get("allowed_commands", []),
+            allow_remote_exec=raw.get("allow_remote_exec", True),
         )
 
     @staticmethod

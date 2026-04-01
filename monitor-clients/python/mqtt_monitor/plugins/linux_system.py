@@ -6,6 +6,22 @@ from mqtt_monitor.plugins.base import BasePlugin
 
 COLLECTORS = {}
 
+_load_avg_cache = {"values": (0.0, 0.0, 0.0), "time": 0}
+
+
+def _read_load_avg():
+    import time as _time
+    now = _time.time()
+    if now - _load_avg_cache["time"] > 1:  # Cache for 1 second
+        try:
+            with open("/proc/loadavg") as f:
+                parts = f.read().split()
+            _load_avg_cache["values"] = (float(parts[0]), float(parts[1]), float(parts[2]))
+            _load_avg_cache["time"] = now
+        except Exception:
+            pass
+    return _load_avg_cache["values"]
+
 
 def collector(attr_name):
     def decorator(func):
@@ -128,32 +144,17 @@ def _open_ports():
 
 @collector("load_1m")
 def _load_1m():
-    try:
-        with open("/proc/loadavg") as f:
-            parts = f.read().split()
-        return {"value": float(parts[0]), "unit": ""}
-    except Exception:
-        return {"value": None, "unit": ""}
+    return {"value": _read_load_avg()[0], "unit": ""}
 
 
 @collector("load_5m")
 def _load_5m():
-    try:
-        with open("/proc/loadavg") as f:
-            parts = f.read().split()
-        return {"value": float(parts[1]), "unit": ""}
-    except Exception:
-        return {"value": None, "unit": ""}
+    return {"value": _read_load_avg()[1], "unit": ""}
 
 
 @collector("load_15m")
 def _load_15m():
-    try:
-        with open("/proc/loadavg") as f:
-            parts = f.read().split()
-        return {"value": float(parts[2]), "unit": ""}
-    except Exception:
-        return {"value": None, "unit": ""}
+    return {"value": _read_load_avg()[2], "unit": ""}
 
 
 @collector("swap_usage")

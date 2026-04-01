@@ -62,6 +62,7 @@ class CommandHandler:
 
     def _execute(self, command: str, params: dict, request_id: str) -> dict:
         template = self._templates.get(command, command)
+        logger.warning(f"Executing remote command: {command} (template: {template})")
         safe_params = {k: shlex.quote(str(v)) for k, v in params.items()}
         try:
             shell_cmd = template.format(**safe_params)
