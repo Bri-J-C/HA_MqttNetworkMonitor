@@ -7,11 +7,11 @@ import queue
 import sys
 import threading
 import time
-from pathlib import Path
+from contextlib import asynccontextmanager
+from pathlib import Path, Path as _Path
 
 import uvicorn
-
-from pathlib import Path as _Path
+from fastapi import WebSocket, WebSocketDisconnect
 
 from server.api.routes import app, init_app
 from server.api.websocket import ws_manager
@@ -24,7 +24,6 @@ from server.settings_resolver import resolve_settings
 from server.storage.store import Storage
 from server.tag_registry import TagRegistry
 from server.topology import TopologyEngine
-from fastapi import WebSocket, WebSocketDisconnect
 
 logger = logging.getLogger(__name__)
 
@@ -40,26 +39,10 @@ def _device_hash(device: dict) -> tuple:
         (k, v.get("value") if isinstance(v, dict) else v) for k, v in attrs.items()
     )))
 
-# WebSocket endpoint
-@app.websocket("/api/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await ws_manager.connect(websocket)
-    try:
-        while True:
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        ws_manager.disconnect(websocket)
 
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    from server.api import state
-    if state.registry:
-        state.registry.flush()
-
-
-@app.on_event("startup")
-async def start_broadcast_worker():
+@asynccontextmanager
+async def lifespan(app):
+    # Startup: launch broadcast worker
     async def worker():
         while True:
             try:
@@ -69,7 +52,26 @@ async def start_broadcast_worker():
                 await ws_manager.broadcast(msg)
             except queue.Empty:
                 await asyncio.sleep(0.1)
-    asyncio.create_task(worker())
+    task = asyncio.create_task(worker())
+    yield
+    # Shutdown: flush registry
+    task.cancel()
+    from server.api import state
+    if state.registry:
+        state.registry.flush()
+
+app.router.lifespan_context = lifespan
+
+
+# WebSocket endpoint
+@app.websocket("/api/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
 
 
 def create_app():
@@ -193,7 +195,17 @@ def main():
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    app = create_app()
+    inner_app = create_app()
+
+    # Wrap the ASGI app to suppress AssertionError from Starlette's
+    # StaticFiles when HA ingress sends WebSocket probes to non-WS paths.
+    # The error is harmless but floods the logs with tracebacks.
+    async def app(scope, receive, send):
+        try:
+            await inner_app(scope, receive, send)
+        except AssertionError:
+            pass  # Silently ignore StaticFiles WebSocket assertion
+
     port = int(os.environ.get("PORT", "8100"))
     uvicorn.run(app, host="0.0.0.0", port=port)
 
