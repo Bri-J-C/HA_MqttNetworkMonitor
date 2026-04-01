@@ -25,6 +25,7 @@ class CommandSender:
             "timestamp": time.time(),
             "status": "pending",
         }
+        logger.debug(f"Command queued: {command} -> {device_id} (req: {request_id})")
         return request_id
 
     def handle_response(self, response: dict) -> None:
@@ -35,6 +36,8 @@ class CommandSender:
                 "output": response.get("output", ""),
                 "completed_at": time.time(),
             })
+            logger.debug(f"Command response received: req={request_id}, "
+                         f"status={response.get('status', 'unknown')}")
 
     def get_pending(self) -> dict:
         self._cleanup_timed_out()
@@ -45,6 +48,8 @@ class CommandSender:
         for req_id, cmd in list(self._pending.items()):
             if cmd["status"] == "pending" and now - cmd["sent_at"] > self._timeout:
                 cmd["status"] = "timed_out"
+                logger.debug(f"Command timed out: {cmd['command']} -> {cmd['device_id']} "
+                             f"(req: {req_id})")
         # Evict entries older than 5 minutes
         cutoff = time.time() - 300
         to_remove = [rid for rid, entry in self._pending.items()

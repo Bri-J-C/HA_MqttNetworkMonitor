@@ -161,15 +161,23 @@ class DeviceRegistry:
                 device["collection_interval"] = payload["collection_interval"]
 
             # Derive status
-            device["status"] = self._derive_status(device)
+            new_status = self._derive_status(device)
+            if new_status != device.get("status"):
+                logger.info(f"Device {device_id} status changed to {new_status}")
+            device["status"] = new_status
+            if not is_new:
+                logger.debug(f"Device {device_id} attributes updated (plugin={plugin_name})")
             self._save_devices()
 
     def set_device_status(self, device_id: str, status: str) -> None:
         with self._lock:
             if device_id not in self._devices:
                 self._devices[device_id] = self._default_device(device_id)
+            old_status = self._devices[device_id].get("status")
             self._devices[device_id]["status"] = status
             self._devices[device_id]["last_seen"] = time.time()
+            if old_status != status:
+                logger.info(f"Device {device_id} status: {old_status} -> {status}")
             self._save_devices()
 
     @staticmethod
@@ -381,6 +389,7 @@ class DeviceRegistry:
         """Mark devices as offline if they haven't been seen within timeout."""
         with self._lock:
             now = time.time()
+            logger.debug(f"Heartbeat check: {len(self._devices)} devices, timeout={timeout_seconds}s")
             changed = False
             for device_id, device in self._devices.items():
                 if device.get("status") not in ("offline", None):
@@ -388,7 +397,7 @@ class DeviceRegistry:
                     if now - last_seen > timeout_seconds:
                         device["status"] = "offline"
                         changed = True
-                        logger.info(
+                        logger.warning(
                             f"Device {device_id} marked offline (heartbeat timeout)"
                         )
             if changed:
@@ -441,8 +450,10 @@ class DeviceRegistry:
                             "crit_threshold_overrides", "server_commands", "remote_config",
                             "hidden_attributes", "hidden_commands", "card_attributes",
                             "server_sensors", "config_interval"}
-            for key in allowed_keys:
-                if key in settings:
-                    device[key] = settings[key]
+            changed_keys = [key for key in allowed_keys if key in settings]
+            for key in changed_keys:
+                device[key] = settings[key]
+            if changed_keys:
+                logger.debug(f"Device {device_id} settings updated: {changed_keys}")
             self._save_devices()
             return device

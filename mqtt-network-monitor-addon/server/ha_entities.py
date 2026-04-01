@@ -133,7 +133,7 @@ class HAEntityManager:
         topic = f"{HA_DISCOVERY_PREFIX}/sensor/{unique_id}/config"
         self._mqtt.publish(topic, json.dumps(config), retain=True)
         self._registered_entities.add(entity_key)
-        logger.info(f"Registered HA sensor: {unique_id}")
+        logger.debug(f"Registered HA sensor: {unique_id}")
 
     def _register_binary_sensor(self, device_id: str, attr_name: str,
                                 device_name: str, device_type: str,
@@ -156,7 +156,7 @@ class HAEntityManager:
         topic = f"{HA_DISCOVERY_PREFIX}/binary_sensor/{unique_id}/config"
         self._mqtt.publish(topic, json.dumps(config), retain=True)
         self._registered_entities.add(entity_key)
-        logger.info(f"Registered HA binary sensor: {unique_id}")
+        logger.debug(f"Registered HA binary sensor: {unique_id}")
 
     def publish_attribute_state(self, device_id: str, attr_name: str, value) -> None:
         key = f"{device_id}/{attr_name}"

@@ -149,6 +149,7 @@ def create_app():
             current_hash = _device_hash(broadcast_device)
             with _broadcast_lock:
                 if _last_broadcast_hash.get(device_id) == current_hash:
+                    logger.debug(f"Broadcast skipped for {device_id} (unchanged)")
                     return
                 _last_broadcast_hash[device_id] = current_hash
 
@@ -191,8 +192,9 @@ def create_app():
 
 
 def main():
+    log_level = os.environ.get("LOG_LEVEL", "info").upper()
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, log_level, logging.INFO),
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 

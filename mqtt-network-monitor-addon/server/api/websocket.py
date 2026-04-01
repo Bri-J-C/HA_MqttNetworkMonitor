@@ -16,11 +16,11 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self._connections.append(websocket)
-        logger.info(f"WebSocket client connected ({len(self._connections)} total)")
+        logger.debug(f"WebSocket client connected ({len(self._connections)} total)")
 
     def disconnect(self, websocket: WebSocket):
         self._connections.remove(websocket)
-        logger.info(f"WebSocket client disconnected ({len(self._connections)} total)")
+        logger.debug(f"WebSocket client disconnected ({len(self._connections)} total)")
 
     async def broadcast(self, message: dict[str, Any]):
         data = json.dumps(message)

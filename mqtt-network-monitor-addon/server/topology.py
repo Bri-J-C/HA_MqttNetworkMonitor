@@ -61,6 +61,7 @@ class TopologyEngine:
                     "type": "auto",
                 })
 
+        logger.debug(f"Topology auto-discovered: {len(nodes)} nodes, {len(edges)} edges")
         return {"nodes": nodes, "edges": edges}
 
     def get_layouts(self) -> dict:

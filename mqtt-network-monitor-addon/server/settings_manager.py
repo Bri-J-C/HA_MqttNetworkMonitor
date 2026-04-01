@@ -57,4 +57,5 @@ class SettingsManager:
         """Apply *data* on top of current settings. Returns updated settings."""
         self._deep_update(self._settings, data)
         self._save()
+        logger.debug(f"Global settings updated: {list(data.keys())}")
         return self.get_settings()

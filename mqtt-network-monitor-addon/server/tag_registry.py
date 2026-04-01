@@ -46,6 +46,7 @@ class TagRegistry:
             return False
         self._tags.append(tag)
         self._save()
+        logger.debug(f"Tag added: {tag}")
         return True
 
     def rename_tag(self, old: str, new: str) -> bool:
@@ -60,6 +61,7 @@ class TagRegistry:
         idx = self._tags.index(old)
         self._tags[idx] = new
         self._save()
+        logger.debug(f"Tag renamed: {old} -> {new}")
         return True
 
     def delete_tag(self, tag: str) -> bool:
@@ -68,6 +70,7 @@ class TagRegistry:
             return False
         self._tags.remove(tag)
         self._save()
+        logger.debug(f"Tag deleted: {tag}")
         return True
 
     def get_tag_count(self, tag: str, devices: dict[str, Any] | None = None) -> int:

@@ -80,5 +80,7 @@ def assemble_and_push(device_id: str, registry, mqtt_handler) -> dict:
     all_cmds = sorted(set(list(server_cmd_keys) + client_local_cmds))
     registry.set_device_settings(device_id, {"allowed_commands": all_cmds})
 
-    logger.info(f"Assembled and pushed config to {device_id}")
+    logger.debug(f"Assembled config for {device_id}: interval={config.get('interval')}, "
+                  f"commands={len(config.get('commands', {}))}, "
+                  f"sensors={len((config.get('plugins', {}).get('custom_command', {}).get('commands', {})))}")
     return config

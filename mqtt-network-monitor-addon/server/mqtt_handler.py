@@ -87,25 +87,25 @@ class MQTTHandler:
             status = msg.payload.decode().strip().strip('"')
             if not status:
                 return  # Empty payload (cleared retained message), skip
-            logger.info(f"Device {device_id} status: {status}")
+            logger.debug(f"Device {device_id} status: {status}")
             self._registry.set_device_status(device_id, status)
             self._notify_update(device_id)
 
         elif subtopic == "command/response":
             try:
                 response = json.loads(msg.payload.decode())
-                logger.info(f"Command response from {device_id}: {response}")
+                logger.debug(f"Command response from {device_id}: {response}")
                 self._registry.add_command_response(device_id, response)
             except json.JSONDecodeError:
-                logger.error(f"Invalid command response from {device_id}")
+                logger.warning(f"Invalid command response JSON from {device_id}")
 
         elif subtopic == "config/response":
             try:
                 response = json.loads(msg.payload.decode())
                 status = response.get("status", "unknown")
-                logger.info(f"Config response from {device_id}: status={status}")
+                logger.debug(f"Config response from {device_id}: status={status}")
             except json.JSONDecodeError:
-                logger.error(f"Invalid config response from {device_id}")
+                logger.warning(f"Invalid config response JSON from {device_id}")
 
         elif subtopic == "config":
             # Server's own config push echoed back — ignore
@@ -124,7 +124,7 @@ class MQTTHandler:
                 self._notify_update(device_id)
                 logger.debug(f"Updated device {device_id} from plugin {subtopic}")
             except json.JSONDecodeError:
-                logger.error(f"Invalid JSON from {device_id}/{subtopic}")
+                logger.warning(f"Invalid JSON from {device_id}/{subtopic}")
 
     def _notify_update(self, device_id: str):
         for callback in self._on_device_update_callbacks:
