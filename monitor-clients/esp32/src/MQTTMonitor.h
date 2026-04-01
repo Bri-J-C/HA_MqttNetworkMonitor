@@ -337,6 +337,8 @@ private:
         tagsBuf[tn] = '\0';
 
         // Build full payload into shared MQTT buffer.
+        // Timestamp is seconds since boot (no RTC/NTP on most ESP32 setups).
+        // The server uses its own clock for time-based operations.
         char payload[MQTT_MONITOR_BUF_SIZE];
         int pn = snprintf(payload, sizeof(payload),
             "{\"device_id\":\"%s\",\"device_name\":\"%s\",\"device_type\":\"%s\","
@@ -411,6 +413,10 @@ private:
     }
 
     void _handleConfig(byte* payload, unsigned int length) {
+        if (length >= 512) {
+            _publishConfigResponse("rejected", "Config message too large");
+            return;
+        }
         char msg[512];
         unsigned int copyLen = length < sizeof(msg) - 1 ? length : sizeof(msg) - 1;
         memcpy(msg, payload, copyLen);
@@ -494,6 +500,11 @@ private:
             }
         }
 
+        if (length >= 512) {
+            Serial.println("[MQTTMonitor] Command message too large, ignoring");
+            return;
+        }
+
         char msg[512];
         unsigned int copyLen = length < sizeof(msg) - 1 ? length : sizeof(msg) - 1;
         memcpy(msg, payload, copyLen);
@@ -506,6 +517,21 @@ private:
             requestId[0] = '\0';
         }
 
+        // Build response topic
+        snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/command/response",
+                 MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
+
+        // Reject overly long command names (could match prefix of whitelisted command)
+        if (strlen(command) >= 63) {
+            char respBuf[192];
+            snprintf(respBuf, sizeof(respBuf),
+                "{\"request_id\":\"%s\",\"status\":\"rejected\","
+                "\"output\":\"Command name too long\"}",
+                requestId);
+            _mqttClient->publish(_topicBuf, respBuf);
+            return;
+        }
+
         // Check whitelist.
         bool allowed = false;
         for (int i = 0; i < _allowedCmdCount; i++) {
@@ -514,9 +540,6 @@ private:
                 break;
             }
         }
-
-        snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/command/response",
-                 MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
 
         char respBuf[192];
         if (!allowed) {

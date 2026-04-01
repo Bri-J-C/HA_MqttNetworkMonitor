@@ -112,7 +112,8 @@ inline const char* findObjectEnd(const char* start) {
     const char* p = start;
     while (*p) {
         if (*p == '"') {
-            // skip entire quoted string, including escaped quotes
+            // Skip entire quoted string, including escaped quotes.
+            // Note: does not handle double-escaped backslashes (\\") — unlikely in practice.
             p++;
             while (*p && !(*p == '"' && *(p - 1) != '\\')) p++;
             if (*p) p++; // skip closing quote
