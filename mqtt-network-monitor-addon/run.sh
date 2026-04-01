@@ -5,6 +5,7 @@ export MQTT_BROKER=$(bashio::config 'mqtt_host')
 export MQTT_PORT=$(bashio::config 'mqtt_port')
 export MQTT_USER=$(bashio::config 'mqtt_user')
 export MQTT_PASSWORD=$(bashio::config 'mqtt_password')
+export LOG_LEVEL=$(bashio::config 'log_level')
 export DATA_DIR="/data"
 export PORT=8100
 

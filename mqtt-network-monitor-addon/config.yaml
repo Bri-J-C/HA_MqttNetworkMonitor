@@ -18,8 +18,10 @@ options:
   mqtt_port: 1883
   mqtt_user: ""
   mqtt_password: ""
+  log_level: "info"
 schema:
   mqtt_host: str
   mqtt_port: int
   mqtt_user: str
   mqtt_password: password
+  log_level: list(debug|info|warning|error)

@@ -11,3 +11,6 @@ configuration:
   mqtt_password:
     name: MQTT Password
     description: Password for MQTT authentication. Leave empty if auth is disabled.
+  log_level:
+    name: Log Level
+    description: Set the logging verbosity. Debug shows all messages, Error shows only errors.
