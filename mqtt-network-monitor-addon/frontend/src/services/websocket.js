@@ -3,6 +3,8 @@ export class WebSocketService {
     this._ws = null;
     this._listeners = [];
     this._reconnectDelay = 1000;
+    this._reconnectAttempts = 0;
+    this._maxReconnectAttempts = 50;
   }
 
   connect() {
@@ -22,12 +24,18 @@ export class WebSocketService {
     };
 
     this._ws.onclose = () => {
+      if (this._reconnectAttempts >= this._maxReconnectAttempts) {
+        console.error('WebSocket: max reconnect attempts reached');
+        return;
+      }
+      this._reconnectAttempts++;
       setTimeout(() => this.connect(), this._reconnectDelay);
       this._reconnectDelay = Math.min(this._reconnectDelay * 2, 30000);
     };
 
     this._ws.onopen = () => {
       this._reconnectDelay = 1000;
+      this._reconnectAttempts = 0;
     };
   }
 

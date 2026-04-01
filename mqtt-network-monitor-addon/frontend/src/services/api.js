@@ -26,27 +26,27 @@ export async function fetchDevices(since = 0) {
 }
 
 export async function fetchDevice(id) {
-  return apiCall(`${BASE}/api/devices/${id}`);
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(id)}`);
 }
 
 export async function deleteDevice(id) {
-  return apiCall(`${BASE}/api/devices/${id}`, { method: 'DELETE' });
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 export async function deleteAttribute(deviceId, attrName) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/attributes/${attrName}`, { method: 'DELETE' });
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/attributes/${encodeURIComponent(attrName)}`, { method: 'DELETE' });
 }
 
 export async function unhideAttribute(deviceId, attrName) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/attributes/${attrName}/unhide`, { method: 'POST' });
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/attributes/${encodeURIComponent(attrName)}/unhide`, { method: 'POST' });
 }
 
 export async function hideCommand(deviceId, cmdName) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/commands/${cmdName}`, { method: 'DELETE' });
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/commands/${encodeURIComponent(cmdName)}`, { method: 'DELETE' });
 }
 
 export async function unhideCommand(deviceId, cmdName) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/commands/${cmdName}/unhide`, { method: 'POST' });
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/commands/${encodeURIComponent(cmdName)}/unhide`, { method: 'POST' });
 }
 
 export async function fetchTopology() {
@@ -66,11 +66,11 @@ export async function saveLayout(layout) {
 }
 
 export async function deleteLayout(id) {
-  return apiCall(`${BASE}/api/topology/layouts/${id}`, { method: 'DELETE' });
+  return apiCall(`${BASE}/api/topology/layouts/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 export async function sendCommand(deviceId, command, params = {}) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/command`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/command`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ command, params }),
@@ -90,7 +90,7 @@ export async function createGroup(id, name, deviceIds = []) {
 }
 
 export async function updateGroup(groupId, { name, device_ids, custom_commands, custom_sensors, thresholds, hidden_commands }) {
-  return apiCall(`${BASE}/api/groups/${groupId}`, {
+  return apiCall(`${BASE}/api/groups/${encodeURIComponent(groupId)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, device_ids, custom_commands, custom_sensors, thresholds, hidden_commands }),
@@ -98,11 +98,11 @@ export async function updateGroup(groupId, { name, device_ids, custom_commands, 
 }
 
 export async function deleteGroup(groupId) {
-  return apiCall(`${BASE}/api/groups/${groupId}`, { method: 'DELETE' });
+  return apiCall(`${BASE}/api/groups/${encodeURIComponent(groupId)}`, { method: 'DELETE' });
 }
 
 export async function setDeviceTags(deviceId, tags) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/tags`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/tags`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tags }),
@@ -110,7 +110,7 @@ export async function setDeviceTags(deviceId, tags) {
 }
 
 export async function addDeviceTags(deviceId, tags) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/tags/add`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/tags/add`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tags }),
@@ -118,7 +118,7 @@ export async function addDeviceTags(deviceId, tags) {
 }
 
 export async function removeDeviceTag(deviceId, tag) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/tags/${tag}`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/tags/${encodeURIComponent(tag)}`, {
     method: 'DELETE',
   });
 }
@@ -163,11 +163,11 @@ export async function updateSettings(data) {
 
 // Device settings
 export async function fetchEffectiveSettings(deviceId) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/effective-settings`);
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/effective-settings`);
 }
 
 export async function updateDeviceSettings(deviceId, settings) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/settings`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/settings`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(settings),
@@ -175,7 +175,7 @@ export async function updateDeviceSettings(deviceId, settings) {
 }
 
 export async function pushDeviceConfig(deviceId, config) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/push-config`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/push-config`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
@@ -184,7 +184,7 @@ export async function pushDeviceConfig(deviceId, config) {
 
 // Group operations
 export async function sendGroupCommand(groupId, command, params = {}) {
-  return apiCall(`${BASE}/api/groups/${groupId}/command`, {
+  return apiCall(`${BASE}/api/groups/${encodeURIComponent(groupId)}/command`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ command, params }),
@@ -192,7 +192,7 @@ export async function sendGroupCommand(groupId, command, params = {}) {
 }
 
 export async function pushGroupConfig(groupId, config) {
-  return apiCall(`${BASE}/api/groups/${groupId}/push-config`, {
+  return apiCall(`${BASE}/api/groups/${encodeURIComponent(groupId)}/push-config`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
@@ -200,7 +200,7 @@ export async function pushGroupConfig(groupId, config) {
 }
 
 export async function checkGroupConflicts(groupId, newDeviceId = null) {
-  return apiCall(`${BASE}/api/groups/${groupId}/check-conflicts`, {
+  return apiCall(`${BASE}/api/groups/${encodeURIComponent(groupId)}/check-conflicts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(newDeviceId ? { new_device_id: newDeviceId } : {}),
@@ -209,7 +209,7 @@ export async function checkGroupConflicts(groupId, newDeviceId = null) {
 
 // Device server commands
 export async function addServerCommand(deviceId, name, shell) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/server-commands`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/server-commands`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, shell }),
@@ -217,14 +217,14 @@ export async function addServerCommand(deviceId, name, shell) {
 }
 
 export async function removeServerCommand(deviceId, name) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/server-commands/${encodeURIComponent(name)}`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/server-commands/${encodeURIComponent(name)}`, {
     method: 'DELETE',
   });
 }
 
 // Device server sensors
 export async function addServerSensor(deviceId, name, sensor) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/server-sensors`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/server-sensors`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, ...sensor }),
@@ -232,14 +232,14 @@ export async function addServerSensor(deviceId, name, sensor) {
 }
 
 export async function removeServerSensor(deviceId, name) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/server-sensors/${encodeURIComponent(name)}`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/server-sensors/${encodeURIComponent(name)}`, {
     method: 'DELETE',
   });
 }
 
 // Device config interval
 export async function setDeviceInterval(deviceId, interval) {
-  return apiCall(`${BASE}/api/devices/${deviceId}/config-interval`, {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/config-interval`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ interval }),

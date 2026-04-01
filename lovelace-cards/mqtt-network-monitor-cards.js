@@ -616,7 +616,8 @@ class MQTTTopologyCard extends HTMLElement {
       const pos = positions[n.id];
       if (!pos) return '';
       const col = STATUS_COLORS[n.status] || STATUS_COLORS.unknown;
-      const label = (n.name || n.id).substring(0, 14);
+      const label = this._escHtml((n.name || n.id).substring(0, 14));
+      const statusLabel = this._escHtml(n.status);
       const isGw = n.type === 'gateway';
 
       if (isGw) {
@@ -634,7 +635,7 @@ class MQTTTopologyCard extends HTMLElement {
           <text x="${pos.x}" y="${pos.y - 1}" text-anchor="middle" fill="#fff" font-size="${fontSz}" font-weight="500"
             font-family="-apple-system,BlinkMacSystemFont,sans-serif">${label}</text>
           <text x="${pos.x}" y="${pos.y + 11}" text-anchor="middle" fill="${col}" font-size="7"
-            font-family="-apple-system,BlinkMacSystemFont,sans-serif">${n.status}</text>
+            font-family="-apple-system,BlinkMacSystemFont,sans-serif">${statusLabel}</text>
         </g>`;
     }).join('');
 
@@ -651,9 +652,10 @@ class MQTTTopologyCard extends HTMLElement {
       if (perpY > 0) { perpX = -perpX; perpY = -perpY; }
       const bgH = labelFontSz + 4;
       const renderLabel = (x, y, text, color) => {
+        const escaped = this._escHtml(text);
         const tw = text.length * labelFontSz * 0.55 + 8;
         return `<rect x="${x-tw/2}" y="${y-bgH+2}" width="${tw}" height="${bgH}" rx="3" fill="#0a0a1a" opacity="0.9"/>` +
-               `<text x="${x}" y="${y}" text-anchor="middle" fill="${color}" font-size="${labelFontSz}" font-family="-apple-system,sans-serif">${text}</text>`;
+               `<text x="${x}" y="${y}" text-anchor="middle" fill="${color}" font-size="${labelFontSz}" font-family="-apple-system,sans-serif">${escaped}</text>`;
       };
       if (e.label) {
         svg += renderLabel((from.x+to.x)/2 + perpX*12, (from.y+to.y)/2 + perpY*12, e.label, '#888');
@@ -733,6 +735,18 @@ class MQTTTopologyCard extends HTMLElement {
       </ha-card>
     `;
 
+  }
+
+  disconnectedCallback() {
+    if (_sessionRefreshInterval) {
+      clearInterval(_sessionRefreshInterval);
+      _sessionRefreshInterval = null;
+    }
+  }
+
+  _escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   getCardSize() {
