@@ -22,6 +22,7 @@ class CommandSender:
             "device_id": device_id,
             "command": command,
             "sent_at": time.time(),
+            "timestamp": time.time(),
             "status": "pending",
         }
         return request_id
@@ -44,3 +45,9 @@ class CommandSender:
         for req_id, cmd in list(self._pending.items()):
             if cmd["status"] == "pending" and now - cmd["sent_at"] > self._timeout:
                 cmd["status"] = "timed_out"
+        # Evict entries older than 5 minutes
+        cutoff = time.time() - 300
+        to_remove = [rid for rid, entry in self._pending.items()
+                     if entry.get("timestamp", 0) < cutoff]
+        for rid in to_remove:
+            del self._pending[rid]

@@ -12,10 +12,13 @@ logger = logging.getLogger(__name__)
 DEVICES_FILE = "devices.json"
 GROUPS_FILE = "groups.json"
 
+_UNSET = object()  # Named sentinel for "no value provided"
+
 
 class DeviceRegistry:
     def __init__(self, storage: Storage):
         self._storage = storage
+        self._lock = threading.RLock()
         self._devices: dict[str, dict[str, Any]] = {}
         self._groups: dict[str, dict[str, Any]] = {}
         self._warning_thresholds: dict[str, float] = {
@@ -88,84 +91,86 @@ class DeviceRegistry:
         self._flush_devices()
         self._flush_groups()
 
+    @staticmethod
+    def _default_device(device_id: str) -> dict:
+        """Return a new device record with all default fields."""
+        return {
+            "device_id": device_id,
+            "first_seen": time.time(),
+            "status": "online",
+            "server_tags": [],
+            "groups": [],
+            "group_policy": None,
+            "ha_exposure_overrides": {},
+            "threshold_overrides": {},
+            "allowed_commands": [],
+            "server_commands": {},
+            "server_sensors": {},
+            "config_interval": None,
+            "hidden_attributes": [],
+            "hidden_commands": [],
+            "attributes": {},
+        }
+
     def update_device(self, device_id: str, payload: dict, plugin_name: str | None = None) -> None:
-        is_new = device_id not in self._devices
-        if is_new:
-            self._devices[device_id] = {
-                "device_id": device_id,
-                "first_seen": time.time(),
-                "status": "online",
-                "server_tags": [],
-                "groups": [],
-                "group_policy": None,
-                "ha_exposure_overrides": {},
-                "threshold_overrides": {},
-                "allowed_commands": [],
-                "server_commands": {},
-                "server_sensors": {},
-                "config_interval": None,
-                "hidden_attributes": [],
-                "hidden_commands": [],
-            }
-            logger.info(f"New device discovered: {device_id}")
+        with self._lock:
+            is_new = device_id not in self._devices
+            if is_new:
+                self._devices[device_id] = self._default_device(device_id)
+                logger.info(f"New device discovered: {device_id}")
 
-        device = self._devices[device_id]
-        device["device_name"] = payload.get("device_name", device_id)
-        device["device_type"] = payload.get("device_type", "unknown")
-        device["tags"] = payload.get("tags", [])
-        device["last_seen"] = time.time()
-        # Per-plugin attribute tracking: replace attributes from the publishing plugin,
-        # keep attributes from other plugins. This ensures removed sensors disappear.
-        incoming_attrs = payload.get("attributes", {})
-        if plugin_name:
-            # Track which plugin owns which attributes
-            plugin_attrs = device.get("_plugin_attrs", {})
-            # Remove old attributes that this plugin previously owned
-            old_keys = plugin_attrs.get(plugin_name, [])
-            existing_attrs = device.get("attributes", {})
-            for key in old_keys:
-                if key not in incoming_attrs:
-                    existing_attrs.pop(key, None)
-            # Add/update incoming attributes
-            existing_attrs.update(incoming_attrs)
-            device["attributes"] = existing_attrs
-            # Update ownership tracking
-            plugin_attrs[plugin_name] = list(incoming_attrs.keys())
-            device["_plugin_attrs"] = plugin_attrs
-        else:
-            # No plugin name (legacy) — merge as before
-            existing_attrs = device.get("attributes", {})
-            existing_attrs.update(incoming_attrs)
-            device["attributes"] = existing_attrs
-        if payload.get("network"):
-            device["network"] = payload["network"]
-        if "allowed_commands" in payload:
-            # Store only client-origin commands — filter out server-pushed ones
-            server_cmds = set(device.get("server_commands", {}).keys())
-            device["allowed_commands"] = [
-                c for c in payload["allowed_commands"] if c not in server_cmds
-            ]
-        if "active_plugins" in payload:
-            device["active_plugins"] = payload["active_plugins"]
-        if "collection_interval" in payload:
-            device["collection_interval"] = payload["collection_interval"]
+            device = self._devices[device_id]
+            device["device_name"] = payload.get("device_name", device_id)
+            device["device_type"] = payload.get("device_type", "unknown")
+            device["tags"] = payload.get("tags", [])
+            device["last_seen"] = time.time()
+            # Per-plugin attribute tracking: replace attributes from the publishing plugin,
+            # keep attributes from other plugins. This ensures removed sensors disappear.
+            incoming_attrs = payload.get("attributes", {})
+            if plugin_name:
+                # Track which plugin owns which attributes
+                plugin_attrs = device.get("plugin_attrs", {})
+                # Remove old attributes that this plugin previously owned
+                old_keys = plugin_attrs.get(plugin_name, [])
+                existing_attrs = device.get("attributes", {})
+                for key in old_keys:
+                    if key not in incoming_attrs:
+                        existing_attrs.pop(key, None)
+                # Add/update incoming attributes
+                existing_attrs.update(incoming_attrs)
+                device["attributes"] = existing_attrs
+                # Update ownership tracking
+                plugin_attrs[plugin_name] = list(incoming_attrs.keys())
+                device["plugin_attrs"] = plugin_attrs
+            else:
+                # No plugin name (legacy) — merge as before
+                existing_attrs = device.get("attributes", {})
+                existing_attrs.update(incoming_attrs)
+                device["attributes"] = existing_attrs
+            if payload.get("network"):
+                device["network"] = payload["network"]
+            if "allowed_commands" in payload:
+                # Store only client-origin commands — filter out server-pushed ones
+                server_cmds = set(device.get("server_commands", {}).keys())
+                device["allowed_commands"] = [
+                    c for c in payload["allowed_commands"] if c not in server_cmds
+                ]
+            if "active_plugins" in payload:
+                device["active_plugins"] = payload["active_plugins"]
+            if "collection_interval" in payload:
+                device["collection_interval"] = payload["collection_interval"]
 
-        # Derive status
-        device["status"] = self._derive_status(device)
-        self._save_devices()
+            # Derive status
+            device["status"] = self._derive_status(device)
+            self._save_devices()
 
     def set_device_status(self, device_id: str, status: str) -> None:
-        if device_id not in self._devices:
-            self._devices[device_id] = {
-                "device_id": device_id,
-                "first_seen": time.time(),
-                "server_tags": [],
-                "groups": [],
-                "attributes": {},
-            }
-        self._devices[device_id]["status"] = status
-        self._devices[device_id]["last_seen"] = time.time()
-        self._save_devices()
+        with self._lock:
+            if device_id not in self._devices:
+                self._devices[device_id] = self._default_device(device_id)
+            self._devices[device_id]["status"] = status
+            self._devices[device_id]["last_seen"] = time.time()
+            self._save_devices()
 
     @staticmethod
     def _check_threshold(value, threshold) -> bool:
@@ -282,7 +287,7 @@ class DeviceRegistry:
                      thresholds: dict | None = None,
                      crit_thresholds: dict | None = None,
                      hidden_commands: list | None = None,
-                     interval: int | None = ...) -> dict | None:
+                     interval: int | None = _UNSET) -> dict | None:
         group = self._groups.get(group_id)
         if not group:
             return None
@@ -313,7 +318,7 @@ class DeviceRegistry:
             group["crit_thresholds"] = crit_thresholds
         if hidden_commands is not None:
             group["hidden_commands"] = hidden_commands
-        if interval is not ...:
+        if interval is not _UNSET:
             group["interval"] = interval
         self._save_groups()
         return group
@@ -374,19 +379,20 @@ class DeviceRegistry:
 
     def check_stale_devices(self, timeout_seconds: int = 300) -> None:
         """Mark devices as offline if they haven't been seen within timeout."""
-        now = time.time()
-        changed = False
-        for device_id, device in self._devices.items():
-            if device.get("status") == "online":
-                last_seen = device.get("last_seen", 0)
-                if now - last_seen > timeout_seconds:
-                    device["status"] = "offline"
-                    changed = True
-                    logger.info(
-                        f"Device {device_id} marked offline (heartbeat timeout)"
-                    )
-        if changed:
-            self._save_devices()
+        with self._lock:
+            now = time.time()
+            changed = False
+            for device_id, device in self._devices.items():
+                if device.get("status") not in ("offline", None):
+                    last_seen = device.get("last_seen", 0)
+                    if now - last_seen > timeout_seconds:
+                        device["status"] = "offline"
+                        changed = True
+                        logger.info(
+                            f"Device {device_id} marked offline (heartbeat timeout)"
+                        )
+            if changed:
+                self._save_devices()
 
     def migrate_config_fields(self):
         """One-time migration: extract server_sensors, config_interval, and commands
@@ -427,15 +433,16 @@ class DeviceRegistry:
 
     def set_device_settings(self, device_id: str, settings: dict) -> dict | None:
         """Update group_policy, ha_exposure_overrides, and/or threshold_overrides for a device."""
-        device = self._devices.get(device_id)
-        if not device:
-            return None
-        allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides",
-                        "crit_threshold_overrides", "server_commands", "remote_config",
-                        "hidden_attributes", "hidden_commands", "card_attributes",
-                        "server_sensors", "config_interval", "allowed_commands"}
-        for key in allowed_keys:
-            if key in settings:
-                device[key] = settings[key]
-        self._save_devices()
-        return device
+        with self._lock:
+            device = self._devices.get(device_id)
+            if not device:
+                return None
+            allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides",
+                            "crit_threshold_overrides", "server_commands", "remote_config",
+                            "hidden_attributes", "hidden_commands", "card_attributes",
+                            "server_sensors", "config_interval"}
+            for key in allowed_keys:
+                if key in settings:
+                    device[key] = settings[key]
+            self._save_devices()
+            return device

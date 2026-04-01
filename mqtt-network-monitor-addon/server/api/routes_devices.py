@@ -33,7 +33,7 @@ def delete_all_devices():
             state.ha_entity_manager.remove_device_entities(device_id, device)
         if state.mqtt_handler:
             for topic_suffix in ["status", "system_resources", "network_info", "custom_command", "telemetry", "system"]:
-                state.mqtt_handler._client.publish(f"network_monitor/{device_id}/{topic_suffix}", "", retain=True)
+                state.mqtt_handler.get_client().publish(f"network_monitor/{device_id}/{topic_suffix}", "", retain=True)
         state.registry.delete_device(device_id)
     return {"status": "deleted", "count": len(all_devices)}
 
@@ -49,7 +49,7 @@ def delete_device(device_id: str):
     # Clear retained MQTT messages so device doesn't recreate on reconnect
     if state.mqtt_handler:
         for topic_suffix in ["status", "system_resources", "network_info", "custom_command", "telemetry", "system"]:
-            state.mqtt_handler._client.publish(f"network_monitor/{device_id}/{topic_suffix}", "", retain=True)
+            state.mqtt_handler.get_client().publish(f"network_monitor/{device_id}/{topic_suffix}", "", retain=True)
     state.registry.delete_device(device_id)
     return {"status": "deleted"}
 
@@ -70,7 +70,7 @@ def delete_attribute(device_id: str, attr_name: str):
     is_custom = attr_name in cc
 
     # Check if any active plugin owns this attribute
-    plugin_attrs = device.get("_plugin_attrs", {})
+    plugin_attrs = device.get("plugin_attrs", {})
     has_plugin_owner = any(attr_name in attrs for attrs in plugin_attrs.values())
 
     if is_server_sensor:
@@ -102,7 +102,7 @@ def delete_attribute(device_id: str, attr_name: str):
 
     # Remove HA entity either way
     if state.ha_entity_manager:
-        state.ha_entity_manager._remove_sensor(device_id, attr_name)
+        state.ha_entity_manager.remove_sensor(device_id, attr_name)
         state.ha_entity_manager._mqtt.publish(f"network_monitor/{device_id}/ha/{attr_name}", "", retain=True)
 
     # Also remove from card_attributes if pinned
@@ -200,7 +200,7 @@ def remove_server_command(device_id: str, cmd_name: str):
     if state.mqtt_handler:
         assemble_and_push(device_id, state.registry, state.mqtt_handler)
     if state.ha_entity_manager:
-        state.ha_entity_manager._remove_sensor(device_id, cmd_name)
+        state.ha_entity_manager.remove_sensor(device_id, cmd_name)
     return state.registry.get_device(device_id)
 
 
@@ -235,7 +235,7 @@ def remove_server_sensor(device_id: str, sensor_name: str):
     if state.mqtt_handler:
         assemble_and_push(device_id, state.registry, state.mqtt_handler)
     if state.ha_entity_manager:
-        state.ha_entity_manager._remove_sensor(device_id, sensor_name)
+        state.ha_entity_manager.remove_sensor(device_id, sensor_name)
     return state.registry.get_device(device_id)
 
 

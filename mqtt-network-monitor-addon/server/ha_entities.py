@@ -61,7 +61,7 @@ class HAEntityManager:
             for attr_name in list(attributes.keys()):
                 entity_key = f"{device_id}_{attr_name}"
                 if attr_name not in expose_set and entity_key in self._registered_entities:
-                    self._remove_sensor(device_id, attr_name)
+                    self.remove_sensor(device_id, attr_name)
 
         # Register attribute sensors
         for attr_name, attr_data in attributes.items():
@@ -87,7 +87,7 @@ class HAEntityManager:
 
         # Remove all attribute sensors
         for attr_name in device.get("attributes", {}):
-            self._remove_sensor(device_id, attr_name)
+            self.remove_sensor(device_id, attr_name)
 
         # Clear the status retained message
         self._mqtt.publish(f"network_monitor/{device_id}/status", "", retain=True)
@@ -96,7 +96,7 @@ class HAEntityManager:
         for attr_name in device.get("attributes", {}):
             self._mqtt.publish(f"network_monitor/{device_id}/ha/{attr_name}", "", retain=True)
 
-    def _remove_sensor(self, device_id: str, attr_name: str) -> None:
+    def remove_sensor(self, device_id: str, attr_name: str) -> None:
         """Remove a sensor from HA by publishing an empty retained config."""
         entity_key = f"{device_id}_{attr_name}"
         unique_id = f"network_monitor_{device_id}_{attr_name}"

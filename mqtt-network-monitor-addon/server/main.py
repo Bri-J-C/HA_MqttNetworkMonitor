@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 _broadcast_queue: queue.Queue = queue.Queue()
 _last_broadcast_hash: dict = {}
+_broadcast_lock = threading.Lock()
 
 
 def _device_hash(device: dict) -> tuple:
@@ -46,6 +47,13 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.receive_text()
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    from server.api import state
+    if state.registry:
+        state.registry.flush()
 
 
 @app.on_event("startup")
@@ -74,7 +82,7 @@ def create_app():
     registry.migrate_config_fields()
     topology_engine = TopologyEngine(registry, storage)
     mqtt_handler = MQTTHandler(registry, mqtt_broker, mqtt_port, mqtt_user, mqtt_pass)
-    ha_entities = HAEntityManager(mqtt_handler._client)
+    ha_entities = HAEntityManager(mqtt_handler.get_client())
     command_sender = CommandSender(mqtt_handler)
     tag_reg = TagRegistry(storage)
     settings_mgr = SettingsManager(storage)
@@ -134,9 +142,10 @@ def create_app():
 
             # Skip broadcast if nothing changed
             current_hash = _device_hash(broadcast_device)
-            if _last_broadcast_hash.get(device_id) == current_hash:
-                return
-            _last_broadcast_hash[device_id] = current_hash
+            with _broadcast_lock:
+                if _last_broadcast_hash.get(device_id) == current_hash:
+                    return
+                _last_broadcast_hash[device_id] = current_hash
 
             _broadcast_queue.put({
                 "type": "device_update",

@@ -14,6 +14,7 @@ class Storage:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
     def load(self, filename: str) -> Any:
+        assert '/' not in filename and '..' not in filename, f"Invalid filename: {filename}"
         path = self.data_dir / filename
         if not path.exists():
             return None
@@ -24,6 +25,7 @@ class Storage:
             return None
 
     def save(self, filename: str, data: Any) -> None:
+        assert '/' not in filename and '..' not in filename, f"Invalid filename: {filename}"
         path = self.data_dir / filename
         tmp_path = path.with_suffix(".tmp")
         try:

@@ -26,6 +26,10 @@ class MQTTHandler:
         self._client.on_connect = self._on_connect
         self._client.on_message = self._on_message
 
+    def get_client(self):
+        """Return the underlying MQTT client for direct publishing."""
+        return self._client
+
     def on_device_update(self, callback):
         self._on_device_update_callbacks.append(callback)
 
@@ -61,7 +65,6 @@ class MQTTHandler:
 
     def _on_connect(self, client, userdata, flags, rc, *args):
         logger.info(f"MQTT connected (rc={rc})")
-        client.subscribe(f"{TOPIC_PREFIX}/+/status")
         client.subscribe(f"{TOPIC_PREFIX}/+/+")
         client.subscribe(f"{TOPIC_PREFIX}/+/command/response")
         client.subscribe(f"{TOPIC_PREFIX}/+/config/response")
@@ -72,6 +75,12 @@ class MQTTHandler:
             return
 
         device_id = topic_parts[1]
+        # Validate device_id format
+        if not device_id or len(device_id) > 64 or not all(
+            c.isalnum() or c in '-_.' for c in device_id
+        ):
+            logger.warning(f"Invalid device_id in topic: {device_id}")
+            return
         subtopic = "/".join(topic_parts[2:])
 
         if subtopic == "status":
