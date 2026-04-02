@@ -238,7 +238,8 @@ class DeviceDetail extends LitElement {
         .haOverrides=${this._haOverrides}
         .groups=${this._groups}
         .cardAttributes=${this.device?.card_attributes || []}
-        .attributeTransforms=${this.device?.attribute_transforms || {}}
+        .attributeTransforms=${this._effectiveTransforms()}
+        .groupTransforms=${this._groupTransforms()}
         @attribute-deleted=${(e) => this._deleteAttribute(e.detail.name)}
         @attribute-unhidden=${(e) => this._unhideAttribute(e.detail.name)}
         @ha-exposure-toggled=${(e) => this._toggleHaExposure(e.detail.name)}
@@ -481,6 +482,20 @@ class DeviceDetail extends LitElement {
     } catch (e) {
       console.error('Failed to set crit threshold:', e);
     }
+  }
+
+  _effectiveTransforms() {
+    const groupId = this.device?.group_policy;
+    const group = groupId ? this._groups[groupId] : null;
+    const groupTransforms = group?.attribute_transforms || {};
+    const deviceTransforms = this.device?.attribute_transforms || {};
+    return { ...groupTransforms, ...deviceTransforms };
+  }
+
+  _groupTransforms() {
+    const groupId = this.device?.group_policy;
+    const group = groupId ? this._groups[groupId] : null;
+    return group?.attribute_transforms || {};
   }
 
   async _setAttributeTransform(attr, transform) {

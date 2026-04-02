@@ -30,6 +30,7 @@ class DeviceAttributes extends LitElement {
     groups:            { type: Object },
     cardAttributes:    { type: Array },
     attributeTransforms: { type: Object },
+    groupTransforms: { type: Object },
     _showHidden:       { type: Boolean, state: true },
   };
 
@@ -108,10 +109,10 @@ class DeviceAttributes extends LitElement {
     /* Transform select */
     .attr-transform {
       margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.05);
-      display: flex; align-items: center; gap: 6px;
+      display: flex; align-items: center; gap: 4px;
     }
     .transform-select {
-      flex: 1; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08);
+      flex: 1; min-width: 0; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08);
       border-radius: 4px; color: rgba(255,255,255,0.5); padding: 2px 4px;
       font-size: 10px; cursor: pointer;
       appearance: none; -webkit-appearance: none; -moz-appearance: none;
@@ -119,8 +120,11 @@ class DeviceAttributes extends LitElement {
     .transform-select option { background: #0d0d1f; color: #fff; }
     .transform-select:hover, .transform-select:focus { outline: none; border-color: #00D4FF; color: #fff; }
     .transform-label {
-      font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase;
-      letter-spacing: 0.5px; white-space: nowrap;
+      font-size: 8px; color: rgba(255,255,255,0.3); text-transform: uppercase;
+      letter-spacing: 0.3px; white-space: nowrap;
+    }
+    .transform-source {
+      font-size: 8px; color: rgba(255,255,255,0.25); font-style: italic; white-space: nowrap;
     }
 
     /* Pin icon */
@@ -159,6 +163,7 @@ class DeviceAttributes extends LitElement {
     this.groups            = {};
     this.cardAttributes    = [];
     this.attributeTransforms = {};
+    this.groupTransforms = {};
     this._showHidden       = false;
   }
 
@@ -377,7 +382,7 @@ class DeviceAttributes extends LitElement {
           </div>
         </div>
         <div class="attr-transform">
-          <div class="transform-label">transform</div>
+          <div class="transform-label">Fmt</div>
           <select class="transform-select"
             aria-label="Value transform for ${name.replace(/_/g, ' ')}"
             .value=${transform}
@@ -386,6 +391,8 @@ class DeviceAttributes extends LitElement {
               <option value=${t.value} ?selected=${t.value === transform}>${t.label}</option>
             `)}
           </select>
+          ${(this.groupTransforms || {})[name] && !(this.device?.attribute_transforms || {})[name]
+            ? html`<span class="transform-source">Group Policy</span>` : ''}
         </div>
       </div>
     `;
