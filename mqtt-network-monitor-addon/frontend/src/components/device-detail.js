@@ -167,7 +167,13 @@ class DeviceDetail extends LitElement {
 
   _updateDeviceData(device) {
     if (!device) return;
-    this.device = { ...(this.device || {}), ...device };
+    // Only trigger re-render if data actually changed — prevents flickering
+    const merged = { ...(this.device || {}), ...device };
+    const oldJson = JSON.stringify(this.device);
+    const newJson = JSON.stringify(merged);
+    if (oldJson !== newJson) {
+      this.device = merged;
+    }
   }
 
   async _loadDevice() {

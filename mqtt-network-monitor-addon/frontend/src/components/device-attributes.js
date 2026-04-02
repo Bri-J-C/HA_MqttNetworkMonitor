@@ -108,9 +108,10 @@ class DeviceAttributes extends LitElement {
     /* Transform select */
     .attr-transform {
       margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex; align-items: center; gap: 6px;
     }
     .transform-select {
-      width: 100%; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08);
+      flex: 1; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08);
       border-radius: 4px; color: rgba(255,255,255,0.5); padding: 2px 4px;
       font-size: 10px; cursor: pointer;
       appearance: none; -webkit-appearance: none; -moz-appearance: none;
@@ -119,7 +120,7 @@ class DeviceAttributes extends LitElement {
     .transform-select:hover, .transform-select:focus { outline: none; border-color: #00D4FF; color: #fff; }
     .transform-label {
       font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase;
-      letter-spacing: 0.5px; margin-bottom: 2px;
+      letter-spacing: 0.5px; white-space: nowrap;
     }
 
     /* Pin icon */
