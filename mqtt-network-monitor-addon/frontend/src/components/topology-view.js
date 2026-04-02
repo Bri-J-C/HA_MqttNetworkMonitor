@@ -48,7 +48,21 @@ class TopologyView extends LitElement {
       margin-bottom: 12px; justify-content: flex-start;
     }
     .toolbar-left { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .toolbar-right { display: flex; gap: 8px; font-size: 11px; }
+    .toolbar-right { display: none; }
+    .status-counts {
+      position: absolute; bottom: 12px; left: 12px;
+      display: flex; gap: 6px; z-index: 10;
+    }
+    .status-pill {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 11px; color: rgba(255,255,255,0.7);
+    }
+    .status-pill::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%;
+    }
+    .status-pill.online::before { background: #04d65c; }
+    .status-pill.offline::before { background: #ef5350; }
+    .status-pill.warning::before { background: #ffb74d; }
 
     /* Custom layout dropdown */
     .layout-dropdown { position: relative; }
@@ -495,9 +509,6 @@ class TopologyView extends LitElement {
           `}
         </div>
         <div class="toolbar-right">
-          <span class="status-dot" style="color: #04d65c">${counts.online} online</span>
-          <span class="status-dot" style="color: #ef5350">${counts.offline} offline</span>
-          <span class="status-dot" style="color: #ffb74d">${counts.warning} warning</span>
         </div>
       </div>
       ${this.editMode ? html`
@@ -541,6 +552,11 @@ class TopologyView extends LitElement {
           <button class="zoom-btn" @click=${this._zoomIn} title="Zoom in">+</button>
           <button class="zoom-btn" @click=${this._zoomOut} title="Zoom out">\u2212</button>
           <button class="zoom-btn fit" @click=${this._fitAll} title="Fit all">\u229E</button>
+        </div>
+        <div class="status-counts">
+          <span class="status-pill online">${counts.online}</span>
+          <span class="status-pill offline">${counts.offline}</span>
+          <span class="status-pill warning">${counts.warning}</span>
         </div>
       </div>
 
