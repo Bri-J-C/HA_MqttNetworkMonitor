@@ -282,6 +282,20 @@ class GroupPolicySettings extends LitElement {
             </div>
 
             <div class="group-field">
+              <label>Collection Interval</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input class="threshold-input" type="number" min="1" step="1"
+                  placeholder="Default (seconds)" style="max-width: 220px;"
+                  .value=${g.interval != null ? String(g.interval) : ''}
+                  @change=${(e) => this._setGroupInterval(g, e.target.value)}>
+                ${g.interval != null ? html`
+                  <button class="sensor-btn remove" style="white-space: nowrap;"
+                    @click=${() => this._setGroupInterval(g, null)}>Clear</button>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="group-field">
               <label>Thresholds</label>
               ${this._renderGroupThresholds(g)}
             </div>
@@ -804,6 +818,20 @@ class GroupPolicySettings extends LitElement {
     }
   }
 
+  async _setGroupInterval(g, value) {
+    const interval = value === null || value === '' ? null : parseInt(value, 10);
+    if (value !== null && value !== '' && (isNaN(interval) || interval < 1)) return;
+    try {
+      await updateGroup(g.id, { interval });
+      this._groups = {
+        ...this._groups,
+        [g.id]: { ...this._groups[g.id], interval },
+      };
+    } catch (e) {
+      console.error('Failed to set group interval:', e);
+    }
+  }
+
   async _removeMember(g, deviceId) {
     const deviceIds = (g.device_ids || []).filter(id => id !== deviceId);
     try {
@@ -844,6 +872,7 @@ class GroupPolicySettings extends LitElement {
       thresholds: cleanThresholds,
       crit_thresholds: cleanCritThresholds,
       hidden_commands: latest.hidden_commands || [],
+      interval: latest.interval != null ? latest.interval : null,
     };
     console.log('Saving group:', g.id, payload);
     try {
