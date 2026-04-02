@@ -209,8 +209,11 @@ def main():
         except AssertionError:
             pass  # Silently ignore StaticFiles WebSocket assertion
 
+    # Only show HTTP access logs at DEBUG level
+    access_log = log_level == "DEBUG"
+
     port = int(os.environ.get("PORT", "8100"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port, access_log=access_log)
 
 
 if __name__ == "__main__":
