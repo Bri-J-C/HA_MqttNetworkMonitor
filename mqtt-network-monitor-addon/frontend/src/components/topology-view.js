@@ -1,7 +1,9 @@
 import { LitElement, html, svg, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 import { fetchTopology, fetchLayouts, saveLayout, deleteLayout } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
 import './device-detail.js';
+import './themed-dialog.js';
 
 const STATUS_COLORS = {
   online: '#04d65c',
@@ -28,13 +30,13 @@ class TopologyView extends LitElement {
     _selectedEdge: { type: Number, state: true },
     _selectedDeviceData: { type: Object, state: true },  // kept for compatibility
     _dirty: { type: Boolean, state: true },
-    _showSaveDialog: { type: Boolean, state: true },
+    _layoutDropdownOpen: { type: Boolean, state: true },
     _showLabelDialog: { type: Boolean, state: true },
     _labelEdgeIndex: { type: Number, state: true },
     hideAutoEdges: { type: Boolean },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
     .toolbar {
       display: flex; justify-content: space-between; align-items: center;
@@ -43,10 +45,47 @@ class TopologyView extends LitElement {
     }
     .toolbar-left { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .toolbar-right { display: flex; gap: 8px; font-size: 11px; }
-    select {
-      background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 4px; padding: 4px 8px; font-size: 12px;
+
+    /* Custom layout dropdown */
+    .layout-dropdown { position: relative; }
+    .layout-trigger {
+      background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 5px 28px 5px 10px; font-size: 12px;
+      cursor: pointer; white-space: nowrap; position: relative; min-width: 120px;
+      text-align: left; transition: border-color var(--transition);
     }
+    .layout-trigger:hover { border-color: var(--border-hover); }
+    .layout-trigger::after {
+      content: ''; position: absolute; right: 10px; top: 50%;
+      border: 4px solid transparent; border-top-color: var(--text-secondary);
+      transform: translateY(-25%);
+    }
+    .layout-trigger.open::after {
+      border-top-color: transparent; border-bottom-color: var(--text-secondary);
+      transform: translateY(-75%);
+    }
+    .layout-menu {
+      position: absolute; top: calc(100% + 4px); left: 0; min-width: 200px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-md); box-shadow: var(--shadow-dropdown);
+      z-index: 100; overflow: hidden;
+    }
+    .layout-option {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px; font-size: 12px; color: var(--text-primary);
+      cursor: pointer; transition: background var(--transition);
+    }
+    .layout-option:hover { background: var(--bg-hover); }
+    .layout-option.selected { color: var(--accent); }
+    .layout-divider {
+      height: 1px; background: var(--border); margin: 4px 0;
+    }
+    .default-badge {
+      font-size: 9px; padding: 1px 5px; border-radius: var(--radius-sm);
+      background: var(--accent-bg); color: var(--accent); margin-left: auto;
+    }
+    .layout-option.new-layout { color: var(--accent); }
+
     .tool-btn {
       background: none; border: none; color: #fff; cursor: pointer;
       font-size: 12px; padding: 4px 10px; border-radius: 4px; transition: all 0.2s;
@@ -59,6 +98,15 @@ class TopologyView extends LitElement {
     .tool-btn.danger:hover { background: rgba(239,83,80,0.1); }
     .tool-btn.save { color: #04d65c; }
     .tool-btn.save:hover { background: rgba(129,199,132,0.15); color: #a5d6a7; }
+    .tool-btn.done {
+      color: var(--bg-card); background: var(--success); font-weight: 600;
+      border-radius: var(--radius-sm); padding: 5px 14px;
+    }
+    .tool-btn.done:hover { background: #05e868; }
+    .tool-btn.discard {
+      color: var(--text-dim); background: none;
+    }
+    .tool-btn.discard:hover { color: var(--danger); background: var(--danger-bg); }
     .status-dot { font-size: 11px; }
     .separator { color: #666; }
     .canvas-container {
@@ -161,12 +209,6 @@ class TopologyView extends LitElement {
       background: rgba(0,0,0,0.6); display: flex; align-items: center;
       justify-content: center; z-index: 1000;
     }
-    .save-dialog {
-      background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px;
-      min-width: 320px; max-width: 400px; border: 1px solid rgba(255,255,255,0.1);
-    }
-    .save-dialog h3 { color: #fff; margin-bottom: 8px; font-size: 16px; }
-    .save-dialog p { color: #fff; font-size: 13px; margin-bottom: 20px; }
     .save-dialog-buttons {
       display: flex; gap: 8px; justify-content: flex-end;
     }
@@ -176,8 +218,6 @@ class TopologyView extends LitElement {
     }
     .dialog-btn.save { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
     .dialog-btn.save:hover { background: #33DDFF; }
-    .dialog-btn.discard { background: rgba(255,255,255,0.1); color: #ef5350; }
-    .dialog-btn.discard:hover { background: #4a3a3a; }
     .dialog-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
     .dialog-btn.cancel:hover { background: rgba(255,255,255,0.15); }
     .dirty-indicator {
@@ -205,7 +245,15 @@ class TopologyView extends LitElement {
     .label-field .hint {
       font-size: 10px; color: #fff; margin-top: 3px;
     }
-  `;
+    @media (max-width: 768px) {
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .toolbar-left { flex-wrap: wrap; }
+      .toolbar-right { justify-content: center; }
+      .separator { display: none; }
+      .layout-trigger { width: 100%; box-sizing: border-box; }
+      svg { height: 60vh; }
+    }
+  `];
 
   constructor() {
     super();
@@ -226,7 +274,7 @@ class TopologyView extends LitElement {
     this._selectedDeviceData = null;
     this._commandResult = '';
     this._dirty = false;
-    this._showSaveDialog = false;
+    this._layoutDropdownOpen = false;
     this._showLabelDialog = false;
     this._labelEdgeIndex = -1;
     this._savedPositions = null;
@@ -248,12 +296,22 @@ class TopologyView extends LitElement {
         this._refreshNodeStatuses();
       }
     });
+    this._onDocClick = (e) => {
+      if (this._layoutDropdownOpen) {
+        const dropdown = this.shadowRoot?.querySelector('.layout-dropdown');
+        if (dropdown && !e.composedPath().includes(dropdown)) {
+          this._layoutDropdownOpen = false;
+        }
+      }
+    };
+    document.addEventListener('click', this._onDocClick);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     if (this._wsUnsub) this._wsUnsub();
     if (this._pollTimer) clearInterval(this._pollTimer);
+    if (this._onDocClick) document.removeEventListener('click', this._onDocClick);
   }
 
   async _refreshNodeStatuses() {
@@ -383,30 +441,22 @@ class TopologyView extends LitElement {
     return html`
       <div class="toolbar">
         <div class="toolbar-left">
-          <select @change=${this._onLayoutChange}>
-            <option value="">Auto Discovery</option>
-            ${Object.entries(this.layouts).map(([id, l]) => html`
-              <option value=${id} ?selected=${this.selectedLayout === id}>
-                ${l.name}${l.isDefault ? ' (default)' : ''}
-              </option>
-            `)}
-          </select>
-          <button class="tool-btn ${this.editMode ? 'active' : ''}"
-            @click=${this._toggleEditMode}>
-            ${this.editMode ? 'Done Editing' : 'Edit Mode'}
-          </button>
+          ${this._renderLayoutDropdown()}
           ${this.editMode ? html`
+            <span class="separator">|</span>
+            <button class="tool-btn done" @click=${this._doneEditing}>Done Editing</button>
+            <button class="tool-btn discard" @click=${this._discardAndExit}>Discard</button>
             <span class="separator">|</span>
             <button class="tool-btn link-mode ${this.linkMode ? 'active' : ''}"
               @click=${this._toggleLinkMode}>
-              ${this.linkMode ? 'Cancel Link' : 'Add Link'}
+              ${this.linkMode ? 'Cancel Link' : '+ Link'}
             </button>
             <button class="tool-btn ${this.hideAutoEdges ? 'active' : ''}"
               @click=${() => { this.hideAutoEdges = !this.hideAutoEdges; this._markDirty(); }}>
-              ${this.hideAutoEdges ? 'Show Auto Links' : 'Hide Auto Links'}
+              ${this.hideAutoEdges ? 'Show Auto Links' : 'Auto Links'}
             </button>
             <span class="separator">|</span>
-            <button class="tool-btn save" @click=${this._saveCurrentLayout}>Save Layout</button>
+            <button class="tool-btn save" @click=${this._saveAsLayout}>Save As</button>
             ${this.selectedLayout ? html`
               <button class="tool-btn" @click=${this._setAsDefault}>
                 ${this.layouts[this.selectedLayout]?.isDefault ? 'Default' : 'Set Default'}
@@ -414,7 +464,9 @@ class TopologyView extends LitElement {
               <button class="tool-btn danger" @click=${this._deleteCurrentLayout}>Delete</button>
             ` : ''}
             ${this._dirty ? html`<span class="dirty-indicator">unsaved changes</span>` : ''}
-          ` : ''}
+          ` : html`
+            <button class="tool-btn" @click=${this._enterEditMode}>Edit Mode</button>
+          `}
         </div>
         <div class="toolbar-right">
           <span class="status-dot" style="color: #04d65c">${counts.online} online</span>
@@ -445,8 +497,8 @@ class TopologyView extends LitElement {
 
       ${this.selectedNode && !this.linkMode ? this._renderDetailPanel() : ''}
       ${this.editMode && this.manualEdges.length > 0 ? this._renderManualEdgesList() : ''}
-      ${this._showSaveDialog ? this._renderSaveDialog() : ''}
       ${this._showLabelDialog ? this._renderLabelDialog() : ''}
+      <themed-dialog></themed-dialog>
     `;
   }
 
@@ -653,18 +705,30 @@ class TopologyView extends LitElement {
     `;
   }
 
-  _renderSaveDialog() {
+  _renderLayoutDropdown() {
+    const currentName = this.selectedLayout && this.layouts[this.selectedLayout]
+      ? this.layouts[this.selectedLayout].name : 'Auto Discovery';
     return html`
-      <div class="save-overlay" @click=${this._cancelDialog}>
-        <div class="save-dialog" @click=${(e) => e.stopPropagation()}>
-          <h3>Unsaved Changes</h3>
-          <p>You have unsaved changes to the layout. What would you like to do?</p>
-          <div class="save-dialog-buttons">
-            <button class="dialog-btn cancel" @click=${this._cancelDialog}>Keep Editing</button>
-            <button class="dialog-btn discard" @click=${this._discardAndExit}>Discard</button>
-            <button class="dialog-btn save" @click=${this._saveAndExit}>Save</button>
+      <div class="layout-dropdown">
+        <button class="layout-trigger ${this._layoutDropdownOpen ? 'open' : ''}"
+          @click=${(e) => { e.stopPropagation(); this._layoutDropdownOpen = !this._layoutDropdownOpen; }}>
+          ${currentName}
+        </button>
+        ${this._layoutDropdownOpen ? html`
+          <div class="layout-menu">
+            <div class="layout-option ${!this.selectedLayout ? 'selected' : ''}"
+              @click=${() => this._selectLayout('')}>Auto Discovery</div>
+            ${Object.entries(this.layouts).map(([id, l]) => html`
+              <div class="layout-option ${this.selectedLayout === id ? 'selected' : ''}"
+                @click=${() => this._selectLayout(id)}>
+                ${l.name}
+                ${l.isDefault ? html`<span class="default-badge">default</span>` : ''}
+              </div>
+            `)}
+            <div class="layout-divider"></div>
+            <div class="layout-option new-layout" @click=${this._createNewLayout}>+ New Layout</div>
           </div>
-        </div>
+        ` : ''}
       </div>
     `;
   }
@@ -758,28 +822,19 @@ class TopologyView extends LitElement {
     }
   }
 
-  _toggleEditMode() {
-    if (this.editMode && this._dirty) {
-      // Trying to exit edit mode with unsaved changes
-      this._showSaveDialog = true;
-      return;
-    }
-    this._enterOrExitEdit();
+  _enterEditMode() {
+    this.editMode = true;
+    this._savedPositions = JSON.stringify(this.nodePositions);
+    this._savedManualEdges = JSON.stringify(this.manualEdges);
+    this._dirty = false;
   }
 
-  _enterOrExitEdit() {
-    this.editMode = !this.editMode;
-    if (this.editMode) {
-      // Snapshot current state so we can detect changes
-      this._savedPositions = JSON.stringify(this.nodePositions);
-      this._savedManualEdges = JSON.stringify(this.manualEdges);
-      this._dirty = false;
-    } else {
-      this.linkMode = false;
-      this._linkSource = null;
-      this._selectedEdge = -1;
-      this._dirty = false;
-    }
+  _exitEditMode() {
+    this.editMode = false;
+    this.linkMode = false;
+    this._linkSource = null;
+    this._selectedEdge = -1;
+    this._dirty = false;
   }
 
   _markDirty() {
@@ -787,28 +842,104 @@ class TopologyView extends LitElement {
     this._dirty = true;
   }
 
-  async _saveAndExit() {
-    this._showSaveDialog = false;
-    await this._saveCurrentLayout();
-    this._dirty = false;
-    this._enterOrExitEdit();
+  async _doneEditing() {
+    if (this.selectedLayout) {
+      // Existing layout — save silently
+      await this._saveToCurrentLayout();
+      this._exitEditMode();
+    } else {
+      // Auto Discovery (no layout) — prompt for name
+      const dialog = this.shadowRoot.querySelector('themed-dialog');
+      const name = await dialog.show({
+        type: 'prompt',
+        title: 'Save Layout',
+        message: 'Enter a name for this layout:',
+        placeholder: 'My Layout',
+      });
+      if (!name) return; // user cancelled, stay in edit mode
+      await this._saveNewLayout(name);
+      this._exitEditMode();
+    }
   }
 
   _discardAndExit() {
-    this._showSaveDialog = false;
-    // Restore to saved state
     if (this._savedPositions) {
       this.nodePositions = JSON.parse(this._savedPositions);
     }
     if (this._savedManualEdges) {
       this.manualEdges = JSON.parse(this._savedManualEdges);
     }
-    this._dirty = false;
-    this._enterOrExitEdit();
+    this._exitEditMode();
   }
 
-  _cancelDialog() {
-    this._showSaveDialog = false;
+  async _saveAsLayout() {
+    const dialog = this.shadowRoot.querySelector('themed-dialog');
+    const name = await dialog.show({
+      type: 'prompt',
+      title: 'Save As New Layout',
+      message: 'Enter a name for the new layout:',
+      placeholder: 'Layout copy',
+    });
+    if (!name) return;
+    await this._saveNewLayout(name);
+  }
+
+  async _saveToCurrentLayout() {
+    if (!this.selectedLayout || !this.layouts[this.selectedLayout]) return;
+    const current = this.layouts[this.selectedLayout];
+    await saveLayout({
+      id: this.selectedLayout,
+      name: current.name,
+      positions: this.nodePositions,
+      manualEdges: this.manualEdges,
+      hideAutoEdges: this.hideAutoEdges,
+      isDefault: current.isDefault || false,
+    });
+    await this._loadLayouts();
+    this._dirty = false;
+    this._savedPositions = JSON.stringify(this.nodePositions);
+    this._savedManualEdges = JSON.stringify(this.manualEdges);
+  }
+
+  async _saveNewLayout(name) {
+    const saved = await saveLayout({
+      name,
+      positions: this.nodePositions,
+      manualEdges: this.manualEdges,
+      hideAutoEdges: this.hideAutoEdges,
+      isDefault: false,
+    });
+    this.selectedLayout = saved.id;
+    await this._loadLayouts();
+    this._dirty = false;
+    this._savedPositions = JSON.stringify(this.nodePositions);
+    this._savedManualEdges = JSON.stringify(this.manualEdges);
+  }
+
+  _selectLayout(id) {
+    this._layoutDropdownOpen = false;
+    this.selectedLayout = id;
+    if (id && this.layouts[id]) {
+      const layout = this.layouts[id];
+      this.nodePositions = layout.positions || {};
+      this.manualEdges = layout.manualEdges || [];
+      this.hideAutoEdges = layout.hideAutoEdges || false;
+    } else {
+      this.nodePositions = {};
+      this.manualEdges = [];
+      this.hideAutoEdges = false;
+      this._autoLayout();
+    }
+  }
+
+  _createNewLayout() {
+    this._layoutDropdownOpen = false;
+    this.selectedLayout = '';
+    this.nodePositions = {};
+    this.manualEdges = [];
+    this.hideAutoEdges = false;
+    this._autoLayout();
+    this._enterEditMode();
   }
 
   _toggleLinkMode() {
@@ -933,42 +1064,7 @@ class TopologyView extends LitElement {
 
   // --- Layout management ---
 
-  _onLayoutChange(e) {
-    this.selectedLayout = e.target.value;
-    if (this.selectedLayout && this.layouts[this.selectedLayout]) {
-      const layout = this.layouts[this.selectedLayout];
-      this.nodePositions = layout.positions || {};
-      this.manualEdges = layout.manualEdges || [];
-      this.hideAutoEdges = layout.hideAutoEdges || false;
-    } else {
-      this.nodePositions = {};
-      this.manualEdges = [];
-      this.hideAutoEdges = false;
-      this._autoLayout();
-    }
-  }
-
-  async _saveCurrentLayout() {
-    const existingName = this.selectedLayout && this.layouts[this.selectedLayout]
-      ? this.layouts[this.selectedLayout].name : '';
-    const name = prompt('Layout name:', existingName);
-    if (!name) return;
-    const isDefault = this.selectedLayout && this.layouts[this.selectedLayout]
-      ? this.layouts[this.selectedLayout].isDefault || false : false;
-    const saved = await saveLayout({
-      id: this.selectedLayout || undefined,
-      name,
-      positions: this.nodePositions,
-      manualEdges: this.manualEdges,
-      hideAutoEdges: this.hideAutoEdges,
-      isDefault,
-    });
-    this.selectedLayout = saved.id;
-    await this._loadLayouts();
-    this._dirty = false;
-    this._savedPositions = JSON.stringify(this.nodePositions);
-    this._savedManualEdges = JSON.stringify(this.manualEdges);
-  }
+  /* _onLayoutChange and _saveCurrentLayout removed — replaced by _selectLayout, _doneEditing, _saveAsLayout */
 
   async _setAsDefault() {
     if (!this.selectedLayout) return;
@@ -995,7 +1091,15 @@ class TopologyView extends LitElement {
   async _deleteCurrentLayout() {
     if (!this.selectedLayout) return;
     const name = this.layouts[this.selectedLayout]?.name || this.selectedLayout;
-    if (!confirm(`Delete layout "${name}"?`)) return;
+    const dialog = this.shadowRoot.querySelector('themed-dialog');
+    const confirmed = await dialog.show({
+      type: 'confirm',
+      title: 'Delete Layout',
+      message: `Delete "${name}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      confirmDanger: true,
+    });
+    if (!confirmed) return;
 
     await deleteLayout(this.selectedLayout);
     this.selectedLayout = '';
