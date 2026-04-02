@@ -131,19 +131,11 @@ def create_app():
             else:
                 ha_entities.update_device_states(device_id, device, exposed_attrs)
 
-            # Filter hidden attributes for broadcast too
+            # Broadcast full device data — frontend handles hidden filtering.
+            # Previously we stripped hidden attrs/commands here, but that caused
+            # flickering because poll responses had the full data while WebSocket
+            # updates had the filtered data, triggering constant re-renders.
             broadcast_device = dict(device)
-            hidden = device.get("hidden_attributes", [])
-            if hidden:
-                broadcast_device["attributes"] = {
-                    k: v for k, v in device.get("attributes", {}).items()
-                    if k not in hidden
-                }
-            # Also filter hidden commands
-            hidden_cmds = device.get("hidden_commands", [])
-            if hidden_cmds:
-                allowed = broadcast_device.get("allowed_commands", [])
-                broadcast_device["allowed_commands"] = [c for c in allowed if c not in hidden_cmds]
 
             # Skip broadcast if nothing changed
             current_hash = _device_hash(broadcast_device)
