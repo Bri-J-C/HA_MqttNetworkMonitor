@@ -191,13 +191,13 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/2 19:10"}</span>
+        <span class="version">v0.2.1 build ${"4/2 19:22"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/2 19:10"}</span>
+        <span class="version">build ${"4/2 19:22"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
@@ -2458,19 +2458,19 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       `:B`
         <button class="add-cmd-btn" @click=${()=>this._startAddGroupCmd(e.id)}>+ Add Command</button>
       `}
-    `}_startAddGroupCmd(e){this._showAddGroupCmd={groupId:e},this._editingGroupCmd=null,this._groupCmdForm={name:"",shell:""}}_startEditGroupCmd(e,t,o){this._editingGroupCmd={groupId:e,name:t},this._showAddGroupCmd=null,this._groupCmdForm={name:t,shell:o}}_cancelGroupCmdForm(){this._editingGroupCmd=null,this._showAddGroupCmd=null,this._groupCmdForm={name:"",shell:""}}async _saveGroupCmd(e){const t=this._groupCmdForm?.name?.trim(),o=this._groupCmdForm?.shell?.trim();if(!t||!o)return;const s={...this._getLatestGroup(e).custom_commands||{},[t]:o};await Ae(e.id,{custom_commands:s}),await this._loadAll(),this._cancelGroupCmdForm()}async _removeGroupCommand(e,t){const o=this._getLatestGroup(e),s={...o.custom_commands||{}};delete s[t];try{await Ae(e.id,this._buildGroupPayload(o,{custom_commands:s}))}catch(e){console.error("Failed to remove group command:",e)}await this._loadAll()}_getLatestGroup(e){return this._groups[e.id]||e}_buildGroupPayload(e,t={}){return{name:e.name,device_ids:e.device_ids||[],custom_commands:e.custom_commands||{},custom_sensors:e.custom_sensors||{},thresholds:e.thresholds||{},hidden_commands:e.hidden_commands||[],...t}}async _hideGroupCommand(e,t){const o=this._getLatestGroup(e),s=[...o.hidden_commands||[]];s.includes(t)||s.push(t);try{await Ae(e.id,this._buildGroupPayload(o,{hidden_commands:s}))}catch(e){console.error("Failed to hide group command:",e)}await this._loadAll()}async _unhideGroupCommand(e,t){const o=this._getLatestGroup(e),s=(o.hidden_commands||[]).filter(e=>e!==t);try{await Ae(e.id,this._buildGroupPayload(o,{hidden_commands:s}))}catch(e){console.error("Failed to unhide group command:",e)}await this._loadAll()}_renderGroupThresholds(e){const t=e.thresholds||{},o=e.crit_thresholds||{},s=this._getGroupDiscoveredData(e).attributes,i=Object.keys(t).filter(e=>null!=t[e]&&!s.includes(e)),r=Object.keys(o).filter(e=>null!=o[e]&&!s.includes(e)&&!i.includes(e)),n=[...s,...i,...r];return 0===n.length?B`<div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 6px;">No attributes discovered from member devices yet.</div>`:B`
+    `}_startAddGroupCmd(e){this._showAddGroupCmd={groupId:e},this._editingGroupCmd=null,this._groupCmdForm={name:"",shell:""}}_startEditGroupCmd(e,t,o){this._editingGroupCmd={groupId:e,name:t},this._showAddGroupCmd=null,this._groupCmdForm={name:t,shell:o}}_cancelGroupCmdForm(){this._editingGroupCmd=null,this._showAddGroupCmd=null,this._groupCmdForm={name:"",shell:""}}async _saveGroupCmd(e){const t=this._groupCmdForm?.name?.trim(),o=this._groupCmdForm?.shell?.trim();if(!t||!o)return;const s={...this._getLatestGroup(e).custom_commands||{},[t]:o};await Ae(e.id,{custom_commands:s}),await this._loadAll(),this._cancelGroupCmdForm()}async _removeGroupCommand(e,t){const o=this._getLatestGroup(e),s={...o.custom_commands||{}};delete s[t];try{await Ae(e.id,this._buildGroupPayload(o,{custom_commands:s}))}catch(e){console.error("Failed to remove group command:",e)}await this._loadAll()}_getLatestGroup(e){return this._groups[e.id]||e}_buildGroupPayload(e,t={}){return{name:e.name,device_ids:e.device_ids||[],custom_commands:e.custom_commands||{},custom_sensors:e.custom_sensors||{},thresholds:e.thresholds||{},hidden_commands:e.hidden_commands||[],attribute_transforms:e.attribute_transforms||{},...t}}async _hideGroupCommand(e,t){const o=this._getLatestGroup(e),s=[...o.hidden_commands||[]];s.includes(t)||s.push(t);try{await Ae(e.id,this._buildGroupPayload(o,{hidden_commands:s}))}catch(e){console.error("Failed to hide group command:",e)}await this._loadAll()}async _unhideGroupCommand(e,t){const o=this._getLatestGroup(e),s=(o.hidden_commands||[]).filter(e=>e!==t);try{await Ae(e.id,this._buildGroupPayload(o,{hidden_commands:s}))}catch(e){console.error("Failed to unhide group command:",e)}await this._loadAll()}_renderGroupThresholds(e){const t=e.thresholds||{},o=e.crit_thresholds||{},s=e.attribute_transforms||{},i=this._getGroupDiscoveredData(e).attributes,r=Object.keys(t).filter(e=>null!=t[e]&&!i.includes(e)),n=Object.keys(o).filter(e=>null!=o[e]&&!i.includes(e)&&!r.includes(e)),a=[...i,...r,...n];return 0===a.length?B`<div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 6px;">No attributes discovered from member devices yet.</div>`:B`
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px;">
-        ${n.map(s=>{const i=t[s],r=null!=i,n=r&&"object"==typeof i&&i.op||">",a=r?"object"==typeof i?i.value:i:null,d=o[s],l=null!=d,c=l&&"object"==typeof d&&d.op||">",p=l?"object"==typeof d?d.value:d:null;return B`
+        ${a.map(i=>{const r=t[i],n=null!=r,a=n&&"object"==typeof r&&r.op||">",d=n?"object"==typeof r?r.value:r:null,l=o[i],c=null!=l,p=c&&"object"==typeof l&&l.op||">",h=c?"object"==typeof l?l.value:l:null;return B`
             <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 12px;
-              ${l?"border: 1px solid rgba(239,83,80,0.2);":r?"border: 1px solid rgba(255,183,77,0.15);":"border: 1px solid transparent;"}">
+              ${c?"border: 1px solid rgba(239,83,80,0.2);":n?"border: 1px solid rgba(255,183,77,0.15);":"border: 1px solid transparent;"}">
               <div style="font-size: 12px; color: #fff; margin-bottom: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px;">
-                ${s.replace(/_/g," ")}
+                ${i.replace(/_/g," ")}
               </div>
               <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
                 <span style="font-size: 11px; color: rgba(255,183,77,0.7); text-transform: uppercase; letter-spacing: 0.5px; width: 34px; font-weight: 600;">warn</span>
                 <select style="background: #0d0d1f; border: none; border-radius: 3px; color: rgba(255,255,255,0.6); padding: 2px; font-size: 11px; width: 38px; appearance: none; -webkit-appearance: none;"
-                  .value=${n}
-                  @change=${t=>this._updateGroupThreshold(e.id,s,a,t.target.value)}>
+                  .value=${a}
+                  @change=${t=>this._updateGroupThreshold(e.id,i,d,t.target.value)}>
                   <option value=">" style="background: #0d0d1f; color: #fff;">&gt;</option>
                   <option value="<" style="background: #0d0d1f; color: #fff;">&lt;</option>
                   <option value=">=" style="background: #0d0d1f; color: #fff;">&gt;=</option>
@@ -2480,18 +2480,18 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
                 </select>
                 <input type="number" placeholder="\u2014"
                   style="width: 55px; font-size: 11px; padding: 3px 4px; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; color: rgba(255,255,255,0.7); text-align: center;"
-                  .value=${null!=a?String(a):""}
-                  @change=${t=>this._updateGroupThreshold(e.id,s,t.target.value,n)}>
-                ${r?B`
+                  .value=${null!=d?String(d):""}
+                  @change=${t=>this._updateGroupThreshold(e.id,i,t.target.value,a)}>
+                ${n?B`
                   <span style="font-size: 12px; color: rgba(255,255,255,0.3); cursor: pointer;" title="Clear"
-                    @click=${()=>this._removeGroupThreshold(e.id,s)}>&times;</span>
+                    @click=${()=>this._removeGroupThreshold(e.id,i)}>&times;</span>
                 `:""}
               </div>
               <div style="display: flex; align-items: center; gap: 4px;">
                 <span style="font-size: 11px; color: rgba(239,83,80,0.7); text-transform: uppercase; letter-spacing: 0.5px; width: 34px; font-weight: 600;">crit</span>
                 <select style="background: #0d0d1f; border: none; border-radius: 3px; color: rgba(255,255,255,0.6); padding: 2px; font-size: 11px; width: 38px; appearance: none; -webkit-appearance: none;"
-                  .value=${c}
-                  @change=${t=>this._updateGroupCritThreshold(e.id,s,p,t.target.value)}>
+                  .value=${p}
+                  @change=${t=>this._updateGroupCritThreshold(e.id,i,h,t.target.value)}>
                   <option value=">" style="background: #0d0d1f; color: #fff;">&gt;</option>
                   <option value="<" style="background: #0d0d1f; color: #fff;">&lt;</option>
                   <option value=">=" style="background: #0d0d1f; color: #fff;">&gt;=</option>
@@ -2501,17 +2501,28 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
                 </select>
                 <input type="number" placeholder="\u2014"
                   style="width: 55px; font-size: 11px; padding: 3px 4px; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; color: rgba(255,255,255,0.7); text-align: center;"
-                  .value=${null!=p?String(p):""}
-                  @change=${t=>this._updateGroupCritThreshold(e.id,s,t.target.value,c)}>
-                ${l?B`
+                  .value=${null!=h?String(h):""}
+                  @change=${t=>this._updateGroupCritThreshold(e.id,i,t.target.value,p)}>
+                ${c?B`
                   <span style="font-size: 12px; color: rgba(255,255,255,0.3); cursor: pointer;" title="Clear"
-                    @click=${()=>this._removeGroupCritThreshold(e.id,s)}>&times;</span>
+                    @click=${()=>this._removeGroupCritThreshold(e.id,i)}>&times;</span>
                 `:""}
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.05);">
+                <span style="font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">Transform</span>
+                <select style="flex: 1; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; color: rgba(255,255,255,0.5); padding: 2px 4px; font-size: 10px; cursor: pointer; appearance: none; -webkit-appearance: none;"
+                  .value=${s[i]||""}
+                  @change=${t=>this._updateGroupTransform(e.id,i,t.target.value)}>
+                  ${Ve.map(e=>B`
+                    <option value=${e.value} ?selected=${e.value===(s[i]||"")}
+                      style="background: #0d0d1f; color: #fff;">${e.label}</option>
+                  `)}
+                </select>
               </div>
             </div>
           `})}
       </div>
-    `}_updateGroupThreshold(e,t,o,s=">"){const i=this._groups[e];if(!i)return;const r={...i.thresholds||{}};""===o||null==o?delete r[t]:r[t]={op:s,value:Number(o)},this._groups={...this._groups,[e]:{...i,thresholds:r}}}_removeGroupThreshold(e,t){const o=this._groups[e];if(!o)return;const s={...o.thresholds||{}};delete s[t],this._groups={...this._groups,[e]:{...o,thresholds:s}}}_updateGroupCritThreshold(e,t,o,s=">"){const i=this._groups[e];if(!i)return;const r={...i.crit_thresholds||{}};""===o||null==o?delete r[t]:r[t]={op:s,value:Number(o)},this._groups={...this._groups,[e]:{...i,crit_thresholds:r}}}_removeGroupCritThreshold(e,t){const o=this._groups[e];if(!o)return;const s={...o.crit_thresholds||{}};delete s[t],this._groups={...this._groups,[e]:{...o,crit_thresholds:s}}}_renderGroupCustomSensors(e){const t=e.custom_sensors||{},o=this._editingGroupSensor&&this._editingGroupSensor.groupId===e.id,s=this._showAddGroupSensor&&this._showAddGroupSensor.groupId===e.id;return B`
+    `}_updateGroupThreshold(e,t,o,s=">"){const i=this._groups[e];if(!i)return;const r={...i.thresholds||{}};""===o||null==o?delete r[t]:r[t]={op:s,value:Number(o)},this._groups={...this._groups,[e]:{...i,thresholds:r}}}_removeGroupThreshold(e,t){const o=this._groups[e];if(!o)return;const s={...o.thresholds||{}};delete s[t],this._groups={...this._groups,[e]:{...o,thresholds:s}}}_updateGroupCritThreshold(e,t,o,s=">"){const i=this._groups[e];if(!i)return;const r={...i.crit_thresholds||{}};""===o||null==o?delete r[t]:r[t]={op:s,value:Number(o)},this._groups={...this._groups,[e]:{...i,crit_thresholds:r}}}_removeGroupCritThreshold(e,t){const o=this._groups[e];if(!o)return;const s={...o.crit_thresholds||{}};delete s[t],this._groups={...this._groups,[e]:{...o,crit_thresholds:s}}}_updateGroupTransform(e,t,o){const s=this._groups[e];if(!s)return;const i={...s.attribute_transforms||{}};o?i[t]=o:delete i[t],this._groups={...this._groups,[e]:{...s,attribute_transforms:i}}}_renderGroupCustomSensors(e){const t=e.custom_sensors||{},o=this._editingGroupSensor&&this._editingGroupSensor.groupId===e.id,s=this._showAddGroupSensor&&this._showAddGroupSensor.groupId===e.id;return B`
       ${Object.keys(t).length>0?B`
         <table class="sensor-table">
           <thead>
@@ -2573,7 +2584,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <option value=${e}>${t.device_name||e}</option>
         `)}
       </select>
-    `}_toggleGroup(e){this._expandedGroup=this._expandedGroup===e?null:e}async _addMember(e,t){const o=[...e.device_ids||[],t];try{await Ae(e.id,{device_ids:o}),await this._loadAll()}catch(e){console.error("Failed to add member:",e)}}async _setGroupInterval(e,t){const o=null===t||""===t?null:parseInt(t,10);if(null===t||""===t||!(isNaN(o)||o<1))try{await Ae(e.id,{interval:o}),this._groups={...this._groups,[e.id]:{...this._groups[e.id],interval:o}}}catch(e){console.error("Failed to set group interval:",e)}}async _removeMember(e,t){const o=(e.device_ids||[]).filter(e=>e!==t);try{await Ae(e.id,{device_ids:o}),await this._loadAll()}catch(e){console.error("Failed to remove member:",e)}}async _updateGroup(e){const t=this._groups[e.id]||e,o=this._editingGroupName===e.id?this._editGroupName.trim():t.name,s={};for(const[e,o]of Object.entries(t.thresholds||{}))null!=o&&("object"==typeof o&&null!=o.value?s[e]=o:"number"!=typeof o||isNaN(o)||(s[e]=o));const i={};for(const[e,o]of Object.entries(t.crit_thresholds||{}))null!=o&&("object"==typeof o&&null!=o.value?i[e]=o:"number"!=typeof o||isNaN(o)||(i[e]=o));const r=o||t.name,n={name:r,device_ids:t.device_ids||[],custom_commands:t.custom_commands||{},custom_sensors:t.custom_sensors||{},thresholds:s,crit_thresholds:i,hidden_commands:t.hidden_commands||[],interval:null!=t.interval?t.interval:null};console.log("Saving group:",e.id,n);try{await Ae(e.id,n),this._groups={...this._groups,[e.id]:{...t,name:r,thresholds:s,crit_thresholds:i}},this._editingGroupName===e.id&&(this._editingGroupName=null),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"saved"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}catch(t){console.error("Failed to update group:",t),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"error"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}}async _createGroup(){const e=this._newGroupName.trim();if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_");try{await Ee(t,e,[]),this._newGroupName="",this._expandedGroup=t,await this._loadAll()}catch(e){console.error("Failed to create group:",e)}}async _deleteGroup(e){const t=(e.device_ids||[]).length;if(!(t>0)||confirm(`Delete group "${e.name}"? It has ${t} member(s).`))try{await Te(e.id),this._expandedGroup===e.id&&(this._expandedGroup=null),await this._loadAll()}catch(e){console.error("Failed to delete group:",e)}}async _deployToDevices(e){await this._updateGroup(e),await this._doDeploy(e)}async _doDeploy(e){const t=this._groups[e.id]||e;this._groupPushStatus={...this._groupPushStatus,[e.id]:"Deploying..."};try{const o=await Re(t.id,{});console.log("Deploy result:",o),this._groupPushStatus={...this._groupPushStatus,[e.id]:"Deployed!"},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3),await this._loadAll()}catch(t){console.error("Failed to deploy group config:",t);const o=t&&t.message?`Error: ${t.message}`:"Error";this._groupPushStatus={...this._groupPushStatus,[e.id]:o},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}}}customElements.define("group-policy-settings",it);const rt={attr:"",value:""};class nt extends de{static properties={_settings:{type:Object,state:!0},_loading:{type:Boolean,state:!0},_savingSettings:{type:Boolean,state:!0},_settingsSaved:{type:Boolean,state:!0}};static styles=[ce,r`
+    `}_toggleGroup(e){this._expandedGroup=this._expandedGroup===e?null:e}async _addMember(e,t){const o=[...e.device_ids||[],t];try{await Ae(e.id,{device_ids:o}),await this._loadAll()}catch(e){console.error("Failed to add member:",e)}}async _setGroupInterval(e,t){const o=null===t||""===t?null:parseInt(t,10);if(null===t||""===t||!(isNaN(o)||o<1))try{await Ae(e.id,{interval:o}),this._groups={...this._groups,[e.id]:{...this._groups[e.id],interval:o}}}catch(e){console.error("Failed to set group interval:",e)}}async _removeMember(e,t){const o=(e.device_ids||[]).filter(e=>e!==t);try{await Ae(e.id,{device_ids:o}),await this._loadAll()}catch(e){console.error("Failed to remove member:",e)}}async _updateGroup(e){const t=this._groups[e.id]||e,o=this._editingGroupName===e.id?this._editGroupName.trim():t.name,s={};for(const[e,o]of Object.entries(t.thresholds||{}))null!=o&&("object"==typeof o&&null!=o.value?s[e]=o:"number"!=typeof o||isNaN(o)||(s[e]=o));const i={};for(const[e,o]of Object.entries(t.crit_thresholds||{}))null!=o&&("object"==typeof o&&null!=o.value?i[e]=o:"number"!=typeof o||isNaN(o)||(i[e]=o));const r=o||t.name,n={name:r,device_ids:t.device_ids||[],custom_commands:t.custom_commands||{},custom_sensors:t.custom_sensors||{},thresholds:s,crit_thresholds:i,hidden_commands:t.hidden_commands||[],interval:null!=t.interval?t.interval:null,attribute_transforms:t.attribute_transforms||{}};console.log("Saving group:",e.id,n);try{await Ae(e.id,n),this._groups={...this._groups,[e.id]:{...t,name:r,thresholds:s,crit_thresholds:i}},this._editingGroupName===e.id&&(this._editingGroupName=null),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"saved"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}catch(t){console.error("Failed to update group:",t),this._groupSaveStatus={...this._groupSaveStatus,[e.id]:"error"},setTimeout(()=>{this._groupSaveStatus={...this._groupSaveStatus,[e.id]:""}},2e3)}}async _createGroup(){const e=this._newGroupName.trim();if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_");try{await Ee(t,e,[]),this._newGroupName="",this._expandedGroup=t,await this._loadAll()}catch(e){console.error("Failed to create group:",e)}}async _deleteGroup(e){const t=(e.device_ids||[]).length;if(!(t>0)||confirm(`Delete group "${e.name}"? It has ${t} member(s).`))try{await Te(e.id),this._expandedGroup===e.id&&(this._expandedGroup=null),await this._loadAll()}catch(e){console.error("Failed to delete group:",e)}}async _deployToDevices(e){await this._updateGroup(e),await this._doDeploy(e)}async _doDeploy(e){const t=this._groups[e.id]||e;this._groupPushStatus={...this._groupPushStatus,[e.id]:"Deploying..."};try{const o=await Re(t.id,{});console.log("Deploy result:",o),this._groupPushStatus={...this._groupPushStatus,[e.id]:"Deployed!"},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3),await this._loadAll()}catch(t){console.error("Failed to deploy group config:",t);const o=t&&t.message?`Error: ${t.message}`:"Error";this._groupPushStatus={...this._groupPushStatus,[e.id]:o},setTimeout(()=>{this._groupPushStatus={...this._groupPushStatus,[e.id]:""}},3e3)}}}customElements.define("group-policy-settings",it);const rt={attr:"",value:""};class nt extends de{static properties={_settings:{type:Object,state:!0},_loading:{type:Boolean,state:!0},_savingSettings:{type:Boolean,state:!0},_settingsSaved:{type:Boolean,state:!0}};static styles=[ce,r`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     h2 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 16px; margin-top: 0; }

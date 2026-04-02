@@ -35,6 +35,7 @@ def update_group(group_id: str, body: dict[str, Any]):
         crit_thresholds=body.get("crit_thresholds"),
         hidden_commands=body.get("hidden_commands"),
         interval=body.get("interval", ...),
+        attribute_transforms=body.get("attribute_transforms"),
     )
     if not result:
         raise HTTPException(status_code=404, detail="Group not found")

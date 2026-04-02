@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
+import { AVAILABLE_TRANSFORMS } from '../utils/transforms.js';
 import {
   fetchGroups, createGroup, updateGroup, deleteGroup,
   sendGroupCommand, pushGroupConfig,
@@ -504,6 +505,7 @@ class GroupPolicySettings extends LitElement {
       custom_sensors: group.custom_sensors || {},
       thresholds: group.thresholds || {},
       hidden_commands: group.hidden_commands || [],
+      attribute_transforms: group.attribute_transforms || {},
       ...overrides,
     };
   }
@@ -536,6 +538,7 @@ class GroupPolicySettings extends LitElement {
   _renderGroupThresholds(g) {
     const thresholds = g.thresholds || {};
     const critThresholds = g.crit_thresholds || {};
+    const transforms = g.attribute_transforms || {};
     const discovered = this._getGroupDiscoveredData(g);
     const discoveredAttrs = discovered.attributes;
 
@@ -612,6 +615,17 @@ class GroupPolicySettings extends LitElement {
                     @click=${() => this._removeGroupCritThreshold(g.id, key)}>&times;</span>
                 ` : ''}
               </div>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.05);">
+                <span style="font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">Transform</span>
+                <select style="flex: 1; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; color: rgba(255,255,255,0.5); padding: 2px 4px; font-size: 10px; cursor: pointer; appearance: none; -webkit-appearance: none;"
+                  .value=${transforms[key] || ''}
+                  @change=${(e) => this._updateGroupTransform(g.id, key, e.target.value)}>
+                  ${AVAILABLE_TRANSFORMS.map(t => html`
+                    <option value=${t.value} ?selected=${t.value === (transforms[key] || '')}
+                      style="background: #0d0d1f; color: #fff;">${t.label}</option>
+                  `)}
+                </select>
+              </div>
             </div>
           `;
         })}
@@ -668,6 +682,21 @@ class GroupPolicySettings extends LitElement {
     this._groups = {
       ...this._groups,
       [groupId]: { ...group, crit_thresholds: updated },
+    };
+  }
+
+  _updateGroupTransform(groupId, key, value) {
+    const group = this._groups[groupId];
+    if (!group) return;
+    const updated = { ...(group.attribute_transforms || {}) };
+    if (value) {
+      updated[key] = value;
+    } else {
+      delete updated[key];
+    }
+    this._groups = {
+      ...this._groups,
+      [groupId]: { ...group, attribute_transforms: updated },
     };
   }
 
@@ -873,6 +902,7 @@ class GroupPolicySettings extends LitElement {
       crit_thresholds: cleanCritThresholds,
       hidden_commands: latest.hidden_commands || [],
       interval: latest.interval != null ? latest.interval : null,
+      attribute_transforms: latest.attribute_transforms || {},
     };
     console.log('Saving group:', g.id, payload);
     try {

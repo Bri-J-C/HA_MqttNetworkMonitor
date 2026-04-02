@@ -295,7 +295,8 @@ class DeviceRegistry:
                      thresholds: dict | None = None,
                      crit_thresholds: dict | None = None,
                      hidden_commands: list | None = None,
-                     interval: int | None = _UNSET) -> dict | None:
+                     interval: int | None = _UNSET,
+                     attribute_transforms: dict | None = None) -> dict | None:
         group = self._groups.get(group_id)
         if not group:
             return None
@@ -328,6 +329,8 @@ class DeviceRegistry:
             group["hidden_commands"] = hidden_commands
         if interval is not _UNSET:
             group["interval"] = interval
+        if attribute_transforms is not None:
+            group["attribute_transforms"] = attribute_transforms
         self._save_groups()
         return group
 
