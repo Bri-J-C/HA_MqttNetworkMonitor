@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 import {
   fetchGroups, createGroup, updateGroup, deleteGroup,
   sendGroupCommand, pushGroupConfig,
@@ -33,7 +34,7 @@ class GroupPolicySettings extends LitElement {
     _groupSensorForm: { type: Object, state: true },    // { name, command, interval, unit }
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; }
 
     .section {
@@ -175,7 +176,13 @@ class GroupPolicySettings extends LitElement {
       margin-top: 4px; transition: all 0.15s;
     }
     .add-cmd-btn:hover { border-color: #00D4FF; color: #00D4FF; }
-  `;
+
+    @media (max-width: 768px) {
+      .sensor-form-grid { grid-template-columns: 1fr; }
+      .add-row { flex-direction: column; }
+      .add-row input, .add-row select { width: 100%; box-sizing: border-box; }
+    }
+  `];
 
   constructor() {
     super();

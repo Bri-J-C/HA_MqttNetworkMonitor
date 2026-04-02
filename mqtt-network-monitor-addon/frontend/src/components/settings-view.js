@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 import { fetchSettings, updateSettings } from '../services/api.js';
 import './tag-registry-settings.js';
 import './group-policy-settings.js';
@@ -14,7 +15,7 @@ class SettingsView extends LitElement {
     _settingsSaved: { type: Boolean, state: true },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     h2 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 16px; margin-top: 0; }
@@ -58,7 +59,11 @@ class SettingsView extends LitElement {
     .icon-btn.delete:hover { color: #ef5350; background: rgba(239,83,80,0.1); }
 
     .loading { padding: 40px; text-align: center; color: #fff; }
-  `;
+
+    @media (max-width: 768px) {
+      :host { padding: 12px; }
+    }
+  `];
 
   constructor() {
     super();

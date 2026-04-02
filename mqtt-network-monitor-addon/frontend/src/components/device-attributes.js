@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 
 /**
  * device-attributes — attributes grid with HA exposure toggles, threshold editing, hide/unhide.
@@ -28,7 +29,7 @@ class DeviceAttributes extends LitElement {
     _showHidden:       { type: Boolean, state: true },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     /* Attributes + HA exposure */
     .section {
       background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
@@ -122,7 +123,11 @@ class DeviceAttributes extends LitElement {
     }
     .toggle.on  .toggle-knob { left: 16px; }
     .toggle.off .toggle-knob { left: 2px; }
-  `;
+
+    @media (max-width: 768px) {
+      .attr-grid { grid-template-columns: 1fr; }
+    }
+  `];
 
   constructor() {
     super();

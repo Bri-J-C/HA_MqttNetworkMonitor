@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 
 const DANGEROUS_COMMANDS = ['shutdown', 'halt', 'poweroff', 'destroy'];
 
@@ -18,7 +19,7 @@ class DeviceCommands extends LitElement {
     _editCommandForm:   { type: Object,  state: true },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     .section {
       background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
@@ -93,7 +94,11 @@ class DeviceCommands extends LitElement {
       margin-top: 8px;
     }
     .add-btn:hover { border-color: #00D4FF; color: #00D4FF; }
-  `;
+
+    @media (max-width: 768px) {
+      .commands { grid-template-columns: 1fr; }
+    }
+  `];
 
   constructor() {
     super();

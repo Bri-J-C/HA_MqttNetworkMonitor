@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 
 /**
  * device-config — agent configuration: collection interval, active plugins,
@@ -24,7 +25,7 @@ class DeviceConfig extends LitElement {
     _sensorForm:    { type: Object,  state: true },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     .section {
       background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
@@ -107,7 +108,13 @@ class DeviceConfig extends LitElement {
     .push-status        { font-size: 12px; color: #fff; }
     .push-status.synced { color: #04d65c; }
     .push-status.pending{ color: #ffb74d; }
-  `;
+
+    @media (max-width: 768px) {
+      .sensor-table { font-size: 11px; }
+      .sensor-form-grid { flex-direction: column; }
+      .sensor-form-grid input { width: 100%; box-sizing: border-box; }
+    }
+  `];
 
   constructor() {
     super();

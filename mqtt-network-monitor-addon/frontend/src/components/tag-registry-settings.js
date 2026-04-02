@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 import { fetchTags, createTag, renameTag, deleteTag } from '../services/api.js';
 
 class TagRegistrySettings extends LitElement {
@@ -11,7 +12,7 @@ class TagRegistrySettings extends LitElement {
     _selectedTags: { type: Object, state: true },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; }
 
     .section {
@@ -75,7 +76,11 @@ class TagRegistrySettings extends LitElement {
     .small-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
     .small-btn.cancel:hover { background: rgba(255,255,255,0.15); }
     .add-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
-  `;
+
+    @media (max-width: 768px) {
+      .tag-grid { grid-template-columns: 1fr; }
+    }
+  `];
 
   constructor() {
     super();
