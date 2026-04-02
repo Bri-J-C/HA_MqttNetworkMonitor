@@ -34,6 +34,10 @@ class TopologyView extends LitElement {
     _showLabelDialog: { type: Boolean, state: true },
     _labelEdgeIndex: { type: Number, state: true },
     hideAutoEdges: { type: Boolean },
+    _viewBox: { type: Object, state: true },
+    _isPanning: { type: Boolean, state: true },
+    _panStart: { type: Object, state: true },
+    _pinchStartDist: { type: Number, state: true },
   };
 
   static styles = [sharedStyles, css`
@@ -113,7 +117,20 @@ class TopologyView extends LitElement {
       background: #0d0d1f; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);
       position: relative; overflow: hidden;
     }
-    svg { width: 100%; height: 500px; display: block; }
+    svg { width: 100%; height: 500px; display: block; touch-action: none; }
+    .zoom-controls {
+      position: absolute; bottom: 12px; right: 12px;
+      display: flex; flex-direction: column; gap: 4px; z-index: 10;
+    }
+    .zoom-btn {
+      width: 32px; height: 32px; border-radius: var(--radius-md, 8px);
+      background: var(--bg-surface, #1a1a2e); border: 1px solid var(--border, rgba(255,255,255,0.1));
+      color: var(--text-primary, #fff); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .zoom-btn:hover { background: var(--bg-hover, rgba(255,255,255,0.08)); border-color: var(--border-hover, rgba(255,255,255,0.2)); }
+    .zoom-btn.fit { font-size: 14px; }
     .detail-panel {
       background: rgba(255,255,255,0.05); border-radius: 8px; padding: 14px; margin-top: 12px;
     }
@@ -280,6 +297,10 @@ class TopologyView extends LitElement {
     this._savedPositions = null;
     this._savedManualEdges = null;
     this.hideAutoEdges = false;
+    this._viewBox = { x: 0, y: 0, width: 900, height: 500 };
+    this._isPanning = false;
+    this._panStart = null;
+    this._pinchStartDist = 0;
   }
 
   connectedCallback() {
@@ -484,15 +505,24 @@ class TopologyView extends LitElement {
       ` : ''}
 
       <div class="canvas-container">
-        <svg viewBox="0 0 900 500"
+        <svg viewBox="${this._viewBox.x} ${this._viewBox.y} ${this._viewBox.width} ${this._viewBox.height}"
           @mousemove=${this._onMouseMove}
           @mouseup=${this._onMouseUp}
-          @mouseleave=${this._onMouseUp}>
+          @mouseleave=${this._onMouseUp}
+          @wheel=${this._onWheel}
+          @touchstart=${this._onTouchStart}
+          @touchmove=${this._onTouchMove}
+          @touchend=${this._onTouchEnd}>
           ${allEdges.map((edge, i) => this._renderEdgeLine(edge, i))}
           ${this._renderLinkPreview()}
           ${nodes.map(node => this._renderNode(node))}
           ${allEdges.map((edge, i) => this._renderEdgeLabels(edge, i))}
         </svg>
+        <div class="zoom-controls">
+          <button class="zoom-btn" @click=${this._zoomIn} title="Zoom in">+</button>
+          <button class="zoom-btn" @click=${this._zoomOut} title="Zoom out">\u2212</button>
+          <button class="zoom-btn fit" @click=${this._fitAll} title="Fit all">\u229E</button>
+        </div>
       </div>
 
       ${this.selectedNode && !this.linkMode ? this._renderDetailPanel() : ''}
@@ -518,6 +548,7 @@ class TopologyView extends LitElement {
         <g transform="translate(${pos.x}, ${pos.y})"
           @click=${(e) => this._onNodeClick(e, node.id)}
           @mousedown=${(e) => this.editMode && !this.linkMode && this._onMouseDown(e, node.id)}
+          @touchstart=${(e) => this.editMode && !this.linkMode && this._onTouchNodeStart(e, node.id)}
           style="cursor:pointer">
           <circle r="22" fill="${glowColor}22" stroke="${glowColor}" stroke-width="${strokeWidth}"
             stroke-dasharray="${strokeDash}"/>
@@ -530,6 +561,7 @@ class TopologyView extends LitElement {
       <g transform="translate(${pos.x}, ${pos.y})"
         @click=${(e) => this._onNodeClick(e, node.id)}
         @mousedown=${(e) => this.editMode && !this.linkMode && this._onMouseDown(e, node.id)}
+        @touchstart=${(e) => this.editMode && !this.linkMode && this._onTouchNodeStart(e, node.id)}
         style="cursor:pointer">
         <rect x="-45" y="-18" width="90" height="36" rx="6"
           fill="rgba(255,255,255,0.05)" stroke="${glowColor}" stroke-width="${strokeWidth}"
@@ -1053,6 +1085,155 @@ class TopologyView extends LitElement {
         y: svgP.y - this._dragOffset.y,
       },
     };
+  }
+
+  // --- Zoom/Pan handlers ---
+
+  _onWheel(e) {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 1.1 : 0.9;
+    this._zoomAt(e.clientX, e.clientY, factor);
+  }
+
+  _zoomAt(clientX, clientY, factor) {
+    const svgEl = this.shadowRoot.querySelector('svg');
+    if (!svgEl) return;
+    const pt = svgEl.createSVGPoint();
+    pt.x = clientX; pt.y = clientY;
+    const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+
+    const vb = { ...this._viewBox };
+    const newWidth = Math.max(300, Math.min(2700, vb.width * factor));
+    const newHeight = Math.max(167, Math.min(1500, vb.height * factor));
+    const scaleX = newWidth / vb.width;
+    const scaleY = newHeight / vb.height;
+
+    vb.x = svgP.x - (svgP.x - vb.x) * scaleX;
+    vb.y = svgP.y - (svgP.y - vb.y) * scaleY;
+    vb.width = newWidth;
+    vb.height = newHeight;
+    this._viewBox = vb;
+  }
+
+  _zoomIn() {
+    const rect = this.shadowRoot.querySelector('svg')?.getBoundingClientRect();
+    if (rect) this._zoomAt(rect.left + rect.width/2, rect.top + rect.height/2, 0.8);
+  }
+
+  _zoomOut() {
+    const rect = this.shadowRoot.querySelector('svg')?.getBoundingClientRect();
+    if (rect) this._zoomAt(rect.left + rect.width/2, rect.top + rect.height/2, 1.25);
+  }
+
+  _fitAll() {
+    const positions = Object.values(this.nodePositions);
+    if (!positions.length) return;
+    const xs = positions.map(p => p.x);
+    const ys = positions.map(p => p.y);
+    const pad = 80;
+    this._viewBox = {
+      x: Math.min(...xs) - pad,
+      y: Math.min(...ys) - pad,
+      width: Math.max(...xs) - Math.min(...xs) + pad * 2,
+      height: Math.max(...ys) - Math.min(...ys) + pad * 2,
+    };
+  }
+
+  // --- Touch handlers ---
+
+  _onTouchStart(e) {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      this._pinchStartDist = Math.sqrt(dx * dx + dy * dy);
+      this._pinchStartViewBox = { ...this._viewBox };
+      return;
+    }
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      this._isPanning = true;
+      this._panStart = { x: touch.clientX, y: touch.clientY, vbX: this._viewBox.x, vbY: this._viewBox.y };
+    }
+  }
+
+  _onTouchMove(e) {
+    if (e.touches.length === 2 && this._pinchStartDist) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const scale = this._pinchStartDist / dist;
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+      const svgEl = this.shadowRoot.querySelector('svg');
+      if (!svgEl) return;
+      const pt = svgEl.createSVGPoint();
+      pt.x = midX; pt.y = midY;
+      const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+
+      const vb = { ...this._pinchStartViewBox };
+      const newWidth = Math.max(300, Math.min(2700, vb.width * scale));
+      const newHeight = Math.max(167, Math.min(1500, vb.height * scale));
+      vb.x = svgP.x - (svgP.x - vb.x) * (newWidth / vb.width);
+      vb.y = svgP.y - (svgP.y - vb.y) * (newHeight / vb.height);
+      vb.width = newWidth;
+      vb.height = newHeight;
+      this._viewBox = vb;
+      return;
+    }
+
+    if (e.touches.length === 1 && this._dragging) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const svgEl = this.shadowRoot.querySelector('svg');
+      if (!svgEl) return;
+      const pt = svgEl.createSVGPoint();
+      pt.x = touch.clientX; pt.y = touch.clientY;
+      const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+      this.nodePositions = {
+        ...this.nodePositions,
+        [this._dragging]: { x: svgP.x - this._dragOffset.x, y: svgP.y - this._dragOffset.y },
+      };
+      return;
+    }
+
+    if (e.touches.length === 1 && this._isPanning && this._panStart) {
+      const touch = e.touches[0];
+      const svgEl = this.shadowRoot.querySelector('svg');
+      if (!svgEl) return;
+      const ctm = svgEl.getScreenCTM();
+      const dx = (touch.clientX - this._panStart.x) / ctm.a;
+      const dy = (touch.clientY - this._panStart.y) / ctm.d;
+      this._viewBox = { ...this._viewBox, x: this._panStart.vbX - dx, y: this._panStart.vbY - dy };
+    }
+  }
+
+  _onTouchEnd(e) {
+    if (e.touches.length < 2) this._pinchStartDist = 0;
+    if (e.touches.length === 0) {
+      if (this._dragging) this._markDirty();
+      this._dragging = null;
+      this._isPanning = false;
+      this._panStart = null;
+    }
+  }
+
+  _onTouchNodeStart(e, nodeId) {
+    if (e.touches.length !== 1) return;
+    e.stopPropagation();
+    this._isPanning = false;
+    const touch = e.touches[0];
+    const svgEl = this.shadowRoot.querySelector('svg');
+    if (!svgEl) return;
+    const pt = svgEl.createSVGPoint();
+    pt.x = touch.clientX; pt.y = touch.clientY;
+    const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+    const pos = this.nodePositions[nodeId] || { x: 0, y: 0 };
+    this._dragOffset = { x: svgP.x - pos.x, y: svgP.y - pos.y };
+    this._dragging = nodeId;
   }
 
   _onMouseUp() {
