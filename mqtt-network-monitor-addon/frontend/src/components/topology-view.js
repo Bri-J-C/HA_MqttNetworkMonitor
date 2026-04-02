@@ -35,9 +35,6 @@ class TopologyView extends LitElement {
     _labelEdgeIndex: { type: Number, state: true },
     hideAutoEdges: { type: Boolean },
     _viewBox: { type: Object, state: true },
-    _isPanning: { type: Boolean, state: true },
-    _panStart: { type: Object, state: true },
-    _pinchStartDist: { type: Number, state: true },
   };
 
   static styles = [sharedStyles, css`
@@ -302,9 +299,18 @@ class TopologyView extends LitElement {
     this._savedManualEdges = null;
     this.hideAutoEdges = false;
     this._viewBox = { x: 0, y: 0, width: 900, height: 500 };
+    // Non-reactive touch state (these must NOT trigger re-renders, which would
+    // invalidate getScreenCTM() between touchmove frames and cause jumps).
     this._isPanning = false;
     this._panStart = null;
-    this._pinchStartDist = 0;
+    this._pinchActive = false;
+    // d3-zoom style: store SVG-space anchor points for both fingers at pinch
+    // start.  On each move we compute the new scale + translation that maps
+    // these anchors to the current screen positions, giving a single stable
+    // viewBox update per frame with no accumulated drift.
+    this._pinchAnchor0 = null; // SVG-space position of finger 0 at last frame
+    this._pinchAnchor1 = null; // SVG-space position of finger 1 at last frame
+    this._pinchPrevDist = 0;
   }
 
   connectedCallback() {
@@ -1151,25 +1157,70 @@ class TopologyView extends LitElement {
   }
 
   // --- Touch handlers ---
+  //
+  // Pinch-to-zoom strategy (d3-zoom / anvaka-panzoom hybrid):
+  //
+  // The classic bug: you convert the pinch midpoint to SVG coords via
+  // getScreenCTM().inverse(), compute a new viewBox, but the *next* frame's
+  // getScreenCTM() has already changed because Lit re-rendered the viewBox
+  // attribute.  If the focal-point SVG coord drifts even slightly between
+  // frames, the view jumps.
+  //
+  // The fix has two parts:
+  //
+  // 1. ANCHOR POINTS (d3-zoom approach): On pinch start, record where each
+  //    finger lands in SVG-space.  On each move, we know where those same
+  //    SVG points *should* appear on screen (under the user's fingers).
+  //    We solve for the viewBox that satisfies that constraint.  This is
+  //    immune to CTM drift because we never re-query the CTM to find the
+  //    focal point — we already know it in SVG-space.
+  //
+  // 2. PER-FRAME RE-ANCHORING: After applying each frame's viewBox, we
+  //    update the anchor points to the *current* SVG positions of the
+  //    fingers (using the just-written viewBox's CTM).  This prevents
+  //    floating-point drift from accumulating across many frames.
+  //    Critically, we read the CTM *synchronously* before Lit's async
+  //    render can change the DOM — since we set this._viewBox (which is
+  //    reactive), we must re-anchor from the current state, not the
+  //    post-render state.
+  //
+  // The math:
+  //   Given SVG anchor midpoint (ax, ay), old viewBox vb, and desired
+  //   uniform scale factor s (prevDist / curDist):
+  //     newWidth  = clamp(vb.width * s)
+  //     newHeight = clamp(vb.height * s)
+  //     actualS   = newWidth / vb.width          (after clamping)
+  //     newVB.x   = ax - (ax - vb.x) * actualS
+  //     newVB.y   = ay - (ay - vb.y) * actualS
+  //
+  //   Then to handle pinch-pan (midpoint translation):
+  //     Convert the new client midpoint to SVG-space in the *new* viewBox
+  //     and shift so the anchor midpoint lands under the fingers.
+
+  _clientToSvg(clientX, clientY) {
+    const svgEl = this.shadowRoot.querySelector('svg');
+    if (!svgEl) return null;
+    const pt = svgEl.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    return pt.matrixTransform(svgEl.getScreenCTM().inverse());
+  }
 
   _onTouchStart(e) {
     if (e.touches.length === 2) {
       e.preventDefault();
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
-      this._pinchStartDist = Math.sqrt(dx * dx + dy * dy);
-      this._pinchStartViewBox = { ...this._viewBox };
-      // Store pinch midpoint as a ratio (0-1) within the SVG element's screen rect
-      const svgEl = this.shadowRoot.querySelector('svg');
-      if (svgEl) {
-        const rect = svgEl.getBoundingClientRect();
-        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        this._pinchRatio = {
-          rx: (midX - rect.left) / rect.width,
-          ry: (midY - rect.top) / rect.height,
-        };
-      }
+      this._pinchPrevDist = Math.sqrt(dx * dx + dy * dy);
+      this._pinchActive = true;
+
+      // Record SVG-space anchor points for both fingers
+      this._pinchAnchor0 = this._clientToSvg(e.touches[0].clientX, e.touches[0].clientY);
+      this._pinchAnchor1 = this._clientToSvg(e.touches[1].clientX, e.touches[1].clientY);
+
+      // Cancel any single-finger pan that was in progress
+      this._isPanning = false;
+      this._panStart = null;
       return;
     }
     if (e.touches.length === 1) {
@@ -1180,37 +1231,91 @@ class TopologyView extends LitElement {
   }
 
   _onTouchMove(e) {
-    if (e.touches.length === 2 && this._pinchStartDist && this._pinchRatio) {
+    // --- Pinch-to-zoom + pinch-pan (two fingers) ---
+    if (e.touches.length === 2 && this._pinchActive) {
       e.preventDefault();
+
+      if (!this._pinchAnchor0 || !this._pinchAnchor1) return;
+
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const scale = this._pinchStartDist / dist;
+      if (!this._pinchPrevDist || dist === 0) { this._pinchPrevDist = dist; return; }
 
-      // Zoom around the pinch center using viewport ratios — stable regardless of viewBox changes
-      const svb = this._pinchStartViewBox;
-      const newWidth = Math.max(300, Math.min(2700, svb.width * scale));
-      const newHeight = Math.max(167, Math.min(1500, svb.height * scale));
-      // The focal point in SVG coords (relative to start viewBox)
-      const focalX = svb.x + this._pinchRatio.rx * svb.width;
-      const focalY = svb.y + this._pinchRatio.ry * svb.height;
-      this._viewBox = {
-        x: focalX - this._pinchRatio.rx * newWidth,
-        y: focalY - this._pinchRatio.ry * newHeight,
-        width: newWidth,
-        height: newHeight,
-      };
+      // --- Step 1: Zoom around the SVG-space anchor midpoint ---
+      // Incremental scale factor (>1 = zoom out / wider viewBox, <1 = zoom in)
+      const rawFactor = this._pinchPrevDist / dist;
+
+      // SVG-space anchor midpoint (stable — not re-derived from CTM)
+      const ax = (this._pinchAnchor0.x + this._pinchAnchor1.x) / 2;
+      const ay = (this._pinchAnchor0.y + this._pinchAnchor1.y) / 2;
+
+      const vb = this._viewBox;
+      // Use uniform scale to avoid aspect-ratio skew from independent clamping
+      const newWidth  = Math.max(300, Math.min(2700, vb.width  * rawFactor));
+      const actualFactor = newWidth / vb.width;       // after clamping
+      const newHeight = Math.max(167, Math.min(1500, vb.height * actualFactor));
+
+      // Zoom-at-point: anchor stays fixed in SVG-space
+      let newX = ax - (ax - vb.x) * actualFactor;
+      let newY = ay - (ay - vb.y) * (newHeight / vb.height);
+
+      // --- Step 2: Pinch-pan (midpoint translation) ---
+      // The anchor midpoint should appear under the current screen midpoint.
+      // Compute where the anchor midpoint currently maps to in the NEW viewBox,
+      // then shift the viewBox so it lands under the fingers.
+      //
+      // In the new viewBox coordinate system, a screen point (cx, cy) maps to:
+      //   svgX = newX + (cx - svgRect.left) * (newWidth / svgRect.width)
+      //   svgY = newY + (cy - svgRect.top)  * (newHeight / svgRect.height)
+      //
+      // We want (ax, ay) to be at screen midpoint (midCX, midCY):
+      //   ax = newX + (midCX - rect.left) * (newWidth / rect.width)
+      // Solving for newX:
+      //   newX = ax - (midCX - rect.left) * (newWidth / rect.width)
+      const svgEl = this.shadowRoot.querySelector('svg');
+      if (svgEl) {
+        const rect = svgEl.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const midCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const midCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          newX = ax - (midCX - rect.left) * (newWidth / rect.width);
+          newY = ay - (midCY - rect.top) * (newHeight / rect.height);
+        }
+      }
+
+      this._viewBox = { x: newX, y: newY, width: newWidth, height: newHeight };
+
+      // --- Step 3: Re-anchor for next frame ---
+      // Update anchors to current finger positions in the NEW viewBox's
+      // coordinate system.  We use getBoundingClientRect arithmetic instead
+      // of getScreenCTM to avoid any async-render staleness.
+      if (svgEl) {
+        const rect = svgEl.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const toSvgX = (cx) => newX + (cx - rect.left) * (newWidth / rect.width);
+          const toSvgY = (cy) => newY + (cy - rect.top) * (newHeight / rect.height);
+          this._pinchAnchor0 = {
+            x: toSvgX(e.touches[0].clientX),
+            y: toSvgY(e.touches[0].clientY),
+          };
+          this._pinchAnchor1 = {
+            x: toSvgX(e.touches[1].clientX),
+            y: toSvgY(e.touches[1].clientY),
+          };
+        }
+      }
+
+      this._pinchPrevDist = dist;
       return;
     }
 
+    // --- Node drag (single finger on a node) ---
     if (e.touches.length === 1 && this._dragging) {
       e.preventDefault();
       const touch = e.touches[0];
-      const svgEl = this.shadowRoot.querySelector('svg');
-      if (!svgEl) return;
-      const pt = svgEl.createSVGPoint();
-      pt.x = touch.clientX; pt.y = touch.clientY;
-      const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+      const svgP = this._clientToSvg(touch.clientX, touch.clientY);
+      if (!svgP) return;
       this.nodePositions = {
         ...this.nodePositions,
         [this._dragging]: { x: svgP.x - this._dragOffset.x, y: svgP.y - this._dragOffset.y },
@@ -1218,6 +1323,7 @@ class TopologyView extends LitElement {
       return;
     }
 
+    // --- Pan (single finger on background) ---
     if (e.touches.length === 1 && this._isPanning && this._panStart) {
       const touch = e.touches[0];
       const svgEl = this.shadowRoot.querySelector('svg');
@@ -1230,7 +1336,18 @@ class TopologyView extends LitElement {
   }
 
   _onTouchEnd(e) {
-    if (e.touches.length < 2) this._pinchStartDist = 0;
+    if (e.touches.length < 2) {
+      this._pinchActive = false;
+      this._pinchPrevDist = 0;
+      this._pinchAnchor0 = null;
+      this._pinchAnchor1 = null;
+      // If one finger remains after a pinch, re-anchor pan to avoid a jump
+      if (e.touches.length === 1 && !this._dragging) {
+        const touch = e.touches[0];
+        this._isPanning = true;
+        this._panStart = { x: touch.clientX, y: touch.clientY, vbX: this._viewBox.x, vbY: this._viewBox.y };
+      }
+    }
     if (e.touches.length === 0) {
       if (this._dragging) this._markDirty();
       this._dragging = null;
@@ -1244,11 +1361,8 @@ class TopologyView extends LitElement {
     e.stopPropagation();
     this._isPanning = false;
     const touch = e.touches[0];
-    const svgEl = this.shadowRoot.querySelector('svg');
-    if (!svgEl) return;
-    const pt = svgEl.createSVGPoint();
-    pt.x = touch.clientX; pt.y = touch.clientY;
-    const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+    const svgP = this._clientToSvg(touch.clientX, touch.clientY);
+    if (!svgP) return;
     const pos = this.nodePositions[nodeId] || { x: 0, y: 0 };
     this._dragOffset = { x: svgP.x - pos.x, y: svgP.y - pos.y };
     this._dragging = nodeId;
