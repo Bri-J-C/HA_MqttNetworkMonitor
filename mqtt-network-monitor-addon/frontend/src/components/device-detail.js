@@ -232,12 +232,14 @@ class DeviceDetail extends LitElement {
         .haOverrides=${this._haOverrides}
         .groups=${this._groups}
         .cardAttributes=${this.device?.card_attributes || []}
+        .attributeTransforms=${this.device?.attribute_transforms || {}}
         @attribute-deleted=${(e) => this._deleteAttribute(e.detail.name)}
         @attribute-unhidden=${(e) => this._unhideAttribute(e.detail.name)}
         @ha-exposure-toggled=${(e) => this._toggleHaExposure(e.detail.name)}
         @threshold-changed=${(e) => this._setThreshold(e.detail.name, e.detail.value, e.detail.op)}
         @crit-threshold-changed=${(e) => this._setCritThreshold(e.detail.name, e.detail.value, e.detail.op)}
         @pin-attribute=${(e) => this._toggleCardAttribute(e.detail)}
+        @transform-changed=${(e) => this._setAttributeTransform(e.detail.attr, e.detail.transform)}
       ></device-attributes>
 
       <!-- 5. Network -->
@@ -480,6 +482,21 @@ class DeviceDetail extends LitElement {
       this.device = { ...this.device, crit_threshold_overrides: overrides };
     } catch (e) {
       console.error('Failed to set crit threshold:', e);
+    }
+  }
+
+  async _setAttributeTransform(attr, transform) {
+    const transforms = { ...(this.device?.attribute_transforms || {}) };
+    if (transform) {
+      transforms[attr] = transform;
+    } else {
+      delete transforms[attr];
+    }
+    try {
+      await updateDeviceSettings(this.deviceId, { attribute_transforms: transforms });
+      this.device = { ...this.device, attribute_transforms: transforms };
+    } catch (e) {
+      console.error('Failed to update attribute transform:', e);
     }
   }
 

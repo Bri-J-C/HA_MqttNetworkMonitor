@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
+import { applyTransform, AVAILABLE_TRANSFORMS } from '../utils/transforms.js';
 
 /**
  * device-attributes — attributes grid with HA exposure toggles, threshold editing, hide/unhide.
@@ -10,6 +11,7 @@ import { sharedStyles } from '../styles/shared.js';
  *   haOverrides       {Object}  — local HA-exposure overrides (name → bool)
  *   groups            {Object}  — groups map (id → group)
  *   cardAttributes    {Array}   — list of attribute names pinned to the device card
+ *   attributeTransforms {Object} — map of attribute name → transform name
  *
  * Events fired:
  *   attribute-deleted     {name}          — user clicked delete on an attribute
@@ -18,6 +20,7 @@ import { sharedStyles } from '../styles/shared.js';
  *   threshold-changed     {name, value, op} — user edited a warn threshold
  *   crit-threshold-changed {name, value, op} — user edited a crit threshold
  *   pin-attribute         {name, pinned}  — user toggled pin on an attribute
+ *   transform-changed     {attr, transform} — user changed a value transform
  */
 class DeviceAttributes extends LitElement {
   static properties = {
@@ -26,6 +29,7 @@ class DeviceAttributes extends LitElement {
     haOverrides:       { type: Object },
     groups:            { type: Object },
     cardAttributes:    { type: Array },
+    attributeTransforms: { type: Object },
     _showHidden:       { type: Boolean, state: true },
   };
 
@@ -101,6 +105,23 @@ class DeviceAttributes extends LitElement {
       font-size: 8px; color: rgba(255,255,255,0.2); margin-left: auto;
     }
 
+    /* Transform select */
+    .attr-transform {
+      margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .transform-select {
+      width: 100%; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px; color: rgba(255,255,255,0.5); padding: 2px 4px;
+      font-size: 10px; cursor: pointer;
+      appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    }
+    .transform-select option { background: #0d0d1f; color: #fff; }
+    .transform-select:hover, .transform-select:focus { outline: none; border-color: #00D4FF; color: #fff; }
+    .transform-label {
+      font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 2px;
+    }
+
     /* Pin icon */
     .attr-pin {
       font-size: 10px; cursor: pointer; opacity: 0.3;
@@ -136,6 +157,7 @@ class DeviceAttributes extends LitElement {
     this.haOverrides       = {};
     this.groups            = {};
     this.cardAttributes    = [];
+    this.attributeTransforms = {};
     this._showHidden       = false;
   }
 
@@ -270,6 +292,7 @@ class DeviceAttributes extends LitElement {
     const currentOp         = this._getThresholdOp(name);
     const currentThreshVal  = this._getThresholdVal(name);
     const isPinned          = (this.cardAttributes || []).includes(name);
+    const transform         = (this.attributeTransforms || {})[name] || '';
 
     // Crit threshold
     const critOp           = this._getCritThresholdOp(name);
@@ -305,8 +328,7 @@ class DeviceAttributes extends LitElement {
           </span>
         </div>
         <div class="attr-val ${exposed ? '' : 'dimmed-val'} ${valClass}">
-          ${currentVal != null ? currentVal : '\u2014'}
-          <span class="attr-unit">${data.unit || ''}</span>
+          ${this._formatValue(currentVal, data.unit, transform)}
         </div>
         <div class="attr-thresholds">
           <div class="attr-threshold-row">
@@ -353,6 +375,17 @@ class DeviceAttributes extends LitElement {
               @change=${(e) => this._onCritThresholdChange(name, e.target.value, critOp)}>
           </div>
         </div>
+        <div class="attr-transform">
+          <div class="transform-label">transform</div>
+          <select class="transform-select"
+            aria-label="Value transform for ${name.replace(/_/g, ' ')}"
+            .value=${transform}
+            @change=${(e) => this._onTransformChange(name, e.target.value)}>
+            ${AVAILABLE_TRANSFORMS.map(t => html`
+              <option value=${t.value} ?selected=${t.value === transform}>${t.label}</option>
+            `)}
+          </select>
+        </div>
       </div>
     `;
   }
@@ -377,6 +410,23 @@ class DeviceAttributes extends LitElement {
 
   _onCritThresholdChange(name, value, op) {
     this.dispatchEvent(new CustomEvent('crit-threshold-changed', { detail: { name, value, op }, bubbles: true, composed: true }));
+  }
+
+  _formatValue(value, unit, transform) {
+    if (value == null) return '\u2014';
+    if (transform) {
+      const transformed = applyTransform(value, transform);
+      // When a transform is active, it replaces both value and unit
+      return transformed;
+    }
+    return html`${value}<span class="attr-unit">${unit || ''}</span>`;
+  }
+
+  _onTransformChange(attr, transform) {
+    this.dispatchEvent(new CustomEvent('transform-changed', {
+      detail: { attr, transform: transform || null },
+      bubbles: true, composed: true,
+    }));
   }
 
   _togglePin(name) {

@@ -449,7 +449,7 @@ class DeviceRegistry:
             allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides",
                             "crit_threshold_overrides", "server_commands", "remote_config",
                             "hidden_attributes", "hidden_commands", "card_attributes",
-                            "server_sensors", "config_interval"}
+                            "server_sensors", "config_interval", "attribute_transforms"}
             changed_keys = [key for key in allowed_keys if key in settings]
             for key in changed_keys:
                 device[key] = settings[key]

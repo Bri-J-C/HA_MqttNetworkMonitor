@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
+import { applyTransform } from '../utils/transforms.js';
 
 const STATUS_COLORS = {
   online: '#04d65c',
@@ -92,6 +93,7 @@ class DeviceCard extends LitElement {
         .filter(([name]) => !hidden.includes(name))
         .slice(0, 4);
     }
+    const transforms = d.attribute_transforms || {};
     const tags = [...(d.tags || []), ...(d.server_tags || [])];
     const displayName = d.device_name || this.deviceId;
 
@@ -110,11 +112,15 @@ class DeviceCard extends LitElement {
       <div class="type">${d.device_type || 'unknown'}</div>
       ${attrs.length > 0 ? html`
         <div class="attrs">
-          ${attrs.map(([name, data]) => html`
-            <div class="attr">
-              ${name.replace(/_/g, ' ')}: <span class="attr-value ${this._isWarning(name, data) ? 'warning' : ''}">${data.value}${data.unit}</span>
-            </div>
-          `)}
+          ${attrs.map(([name, data]) => {
+            const transform = transforms[name];
+            const displayVal = transform ? applyTransform(data.value, transform) : `${data.value}${data.unit || ''}`;
+            return html`
+              <div class="attr">
+                ${name.replace(/_/g, ' ')}: <span class="attr-value ${this._isWarning(name, data) ? 'warning' : ''}">${displayVal}</span>
+              </div>
+            `;
+          })}
         </div>
       ` : ''}
       ${tags.length > 0 ? html`
