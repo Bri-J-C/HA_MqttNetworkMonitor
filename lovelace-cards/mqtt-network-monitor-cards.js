@@ -487,6 +487,20 @@ class MQTTTopologyCard extends HTMLElement {
   constructor() {
     super();
     this._loading = true;
+    // Zoom state — plain instance properties (not reactive) for gesture stability
+    this._vbX = 0;
+    this._vbY = 0;
+    this._vbW = 600;
+    this._vbH = 400;
+    this._fitVbX = 0;
+    this._fitVbY = 0;
+    this._fitVbW = 600;
+    this._fitVbH = 400;
+    // Pinch gesture state
+    this._pinchStartDist = 0;
+    this._pinchStartVb = null;
+    this._pinchCenterRatioX = 0.5;
+    this._pinchCenterRatioY = 0.5;
     this.attachShadow({ mode: 'open' });
   }
 
@@ -690,10 +704,22 @@ class MQTTTopologyCard extends HTMLElement {
           .count { display: flex; align-items: center; gap: 4px; }
           .count-dot { width: 6px; height: 6px; border-radius: 50%; }
           .svg-container {
+            position: relative;
             background: #0d0d20; border-radius: 10px; overflow: hidden;
             padding: 8px;
           }
           svg { width: 100%; height: auto; display: block; }
+          .zoom-controls {
+            position: absolute; bottom: 8px; right: 8px;
+            display: flex; flex-direction: column; gap: 3px;
+          }
+          .zoom-btn {
+            width: 28px; height: 28px; border-radius: 6px;
+            background: rgba(26,26,46,0.9); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+          }
+          .zoom-btn:hover { background: rgba(255,255,255,0.08); }
         </style>
         <div class="card-content">
           <div class="header">
@@ -730,11 +756,134 @@ class MQTTTopologyCard extends HTMLElement {
               ${nodesSvg}
               ${edgeLabelsSvg}
             </svg>
+            <div class="zoom-controls">
+              <button class="zoom-btn" data-zoom="in" title="Zoom in">+</button>
+              <button class="zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>
+              <button class="zoom-btn" data-zoom="fit" title="Fit all">\u229B</button>
+            </div>
           </div>
         </div>
       </ha-card>
     `;
 
+    // Store fit viewBox and current viewBox
+    this._fitVbX = vbX;
+    this._fitVbY = vbY;
+    this._fitVbW = vbW;
+    this._fitVbH = vbH;
+    // Preserve zoom across re-renders only if user has zoomed
+    if (!this._userHasZoomed) {
+      this._vbX = vbX;
+      this._vbY = vbY;
+      this._vbW = vbW;
+      this._vbH = vbH;
+    } else {
+      // Apply current zoom to the new SVG
+      this._applyViewBox();
+    }
+
+    this._bindZoomEvents();
+  }
+
+  // ── Zoom helpers ────────────────────────────────────────────────────────
+
+  _applyViewBox() {
+    const svg = this.shadowRoot.querySelector('svg');
+    if (svg) {
+      svg.setAttribute('viewBox', `${this._vbX} ${this._vbY} ${this._vbW} ${this._vbH}`);
+    }
+  }
+
+  _zoomBy(factor, centerRatioX = 0.5, centerRatioY = 0.5) {
+    const newW = this._vbW * factor;
+    const newH = this._vbH * factor;
+    // Adjust origin to keep the point at centerRatio stationary
+    this._vbX += (this._vbW - newW) * centerRatioX;
+    this._vbY += (this._vbH - newH) * centerRatioY;
+    this._vbW = newW;
+    this._vbH = newH;
+    this._userHasZoomed = true;
+    this._applyViewBox();
+  }
+
+  _fitAll() {
+    this._vbX = this._fitVbX;
+    this._vbY = this._fitVbY;
+    this._vbW = this._fitVbW;
+    this._vbH = this._fitVbH;
+    this._userHasZoomed = false;
+    this._applyViewBox();
+  }
+
+  _bindZoomEvents() {
+    const root = this.shadowRoot;
+    const container = root.querySelector('.svg-container');
+    const svg = root.querySelector('svg');
+    if (!container || !svg) return;
+
+    // Button clicks
+    root.querySelectorAll('.zoom-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const action = btn.dataset.zoom;
+        if (action === 'in') this._zoomBy(0.8);
+        else if (action === 'out') this._zoomBy(1.25);
+        else if (action === 'fit') this._fitAll();
+      });
+    });
+
+    // Ctrl+scroll zoom (desktop)
+    container.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const ratioX = (e.clientX - rect.left) / rect.width;
+      const ratioY = (e.clientY - rect.top) / rect.height;
+      const factor = e.deltaY > 0 ? 1.1 : 0.9;
+      this._zoomBy(factor, ratioX, ratioY);
+    }, { passive: false });
+
+    // Pinch-to-zoom (touch)
+    container.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const t0 = e.touches[0], t1 = e.touches[1];
+        this._pinchStartDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+        this._pinchStartVb = { x: this._vbX, y: this._vbY, w: this._vbW, h: this._vbH };
+        // Store center ratios using getBoundingClientRect
+        const rect = container.getBoundingClientRect();
+        const cx = (t0.clientX + t1.clientX) / 2;
+        const cy = (t0.clientY + t1.clientY) / 2;
+        this._pinchCenterRatioX = (cx - rect.left) / rect.width;
+        this._pinchCenterRatioY = (cy - rect.top) / rect.height;
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2 && this._pinchStartVb) {
+        e.preventDefault();
+        const t0 = e.touches[0], t1 = e.touches[1];
+        const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+        if (this._pinchStartDist === 0) return;
+        const scale = this._pinchStartDist / dist; // pinch in = zoom out
+        const sv = this._pinchStartVb;
+        const newW = sv.w * scale;
+        const newH = sv.h * scale;
+        this._vbX = sv.x + (sv.w - newW) * this._pinchCenterRatioX;
+        this._vbY = sv.y + (sv.h - newH) * this._pinchCenterRatioY;
+        this._vbW = newW;
+        this._vbH = newH;
+        this._userHasZoomed = true;
+        this._applyViewBox();
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) {
+        this._pinchStartVb = null;
+      }
+    });
   }
 
   disconnectedCallback() {
