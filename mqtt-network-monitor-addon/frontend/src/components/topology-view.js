@@ -45,7 +45,10 @@ class TopologyView extends LitElement {
     .toolbar {
       display: flex; justify-content: space-between; align-items: center;
       background: rgba(255,255,255,0.05); padding: 8px 14px; border-radius: 8px;
-      margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 8px; flex-wrap: wrap; gap: 8px;
+    }
+    .toolbar-secondary {
+      margin-bottom: 12px; justify-content: flex-start;
     }
     .toolbar-left { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .toolbar-right { display: flex; gap: 8px; font-size: 11px; }
@@ -241,8 +244,9 @@ class TopologyView extends LitElement {
       font-size: 11px; color: #ffb74d; margin-left: 4px;
     }
     .label-dialog {
-      background: rgba(255,255,255,0.05); border-radius: 12px; padding: 24px;
-      min-width: 360px; max-width: 440px; border: 1px solid rgba(255,255,255,0.1);
+      background: var(--bg-surface, #1a1a2e); border-radius: 12px; padding: 24px;
+      min-width: 360px; max-width: 440px; border: 1px solid var(--border-hover, rgba(255,255,255,0.2));
+      box-shadow: var(--shadow-modal, 0 20px 60px rgba(0,0,0,0.5));
     }
     .label-dialog h3 { color: #fff; margin-bottom: 4px; font-size: 16px; }
     .label-dialog .subtitle { color: #fff; font-size: 12px; margin-bottom: 16px; }
@@ -476,14 +480,6 @@ class TopologyView extends LitElement {
               @click=${() => { this.hideAutoEdges = !this.hideAutoEdges; this._markDirty(); }}>
               ${this.hideAutoEdges ? 'Show Auto Links' : 'Auto Links'}
             </button>
-            <span class="separator">|</span>
-            <button class="tool-btn save" @click=${this._saveAsLayout}>Save As</button>
-            ${this.selectedLayout ? html`
-              <button class="tool-btn" @click=${this._setAsDefault}>
-                ${this.layouts[this.selectedLayout]?.isDefault ? 'Default' : 'Set Default'}
-              </button>
-              <button class="tool-btn danger" @click=${this._deleteCurrentLayout}>Delete</button>
-            ` : ''}
             ${this._dirty ? html`<span class="dirty-indicator">unsaved changes</span>` : ''}
           ` : html`
             <button class="tool-btn" @click=${this._enterEditMode}>Edit Mode</button>
@@ -495,6 +491,20 @@ class TopologyView extends LitElement {
           <span class="status-dot" style="color: #ffb74d">${counts.warning} warning</span>
         </div>
       </div>
+      ${this.editMode ? html`
+        <div class="toolbar toolbar-secondary">
+          <div class="toolbar-left">
+            <button class="tool-btn save" @click=${this._saveAsLayout}>Save As</button>
+            ${this.selectedLayout ? html`
+              <span class="separator">|</span>
+              <button class="tool-btn" @click=${this._setAsDefault}>
+                ${this.layouts[this.selectedLayout]?.isDefault ? 'Default' : 'Set Default'}
+              </button>
+              <button class="tool-btn danger" @click=${this._deleteCurrentLayout}>Delete</button>
+            ` : ''}
+          </div>
+        </div>
+      ` : ''}
 
       ${this.linkMode ? html`
         <div class="link-hint">
@@ -550,7 +560,7 @@ class TopologyView extends LitElement {
           @mousedown=${(e) => this.editMode && !this.linkMode && this._onMouseDown(e, node.id)}
           @touchstart=${(e) => this.editMode && !this.linkMode && this._onTouchNodeStart(e, node.id)}
           style="cursor:pointer">
-          <circle r="22" fill="${glowColor}22" stroke="${glowColor}" stroke-width="${strokeWidth}"
+          <circle r="22" fill="#1a1a2e" stroke="${glowColor}" stroke-width="${strokeWidth}"
             stroke-dasharray="${strokeDash}"/>
           <text text-anchor="middle" dy="4" fill="${glowColor}" font-size="10">${node.name.substring(0, 12)}</text>
         </g>
@@ -564,7 +574,7 @@ class TopologyView extends LitElement {
         @touchstart=${(e) => this.editMode && !this.linkMode && this._onTouchNodeStart(e, node.id)}
         style="cursor:pointer">
         <rect x="-45" y="-18" width="90" height="36" rx="6"
-          fill="rgba(255,255,255,0.05)" stroke="${glowColor}" stroke-width="${strokeWidth}"
+          fill="#1a1a2e" stroke="${glowColor}" stroke-width="${strokeWidth}"
           stroke-dasharray="${strokeDash}"/>
         <text text-anchor="middle" dy="-3" fill="${glowColor}" font-size="10">
           ${(node.name || node.id).substring(0, 12)}
@@ -1149,6 +1159,15 @@ class TopologyView extends LitElement {
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       this._pinchStartDist = Math.sqrt(dx * dx + dy * dy);
       this._pinchStartViewBox = { ...this._viewBox };
+      // Compute focal point once at pinch start using the current viewBox
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      const svgEl = this.shadowRoot.querySelector('svg');
+      if (svgEl) {
+        const pt = svgEl.createSVGPoint();
+        pt.x = midX; pt.y = midY;
+        this._pinchFocal = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+      }
       return;
     }
     if (e.touches.length === 1) {
@@ -1159,26 +1178,20 @@ class TopologyView extends LitElement {
   }
 
   _onTouchMove(e) {
-    if (e.touches.length === 2 && this._pinchStartDist) {
+    if (e.touches.length === 2 && this._pinchStartDist && this._pinchFocal) {
       e.preventDefault();
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const scale = this._pinchStartDist / dist;
-      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 
-      const svgEl = this.shadowRoot.querySelector('svg');
-      if (!svgEl) return;
-      const pt = svgEl.createSVGPoint();
-      pt.x = midX; pt.y = midY;
-      const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
-
+      // Use the focal point captured at pinch start — no recalculation
+      const focal = this._pinchFocal;
       const vb = { ...this._pinchStartViewBox };
       const newWidth = Math.max(300, Math.min(2700, vb.width * scale));
       const newHeight = Math.max(167, Math.min(1500, vb.height * scale));
-      vb.x = svgP.x - (svgP.x - vb.x) * (newWidth / vb.width);
-      vb.y = svgP.y - (svgP.y - vb.y) * (newHeight / vb.height);
+      vb.x = focal.x - (focal.x - vb.x) * (newWidth / vb.width);
+      vb.y = focal.y - (focal.y - vb.y) * (newHeight / vb.height);
       vb.width = newWidth;
       vb.height = newHeight;
       this._viewBox = vb;
