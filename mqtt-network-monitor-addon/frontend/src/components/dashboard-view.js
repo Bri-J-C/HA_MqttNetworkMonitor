@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 import { fetchDevices, fetchGroups } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
 import './device-card.js';
@@ -15,7 +16,7 @@ class DashboardView extends LitElement {
     _refreshInterval: { type: Number, state: true },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
 
     .filter-bar {
@@ -104,7 +105,13 @@ class DashboardView extends LitElement {
       font-size: 11px; color: #fff; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 8px; margin-top: 4px;
     }
-  `;
+
+    @media (max-width: 768px) {
+      :host { padding: 12px; }
+      .filter-bar { gap: 6px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  `];
 
   constructor() {
     super();

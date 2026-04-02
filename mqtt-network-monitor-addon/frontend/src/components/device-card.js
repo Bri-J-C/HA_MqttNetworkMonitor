@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 
 const STATUS_COLORS = {
   online: '#04d65c',
@@ -13,7 +14,7 @@ class DeviceCard extends LitElement {
     deviceId: { type: String },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host {
       display: block;
       background: rgba(255,255,255,0.05);
@@ -66,7 +67,11 @@ class DeviceCard extends LitElement {
       font-size: 9px; background: rgba(0,212,255,0.15); color: #00D4FF;
       padding: 1px 6px; border-radius: 3px;
     }
-  `;
+
+    @media (max-width: 480px) {
+      .attrs { grid-template-columns: 1fr; }
+    }
+  `];
 
   render() {
     if (!this.device) return html``;
