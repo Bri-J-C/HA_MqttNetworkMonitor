@@ -191,13 +191,13 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/2 18:47"}</span>
+        <span class="version">v0.2.1 build ${"4/2 19:03"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/2 18:47"}</span>
+        <span class="version">build ${"4/2 19:03"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
@@ -1082,20 +1082,17 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
               <option value=${e.id} ?selected=${e.id===t}>${e.name}</option>
             `)}
           </select>
-          <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
-            @click=${()=>this._showGroupDialog=!0}>New Group</button>
         </div>
 
         ${o&&Object.keys(s).length>0?B`
           <div class="group-threshold-summary">
-            ${Object.entries(s).map(([e,t])=>B`
-              <span><span style="color: #fff;">${e.replace(/_/g," ")}:</span> ${t}</span>
-            `)}
+            ${Object.entries(s).map(([e,t])=>{const o="object"==typeof t?`${t.op||">"} ${t.value}`:t;return B`<span><span style="color: #fff;">${e.replace(/_/g," ")}:</span> ${o}</span>`})}
           </div>
         `:""}
 
         <div class="group-hint">
           Group policy sets default thresholds and HA entity settings. Device-level overrides take priority.
+          Manage groups in Settings.
         </div>
       </div>
     `}async _onGroupPolicyChange(e){const t=e.target.value||null;try{await je(this.deviceId,{group_policy:t}),await this._loadDevice()}catch(e){console.error("Failed to update group policy:",e)}}_renderGroupDialog(){return B`

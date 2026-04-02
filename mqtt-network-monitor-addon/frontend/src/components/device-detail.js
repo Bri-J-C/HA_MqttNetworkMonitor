@@ -338,20 +338,20 @@ class DeviceDetail extends LitElement {
               <option value=${g.id} ?selected=${g.id === currentGroupId}>${g.name}</option>
             `)}
           </select>
-          <button class="cmd-btn" style="font-size: 12px; padding: 5px 12px;"
-            @click=${() => this._showGroupDialog = true}>New Group</button>
         </div>
 
         ${currentGroup && Object.keys(groupThresholds).length > 0 ? html`
           <div class="group-threshold-summary">
-            ${Object.entries(groupThresholds).map(([k, v]) => html`
-              <span><span style="color: #fff;">${k.replace(/_/g, ' ')}:</span> ${v}</span>
-            `)}
+            ${Object.entries(groupThresholds).map(([k, v]) => {
+              const val = typeof v === 'object' ? `${v.op || '>'} ${v.value}` : v;
+              return html`<span><span style="color: #fff;">${k.replace(/_/g, ' ')}:</span> ${val}</span>`;
+            })}
           </div>
         ` : ''}
 
         <div class="group-hint">
           Group policy sets default thresholds and HA entity settings. Device-level overrides take priority.
+          Manage groups in Settings.
         </div>
       </div>
     `;
