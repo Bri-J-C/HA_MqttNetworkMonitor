@@ -186,7 +186,7 @@ class DeviceAttributes extends LitElement {
     const group = groupId ? this.groups[groupId] : null;
     let source = 'global';
     if (deviceOverrides[name] != null)                              source = 'device';
-    else if (group?.thresholds?.[name] != null)                    source = 'group';
+    else if (group?.thresholds?.[name] != null)                    source = 'Group Policy';
 
     return { value: numericVal, source };
   }

@@ -340,14 +340,6 @@ class DeviceDetail extends LitElement {
           </select>
         </div>
 
-        ${currentGroup && Object.keys(groupThresholds).length > 0 ? html`
-          <div class="group-threshold-summary">
-            ${Object.entries(groupThresholds).map(([k, v]) => {
-              const val = typeof v === 'object' ? `${v.op || '>'} ${v.value}` : v;
-              return html`<span><span style="color: #fff;">${k.replace(/_/g, ' ')}:</span> ${val}</span>`;
-            })}
-          </div>
-        ` : ''}
 
         <div class="group-hint">
           Group policy sets default thresholds and HA entity settings. Device-level overrides take priority.
