@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Any
 from server.api import state
+from server.device_registry import _UNSET
 
 router = APIRouter(prefix="/api/groups", tags=["groups"])
 
@@ -34,7 +35,7 @@ def update_group(group_id: str, body: dict[str, Any]):
         thresholds=body.get("thresholds"),
         crit_thresholds=body.get("crit_thresholds"),
         hidden_commands=body.get("hidden_commands"),
-        interval=body.get("interval", ...),
+        interval=body.get("interval", _UNSET),
         attribute_transforms=body.get("attribute_transforms"),
     )
     if not result:
