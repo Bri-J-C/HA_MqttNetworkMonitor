@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 import {
   fetchDevice, deleteDevice, deleteAttribute, unhideAttribute, hideCommand, unhideCommand, sendCommand, addDeviceTags, removeDeviceTag,
   fetchGroups, createGroup, updateGroup,
@@ -25,7 +26,7 @@ class DeviceDetail extends LitElement {
     _serverCommands:    { type: Object,  state: true },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     .close-btn {
@@ -115,7 +116,7 @@ class DeviceDetail extends LitElement {
     .dialog-btn { border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; }
     .dialog-btn.save   { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
     .dialog-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
-  `;
+  `];
 
   constructor() {
     super();

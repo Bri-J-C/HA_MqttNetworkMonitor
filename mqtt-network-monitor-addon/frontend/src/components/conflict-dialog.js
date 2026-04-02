@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from '../styles/shared.js';
 
 /**
  * Reusable conflict dialog for group deployment / device-add flows.
@@ -21,7 +22,7 @@ class ConflictDialog extends LitElement {
     action: { type: String },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: contents; }
 
     .overlay {
@@ -92,7 +93,7 @@ class ConflictDialog extends LitElement {
     .btn-cancel:hover { background: rgba(255,255,255,0.15); }
     .btn-proceed { background: #ef5350; color: #fff; font-weight: 600; }
     .btn-proceed:hover { background: #f06666; }
-  `;
+  `];
 
   constructor() {
     super();
