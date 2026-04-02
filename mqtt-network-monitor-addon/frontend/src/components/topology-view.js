@@ -1159,14 +1159,16 @@ class TopologyView extends LitElement {
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       this._pinchStartDist = Math.sqrt(dx * dx + dy * dy);
       this._pinchStartViewBox = { ...this._viewBox };
-      // Compute focal point once at pinch start using the current viewBox
-      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      // Store pinch midpoint as a ratio (0-1) within the SVG element's screen rect
       const svgEl = this.shadowRoot.querySelector('svg');
       if (svgEl) {
-        const pt = svgEl.createSVGPoint();
-        pt.x = midX; pt.y = midY;
-        this._pinchFocal = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+        const rect = svgEl.getBoundingClientRect();
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        this._pinchRatio = {
+          rx: (midX - rect.left) / rect.width,
+          ry: (midY - rect.top) / rect.height,
+        };
       }
       return;
     }
@@ -1178,23 +1180,26 @@ class TopologyView extends LitElement {
   }
 
   _onTouchMove(e) {
-    if (e.touches.length === 2 && this._pinchStartDist && this._pinchFocal) {
+    if (e.touches.length === 2 && this._pinchStartDist && this._pinchRatio) {
       e.preventDefault();
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const scale = this._pinchStartDist / dist;
 
-      // Use the focal point captured at pinch start — no recalculation
-      const focal = this._pinchFocal;
-      const vb = { ...this._pinchStartViewBox };
-      const newWidth = Math.max(300, Math.min(2700, vb.width * scale));
-      const newHeight = Math.max(167, Math.min(1500, vb.height * scale));
-      vb.x = focal.x - (focal.x - vb.x) * (newWidth / vb.width);
-      vb.y = focal.y - (focal.y - vb.y) * (newHeight / vb.height);
-      vb.width = newWidth;
-      vb.height = newHeight;
-      this._viewBox = vb;
+      // Zoom around the pinch center using viewport ratios — stable regardless of viewBox changes
+      const svb = this._pinchStartViewBox;
+      const newWidth = Math.max(300, Math.min(2700, svb.width * scale));
+      const newHeight = Math.max(167, Math.min(1500, svb.height * scale));
+      // The focal point in SVG coords (relative to start viewBox)
+      const focalX = svb.x + this._pinchRatio.rx * svb.width;
+      const focalY = svb.y + this._pinchRatio.ry * svb.height;
+      this._viewBox = {
+        x: focalX - this._pinchRatio.rx * newWidth,
+        y: focalY - this._pinchRatio.ry * newHeight,
+        width: newWidth,
+        height: newHeight,
+      };
       return;
     }
 
