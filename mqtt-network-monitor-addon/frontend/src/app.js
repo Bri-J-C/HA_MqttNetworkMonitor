@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { sharedStyles } from './styles/shared.js';
 import { wsService } from './services/websocket.js';
 import './components/nav-bar.js';
 import './components/topology-view.js';
@@ -12,11 +13,14 @@ class NetworkMonitorApp extends LitElement {
     selectedDevice: { type: String },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host {
       display: block;
       min-height: 100vh;
       background: #0a0a1a;
+    }
+    @media (max-width: 768px) {
+      :host { padding-bottom: 64px; }
     }
     .overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -38,7 +42,7 @@ class NetworkMonitorApp extends LitElement {
       overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     }
-  `;
+  `];
 
   constructor() {
     super();
