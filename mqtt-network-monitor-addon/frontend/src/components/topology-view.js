@@ -405,6 +405,9 @@ class TopologyView extends LitElement {
           this.nodePositions = defaultEntry[1].positions || {};
           this.manualEdges = defaultEntry[1].manualEdges || [];
           this.hideAutoEdges = defaultEntry[1].hideAutoEdges || false;
+          if (defaultEntry[1].viewBox) {
+            this._viewBox = { ...defaultEntry[1].viewBox };
+          }
         }
       }
     } catch (e) {
@@ -941,6 +944,7 @@ class TopologyView extends LitElement {
       positions: this.nodePositions,
       manualEdges: this.manualEdges,
       hideAutoEdges: this.hideAutoEdges,
+      viewBox: this._viewBox,
       isDefault: current.isDefault || false,
     });
     await this._loadLayouts();
@@ -955,6 +959,7 @@ class TopologyView extends LitElement {
       positions: this.nodePositions,
       manualEdges: this.manualEdges,
       hideAutoEdges: this.hideAutoEdges,
+      viewBox: this._viewBox,
       isDefault: false,
     });
     this.selectedLayout = saved.id;
@@ -972,6 +977,11 @@ class TopologyView extends LitElement {
       this.nodePositions = layout.positions || {};
       this.manualEdges = layout.manualEdges || [];
       this.hideAutoEdges = layout.hideAutoEdges || false;
+      if (layout.viewBox) {
+        this._viewBox = { ...layout.viewBox };
+      } else {
+        this._fitAll();
+      }
     } else {
       this.nodePositions = {};
       this.manualEdges = [];
