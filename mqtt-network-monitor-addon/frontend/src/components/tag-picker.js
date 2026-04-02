@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { fetchTags, createTag } from '../services/api.js';
+import { sharedStyles } from '../styles/shared.js';
 
 /**
  * tag-picker — reusable dropdown for selecting/managing tags.
@@ -21,7 +22,7 @@ class TagPicker extends LitElement {
     _creating: { type: Boolean, state: true },
   };
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: inline-block; position: relative; }
 
     .trigger {
@@ -36,9 +37,9 @@ class TagPicker extends LitElement {
 
     .dropdown {
       position: absolute; top: calc(100% + 4px); left: 0;
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+      background: var(--bg-surface); border: 1px solid var(--border-hover); border-radius: 8px;
       min-width: 200px; max-height: 280px; overflow-y: auto;
-      z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 200; box-shadow: var(--shadow-dropdown);
     }
 
     .dropdown-item {
@@ -87,7 +88,7 @@ class TagPicker extends LitElement {
     .cancel-btn:hover { color: rgba(255,255,255,0.8); }
 
     .empty { padding: 12px 14px; color: #fff; font-size: 12px; text-align: center; }
-  `;
+  `];
 
   constructor() {
     super();
