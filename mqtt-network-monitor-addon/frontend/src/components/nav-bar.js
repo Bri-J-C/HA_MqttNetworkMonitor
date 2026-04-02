@@ -59,6 +59,7 @@ class NavBar extends LitElement {
     .mobile-header {
       display: none;
       align-items: center;
+      justify-content: space-between;
       padding: 0 16px;
       height: 48px;
       background: #0d0d1f;
@@ -66,6 +67,10 @@ class NavBar extends LitElement {
     }
     .mobile-header .logo {
       margin-right: 0;
+    }
+    .mobile-header .version {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
     }
 
     /* ── Mobile bottom tab bar ── */
@@ -147,12 +152,13 @@ class NavBar extends LitElement {
             @click=${() => this._navigate('settings')}
           >Settings</button>
         </div>
-        <span class="version">v0.1.0 build ${BUILD_TIME}</span>
+        <span class="version">v0.2.1 build ${BUILD_TIME}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
+        <span class="version">build ${BUILD_TIME}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->

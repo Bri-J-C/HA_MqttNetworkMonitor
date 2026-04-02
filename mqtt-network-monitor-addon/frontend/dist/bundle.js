@@ -101,6 +101,7 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .mobile-header {
       display: none;
       align-items: center;
+      justify-content: space-between;
       padding: 0 16px;
       height: 48px;
       background: #0d0d1f;
@@ -108,6 +109,10 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     }
     .mobile-header .logo {
       margin-right: 0;
+    }
+    .mobile-header .version {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
     }
 
     /* ── Mobile bottom tab bar ── */
@@ -186,12 +191,13 @@ const $=globalThis,w=e=>e,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.1.0 build ${"4/2 17:34"}</span>
+        <span class="version">v0.2.1 build ${"4/2 17:39"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
+        <span class="version">build ${"4/2 17:39"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
