@@ -1,11 +1,13 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import { fetchSettings, updateSettings } from '../services/api.js';
+import { setCustomTransforms } from '../utils/transforms.js';
 import './tag-registry-settings.js';
 import './group-policy-settings.js';
 
 // Global threshold add form (module-level ephemeral state)
 const _globalThresholdForm = { attr: '', value: '' };
+const _customTransformForm = { name: '', expression: '' };
 
 class SettingsView extends LitElement {
   static properties = {
@@ -13,6 +15,7 @@ class SettingsView extends LitElement {
     _loading: { type: Boolean, state: true },
     _savingSettings: { type: Boolean, state: true },
     _settingsSaved: { type: Boolean, state: true },
+    _transformError: { type: String, state: true },
   };
 
   static styles = [sharedStyles, css`
@@ -71,6 +74,7 @@ class SettingsView extends LitElement {
     this._loading = true;
     this._savingSettings = false;
     this._settingsSaved = false;
+    this._transformError = '';
   }
 
   connectedCallback() {
@@ -94,8 +98,92 @@ class SettingsView extends LitElement {
       <h2>Settings</h2>
       <tag-registry-settings></tag-registry-settings>
       <group-policy-settings></group-policy-settings>
+      ${this._renderCustomTransforms()}
       ${this._renderGlobalDefaults()}
     `;
+  }
+
+  // ── Custom Transforms ─────────────────────────────────────────────────────
+
+  _renderCustomTransforms() {
+    const transforms = (this._settings || {}).custom_transforms || [];
+    const form = _customTransformForm;
+
+    return html`
+      <div class="section">
+        <div class="section-title">Custom Transforms</div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 12px;">
+          Define JS expressions to transform attribute values. Use <code style="color: #00D4FF;">value</code> as the input variable.
+        </div>
+
+        ${transforms.map((t, i) => html`
+          <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 12px; color: rgba(255,255,255,0.8); min-width: 120px;">${t.name}</span>
+            <code style="font-size: 11px; color: rgba(255,255,255,0.5); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.expression}</code>
+            <button class="icon-btn delete"
+              @click=${() => this._removeCustomTransform(i)}>Remove</button>
+          </div>
+        `)}
+
+        <div style="display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap;">
+          <input class="small-input" type="text" placeholder="Name (e.g. C to F)"
+            style="width: 150px;"
+            .value=${form.name}
+            @input=${(e) => { _customTransformForm.name = e.target.value; this.requestUpdate(); }}>
+          <input class="small-input" type="text" placeholder="Expression (e.g. value * 1.8 + 32)"
+            style="flex: 1; min-width: 200px;"
+            .value=${form.expression}
+            @input=${(e) => { _customTransformForm.expression = e.target.value; this.requestUpdate(); }}>
+          <button class="small-btn" @click=${this._addCustomTransform.bind(this)}>Add</button>
+        </div>
+
+        ${this._transformError ? html`<div style="font-size: 11px; color: #ef5350; margin-top: 6px;">${this._transformError}</div>` : ''}
+      </div>
+    `;
+  }
+
+  _addCustomTransform() {
+    const name = (_customTransformForm.name || '').trim();
+    const expression = (_customTransformForm.expression || '').trim();
+    this._transformError = '';
+
+    if (!name || !expression) {
+      this._transformError = 'Name and expression are required.';
+      return;
+    }
+
+    // Validate expression
+    try {
+      new Function('value', 'return (' + expression + ')');
+    } catch (e) {
+      this._transformError = `Invalid expression: ${e.message}`;
+      return;
+    }
+
+    const id = 'custom:' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    const s = this._settings || {};
+    const existing = s.custom_transforms || [];
+
+    if (existing.some(t => t.id === id)) {
+      this._transformError = 'A transform with this name already exists.';
+      return;
+    }
+
+    this._settings = {
+      ...s,
+      custom_transforms: [...existing, { id, name, expression }],
+    };
+
+    _customTransformForm.name = '';
+    _customTransformForm.expression = '';
+    this.requestUpdate();
+  }
+
+  _removeCustomTransform(index) {
+    const s = this._settings || {};
+    const transforms = [...(s.custom_transforms || [])];
+    transforms.splice(index, 1);
+    this._settings = { ...s, custom_transforms: transforms };
   }
 
   // ── Global Defaults ───────────────────────────────────────────────────────
@@ -178,6 +266,7 @@ class SettingsView extends LitElement {
     this._settingsSaved = false;
     try {
       await updateSettings(this._settings);
+      setCustomTransforms(this._settings.custom_transforms || []);
       this._settingsSaved = true;
       setTimeout(() => { this._settingsSaved = false; }, 2000);
     } catch (e) {
