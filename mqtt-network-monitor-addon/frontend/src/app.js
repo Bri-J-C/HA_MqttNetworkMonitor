@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from './styles/shared.js';
 import { wsService } from './services/websocket.js';
+import { setCustomTransforms } from './utils/transforms.js';
+import { fetchSettings } from './services/api.js';
 import './components/nav-bar.js';
 import './components/topology-view.js';
 import './components/dashboard-view.js';
@@ -53,6 +55,9 @@ class NetworkMonitorApp extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     wsService.connect();
+    fetchSettings().then(s => {
+      if (s?.custom_transforms) setCustomTransforms(s.custom_transforms);
+    }).catch(() => {});
   }
 
   disconnectedCallback() {
