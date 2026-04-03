@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
-import { applyTransform, AVAILABLE_TRANSFORMS } from '../utils/transforms.js';
+import { applyTransform, getAllTransforms } from '../utils/transforms.js';
 
 /**
  * device-attributes — attributes grid with HA exposure toggles, threshold editing, hide/unhide.
@@ -382,12 +382,12 @@ class DeviceAttributes extends LitElement {
           </div>
         </div>
         <div class="attr-transform">
-          <div class="transform-label">Fmt</div>
+          <div class="transform-label">Transform</div>
           <select class="transform-select"
             aria-label="Value transform for ${name.replace(/_/g, ' ')}"
             .value=${transform}
             @change=${(e) => this._onTransformChange(name, e.target.value)}>
-            ${AVAILABLE_TRANSFORMS.map(t => html`
+            ${getAllTransforms().map(t => html`
               <option value=${t.value} ?selected=${t.value === transform}>${t.label}</option>
             `)}
           </select>
