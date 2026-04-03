@@ -222,7 +222,7 @@ class SettingsView extends LitElement {
           <button class="small-btn" @click=${this._addDefaultThreshold.bind(this)}>Add threshold</button>
         </div>
 
-        <div style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center; margin-top: 12px; padding-bottom: 4px;">
           <button class="save-btn" ?disabled=${this._savingSettings}
             @click=${this._saveSettings}>
             ${this._savingSettings ? 'Saving...' : 'Save Defaults'}
