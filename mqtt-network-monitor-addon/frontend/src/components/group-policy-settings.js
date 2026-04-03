@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
-import { AVAILABLE_TRANSFORMS } from '../utils/transforms.js';
+import { getAllTransforms } from '../utils/transforms.js';
 import {
   fetchGroups, createGroup, updateGroup, deleteGroup,
   sendGroupCommand, pushGroupConfig,
@@ -620,7 +620,7 @@ class GroupPolicySettings extends LitElement {
                 <select style="flex: 1; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; color: rgba(255,255,255,0.5); padding: 2px 4px; font-size: 10px; cursor: pointer; appearance: none; -webkit-appearance: none;"
                   .value=${transforms[key] || ''}
                   @change=${(e) => this._updateGroupTransform(g.id, key, e.target.value)}>
-                  ${AVAILABLE_TRANSFORMS.map(t => html`
+                  ${getAllTransforms().map(t => html`
                     <option value=${t.value} ?selected=${t.value === (transforms[key] || '')}
                       style="background: #0d0d1f; color: #fff;">${t.label}</option>
                   `)}
@@ -909,7 +909,7 @@ class GroupPolicySettings extends LitElement {
       await updateGroup(g.id, payload);
       this._groups = {
         ...this._groups,
-        [g.id]: { ...latest, name: savedName, thresholds: cleanThresholds, crit_thresholds: cleanCritThresholds },
+        [g.id]: { ...latest, name: savedName, thresholds: cleanThresholds, crit_thresholds: cleanCritThresholds, attribute_transforms: latest.attribute_transforms || {} },
       };
       if (this._editingGroupName === g.id) this._editingGroupName = null;
       this._groupSaveStatus = { ...this._groupSaveStatus, [g.id]: 'saved' };
