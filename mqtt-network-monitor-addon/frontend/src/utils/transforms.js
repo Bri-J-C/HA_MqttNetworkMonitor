@@ -47,7 +47,36 @@ export function applyTransform(value, transform) {
     return value + transform.slice(7);
   }
 
+  if (transform.startsWith('custom:')) {
+    const ct = _customTransforms.find(t => t.id === transform);
+    if (ct) {
+      try {
+        return new Function('value', 'return (' + ct.expression + ')')(value);
+      } catch {
+        return value;
+      }
+    }
+  }
+
   return value;
+}
+
+let _customTransforms = [];
+
+export function setCustomTransforms(transforms) {
+  _customTransforms = Array.isArray(transforms) ? transforms : [];
+}
+
+export function getCustomTransforms() {
+  return _customTransforms;
+}
+
+export function getAllTransforms() {
+  const custom = _customTransforms.map(t => ({
+    value: t.id,
+    label: t.name,
+  }));
+  return [...AVAILABLE_TRANSFORMS, ...custom];
 }
 
 export const AVAILABLE_TRANSFORMS = [
