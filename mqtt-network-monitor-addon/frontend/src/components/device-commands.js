@@ -120,6 +120,7 @@ class DeviceCommands extends LitElement {
     const hidden             = this.device.hidden_commands || [];
     const visible            = allNames.filter(c => !hidden.includes(c));
     const hiddenList         = allNames.filter(c => hidden.includes(c));
+    const supportsShell      = (this.device.active_plugins || []).includes('custom_command');
 
     return html`
       <div class="section">
@@ -139,7 +140,7 @@ class DeviceCommands extends LitElement {
         ` : ''}
         ${this.commandResult ? html`<div class="cmd-result">${this.commandResult}</div>` : ''}
 
-        ${serverNames.length > 0 ? html`
+        ${supportsShell && serverNames.length > 0 ? html`
           <div style="margin-top: 8px; font-size: 11px; color: #fff; margin-bottom: 6px;">Server-managed commands</div>
           <table class="sensor-table">
             <thead><tr><th>Name</th><th>Shell Command</th><th></th></tr></thead>
@@ -160,7 +161,7 @@ class DeviceCommands extends LitElement {
           </table>
         ` : ''}
 
-        ${this._editingCommandName || this._showAddCommand ? html`
+        ${supportsShell && (this._editingCommandName || this._showAddCommand) ? html`
           <div class="sensor-form" style="margin-top: 8px;">
             <div class="sensor-form-grid">
               <input type="text" placeholder="Command name"
@@ -177,9 +178,9 @@ class DeviceCommands extends LitElement {
               <button class="form-btn cancel" @click=${this._cancelForm}>Cancel</button>
             </div>
           </div>
-        ` : html`
+        ` : supportsShell ? html`
           <button class="add-btn" @click=${this._startAdd}>+ Add Command</button>
-        `}
+        ` : ''}
 
         ${hiddenList.length > 0 ? html`
           <div style="margin-top: 12px;">

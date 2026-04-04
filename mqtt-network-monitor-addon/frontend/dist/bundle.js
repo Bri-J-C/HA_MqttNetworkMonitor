@@ -191,13 +191,13 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/4 9:08"}</span>
+        <span class="version">v0.2.1 build ${"4/4 9:42"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/4 9:08"}</span>
+        <span class="version">build ${"4/4 9:42"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
@@ -644,7 +644,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     @media (max-width: 768px) {
       .commands { grid-template-columns: 1fr; }
     }
-  `];constructor(){super(),this.device=null,this.serverCommands={},this.commandResult="",this._showHiddenCmds=!1,this._showAddCommand=!1,this._editingCommandName=null,this._editCommandForm=null}render(){if(!this.device)return B``;const t=this.device.allowed_commands||[],e=this.serverCommands||{},o=Object.keys(e),s=[...new Set([...t,...o])],i=this.device.hidden_commands||[],r=s.filter(t=>!i.includes(t)),n=s.filter(t=>i.includes(t));return B`
+  `];constructor(){super(),this.device=null,this.serverCommands={},this.commandResult="",this._showHiddenCmds=!1,this._showAddCommand=!1,this._editingCommandName=null,this._editCommandForm=null}render(){if(!this.device)return B``;const t=this.device.allowed_commands||[],e=this.serverCommands||{},o=Object.keys(e),s=[...new Set([...t,...o])],i=this.device.hidden_commands||[],r=s.filter(t=>!i.includes(t)),n=s.filter(t=>i.includes(t)),a=(this.device.active_plugins||[]).includes("custom_command");return B`
       <div class="section">
         <div class="section-title">Commands</div>
 
@@ -662,7 +662,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         `:""}
         ${this.commandResult?B`<div class="cmd-result">${this.commandResult}</div>`:""}
 
-        ${o.length>0?B`
+        ${a&&o.length>0?B`
           <div style="margin-top: 8px; font-size: 11px; color: #fff; margin-bottom: 6px;">Server-managed commands</div>
           <table class="sensor-table">
             <thead><tr><th>Name</th><th>Shell Command</th><th></th></tr></thead>
@@ -683,7 +683,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </table>
         `:""}
 
-        ${this._editingCommandName||this._showAddCommand?B`
+        ${a&&(this._editingCommandName||this._showAddCommand)?B`
           <div class="sensor-form" style="margin-top: 8px;">
             <div class="sensor-form-grid">
               <input type="text" placeholder="Command name"
@@ -700,9 +700,9 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
               <button class="form-btn cancel" @click=${this._cancelForm}>Cancel</button>
             </div>
           </div>
-        `:B`
+        `:a?B`
           <button class="add-btn" @click=${this._startAdd}>+ Add Command</button>
-        `}
+        `:""}
 
         ${n.length>0?B`
           <div style="margin-top: 12px;">
