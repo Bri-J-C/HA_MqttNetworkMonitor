@@ -1,6 +1,7 @@
 """Custom command plugin — run shell commands and report output."""
 
 import logging
+import platform
 import subprocess
 
 from mqtt_monitor.plugins.base import BasePlugin
@@ -8,6 +9,7 @@ from mqtt_monitor.plugins.base import BasePlugin
 logger = logging.getLogger(__name__)
 
 COMMAND_TIMEOUT = 10
+IS_WINDOWS = platform.system() == "Windows"
 
 
 class CustomCommandPlugin(BasePlugin):
@@ -29,6 +31,13 @@ class CustomCommandPlugin(BasePlugin):
 
     @staticmethod
     def _run_command(command: str):
+        """Run a command using the platform-appropriate shell.
+
+        On Linux/macOS, commands run via the default shell (shell=True uses
+        /bin/sh).  On Windows, shell=True uses cmd.exe.  If the command starts
+        with 'powershell' or 'pwsh' it is passed through as-is so the user can
+        explicitly choose PowerShell in their config.
+        """
         try:
             proc = subprocess.run(
                 command,

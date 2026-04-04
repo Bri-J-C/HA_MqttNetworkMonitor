@@ -1,0 +1,71 @@
+# MQTT Network Monitor — Windows Client Configuration
+# Copy this file to config.yaml and customize for your device.
+
+mqtt:
+  broker: 192.168.1.10
+  port: 1883
+  # username: monitor
+  # password: secret
+
+device:
+  id: my-windows-pc       # Unique ID for this device (no spaces)
+  name: "My Windows PC"   # Human-readable name
+  type: windows            # Device type
+  tags: [home, desktops]   # Tags for grouping/filtering
+
+plugins:
+  system_resources:
+    interval: 30           # Collect every 30 seconds
+    attributes:
+      - cpu_usage
+      - memory_usage
+      - disk_usage
+      - uptime
+      # cpu_temp may not be available on all Windows hardware
+
+  network_info:
+    interval: 60
+    interfaces:
+      - Ethernet             # Use adapter name as shown in 'ipconfig'
+      # - Wi-Fi              # Windows Wi-Fi adapter name
+
+  windows_system:
+    interval: 300            # Collect every 5 minutes
+    attributes:
+      - os_version
+      - os_build
+      - cpu_model
+      - installed_ram
+      - gpu_info
+      - disk_info
+      - process_count
+      - uptime
+      - last_boot
+      - logged_in_users
+      - network_adapters
+      - firewall_status
+      - windows_services_running
+    # Monitor specific Windows services by name:
+    # services:
+    #   - Spooler
+    #   - W32Time
+    #   - WinDefend
+
+  # custom_command:
+  #   commands:
+  #     my_metric:
+  #       command: "powershell -Command \"(Get-Process).Count\""
+  #       interval: 30
+  #       unit: "processes"
+  #     gpu_temp:
+  #       command: "powershell -Command \"(Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace root/wmi).CurrentTemperature / 10 - 273.15\""
+  #       interval: 60
+  #       unit: "C"
+
+# Commands that the server is allowed to execute remotely on this device.
+# On Windows, commands run via cmd.exe (shell=True). Prefix with 'powershell
+# -Command' if you need PowerShell.
+allowed_commands:
+  - shutdown /s /t 60
+  - shutdown /r /t 60
+  # - powershell -Command Restart-Service MyService

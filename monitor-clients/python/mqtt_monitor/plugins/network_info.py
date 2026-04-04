@@ -1,6 +1,7 @@
 """Network info plugin — IP, MAC, gateway, subnet, interface stats."""
 
 import logging
+import platform
 import socket
 import subprocess
 
@@ -17,6 +18,8 @@ except ImportError:
 
 # AF_PACKET is Linux-only; fallback for other platforms
 AF_LINK = getattr(socket, "AF_PACKET", getattr(socket, "AF_LINK", -1))
+
+IS_WINDOWS = platform.system() == "Windows"
 
 
 class NetworkInfoPlugin(BasePlugin):
@@ -61,6 +64,11 @@ class NetworkInfoPlugin(BasePlugin):
                 result[f"{iface}_tx_bytes"] = {"value": counters.bytes_sent, "unit": "bytes"}
                 result[f"{iface}_rx_bytes"] = {"value": counters.bytes_recv, "unit": "bytes"}
 
+        # Wi-Fi SSID detection (cross-platform)
+        ssid = self._detect_ssid()
+        if ssid:
+            result["wifi_ssid"] = {"value": ssid, "unit": ""}
+
         # Cache network info from primary interface for topology
         primary_addrs = addrs.get(primary_iface, [])
         ip = mac = netmask = None
@@ -98,16 +106,70 @@ class NetworkInfoPlugin(BasePlugin):
             except Exception:
                 pass
 
-        try:
-            output = subprocess.check_output(
-                ["ip", "route", "show", "default"],
-                text=True,
-                timeout=5,
-            )
-            parts = output.strip().split()
-            if "via" in parts:
-                return parts[parts.index("via") + 1]
-        except Exception:
-            pass
+        if IS_WINDOWS:
+            try:
+                output = subprocess.check_output(
+                    ["powershell", "-Command",
+                     "(Get-NetRoute -DestinationPrefix '0.0.0.0/0' "
+                     "| Select-Object -First 1).NextHop"],
+                    text=True,
+                    timeout=10,
+                )
+                gw = output.strip()
+                if gw:
+                    return gw
+            except Exception:
+                pass
+        else:
+            try:
+                output = subprocess.check_output(
+                    ["ip", "route", "show", "default"],
+                    text=True,
+                    timeout=5,
+                )
+                parts = output.strip().split()
+                if "via" in parts:
+                    return parts[parts.index("via") + 1]
+            except Exception:
+                pass
 
+        return None
+
+    @staticmethod
+    def _detect_ssid() -> str | None:
+        """Detect the current Wi-Fi SSID, if connected."""
+        if IS_WINDOWS:
+            try:
+                output = subprocess.check_output(
+                    ["netsh", "wlan", "show", "interfaces"],
+                    text=True,
+                    timeout=10,
+                )
+                for line in output.splitlines():
+                    line = line.strip()
+                    if line.startswith("SSID") and "BSSID" not in line:
+                        # Line format: "SSID : MyNetwork"
+                        parts = line.split(":", 1)
+                        if len(parts) == 2:
+                            ssid = parts[1].strip()
+                            if ssid:
+                                return ssid
+            except Exception:
+                pass
+        else:
+            # Linux: try iwconfig
+            try:
+                output = subprocess.check_output(
+                    ["iwconfig"],
+                    text=True,
+                    timeout=5,
+                    stderr=subprocess.DEVNULL,
+                )
+                for line in output.splitlines():
+                    if "ESSID:" in line:
+                        essid = line.split('ESSID:"')[1].split('"')[0]
+                        if essid:
+                            return essid
+            except Exception:
+                pass
         return None

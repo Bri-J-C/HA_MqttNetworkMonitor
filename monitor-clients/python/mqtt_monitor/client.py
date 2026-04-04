@@ -281,4 +281,9 @@ def main():
 
 
 if __name__ == "__main__":
+    # On Windows, check for service/install commands first
+    if sys.platform == "win32":
+        from mqtt_monitor.windows_service import handle_cli
+        if handle_cli():
+            sys.exit(0)
     main()

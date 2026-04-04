@@ -6,6 +6,9 @@ __pycache__/
 venv/
 config.yaml
 config.remote.yaml
+config.*-ready.yaml
+config.local.yaml
+credentials.*
 screenshot/
 *.egg-info/
 node_modules/
