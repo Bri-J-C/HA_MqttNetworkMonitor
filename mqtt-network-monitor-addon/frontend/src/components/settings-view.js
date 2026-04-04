@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
-import { fetchSettings, updateSettings } from '../services/api.js';
+import { fetchSettings, updateSettings, exportSettings, importSettings } from '../services/api.js';
 import { setCustomTransforms } from '../utils/transforms.js';
 import './tag-registry-settings.js';
 import './group-policy-settings.js';
@@ -17,6 +17,7 @@ class SettingsView extends LitElement {
     _settingsSaved: { type: Boolean, state: true },
     _editingTransformIndex: { type: Number, state: true },
     _transformError: { type: String, state: true },
+    _importStatus: { type: String, state: true },
   };
 
   static styles = [sharedStyles, css`
@@ -103,6 +104,7 @@ class SettingsView extends LitElement {
       ${this._renderCustomTransforms()}
       ${this._renderGlobalDefaults()}
       ${this._renderDeviceManagement()}
+      ${this._renderExportImport()}
     `;
   }
 
@@ -352,6 +354,63 @@ class SettingsView extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  // ── Export / Import ────────────────────────────────────────────────────────
+
+  _renderExportImport() {
+    return html`
+      <div class="section">
+        <div class="section-title">Export / Import</div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 12px;">
+          Export or import settings, group policies, and topology layouts as JSON.
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button class="save-btn" @click=${this._exportSettings}>Export</button>
+          <button class="save-btn" style="background: rgba(255,255,255,0.1); color: #fff;"
+            @click=${() => this.shadowRoot.querySelector('#import-file').click()}>Import</button>
+          <input id="import-file" type="file" accept=".json" style="display: none;"
+            @change=${this._importFile}>
+          ${this._importStatus ? html`<span style="font-size: 12px; color: ${this._importStatus.startsWith('Error') ? '#ef5350' : '#04d65c'};">${this._importStatus}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  async _exportSettings() {
+    try {
+      const data = await exportSettings();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mqtt-monitor-settings-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export failed:', e);
+    }
+  }
+
+  async _importFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    this._importStatus = '';
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data.version) {
+        this._importStatus = 'Error: Invalid export file.';
+        return;
+      }
+      await importSettings(data);
+      this._importStatus = 'Imported successfully!';
+      this._loadSettings();
+      setTimeout(() => { this._importStatus = ''; }, 3000);
+    } catch (e) {
+      this._importStatus = `Error: ${e.message}`;
+    }
+    e.target.value = '';
   }
 
   async _saveSettings() {

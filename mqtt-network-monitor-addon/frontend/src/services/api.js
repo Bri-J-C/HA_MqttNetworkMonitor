@@ -161,6 +161,18 @@ export async function updateSettings(data) {
   });
 }
 
+export async function exportSettings() {
+  return apiCall(`${BASE}/api/settings/export`);
+}
+
+export async function importSettings(data) {
+  return apiCall(`${BASE}/api/settings/import`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
 // Device settings
 export async function fetchEffectiveSettings(deviceId) {
   return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/effective-settings`);
