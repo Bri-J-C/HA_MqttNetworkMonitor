@@ -191,13 +191,13 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/4 7:22"}</span>
+        <span class="version">v0.2.1 build ${"4/4 7:47"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/4 7:22"}</span>
+        <span class="version">build ${"4/4 7:47"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
@@ -1803,16 +1803,18 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     }
     .attr {
       font-size: 11px;
-      color: rgba(255,255,255,0.5);
+      color: #fff;
     }
-    .attr-value { color: rgba(255,255,255,0.8); }
+    .attr-value { color: #00D4FF; font-weight: 500; }
     .attr-value.warning { color: #ffb74d; }
     .tags {
-      display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap;
+      display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; align-items: center;
     }
     .tag {
-      font-size: 9px; background: rgba(0,212,255,0.15); color: #00D4FF;
-      padding: 1px 6px; border-radius: 3px;
+      font-size: 9px; color: rgba(0,212,255,0.45);
+    }
+    .tag-sep {
+      font-size: 9px; color: rgba(255,255,255,0.1);
     }
 
     @media (max-width: 480px) {
@@ -1837,7 +1839,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       `:""}
       ${a.length>0?B`
         <div class="tags">
-          ${a.map(t=>B`<span class="tag">${t}</span>`)}
+          ${a.map((t,e)=>B`${e>0?B`<span class="tag-sep">·</span>`:""}<span class="tag">${t}</span>`)}
         </div>
       `:""}
     `}_isWarning(t,e){const o={cpu_usage:90,memory_usage:90,disk_usage:95,cpu_temp:80};return o[t]&&e.value>o[t]}}customElements.define("device-card",ne);class ae extends dt{static properties={devices:{type:Object},filter:{type:String},selectedTags:{type:Array},viewMode:{type:String},_groups:{type:Object,state:!0},_collapsedGroups:{type:Object,state:!0},_selectedUngrouped:{type:Array,state:!0}};static styles=[ct,r`

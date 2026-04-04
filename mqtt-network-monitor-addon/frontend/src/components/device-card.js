@@ -57,16 +57,18 @@ class DeviceCard extends LitElement {
     }
     .attr {
       font-size: 11px;
-      color: rgba(255,255,255,0.5);
+      color: #fff;
     }
-    .attr-value { color: rgba(255,255,255,0.8); }
+    .attr-value { color: #00D4FF; font-weight: 500; }
     .attr-value.warning { color: #ffb74d; }
     .tags {
-      display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap;
+      display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; align-items: center;
     }
     .tag {
-      font-size: 9px; background: rgba(0,212,255,0.15); color: #00D4FF;
-      padding: 1px 6px; border-radius: 3px;
+      font-size: 9px; color: rgba(0,212,255,0.45);
+    }
+    .tag-sep {
+      font-size: 9px; color: rgba(255,255,255,0.1);
     }
 
     @media (max-width: 480px) {
@@ -125,7 +127,7 @@ class DeviceCard extends LitElement {
       ` : ''}
       ${tags.length > 0 ? html`
         <div class="tags">
-          ${tags.map(t => html`<span class="tag">${t}</span>`)}
+          ${tags.map((t, i) => html`${i > 0 ? html`<span class="tag-sep">·</span>` : ''}<span class="tag">${t}</span>`)}
         </div>
       ` : ''}
     `;
