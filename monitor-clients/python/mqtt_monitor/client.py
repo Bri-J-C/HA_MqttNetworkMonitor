@@ -294,12 +294,8 @@ def main():
 
 
 if __name__ == "__main__":
-    # On Windows, check for service/install commands before anything else.
-    # This must happen before main() because main() requires config.yaml
-    # which doesn't exist yet during install.
-    if sys.platform == "win32" and len(sys.argv) > 1 and sys.argv[1].lower() in (
-        "install", "uninstall", "start", "stop", "status", "service"
-    ):
+    # On Windows, handle install/service/auto-run before loading config
+    if sys.platform == "win32":
         from mqtt_monitor.windows_service import handle_cli
         if handle_cli():
             sys.exit(0)

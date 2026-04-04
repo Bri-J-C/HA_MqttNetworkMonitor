@@ -1,15 +1,18 @@
 """Windows service and installer for MQTT Network Monitor.
 
-Usage (run as Administrator):
-    mqtt-network-monitor.exe install     Install service + copy to Program Files
+Double-click behavior:
+  - Not installed yet → requests admin, installs to Program Files,
+    creates default config, opens it in Notepad, starts service.
+  - Already installed → restarts the service.
+
+CLI commands (optional, for advanced users):
+    mqtt-network-monitor.exe install     Install/reinstall
     mqtt-network-monitor.exe uninstall   Remove service + files
     mqtt-network-monitor.exe start       Start the service
     mqtt-network-monitor.exe stop        Stop the service
     mqtt-network-monitor.exe status      Check service status
-    mqtt-network-monitor.exe run         Run in foreground (for debugging)
-
-Without arguments: if installed as service, runs as service.
-Otherwise runs in foreground.
+    mqtt-network-monitor.exe run         Run in foreground (debugging)
+    mqtt-network-monitor.exe service     (internal) Run as Windows service
 """
 
 import os
@@ -31,27 +34,44 @@ def is_admin():
     except Exception:
         return False
 
+def elevate_and_rerun(args=None):
+    """Re-launch the current exe with admin privileges via UAC prompt."""
+    exe = sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]
+    params = ' '.join(args or sys.argv[1:])
+    ctypes.windll.shell32.ShellExecuteW(None, "runas", exe, params, None, 1)
+    sys.exit(0)
+
 def get_exe_path():
-    """Get path to the current executable (works for both .py and frozen .exe)."""
     if getattr(sys, 'frozen', False):
         return Path(sys.executable)
     return Path(__file__)
 
+def is_installed():
+    """Check if the service is already registered."""
+    result = subprocess.run(["sc.exe", "query", SERVICE_NAME],
+                            capture_output=True, text=True)
+    return result.returncode == 0
+
+def is_running():
+    result = subprocess.run(["sc.exe", "query", SERVICE_NAME],
+                            capture_output=True, text=True)
+    return "RUNNING" in result.stdout
+
 def run_sc(args, check=True):
-    """Run sc.exe with arguments."""
     cmd = ["sc.exe"] + args
     result = subprocess.run(cmd, capture_output=True, text=True)
     if check and result.returncode != 0:
-        print(f"Error: {result.stderr.strip() or result.stdout.strip()}")
+        print(f"  Error: {result.stderr.strip() or result.stdout.strip()}")
     return result
 
 def install():
     if not is_admin():
-        print("Error: Installation requires Administrator privileges.")
-        print("Right-click the exe and select 'Run as administrator'.")
-        return False
+        elevate_and_rerun(["install"])
+        return
 
-    print(f"Installing to {INSTALL_DIR}...")
+    print(f"Installing MQTT Network Monitor...")
+    print(f"  Directory: {INSTALL_DIR}")
+    print()
 
     # Create install directory
     INSTALL_DIR.mkdir(parents=True, exist_ok=True)
@@ -59,78 +79,97 @@ def install():
     # Copy executable
     exe_src = get_exe_path()
     exe_dst = INSTALL_DIR / exe_src.name
-    if exe_src != exe_dst:
+    if exe_src.resolve() != exe_dst.resolve():
         shutil.copy2(exe_src, exe_dst)
-        print(f"  Copied {exe_src.name} -> {exe_dst}")
+        print(f"  Copied {exe_src.name}")
 
-    # Copy config if it exists alongside the exe, or create default
-    config_src = exe_src.parent / CONFIG_NAME
+    # Create default config if none exists
     config_dst = INSTALL_DIR / CONFIG_NAME
-    if config_src.exists() and not config_dst.exists():
-        shutil.copy2(config_src, config_dst)
-        print(f"  Copied {CONFIG_NAME}")
-    elif not config_dst.exists():
+    config_created = False
+    if not config_dst.exists():
         config_dst.write_text(_default_config())
-        print(f"  Created default {CONFIG_NAME} — edit before starting!")
+        config_created = True
+        print(f"  Created default {CONFIG_NAME}")
+    else:
+        print(f"  Config already exists, keeping current")
 
-    # Register Windows service using sc.exe
+    # Remove old service if exists (handles reinstall)
+    if is_installed():
+        run_sc(["stop", SERVICE_NAME], check=False)
+        run_sc(["delete", SERVICE_NAME], check=False)
+        print(f"  Removed old service")
+
+    # Register Windows service
     bin_path = f'"{exe_dst}" service'
     run_sc(["create", SERVICE_NAME,
             f"binPath={bin_path}",
             f"DisplayName={SERVICE_DISPLAY}",
             "start=auto"], check=False)
-
     run_sc(["description", SERVICE_NAME, SERVICE_DESC], check=False)
 
-    # Set service to restart on failure (restart after 10s, up to 3 times)
+    # Auto-restart on failure (10s delay, up to 3 times per day)
     subprocess.run([
         "sc.exe", "failure", SERVICE_NAME,
         "reset=86400", "actions=restart/10000/restart/10000/restart/10000"
     ], capture_output=True)
 
-    print(f"\nInstalled! Service: {SERVICE_NAME}")
-    print(f"Config: {config_dst}")
-    print(f"\nNext steps:")
-    print(f"  1. Edit {config_dst} with your MQTT broker details")
-    print(f"  2. Run: mqtt-network-monitor.exe start")
-    return True
+    print(f"  Service registered (auto-start)")
+
+    # Open config in Notepad if newly created
+    if config_created:
+        print()
+        print(f"  Opening config for editing...")
+        print(f"  Set your MQTT broker IP and save the file.")
+        print(f"  Then close Notepad — the service will start automatically.")
+        subprocess.Popen(["notepad.exe", str(config_dst)])
+        input("  Press Enter after saving config to start the service...")
+
+    # Start the service
+    result = run_sc(["start", SERVICE_NAME])
+    if result.returncode == 0:
+        print()
+        print(f"  Service started!")
+        print(f"  Your device should appear in the MQTT Network Monitor dashboard.")
+    else:
+        print()
+        print(f"  Service failed to start. Check config at:")
+        print(f"  {config_dst}")
+
+    print()
+    input("Press Enter to close...")
 
 def uninstall():
     if not is_admin():
-        print("Error: Uninstall requires Administrator privileges.")
-        return False
+        elevate_and_rerun(["uninstall"])
+        return
 
-    print("Stopping service...")
+    print("Uninstalling MQTT Network Monitor...")
     run_sc(["stop", SERVICE_NAME], check=False)
-
-    print("Removing service...")
     run_sc(["delete", SERVICE_NAME], check=False)
-
-    # Don't delete install dir automatically — user's config is there
-    print(f"\nService removed. Config and files remain at {INSTALL_DIR}")
-    print(f"To remove completely: delete {INSTALL_DIR}")
-    return True
+    print(f"  Service removed.")
+    print(f"  Files remain at {INSTALL_DIR} (delete manually if desired)")
+    print()
+    input("Press Enter to close...")
 
 def start():
     if not is_admin():
-        print("Error: Starting the service requires Administrator privileges.")
-        return False
+        elevate_and_rerun(["start"])
+        return
     result = run_sc(["start", SERVICE_NAME])
     if result.returncode == 0:
         print("Service started.")
-    return result.returncode == 0
 
 def stop():
     if not is_admin():
-        print("Error: Stopping the service requires Administrator privileges.")
-        return False
+        elevate_and_rerun(["stop"])
+        return
     result = run_sc(["stop", SERVICE_NAME])
     if result.returncode == 0:
         print("Service stopped.")
-    return result.returncode == 0
 
 def status():
-    result = run_sc(["query", SERVICE_NAME], check=False)
+    result = subprocess.run(["sc.exe", "query", SERVICE_NAME],
+                            capture_output=True, text=True)
     if result.returncode != 0:
         print("Service not installed.")
     else:
@@ -142,15 +181,16 @@ def status():
         print(result.stdout.strip())
 
 def run_as_service():
-    """Entry point when running as a Windows service via sc.exe.
-
-    Uses a simple approach: sc.exe calls us with 'service' arg.
-    We signal SERVICE_RUNNING, run the monitor, and handle stop.
-    """
-    import servicemanager
-    import win32serviceutil
-    import win32service
-    import win32event
+    """Entry point when running as a Windows service via sc.exe."""
+    try:
+        import servicemanager
+        import win32serviceutil
+        import win32service
+        import win32event
+    except ImportError:
+        print("Error: pywin32 is required for service mode.")
+        print("Install with: pip install pywin32")
+        sys.exit(1)
 
     class MQTTMonitorService(win32serviceutil.ServiceFramework):
         _svc_name_ = SERVICE_NAME
@@ -176,12 +216,10 @@ def run_as_service():
             config = ConfigLoader.load_with_remote(config_path, remote_path)
 
             client = MQTTMonitorClient(config, config_dir=INSTALL_DIR)
-            # Run in a thread so we can respond to stop
             import threading
             t = threading.Thread(target=client.run, daemon=True)
             t.start()
 
-            # Wait for stop signal
             win32event.WaitForSingleObject(self.stop_event, win32event.INFINITE)
 
     servicemanager.Initialize()
@@ -189,16 +227,37 @@ def run_as_service():
     servicemanager.StartServiceCtrlDispatcher()
 
 def run_foreground():
-    """Run the monitor in the foreground (for debugging or non-service use)."""
+    """Run the monitor in the foreground (for debugging)."""
     from mqtt_monitor.client import main
-    # If running from install dir, use that config
     if (INSTALL_DIR / CONFIG_NAME).exists() and not (Path.cwd() / CONFIG_NAME).exists():
         sys.argv = [sys.argv[0], str(INSTALL_DIR / CONFIG_NAME)]
     main()
 
+def auto_run():
+    """Default double-click behavior: install if needed, otherwise restart."""
+    if not is_installed():
+        install()
+    elif not is_running():
+        if not is_admin():
+            elevate_and_rerun(["start"])
+        else:
+            start()
+    else:
+        print("MQTT Network Monitor is already running.")
+        print()
+        print(f"Config: {INSTALL_DIR / CONFIG_NAME}")
+        print(f"Status: Running")
+        print()
+        print("Options:")
+        print("  mqtt-network-monitor.exe stop        Stop the service")
+        print("  mqtt-network-monitor.exe uninstall   Remove the service")
+        print("  mqtt-network-monitor.exe run         Run in foreground")
+        print()
+        input("Press Enter to close...")
+
 def _default_config():
     return """# MQTT Network Monitor — Windows Client
-# Edit this file with your MQTT broker details.
+# Edit this file with your MQTT broker details, then restart the service.
 
 mqtt:
   broker: 192.168.1.10    # Your MQTT broker IP
@@ -241,32 +300,26 @@ allowed_commands:
 """
 
 def handle_cli():
-    """Handle CLI commands. Returns True if handled, False to fall through to normal run."""
+    """Handle CLI commands. Returns True if handled."""
     if len(sys.argv) < 2:
-        return False
+        # No arguments — auto-run (install or restart)
+        auto_run()
+        return True
 
     cmd = sys.argv[1].lower()
+    handlers = {
+        "install": install,
+        "uninstall": uninstall,
+        "start": start,
+        "stop": stop,
+        "status": status,
+        "run": run_foreground,
+        "service": run_as_service,
+    }
 
-    if cmd == "install":
-        install()
-        return True
-    elif cmd == "uninstall":
-        uninstall()
-        return True
-    elif cmd == "start":
-        start()
-        return True
-    elif cmd == "stop":
-        stop()
-        return True
-    elif cmd == "status":
-        status()
-        return True
-    elif cmd == "run":
-        run_foreground()
-        return True
-    elif cmd == "service":
-        run_as_service()
+    handler = handlers.get(cmd)
+    if handler:
+        handler()
         return True
 
     return False
