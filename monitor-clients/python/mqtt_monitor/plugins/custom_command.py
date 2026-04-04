@@ -42,7 +42,9 @@ class CustomCommandPlugin(BasePlugin):
             if IS_WINDOWS:
                 # Use PowerShell on Windows unless command explicitly uses cmd
                 if not command.lower().startswith(("cmd ", "cmd.exe")):
-                    command = f'powershell -NoProfile -Command "{command}"'
+                    import base64
+                    encoded = base64.b64encode(command.encode("utf-16-le")).decode("ascii")
+                    command = f"powershell -NoProfile -EncodedCommand {encoded}"
             proc = subprocess.run(
                 command,
                 shell=True,
