@@ -20,24 +20,13 @@ def assemble_config(device_id: str, registry) -> dict:
     group_id = device.get("group_policy")
     group = groups.get(group_id) if group_id else None
 
-    # Commands: group replaces device when in a group, otherwise device only
+    # When in a group, group is authoritative for commands and sensors.
+    # Device-only commands/sensors are used when not in a group.
     if group:
         commands = dict(group.get("custom_commands") or {})
-        # Merge device-specific commands that aren't in the group
-        for k, v in (device.get("server_commands") or {}).items():
-            if k not in commands:
-                commands[k] = v
+        sensors = dict(group.get("custom_sensors") or {})
     else:
         commands = dict(device.get("server_commands") or {})
-
-    # Sensors: group replaces device when in a group, otherwise device only
-    if group:
-        sensors = dict(group.get("custom_sensors") or {})
-        # Merge device-specific sensors that aren't in the group
-        for k, v in (device.get("server_sensors") or {}).items():
-            if k not in sensors:
-                sensors[k] = v
-    else:
         sensors = dict(device.get("server_sensors") or {})
 
     # Interval: group > device > default
