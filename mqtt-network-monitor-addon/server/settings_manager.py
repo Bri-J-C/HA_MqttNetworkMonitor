@@ -17,7 +17,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "disk_usage": 95,
         "cpu_temp": 80,
     },
-    "default_ha_exposure": "all",
+    "default_ha_exposure": "none",
     "ha_exposed_attributes": [],
     "device_cleanup_days": 0,
     "alert_cooldown_minutes": 30,

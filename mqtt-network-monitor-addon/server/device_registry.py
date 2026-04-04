@@ -160,11 +160,15 @@ class DeviceRegistry:
             if "collection_interval" in payload:
                 device["collection_interval"] = payload["collection_interval"]
 
-            # Derive status
+            # Derive status with cooldown to prevent flapping
             new_status = self._derive_status(device)
             if new_status != device.get("status"):
-                logger.info(f"Device {device_id} status changed to {new_status}")
-            device["status"] = new_status
+                now = time.time()
+                last_change = device.get("_status_changed_at", 0)
+                if now - last_change >= 10:
+                    device["status"] = new_status
+                    device["_status_changed_at"] = now
+                    logger.info(f"Device {device_id} status changed to {new_status}")
             if not is_new:
                 logger.debug(f"Device {device_id} attributes updated (plugin={plugin_name})")
             self._save_devices()
