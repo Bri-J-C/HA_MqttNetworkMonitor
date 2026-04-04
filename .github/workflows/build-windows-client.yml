@@ -30,6 +30,21 @@ jobs:
         run: |
           python build_windows.py
 
+      - name: Sign executable
+        working-directory: monitor-clients/python
+        run: |
+          $cert = New-SelfSignedCertificate `
+            -Subject "CN=MQTT Network Monitor, O=HA_MqttNetworkMonitor" `
+            -Type CodeSigningCert `
+            -CertStoreLocation Cert:\CurrentUser\My `
+            -NotAfter (Get-Date).AddYears(5)
+          Set-AuthenticodeSignature `
+            -FilePath "dist\mqtt-network-monitor.exe" `
+            -Certificate $cert `
+            -TimestampServer "http://timestamp.digicert.com" `
+            -HashAlgorithm SHA256
+        shell: pwsh
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
