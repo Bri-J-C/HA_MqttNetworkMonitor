@@ -182,7 +182,8 @@ class InstallerWizard:
 
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("MQTT Network Monitor — Installer")
+        from mqtt_monitor.version import __version__
+        self.root.title(f"MQTT Network Monitor v{__version__} — Installer")
         self.root.configure(bg=BG)
         self.root.resizable(False, False)
         _center_window(self.root, WIN_WIDTH, WIN_HEIGHT)
@@ -266,9 +267,11 @@ class InstallerWizard:
         spacer = ttk.Frame(f, height=60)
         spacer.pack()
 
+        from mqtt_monitor.version import __version__
         ttk.Label(f, text="MQTT Network Monitor", style="Title.TLabel").pack(pady=(0, 8))
         ttk.Label(f, text="Monitor your Windows PC from Home Assistant",
-                  style="Subtitle.TLabel").pack(pady=(0, 40))
+                  style="Subtitle.TLabel").pack(pady=(0, 4))
+        ttk.Label(f, text=f"v{__version__}", style="Small.TLabel").pack(pady=(0, 40))
 
         btn_frame = ttk.Frame(f)
         btn_frame.pack()

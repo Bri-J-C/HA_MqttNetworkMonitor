@@ -25,6 +25,16 @@ jobs:
         run: |
           pip install paho-mqtt psutil pyyaml pyinstaller
 
+      - name: Set version from tag
+        working-directory: monitor-clients/python
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          if (-not $version) { $version = "dev" }
+          $content = "__version__ = `"$version`"`n"
+          Set-Content -Path "mqtt_monitor/version.py" -Value $content
+          Write-Host "Version: $version"
+        shell: pwsh
+
       - name: Build installer
         working-directory: monitor-clients/python
         run: |
