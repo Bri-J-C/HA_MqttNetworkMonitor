@@ -264,6 +264,8 @@ class InstallerWizard:
         f = ttk.Frame(self.container)
         self.screens.append(f)
 
+        is_upgrade = self._existing_config is not None
+
         spacer = ttk.Frame(f, height=60)
         spacer.pack()
 
@@ -271,12 +273,20 @@ class InstallerWizard:
         ttk.Label(f, text="MQTT Network Monitor", style="Title.TLabel").pack(pady=(0, 8))
         ttk.Label(f, text="Monitor your Windows PC from Home Assistant",
                   style="Subtitle.TLabel").pack(pady=(0, 4))
-        ttk.Label(f, text=f"v{__version__}", style="Small.TLabel").pack(pady=(0, 40))
+        ttk.Label(f, text=f"v{__version__}", style="Small.TLabel").pack(pady=(0, 30))
+
+        if is_upgrade:
+            ttk.Label(f, text="An existing installation was detected.",
+                      style="Small.TLabel").pack(pady=(0, 12))
 
         btn_frame = ttk.Frame(f)
         btn_frame.pack()
-        ttk.Button(btn_frame, text="Install", style="Accent.TButton",
+        ttk.Button(btn_frame, text="Upgrade" if is_upgrade else "Install",
+                   style="Accent.TButton",
                    command=self._next).pack(side="left", padx=8)
+        if is_upgrade:
+            ttk.Button(btn_frame, text="Uninstall",
+                       command=self._uninstall).pack(side="left", padx=8)
         ttk.Button(btn_frame, text="Cancel",
                    command=self.root.destroy).pack(side="left", padx=8)
 
@@ -775,6 +785,88 @@ class InstallerWizard:
     # ------------------------------------------------------------------
     # Run
     # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # Uninstall
+    # ------------------------------------------------------------------
+
+    def _uninstall(self):
+        if not messagebox.askyesno(
+            "Uninstall",
+            "This will stop the monitor service, remove it, and delete all files "
+            f"from {INSTALL_DIR}.\n\nAre you sure?"
+        ):
+            return
+
+        # Switch to installing screen to show progress
+        self._show_screen(len(self.screens) - 1)
+
+        # Reuse progress UI
+        for lbl in self.step_labels:
+            lbl.configure(text="", style="Step.TLabel")
+        self.progress["value"] = 0
+        self.status_label.configure(text="")
+
+        step_texts = [
+            "Stopping service...",
+            "Removing service...",
+            "Deleting files...",
+        ]
+        for i, text in enumerate(step_texts):
+            if i < len(self.step_labels):
+                self.step_labels[i].configure(text=f"     {text}")
+        self.progress["maximum"] = len(step_texts)
+
+        # Change title
+        for child in self.screens[-1].winfo_children():
+            if hasattr(child, 'cget') and child.cget("style") == "Title.TLabel":
+                child.configure(text="Uninstalling...")
+                break
+
+        threading.Thread(target=self._uninstall_thread, daemon=True).start()
+
+    def _uninstall_thread(self):
+        import time
+
+        def ui(fn):
+            self.root.after(0, fn)
+
+        try:
+            # Step 0: Stop service
+            nssm = str(INSTALL_DIR / "nssm.exe")
+            subprocess.run([nssm, "stop", SERVICE_NAME], capture_output=True)
+            time.sleep(1)
+            ui(lambda: self._mark_step(0, True))
+            time.sleep(0.3)
+
+            # Step 1: Remove service
+            result = subprocess.run([nssm, "remove", SERVICE_NAME, "confirm"],
+                                    capture_output=True, text=True)
+            ui(lambda: self._mark_step(1, result.returncode == 0))
+            time.sleep(0.3)
+
+            # Step 2: Delete install directory
+            import shutil
+            try:
+                shutil.rmtree(INSTALL_DIR)
+                ui(lambda: self._mark_step(2, True))
+            except Exception as e:
+                ui(lambda: self._mark_step(2, False))
+                ui(lambda: self.status_label.configure(
+                    text=f"Could not fully remove {INSTALL_DIR}: {e}\nSome files may need manual deletion.",
+                    style="Error.TLabel"))
+                ui(lambda: self.close_btn.pack(pady=(16, 0)))
+                return
+
+            ui(lambda: self.status_label.configure(
+                text="Uninstall complete. MQTT Network Monitor has been removed.",
+                style="Success.TLabel"))
+
+        except Exception as exc:
+            ui(lambda: self.status_label.configure(
+                text=f"Uninstall failed: {exc}", style="Error.TLabel"))
+
+        ui(lambda: self.close_btn.pack(pady=(16, 0)))
 
     def run(self):
         self.root.mainloop()
