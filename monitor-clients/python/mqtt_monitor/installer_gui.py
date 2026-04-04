@@ -643,6 +643,11 @@ class InstallerWizard:
             time.sleep(0.3)
 
             # Step 1: Copy files
+            # Kill any running instance first (might be locking the exe)
+            subprocess.run(["taskkill.exe", "/F", "/IM", "mqtt-network-monitor.exe"],
+                           capture_output=True)
+            time.sleep(0.5)
+
             if getattr(sys, 'frozen', False):
                 exe_src = Path(sys.executable)
             else:
@@ -654,6 +659,28 @@ class InstallerWizard:
                     shutil.copy2(exe_src, exe_dst)
                 elif not exe_dst.exists():
                     raise FileNotFoundError(f"Source exe not found: {exe_src}")
+            except PermissionError:
+                # Exe still locked — try copy with temp name then rename
+                try:
+                    tmp_dst = INSTALL_DIR / (exe_name + ".new")
+                    shutil.copy2(exe_src, tmp_dst)
+                    # Create a bat script to replace after we exit
+                    bat = INSTALL_DIR / "_update.bat"
+                    bat.write_text(
+                        f'@echo off\ntimeout /t 2 /nobreak >nul\n'
+                        f'move /y "{tmp_dst}" "{exe_dst}"\n'
+                        f'del "%~f0"\n',
+                        encoding="utf-8"
+                    )
+                    subprocess.Popen(["cmd.exe", "/c", str(bat)],
+                                     creationflags=subprocess.CREATE_NO_WINDOW)
+                except Exception as copy_err2:
+                    ui(lambda: self._mark_step(1, False))
+                    ui(lambda: self.status_label.configure(
+                        text=f"Failed to copy exe: {copy_err2}",
+                        style="Error.TLabel"))
+                    ui(lambda: self.close_btn.pack(pady=(16, 0)))
+                    return
             except Exception as copy_err:
                 ui(lambda: self._mark_step(1, False))
                 ui(lambda: self.status_label.configure(
