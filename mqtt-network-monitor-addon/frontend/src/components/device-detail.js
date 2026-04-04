@@ -275,7 +275,7 @@ class DeviceDetail extends LitElement {
       <div class="header">
         <div class="header-left">
           <span class="title">${isGroup ? '⚙ ' : ''}${d.device_name || this.deviceId || this.groupId}</span>
-          <span class="device-type">${d.device_type || ''}</span>
+          <span class="device-type">${d.device_type || ''}${d.client_version ? ` · v${d.client_version}` : ''}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
           ${!isGroup ? html`

@@ -191,13 +191,13 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/4 15:09"}</span>
+        <span class="version">v0.2.1 build ${"4/4 15:39"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/4 15:09"}</span>
+        <span class="version">build ${"4/4 15:39"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
@@ -986,7 +986,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       <div class="header">
         <div class="header-left">
           <span class="title">${e?"⚙ ":""}${t.device_name||this.deviceId||this.groupId}</span>
-          <span class="device-type">${t.device_type||""}</span>
+          <span class="device-type">${t.device_type||""}${t.client_version?` · v${t.client_version}`:""}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
           ${e?B`

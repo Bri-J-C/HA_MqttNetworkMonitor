@@ -61,6 +61,10 @@ class MessageBuilder:
 
     def build_metadata_message(self) -> str:
         """Build a metadata-only message (sent on connect and config change)."""
+        try:
+            from mqtt_monitor.version import __version__
+        except ImportError:
+            __version__ = "unknown"
         return json.dumps({
             "device_id": self.device_id,
             "device_name": self.device_name,
@@ -70,6 +74,7 @@ class MessageBuilder:
             "allowed_commands": self.allowed_commands,
             "active_plugins": self.active_plugins,
             "collection_interval": self.collection_interval,
+            "client_version": __version__,
         }, separators=(',', ':'))
 
     def build_command_response(

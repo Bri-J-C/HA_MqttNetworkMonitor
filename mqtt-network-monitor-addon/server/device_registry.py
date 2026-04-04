@@ -159,6 +159,8 @@ class DeviceRegistry:
                 device["active_plugins"] = payload["active_plugins"]
             if "collection_interval" in payload:
                 device["collection_interval"] = payload["collection_interval"]
+            if "client_version" in payload:
+                device["client_version"] = payload["client_version"]
 
             # Derive status with cooldown to prevent flapping
             new_status = self._derive_status(device)
