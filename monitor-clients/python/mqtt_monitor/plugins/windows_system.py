@@ -165,9 +165,11 @@ class WindowsSystemPlugin(BasePlugin):
     default_interval = 300  # 5 minutes
 
     # Attributes that never change at runtime — collected once and cached.
+    # Also declared as static_attributes so the client skips publishing unchanged values.
     _STATIC_ATTRIBUTES = frozenset([
         "os_version", "os_build", "cpu_model", "installed_ram", "gpu_info",
     ])
+    static_attributes = {"os_version", "os_build", "cpu_model", "installed_ram", "gpu_info"}
 
     def __init__(self, config):
         super().__init__(config)

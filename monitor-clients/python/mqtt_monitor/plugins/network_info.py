@@ -44,13 +44,19 @@ class NetworkInfoPlugin(BasePlugin):
                     return True
             return False
 
-        configured_with_ip = [i for i in interfaces if i in addrs and _has_real_ip(i)]
-        if not configured_with_ip:
-            interfaces = self._detect_active_interfaces(addrs)
-            if not interfaces:
-                return {}
+        # Always report all active interfaces with real IPs.
+        # Configured interfaces get priority ordering, but we include
+        # any additional active interfaces the user didn't configure.
+        active = self._detect_active_interfaces(addrs)
+        if interfaces:
+            # Put configured interfaces first, then any others
+            ordered = [i for i in interfaces if i in active]
+            ordered += [i for i in active if i not in ordered]
+            interfaces = ordered if ordered else active
         else:
-            interfaces = configured_with_ip
+            interfaces = active
+        if not interfaces:
+            return {}
 
         result = {}
 

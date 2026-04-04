@@ -36,6 +36,8 @@ class MQTTMonitorClient:
         self._plugins = []
         self._plugin_timers: dict[str, threading.Timer] = {}
         self._running = False
+        self._last_published: dict[str, dict] = {}  # plugin_name -> {attr: value}
+        self._force_full_publish = True  # Send everything on first connect
 
         _config_dir = config_dir if config_dir is not None else Path(".")
         self._config_handler = ConfigHandler(
@@ -68,6 +70,8 @@ class MQTTMonitorClient:
 
     def _on_connect(self, client, userdata, flags, rc, *args):
         logger.info(f"Connected to MQTT broker (rc={rc})")
+        self._force_full_publish = True  # Send all attributes on reconnect
+        self._last_published.clear()
 
         client.publish(
             self._message_builder.status_topic,
@@ -197,6 +201,27 @@ class MQTTMonitorClient:
         try:
             attributes = plugin.collect()
             network = plugin.get_network_info()
+
+            # Filter out unchanged static attributes (unless first publish)
+            if plugin.static_attributes and not self._force_full_publish:
+                prev = self._last_published.get(plugin.name, {})
+                filtered = {}
+                for name, data in attributes.items():
+                    if name in plugin.static_attributes:
+                        prev_val = prev.get(name)
+                        if prev_val is not None and prev_val == data:
+                            continue  # Skip — unchanged static attribute
+                    filtered[name] = data
+                if not filtered:
+                    logger.debug(f"Skipped {plugin.name}: no changes")
+                    return
+                attributes = filtered
+
+            # Track what we published
+            if plugin.name not in self._last_published:
+                self._last_published[plugin.name] = {}
+            self._last_published[plugin.name].update(attributes)
+            self._force_full_publish = False
 
             message = self._message_builder.build_attribute_message(
                 plugin.name, attributes, network
