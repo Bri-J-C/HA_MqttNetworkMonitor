@@ -148,7 +148,19 @@ class DeviceDetail extends LitElement {
     this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update') {
         if (this._isGroupMode) {
-          // Don't reload — saves are immediate and local state is current
+          // Update attribute values from member devices but preserve group settings
+          const group = this._groups?.[this.groupId];
+          if (group && (group.device_ids || []).includes(data.device_id)) {
+            const memberAttrs = data.device?.attributes || {};
+            const currentAttrs = { ...(this.device?.attributes || {}) };
+            // Merge new attribute values from this member
+            for (const [name, val] of Object.entries(memberAttrs)) {
+              currentAttrs[name] = val;
+            }
+            // Remove attributes that were deleted (not in any member anymore)
+            // by checking if the attribute exists in the updated device
+            this.device = { ...this.device, attributes: currentAttrs };
+          }
           return;
         }
         if (data.device_id === this.deviceId) {
@@ -654,8 +666,10 @@ class DeviceDetail extends LitElement {
       const updated = { ...group, ...fields };
       await updateGroup(this.groupId, updated);
       this._groups = { ...this._groups, [this.groupId]: updated };
-      // Update local virtual device to reflect changes immediately
-      this.device = { ...this.device, ...fields };
+      // Update local virtual device — create a fully new object to trigger re-render
+      const newDevice = Object.assign({}, this.device, fields);
+      this.device = newDevice;
+      this.requestUpdate();
     } catch (e) {
       console.error('Failed to update group:', e);
     }
