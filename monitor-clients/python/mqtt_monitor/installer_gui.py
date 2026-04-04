@@ -748,8 +748,18 @@ class InstallerWizard:
 # ---------------------------------------------------------------------------
 
 def main():
-    wizard = InstallerWizard()
-    wizard.run()
+    try:
+        wizard = InstallerWizard()
+        wizard.run()
+    except Exception as e:
+        # Catch-all so the user can see what went wrong
+        try:
+            import tkinter.messagebox as mb
+            mb.showerror("Installer Error", f"{type(e).__name__}: {e}")
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            input("Press Enter to close...")
 
 
 if __name__ == "__main__":

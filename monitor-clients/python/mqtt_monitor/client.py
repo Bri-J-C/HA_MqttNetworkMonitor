@@ -294,9 +294,15 @@ def main():
 
 
 if __name__ == "__main__":
-    # On Windows, handle install/service/auto-run before loading config
-    if sys.platform == "win32":
-        from mqtt_monitor.windows_service import handle_cli
-        if handle_cli():
-            sys.exit(0)
-    main()
+    try:
+        # On Windows, handle install/service/auto-run before loading config
+        if sys.platform == "win32":
+            from mqtt_monitor.windows_service import handle_cli
+            if handle_cli():
+                sys.exit(0)
+        main()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        if sys.platform == "win32":
+            input("Press Enter to close...")
