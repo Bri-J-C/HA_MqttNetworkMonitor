@@ -191,13 +191,13 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/4 9:46"}</span>
+        <span class="version">v0.2.1 build ${"4/4 9:49"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/4 9:46"}</span>
+        <span class="version">build ${"4/4 9:49"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
@@ -868,12 +868,6 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           `}
         </div>
 
-        ${this.device.allowed_commands?.length>0?B`
-          <div class="config-row" style="margin-bottom: 0;">
-            <span class="config-label" style="color: #fff;">Allowed commands</span>
-            <div style="font-size: 12px; color: #fff;">${(this.device.allowed_commands||[]).join(", ")}</div>
-          </div>
-        `:""}
 
       </div>
     `}_renderSensorForm(){const t=this._sensorForm;return B`

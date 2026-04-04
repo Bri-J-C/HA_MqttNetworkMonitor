@@ -190,12 +190,6 @@ class DeviceConfig extends LitElement {
           `}
         </div>
 
-        ${this.device.allowed_commands?.length > 0 ? html`
-          <div class="config-row" style="margin-bottom: 0;">
-            <span class="config-label" style="color: #fff;">Allowed commands</span>
-            <div style="font-size: 12px; color: #fff;">${(this.device.allowed_commands || []).join(', ')}</div>
-          </div>
-        ` : ''}
 
       </div>
     `;
