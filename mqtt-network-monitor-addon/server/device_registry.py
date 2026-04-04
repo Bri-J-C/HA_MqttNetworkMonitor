@@ -213,30 +213,48 @@ class DeviceRegistry:
         if device.get("status") == "offline":
             return "offline"
         attrs = device.get("attributes", {})
+        effective = None
         if self._settings_resolver is not None:
             try:
                 effective = self._settings_resolver(device)
-                thresholds = effective.get("thresholds", {})
             except Exception:
-                thresholds = self._warning_thresholds
-        else:
-            thresholds = self._warning_thresholds
+                effective = None
+
+        # Check crit thresholds first (highest severity)
+        crit_thresholds = effective.get("crit_thresholds", {}) if effective else {}
+        for attr_name, threshold in crit_thresholds.items():
+            if threshold is None:
+                continue
+            value = self._get_attr_value(attrs, attr_name)
+            if value is not None and self._check_threshold(value, threshold):
+                return "critical"
+
+        # Then warning thresholds
+        thresholds = effective.get("thresholds", {}) if effective else self._warning_thresholds
         for attr_name, threshold in thresholds.items():
             if threshold is None:
                 continue
-            attr = attrs.get(attr_name)
-            if attr is None:
-                continue
-            # Support both {"value": x, "unit": y} and plain values
-            if isinstance(attr, dict):
-                value = attr.get("value")
-            elif isinstance(attr, (int, float)):
-                value = attr
-            else:
-                continue
-            if value is not None and isinstance(value, (int, float)) and self._check_threshold(value, threshold):
+            value = self._get_attr_value(attrs, attr_name)
+            if value is not None and self._check_threshold(value, threshold):
                 return "warning"
+
         return "online"
+
+    @staticmethod
+    def _get_attr_value(attrs, attr_name):
+        """Extract numeric value from an attribute."""
+        attr = attrs.get(attr_name)
+        if attr is None:
+            return None
+        if isinstance(attr, dict):
+            value = attr.get("value")
+        elif isinstance(attr, (int, float)):
+            value = attr
+        else:
+            return None
+        if isinstance(value, (int, float)):
+            return value
+        return None
 
     def get_device(self, device_id: str) -> dict | None:
         return self._devices.get(device_id)

@@ -6,6 +6,7 @@ const STATUS_COLORS = {
   online: '#04d65c',
   offline: '#ef5350',
   warning: '#ffb74d',
+  critical: '#ef5350',
   unknown: '#666',
 };
 
@@ -108,7 +109,7 @@ class DeviceCard extends LitElement {
       <div class="header">
         <span class="name">${displayName}</span>
         <span class="status" style="background: ${color}20; color: ${color}">
-          ${d.status === 'online' ? '● ' : d.status === 'offline' ? '● ' : '⚠ '}${d.status}
+          ${d.status === 'online' ? '● ' : d.status === 'offline' ? '● ' : d.status === 'critical' ? '⚠ ' : '⚠ '}${d.status}
         </span>
       </div>
       <div class="type">${d.device_type || 'unknown'}</div>

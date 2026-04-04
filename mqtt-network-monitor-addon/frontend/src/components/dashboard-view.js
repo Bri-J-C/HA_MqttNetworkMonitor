@@ -188,7 +188,11 @@ class DashboardView extends LitElement {
   get _filteredDevices() {
     let entries = Object.entries(this.devices);
     if (this.filter !== 'all') {
-      entries = entries.filter(([, d]) => d.status === this.filter);
+      if (this.filter === 'warning') {
+        entries = entries.filter(([, d]) => d.status === 'warning' || d.status === 'critical');
+      } else {
+        entries = entries.filter(([, d]) => d.status === this.filter);
+      }
     }
     if (this.selectedTags.length > 0) {
       entries = entries.filter(([, d]) => {
@@ -205,7 +209,7 @@ class DashboardView extends LitElement {
       all: all.length,
       online: all.filter(d => d.status === 'online').length,
       offline: all.filter(d => d.status === 'offline').length,
-      warning: all.filter(d => d.status === 'warning').length,
+      warning: all.filter(d => d.status === 'warning' || d.status === 'critical').length,
     };
   }
 
