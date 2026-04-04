@@ -191,13 +191,13 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/4 18:52"}</span>
+        <span class="version">v0.2.1 build ${"4/4 19:00"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/4 18:52"}</span>
+        <span class="version">build ${"4/4 19:00"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->

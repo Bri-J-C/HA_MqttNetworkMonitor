@@ -20,15 +20,25 @@ def assemble_config(device_id: str, registry) -> dict:
     group_id = device.get("group_policy")
     group = groups.get(group_id) if group_id else None
 
-    # Commands: device base, group overwrites
-    commands = dict(device.get("server_commands") or {})
+    # Commands: group replaces device when in a group, otherwise device only
     if group:
-        commands.update(group.get("custom_commands") or {})
+        commands = dict(group.get("custom_commands") or {})
+        # Merge device-specific commands that aren't in the group
+        for k, v in (device.get("server_commands") or {}).items():
+            if k not in commands:
+                commands[k] = v
+    else:
+        commands = dict(device.get("server_commands") or {})
 
-    # Sensors: device base, group overwrites
-    sensors = dict(device.get("server_sensors") or {})
+    # Sensors: group replaces device when in a group, otherwise device only
     if group:
-        sensors.update(group.get("custom_sensors") or {})
+        sensors = dict(group.get("custom_sensors") or {})
+        # Merge device-specific sensors that aren't in the group
+        for k, v in (device.get("server_sensors") or {}).items():
+            if k not in sensors:
+                sensors[k] = v
+    else:
+        sensors = dict(device.get("server_sensors") or {})
 
     # Interval: group > device > default
     interval = None
@@ -65,8 +75,26 @@ def assemble_and_push(device_id: str, registry, mqtt_handler) -> dict:
     # Push to client
     mqtt_handler.push_config(device_id, config)
 
-    # Store assembled config on device record
-    registry.set_device_settings(device_id, {"remote_config": config})
+    # Store assembled config on device record and sync server_sensors
+    pushed_sensors = config.get("plugins", {}).get("custom_command", {}).get("commands", {})
+
+    # Remove attributes for sensors that were in the old config but not the new one
+    prev_sensors = set((prev_remote_config.get("plugins", {})
+                        .get("custom_command", {}).get("commands", {}).keys()))
+    new_sensors = set(pushed_sensors.keys())
+    removed_sensors = prev_sensors - new_sensors
+    if removed_sensors:
+        device_after = registry.get_device(device_id)
+        if device_after:
+            attrs = device_after.get("attributes", {})
+            for sensor_name in removed_sensors:
+                attrs.pop(sensor_name, None)
+            registry.set_device_settings(device_id, {"attributes": attrs})
+
+    registry.set_device_settings(device_id, {
+        "remote_config": config,
+        "server_sensors": pushed_sensors,
+    })
 
     # Update allowed_commands immediately — combine server-assembled commands
     # with client's last-reported local commands.
