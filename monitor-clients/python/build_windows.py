@@ -4,11 +4,13 @@ Run this on a Windows machine with Python 3.10+ installed:
     pip install pyinstaller paho-mqtt psutil pyyaml
     python build_windows.py
 
-Produces: dist/mqtt-network-monitor.exe
+Produces: dist/mqtt-network-monitor.exe + dist/nssm.exe
 """
 
 import subprocess
 import sys
+import shutil
+from pathlib import Path
 
 def main():
     cmd = [
@@ -28,12 +30,24 @@ def main():
         "--console",
         "mqtt_monitor/client.py",
     ]
-    print(f"Running: {' '.join(cmd)}")
+    print(f"Building exe...")
     subprocess.run(cmd, check=True)
+
+    # Copy NSSM alongside the exe
+    nssm_src = Path("nssm/nssm.exe")
+    nssm_dst = Path("dist/nssm.exe")
+    if nssm_src.exists():
+        shutil.copy2(nssm_src, nssm_dst)
+        print(f"Copied nssm.exe to dist/")
+    else:
+        print(f"WARNING: nssm/nssm.exe not found — service registration won't work")
+
     print()
-    print("Build complete! -> dist/mqtt-network-monitor.exe")
+    print("Build complete!")
+    print("  dist/mqtt-network-monitor.exe")
+    print("  dist/nssm.exe")
     print()
-    print("Double-click the exe to install. That's it.")
+    print("Both files must be in the same folder. Double-click mqtt-network-monitor.exe to install.")
 
 if __name__ == "__main__":
     main()

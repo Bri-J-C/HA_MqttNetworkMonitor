@@ -1,20 +1,10 @@
-"""Windows service and installer for MQTT Network Monitor.
+"""Windows service management via NSSM (Non-Sucking Service Manager).
 
-Uses Windows Task Scheduler instead of sc.exe services — no service
-protocol handshake needed, works reliably with PyInstaller frozen exes.
+NSSM wraps our exe as a proper Windows service with full service protocol
+support, automatic restart on failure, and standard Services panel integration.
 
-Double-click behavior:
-  - Not installed yet → requests admin, launches install wizard.
-  - Already installed → restarts the task.
-
-CLI commands:
-    mqtt-network-monitor.exe install     Launch install wizard
-    mqtt-network-monitor.exe uninstall   Remove task + files
-    mqtt-network-monitor.exe start       Start the task
-    mqtt-network-monitor.exe stop        Stop the task
-    mqtt-network-monitor.exe status      Check task status
-    mqtt-network-monitor.exe run         Run in foreground (debugging)
-    mqtt-network-monitor.exe service     (internal) Run the monitor process
+Double-click: launches install wizard if not installed, shows status if running.
+CLI commands: install, uninstall, start, stop, status, run, service
 """
 
 import os
@@ -24,12 +14,13 @@ import subprocess
 import ctypes
 from pathlib import Path
 
-TASK_NAME = "MQTTNetworkMonitor"
-SERVICE_NAME = TASK_NAME  # Alias for compatibility with installer_gui imports
+SERVICE_NAME = "MQTTNetworkMonitor"
 SERVICE_DISPLAY = "MQTT Network Monitor"
 SERVICE_DESC = "Monitors this PC and reports to MQTT Network Monitor addon"
 INSTALL_DIR = Path(os.environ.get("PROGRAMFILES", r"C:\Program Files")) / "MQTTNetworkMonitor"
 CONFIG_NAME = "config.yaml"
+NSSM_NAME = "nssm.exe"
+
 
 def is_admin():
     try:
@@ -37,110 +28,126 @@ def is_admin():
     except Exception:
         return False
 
+
 def elevate_and_rerun(args=None):
-    """Re-launch the current exe with admin privileges via UAC prompt."""
+    """Re-launch with admin privileges via UAC prompt."""
     if getattr(sys, 'frozen', False):
         exe = sys.executable
+        params = ' '.join(args or sys.argv[1:])
     else:
         exe = sys.executable
-        args = [sys.argv[0]] + (args or sys.argv[1:])
-    params = ' '.join(args or sys.argv[1:])
+        script_args = [sys.argv[0]] + (args or sys.argv[1:])
+        params = ' '.join(script_args)
     ctypes.windll.shell32.ShellExecuteW(None, "runas", exe, params, None, 1)
     sys.exit(0)
+
 
 def get_exe_path():
     if getattr(sys, 'frozen', False):
         return Path(sys.executable)
     return Path(__file__)
 
-def is_installed():
-    """Check if the scheduled task exists."""
-    result = subprocess.run(
-        ["schtasks.exe", "/Query", "/TN", TASK_NAME],
-        capture_output=True, text=True
-    )
-    return result.returncode == 0
 
-def is_running():
-    """Check if the monitor process is running."""
-    result = subprocess.run(
-        ["tasklist.exe", "/FI", f"IMAGENAME eq mqtt-network-monitor.exe"],
-        capture_output=True, text=True
-    )
-    return "mqtt-network-monitor.exe" in result.stdout
+def get_nssm_path():
+    """Find nssm.exe — bundled in install dir or next to source."""
+    locations = [
+        INSTALL_DIR / NSSM_NAME,
+        get_exe_path().parent / NSSM_NAME,
+        get_exe_path().parent / "nssm" / NSSM_NAME,
+    ]
+    for p in locations:
+        if p.exists():
+            return p
+    return None
 
-def run_sc(args, check=True):
-    """Run schtasks.exe with arguments."""
-    cmd = ["schtasks.exe"] + args
+
+def _nssm(args, check=True):
+    """Run nssm.exe with arguments."""
+    nssm = get_nssm_path()
+    if not nssm:
+        print(f"Error: nssm.exe not found")
+        return subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="nssm not found")
+    cmd = [str(nssm)] + args
     result = subprocess.run(cmd, capture_output=True, text=True)
     if check and result.returncode != 0:
-        print(f"  Error: {result.stderr.strip() or result.stdout.strip()}")
+        err = result.stderr.strip() or result.stdout.strip()
+        if err:
+            print(f"  {err}")
     return result
 
-def register_task(exe_path):
-    """Register a scheduled task that runs at startup and restarts on failure."""
-    exe_path = str(exe_path)
 
-    # Create XML task definition for more control than schtasks CLI
-    xml = f"""<?xml version="1.0" encoding="UTF-16"?>
-<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-  <RegistrationInfo>
-    <Description>{SERVICE_DESC}</Description>
-  </RegistrationInfo>
-  <Triggers>
-    <BootTrigger>
-      <Enabled>true</Enabled>
-      <Delay>PT30S</Delay>
-    </BootTrigger>
-  </Triggers>
-  <Principals>
-    <Principal>
-      <UserId>S-1-5-18</UserId>
-      <RunLevel>HighestAvailable</RunLevel>
-    </Principal>
-  </Principals>
-  <Settings>
-    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-    <AllowHardTerminate>true</AllowHardTerminate>
-    <StartWhenAvailable>true</StartWhenAvailable>
-    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>
-    <AllowStartOnDemand>true</AllowStartOnDemand>
-    <Enabled>true</Enabled>
-    <Hidden>false</Hidden>
-    <RestartOnFailure>
-      <Interval>PT1M</Interval>
-      <Count>999</Count>
-    </RestartOnFailure>
-    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
-  </Settings>
-  <Actions>
-    <Exec>
-      <Command>{exe_path}</Command>
-      <Arguments>service</Arguments>
-      <WorkingDirectory>{str(INSTALL_DIR)}</WorkingDirectory>
-    </Exec>
-  </Actions>
-</Task>"""
+def is_installed():
+    """Check if the service is registered."""
+    nssm = get_nssm_path()
+    if not nssm:
+        # Fall back to sc.exe query
+        result = subprocess.run(["sc.exe", "query", SERVICE_NAME],
+                                capture_output=True, text=True)
+        return result.returncode == 0
+    result = _nssm(["status", SERVICE_NAME], check=False)
+    # NSSM returns 0 for status query if service exists
+    return "SERVICE_STOPPED" in result.stdout or "SERVICE_RUNNING" in result.stdout or "SERVICE_PAUSED" in result.stdout
 
-    # Write XML to temp file
-    xml_path = INSTALL_DIR / "task.xml"
-    xml_path.write_text(xml, encoding="utf-16")
 
-    # Register the task
-    result = subprocess.run(
-        ["schtasks.exe", "/Create", "/TN", TASK_NAME, "/XML", str(xml_path), "/F"],
-        capture_output=True, text=True
-    )
+def is_running():
+    """Check if the service is running."""
+    result = _nssm(["status", SERVICE_NAME], check=False)
+    return "SERVICE_RUNNING" in result.stdout
 
-    # Clean up XML
-    try:
-        xml_path.unlink()
-    except Exception:
-        pass
+
+def run_sc(args, check=True):
+    """Compatibility alias — routes through nssm."""
+    return _nssm(args, check)
+
+
+def register_service(exe_path):
+    """Register a Windows service via NSSM."""
+    nssm = get_nssm_path()
+    if not nssm:
+        return subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="nssm not found")
+
+    nssm_str = str(nssm)
+    exe_str = str(exe_path)
+
+    # Install the service
+    result = subprocess.run([nssm_str, "install", SERVICE_NAME, exe_str, "service"],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        return result
+
+    # Configure service properties
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "DisplayName", SERVICE_DISPLAY],
+                   capture_output=True)
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "Description", SERVICE_DESC],
+                   capture_output=True)
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "AppDirectory", str(INSTALL_DIR)],
+                   capture_output=True)
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "Start", "SERVICE_AUTO_START"],
+                   capture_output=True)
+
+    # Restart on failure: restart after 10 seconds
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "AppExit", "Default", "Restart"],
+                   capture_output=True)
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "AppRestartDelay", "10000"],
+                   capture_output=True)
+
+    # Redirect stdout/stderr to log file
+    log_path = str(INSTALL_DIR / "monitor.log")
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "AppStdout", log_path],
+                   capture_output=True)
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "AppStderr", log_path],
+                   capture_output=True)
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "AppStdoutCreationDisposition", "4"],
+                   capture_output=True)
+    subprocess.run([nssm_str, "set", SERVICE_NAME, "AppStderrCreationDisposition", "4"],
+                   capture_output=True)
 
     return result
+
+
+# Alias for installer_gui compatibility
+register_task = register_service
+
 
 def install():
     """Launch the GUI installer wizard."""
@@ -150,64 +157,60 @@ def install():
     from mqtt_monitor.installer_gui import main as installer_main
     installer_main()
 
+
 def uninstall():
     if not is_admin():
         elevate_and_rerun(["uninstall"])
         return
 
     print("Uninstalling MQTT Network Monitor...")
-
-    # Stop the process
-    subprocess.run(
-        ["taskkill.exe", "/F", "/IM", "mqtt-network-monitor.exe"],
-        capture_output=True
-    )
-
-    # Remove the scheduled task
-    subprocess.run(
-        ["schtasks.exe", "/Delete", "/TN", TASK_NAME, "/F"],
-        capture_output=True
-    )
-
-    print(f"  Task removed.")
+    _nssm(["stop", SERVICE_NAME], check=False)
+    _nssm(["remove", SERVICE_NAME, "confirm"], check=False)
+    print(f"  Service removed.")
     print(f"  Files remain at {INSTALL_DIR} (delete manually if desired)")
     print()
     input("Press Enter to close...")
+
 
 def start():
     if not is_admin():
         elevate_and_rerun(["start"])
         return
-    result = subprocess.run(
-        ["schtasks.exe", "/Run", "/TN", TASK_NAME],
-        capture_output=True, text=True
-    )
+    result = _nssm(["start", SERVICE_NAME])
     if result.returncode == 0:
-        print("Monitor started.")
-    else:
-        print(f"Failed to start: {result.stderr.strip() or result.stdout.strip()}")
+        print("Service started.")
+
 
 def stop():
     if not is_admin():
         elevate_and_rerun(["stop"])
         return
-    subprocess.run(
-        ["taskkill.exe", "/F", "/IM", "mqtt-network-monitor.exe"],
-        capture_output=True
-    )
-    print("Monitor stopped.")
+    result = _nssm(["stop", SERVICE_NAME])
+    if result.returncode == 0:
+        print("Service stopped.")
+
 
 def status():
-    if is_installed():
-        running = is_running()
-        print(f"Task: Registered")
-        print(f"Status: {'Running' if running else 'Stopped'}")
-        print(f"Config: {INSTALL_DIR / CONFIG_NAME}")
+    if not get_nssm_path():
+        print("Not installed (nssm.exe not found).")
+        return
+    result = _nssm(["status", SERVICE_NAME], check=False)
+    stdout = result.stdout.strip()
+    if "SERVICE_RUNNING" in stdout:
+        print(f"Status: Running")
+    elif "SERVICE_STOPPED" in stdout:
+        print(f"Status: Stopped")
     else:
-        print("Not installed.")
+        print(f"Not installed.")
+        return
+    print(f"Config: {INSTALL_DIR / CONFIG_NAME}")
+    log = INSTALL_DIR / "monitor.log"
+    if log.exists():
+        print(f"Log: {log}")
+
 
 def run_as_service():
-    """Entry point when running as a scheduled task."""
+    """Entry point when NSSM starts the exe with 'service' arg."""
     import logging
     logging.basicConfig(
         level=logging.INFO,
@@ -230,6 +233,7 @@ def run_as_service():
     client = MQTTMonitorClient(config, config_dir=INSTALL_DIR)
     client.run()
 
+
 def run_foreground():
     """Run the monitor in the foreground (for debugging)."""
     from mqtt_monitor.client import main
@@ -237,8 +241,9 @@ def run_foreground():
         sys.argv = [sys.argv[0], str(INSTALL_DIR / CONFIG_NAME)]
     main()
 
+
 def auto_run():
-    """Default double-click behavior: launch installer wizard or show status."""
+    """Default double-click behavior."""
     if not is_installed():
         if not is_admin():
             elevate_and_rerun()
@@ -252,17 +257,20 @@ def auto_run():
             start()
             input("Press Enter to close...")
     else:
-        print("MQTT Network Monitor is already running.")
+        print("MQTT Network Monitor is running.")
         print()
         print(f"Config: {INSTALL_DIR / CONFIG_NAME}")
-        print(f"Status: Running")
+        log = INSTALL_DIR / "monitor.log"
+        if log.exists():
+            print(f"Log: {log}")
         print()
-        print("Options:")
-        print("  mqtt-network-monitor.exe stop        Stop the monitor")
-        print("  mqtt-network-monitor.exe uninstall   Remove the task")
-        print("  mqtt-network-monitor.exe run         Run in foreground")
+        print("Commands:")
+        print("  mqtt-network-monitor.exe stop        Stop")
+        print("  mqtt-network-monitor.exe uninstall   Remove")
+        print("  mqtt-network-monitor.exe run         Foreground mode")
         print()
         input("Press Enter to close...")
+
 
 def handle_cli():
     """Handle CLI commands. Returns True if handled."""

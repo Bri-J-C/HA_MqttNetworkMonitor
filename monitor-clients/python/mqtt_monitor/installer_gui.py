@@ -24,9 +24,10 @@ from mqtt_monitor.windows_service import (
     SERVICE_DISPLAY,
     SERVICE_DESC,
     CONFIG_NAME,
+    NSSM_NAME,
     get_exe_path,
-    run_sc,
-    register_task,
+    get_nssm_path,
+    register_service,
     is_installed,
 )
 
@@ -643,10 +644,13 @@ class InstallerWizard:
             time.sleep(0.3)
 
             # Step 1: Copy files
-            # Kill any running instance first (might be locking the exe)
+            # Stop existing service and kill process first
+            nssm = get_nssm_path()
+            if nssm:
+                subprocess.run([str(nssm), "stop", SERVICE_NAME], capture_output=True)
             subprocess.run(["taskkill.exe", "/F", "/IM", "mqtt-network-monitor.exe"],
                            capture_output=True)
-            time.sleep(0.5)
+            time.sleep(1)
 
             if getattr(sys, 'frozen', False):
                 exe_src = Path(sys.executable)
@@ -659,28 +663,6 @@ class InstallerWizard:
                     shutil.copy2(exe_src, exe_dst)
                 elif not exe_dst.exists():
                     raise FileNotFoundError(f"Source exe not found: {exe_src}")
-            except PermissionError:
-                # Exe still locked — try copy with temp name then rename
-                try:
-                    tmp_dst = INSTALL_DIR / (exe_name + ".new")
-                    shutil.copy2(exe_src, tmp_dst)
-                    # Create a bat script to replace after we exit
-                    bat = INSTALL_DIR / "_update.bat"
-                    bat.write_text(
-                        f'@echo off\ntimeout /t 2 /nobreak >nul\n'
-                        f'move /y "{tmp_dst}" "{exe_dst}"\n'
-                        f'del "%~f0"\n',
-                        encoding="utf-8"
-                    )
-                    subprocess.Popen(["cmd.exe", "/c", str(bat)],
-                                     creationflags=subprocess.CREATE_NO_WINDOW)
-                except Exception as copy_err2:
-                    ui(lambda: self._mark_step(1, False))
-                    ui(lambda: self.status_label.configure(
-                        text=f"Failed to copy exe: {copy_err2}",
-                        style="Error.TLabel"))
-                    ui(lambda: self.close_btn.pack(pady=(16, 0)))
-                    return
             except Exception as copy_err:
                 ui(lambda: self._mark_step(1, False))
                 ui(lambda: self.status_label.configure(
@@ -688,6 +670,15 @@ class InstallerWizard:
                     style="Error.TLabel"))
                 ui(lambda: self.close_btn.pack(pady=(16, 0)))
                 return
+
+            # Copy NSSM alongside the exe
+            nssm_src = exe_src.parent / NSSM_NAME
+            if not nssm_src.exists():
+                nssm_src = exe_src.parent / "nssm" / NSSM_NAME
+            nssm_dst = INSTALL_DIR / NSSM_NAME
+            if nssm_src.exists() and nssm_src.resolve() != nssm_dst.resolve():
+                shutil.copy2(nssm_src, nssm_dst)
+
             ui(lambda: self._mark_step(1, True))
             time.sleep(0.3)
 
@@ -698,26 +689,28 @@ class InstallerWizard:
             ui(lambda: self._mark_step(2, True))
             time.sleep(0.3)
 
-            # Step 3: Register scheduled task
-            # Remove old task if exists
+            # Step 3: Register Windows service via NSSM
+            # Remove old service if exists
             if is_installed():
-                subprocess.run(["taskkill.exe", "/F", "/IM", "mqtt-network-monitor.exe"],
-                               capture_output=True)
-                subprocess.run(["schtasks.exe", "/Delete", "/TN", SERVICE_NAME, "/F"],
-                               capture_output=True)
-                time.sleep(0.5)
+                nssm = get_nssm_path()
+                if nssm:
+                    subprocess.run([str(nssm), "remove", SERVICE_NAME, "confirm"],
+                                   capture_output=True)
+                    time.sleep(0.5)
 
-            result = register_task(exe_dst)
+            result = register_service(exe_dst)
             reg_ok = result.returncode == 0
             ui(lambda: self._mark_step(3, reg_ok))
             time.sleep(0.3)
 
-            # Step 4: Start the task
-            result = subprocess.run(
-                ["schtasks.exe", "/Run", "/TN", SERVICE_NAME],
-                capture_output=True, text=True
-            )
-            start_ok = result.returncode == 0
+            # Step 4: Start the service
+            nssm = get_nssm_path()
+            if nssm:
+                result = subprocess.run([str(nssm), "start", SERVICE_NAME],
+                                        capture_output=True, text=True)
+                start_ok = result.returncode == 0
+            else:
+                start_ok = False
             ui(lambda: self._mark_step(4, start_ok))
 
             if reg_ok and start_ok:
