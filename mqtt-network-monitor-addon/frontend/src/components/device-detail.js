@@ -707,6 +707,7 @@ class DeviceDetail extends LitElement {
     const custom_commands = { ...(group?.custom_commands || {}), [name]: shell };
     await this._saveGroupUpdate({ custom_commands });
     this._groups = { ...this._groups, [this.groupId]: { ...group, custom_commands } };
+    this.requestUpdate();
   }
 
   async _removeGroupCommand(name) {
@@ -715,6 +716,7 @@ class DeviceDetail extends LitElement {
     delete custom_commands[name];
     await this._saveGroupUpdate({ custom_commands });
     this._groups = { ...this._groups, [this.groupId]: { ...group, custom_commands } };
+    this.requestUpdate();
   }
 
   async _saveGroupSensor({ key, sensor, oldKey }) {
@@ -723,15 +725,17 @@ class DeviceDetail extends LitElement {
       delete custom_sensors[oldKey];
     }
     custom_sensors[key] = sensor;
-    this._customSensors = custom_sensors;
+    this._customSensors = { ...custom_sensors };
     await this._saveGroupUpdate({ custom_sensors });
+    this.requestUpdate();
   }
 
   async _removeGroupSensor(key) {
     const custom_sensors = { ...this._customSensors };
     delete custom_sensors[key];
-    this._customSensors = custom_sensors;
+    this._customSensors = { ...custom_sensors };
     await this._saveGroupUpdate({ custom_sensors });
+    this.requestUpdate();
   }
 
   async _setGroupTransform(attr, transform) {
