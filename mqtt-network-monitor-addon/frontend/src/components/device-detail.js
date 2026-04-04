@@ -148,19 +148,7 @@ class DeviceDetail extends LitElement {
     this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update') {
         if (this._isGroupMode) {
-          // Update attribute values from member devices but preserve group settings
-          const group = this._groups?.[this.groupId];
-          if (group && (group.device_ids || []).includes(data.device_id)) {
-            const memberAttrs = data.device?.attributes || {};
-            const currentAttrs = { ...(this.device?.attributes || {}) };
-            // Merge new attribute values from this member
-            for (const [name, val] of Object.entries(memberAttrs)) {
-              currentAttrs[name] = val;
-            }
-            // Remove attributes that were deleted (not in any member anymore)
-            // by checking if the attribute exists in the updated device
-            this.device = { ...this.device, attributes: currentAttrs };
-          }
+          // Don't update values while editing — too distracting
           return;
         }
         if (data.device_id === this.deviceId) {
@@ -259,6 +247,34 @@ class DeviceDetail extends LitElement {
       this._effectiveSettings = null;
     } catch (e) {
       console.error('Failed to load group aggregate:', e);
+    }
+  }
+
+  async _refreshGroupAggregate() {
+    // Reload attribute data from member devices but preserve current group settings.
+    try {
+      const groups = await fetchGroups();
+      const group = groups[this.groupId];
+      if (!group) return;
+      const allDevices = await fetchDevices();
+      const members = (group.device_ids || []).map(id => allDevices[id]).filter(Boolean);
+
+      const aggregatedAttrs = {};
+      for (const member of members) {
+        for (const [name, data] of Object.entries(member.attributes || {})) {
+          if (!aggregatedAttrs[name]) {
+            aggregatedAttrs[name] = { ...data };
+          }
+        }
+      }
+
+      // Update attributes only, preserve everything else from local state
+      this.device = { ...this.device, attributes: aggregatedAttrs };
+      this._groups = { ...this._groups, [this.groupId]: group };
+      this._customSensors = group.custom_sensors || {};
+      this.requestUpdate();
+    } catch (e) {
+      // Silently ignore refresh errors
     }
   }
 
@@ -728,6 +744,8 @@ class DeviceDetail extends LitElement {
     this._customSensors = { ...custom_sensors };
     await this._saveGroupUpdate({ custom_sensors });
     this.requestUpdate();
+    // Reload aggregate after delay to pick up new attribute from client
+    setTimeout(() => this._refreshGroupAggregate(), 3000);
   }
 
   async _removeGroupSensor(key) {
@@ -736,6 +754,8 @@ class DeviceDetail extends LitElement {
     this._customSensors = { ...custom_sensors };
     await this._saveGroupUpdate({ custom_sensors });
     this.requestUpdate();
+    // Reload aggregate to remove the deleted attribute
+    setTimeout(() => this._refreshGroupAggregate(), 1000);
   }
 
   async _setGroupTransform(attr, transform) {
