@@ -12,8 +12,6 @@ logger = logging.getLogger(__name__)
 DEVICES_FILE = "devices.json"
 GROUPS_FILE = "groups.json"
 
-_UNSET = object()  # Named sentinel for "no value provided"
-
 
 class DeviceRegistry:
     def __init__(self, storage: Storage):
@@ -294,51 +292,32 @@ class DeviceRegistry:
             device["server_tags"] = sorted(set(tags))
             self._save_devices()
 
-    def update_group(self, group_id: str, name: str | None = None,
-                     device_ids: list[str] | None = None,
-                     custom_commands: dict | None = None,
-                     custom_sensors: dict | None = None,
-                     thresholds: dict | None = None,
-                     crit_thresholds: dict | None = None,
-                     hidden_commands: list | None = None,
-                     interval: int | None = _UNSET,
-                     attribute_transforms: dict | None = None) -> dict | None:
-        group = self._groups.get(group_id)
-        if not group:
-            return None
-        if name is not None:
-            group["name"] = name
-        if device_ids is not None:
-            old_ids = set(group.get("device_ids") or [])
-            new_ids = set(device_ids)
-            # Devices removed from this group: clear group_policy if it pointed here
-            for did in old_ids - new_ids:
-                device = self._devices.get(did)
-                if device is not None and device.get("group_policy") == group_id:
-                    device["group_policy"] = None
-            # ALL current members should have group_policy set to this group
-            for did in new_ids:
-                device = self._devices.get(did)
-                if device is not None:
-                    device["group_policy"] = group_id
-            self._save_devices()
-            group["device_ids"] = device_ids
-        if custom_commands is not None:
-            group["custom_commands"] = custom_commands
-        if custom_sensors is not None:
-            group["custom_sensors"] = custom_sensors
-        if thresholds is not None:
-            group["thresholds"] = thresholds
-        if crit_thresholds is not None:
-            group["crit_thresholds"] = crit_thresholds
-        if hidden_commands is not None:
-            group["hidden_commands"] = hidden_commands
-        if interval is not _UNSET:
-            group["interval"] = interval
-        if attribute_transforms is not None:
-            group["attribute_transforms"] = attribute_transforms
-        self._save_groups()
-        return group
+    def update_group(self, group_id: str, fields: dict) -> dict | None:
+        with self._lock:
+            group = self._groups.get(group_id)
+            if not group:
+                return None
+
+            # Handle device_ids specially — need to update device.group_policy refs
+            if "device_ids" in fields:
+                old_ids = set(group.get("device_ids") or [])
+                new_ids = set(fields["device_ids"])
+                # Devices removed: clear group_policy
+                for did in old_ids - new_ids:
+                    device = self._devices.get(did)
+                    if device is not None and device.get("group_policy") == group_id:
+                        device["group_policy"] = None
+                # Current members: set group_policy
+                for did in new_ids:
+                    device = self._devices.get(did)
+                    if device is not None:
+                        device["group_policy"] = group_id
+                self._save_devices()
+
+            # Merge all fields into group
+            group.update(fields)
+            self._save_groups()
+            return dict(group)
 
     def delete_group(self, group_id: str) -> bool:
         if group_id not in self._groups:
