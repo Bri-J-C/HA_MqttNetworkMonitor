@@ -140,7 +140,7 @@ class DeviceCommands extends LitElement {
         ` : ''}
         ${this.commandResult ? html`<div class="cmd-result">${this.commandResult}</div>` : ''}
 
-        ${supportsShell && serverNames.length > 0 ? html`
+        ${serverNames.length > 0 ? html`
           <div style="margin-top: 8px; font-size: 11px; color: #fff; margin-bottom: 6px;">Server-managed commands</div>
           <table class="sensor-table">
             <thead><tr><th>Name</th><th>Shell Command</th><th></th></tr></thead>
@@ -151,7 +151,7 @@ class DeviceCommands extends LitElement {
                   <td class="mono">${shellCmd}</td>
                   <td>
                     <div class="sensor-actions">
-                      <button class="sensor-btn edit" @click=${() => this._startEdit(name, shellCmd)}>Edit</button>
+                      ${supportsShell ? html`<button class="sensor-btn edit" @click=${() => this._startEdit(name, shellCmd)}>Edit</button>` : ''}
                       <button class="sensor-btn remove" @click=${() => this._onRemove(name)}>Delete</button>
                     </div>
                   </td>

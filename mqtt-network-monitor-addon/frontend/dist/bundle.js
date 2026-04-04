@@ -191,13 +191,13 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/4 9:42"}</span>
+        <span class="version">v0.2.1 build ${"4/4 9:46"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/4 9:42"}</span>
+        <span class="version">build ${"4/4 9:46"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
@@ -662,7 +662,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         `:""}
         ${this.commandResult?B`<div class="cmd-result">${this.commandResult}</div>`:""}
 
-        ${a&&o.length>0?B`
+        ${o.length>0?B`
           <div style="margin-top: 8px; font-size: 11px; color: #fff; margin-bottom: 6px;">Server-managed commands</div>
           <table class="sensor-table">
             <thead><tr><th>Name</th><th>Shell Command</th><th></th></tr></thead>
@@ -673,7 +673,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
                   <td class="mono">${e}</td>
                   <td>
                     <div class="sensor-actions">
-                      <button class="sensor-btn edit" @click=${()=>this._startEdit(t,e)}>Edit</button>
+                      ${a?B`<button class="sensor-btn edit" @click=${()=>this._startEdit(t,e)}>Edit</button>`:""}
                       <button class="sensor-btn remove" @click=${()=>this._onRemove(t)}>Delete</button>
                     </div>
                   </td>
