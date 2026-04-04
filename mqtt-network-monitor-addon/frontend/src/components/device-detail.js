@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import {
-  fetchDevice, deleteDevice, deleteAttribute, unhideAttribute, hideCommand, unhideCommand, sendCommand, addDeviceTags, removeDeviceTag,
+  fetchDevice, fetchDevices, deleteDevice, deleteAttribute, unhideAttribute, hideCommand, unhideCommand, sendCommand, addDeviceTags, removeDeviceTag,
   fetchGroups, createGroup, updateGroup,
   fetchEffectiveSettings, updateDeviceSettings,
 } from '../services/api.js';
@@ -14,6 +14,7 @@ import './device-config.js';
 class DeviceDetail extends LitElement {
   static properties = {
     deviceId:           { type: String },
+    groupId:            { type: String },
     device:             { type: Object },
     commandResult:      { type: String },
     _groups:            { type: Object,  state: true },
@@ -132,13 +133,27 @@ class DeviceDetail extends LitElement {
     this._serverCommands    = {};
   }
 
+  get _isGroupMode() { return !!this.groupId && !this.deviceId; }
+
   connectedCallback() {
     super.connectedCallback();
-    this._loadDevice();
     this._loadGroups();
+    if (this._isGroupMode) {
+      this._loadGroupAggregate();
+    } else {
+      this._loadDevice();
+    }
     this._wsUnsub = wsService.onMessage((data) => {
-      if (data.type === 'device_update' && data.device_id === this.deviceId) {
-        this._updateDeviceData(data.device);
+      if (data.type === 'device_update') {
+        if (this._isGroupMode) {
+          // Refresh aggregate if a group member updated
+          const group = this._groups?.[this.groupId];
+          if (group && (group.device_ids || []).includes(data.device_id)) {
+            this._loadGroupAggregate();
+          }
+        } else if (data.device_id === this.deviceId) {
+          this._updateDeviceData(data.device);
+        }
       }
     });
   }
@@ -165,6 +180,60 @@ class DeviceDetail extends LitElement {
     const newJson = JSON.stringify(merged);
     if (oldJson !== newJson) {
       this.device = merged;
+    }
+  }
+
+  async _loadGroupAggregate() {
+    try {
+      const groups = await fetchGroups();
+      this._groups = groups;
+      const group = groups[this.groupId];
+      if (!group) return;
+      const allDevices = await fetchDevices();
+      const memberIds = group.device_ids || [];
+      const members = memberIds.map(id => allDevices[id]).filter(Boolean);
+
+      // Build aggregate attributes: union of all member attributes
+      const aggregatedAttrs = {};
+      for (const member of members) {
+        for (const [name, data] of Object.entries(member.attributes || {})) {
+          if (!aggregatedAttrs[name]) {
+            aggregatedAttrs[name] = { ...data };
+          }
+        }
+      }
+
+      // Build aggregate commands: union of all member commands
+      const aggregatedCommands = new Set();
+      for (const member of members) {
+        for (const cmd of (member.allowed_commands || [])) {
+          aggregatedCommands.add(cmd);
+        }
+      }
+
+      // Create virtual device representing the group
+      this.device = {
+        device_name: group.name,
+        device_type: `Group · ${memberIds.length} device${memberIds.length !== 1 ? 's' : ''}`,
+        status: members.some(m => m.status === 'online') ? 'online' : 'offline',
+        attributes: aggregatedAttrs,
+        attribute_transforms: group.attribute_transforms || {},
+        threshold_overrides: group.thresholds || {},
+        crit_threshold_overrides: group.crit_thresholds || {},
+        allowed_commands: [...aggregatedCommands],
+        hidden_commands: group.hidden_commands || [],
+        tags: [],
+        server_tags: [],
+        group_policy: this.groupId,
+        _isGroupAggregate: true,
+      };
+      this._configInterval = group.interval ?? 30;
+      this._serverCommands = {};
+      this._customSensors = group.custom_sensors || {};
+      this._haOverrides = {};
+      this._effectiveSettings = null;
+    } catch (e) {
+      console.error('Failed to load group aggregate:', e);
     }
   }
 
@@ -198,30 +267,36 @@ class DeviceDetail extends LitElement {
   render() {
     if (!this.device) return html`<div style="padding: 40px; text-align: center; color: #fff;">Loading...</div>`;
     const d = this.device;
+    const isGroup = this._isGroupMode;
     const statusColor = d.status === 'online' ? '#04d65c' : d.status === 'offline' ? '#ef5350' : '#ffb74d';
 
     return html`
       <!-- 1. Header -->
       <div class="header">
         <div class="header-left">
-          <span class="title">${d.device_name || this.deviceId}</span>
+          <span class="title">${isGroup ? '⚙ ' : ''}${d.device_name || this.deviceId || this.groupId}</span>
           <span class="device-type">${d.device_type || ''}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span class="status-badge" style="background: ${statusColor}20; color: ${statusColor}">
-            ${d.status}
-          </span>
-          <button class="cmd-btn danger" style="font-size: 11px; padding: 4px 10px;"
-            @click=${this._deleteDevice}>Delete</button>
+          ${!isGroup ? html`
+            <span class="status-badge" style="background: ${statusColor}20; color: ${statusColor}">
+              ${d.status}
+            </span>
+            <button class="cmd-btn danger" style="font-size: 11px; padding: 4px 10px;"
+              @click=${this._deleteDevice}>Delete</button>
+          ` : html`
+            <span style="font-size: 11px; color: rgba(255,255,255,0.4);">Group Policy Editor</span>
+          `}
           <button class="close-btn" @click=${() => this.dispatchEvent(new CustomEvent('back'))}>&#10005;</button>
         </div>
       </div>
 
-      <!-- 2. Tags -->
-      ${this._renderTagsSection()}
-
-      <!-- 3. Group Policy -->
-      ${this._renderGroupPolicy()}
+      ${!isGroup ? html`
+        <!-- 2. Tags -->
+        ${this._renderTagsSection()}
+        <!-- 3. Group Policy -->
+        ${this._renderGroupPolicy()}
+      ` : ''}
 
       <!-- 4. Attributes + HA Exposure + Thresholds -->
       <device-attributes
@@ -241,30 +316,32 @@ class DeviceDetail extends LitElement {
         @transform-changed=${(e) => this._setAttributeTransform(e.detail.attr, e.detail.transform)}
       ></device-attributes>
 
-      <!-- 5. Network -->
-      ${this._renderNetwork()}
+      ${!isGroup ? html`
+        <!-- 5. Network -->
+        ${this._renderNetwork()}
 
-      <!-- 6. Commands -->
-      <device-commands
-        .device=${this.device}
-        .serverCommands=${this._serverCommands}
-        .commandResult=${this.commandResult}
-        @command-send=${(e) => this._sendCmd(e.detail.command)}
-        @command-hide=${(e) => this._hideCommand(e.detail.name)}
-        @command-unhide=${(e) => this._unhideCommand(e.detail.name)}
-        @server-command-save=${(e) => this._saveServerCommand(e.detail)}
-        @server-command-remove=${(e) => this._removeServerCommand(e.detail.name)}
-      ></device-commands>
+        <!-- 6. Commands -->
+        <device-commands
+          .device=${this.device}
+          .serverCommands=${this._serverCommands}
+          .commandResult=${this.commandResult}
+          @command-send=${(e) => this._sendCmd(e.detail.command)}
+          @command-hide=${(e) => this._hideCommand(e.detail.name)}
+          @command-unhide=${(e) => this._unhideCommand(e.detail.name)}
+          @server-command-save=${(e) => this._saveServerCommand(e.detail)}
+          @server-command-remove=${(e) => this._removeServerCommand(e.detail.name)}
+        ></device-commands>
 
-      <!-- 7. Agent Configuration -->
-      <device-config
-        .device=${this.device}
-        .configInterval=${this._configInterval}
-        .customSensors=${this._customSensors}
-        @interval-changed=${(e) => this._onIntervalChange(e.detail.value)}
-        @sensor-save=${(e) => this._saveSensor(e.detail)}
-        @sensor-remove=${(e) => this._removeSensor(e.detail.key)}
-      ></device-config>
+        <!-- 7. Agent Configuration -->
+        <device-config
+          .device=${this.device}
+          .configInterval=${this._configInterval}
+          .customSensors=${this._customSensors}
+          @interval-changed=${(e) => this._onIntervalChange(e.detail.value)}
+          @sensor-save=${(e) => this._saveSensor(e.detail)}
+          @sensor-remove=${(e) => this._removeSensor(e.detail.key)}
+        ></device-config>
+      ` : ''}
 
       ${this._showGroupDialog ? this._renderGroupDialog() : ''}
     `;
@@ -446,6 +523,7 @@ class DeviceDetail extends LitElement {
   }
 
   async _setThreshold(name, value, op) {
+    if (this._isGroupMode) return this._setGroupThreshold(name, value, op);
     const overrides = { ...(this.device.threshold_overrides || {}) };
     if (value === '' || value == null) {
       delete overrides[name];
@@ -462,6 +540,7 @@ class DeviceDetail extends LitElement {
   }
 
   async _setCritThreshold(name, value, op) {
+    if (this._isGroupMode) return this._setGroupCritThreshold(name, value, op);
     const overrides = { ...(this.device.crit_threshold_overrides || {}) };
     if (value === '' || value == null) {
       delete overrides[name];
@@ -477,6 +556,7 @@ class DeviceDetail extends LitElement {
   }
 
   _effectiveTransforms() {
+    if (this._isGroupMode) return this.device?.attribute_transforms || {};
     const groupId = this.device?.group_policy;
     const group = groupId ? this._groups[groupId] : null;
     const groupTransforms = group?.attribute_transforms || {};
@@ -485,12 +565,14 @@ class DeviceDetail extends LitElement {
   }
 
   _groupTransforms() {
+    if (this._isGroupMode) return {};
     const groupId = this.device?.group_policy;
     const group = groupId ? this._groups[groupId] : null;
     return group?.attribute_transforms || {};
   }
 
   async _setAttributeTransform(attr, transform) {
+    if (this._isGroupMode) return this._setGroupTransform(attr, transform);
     const transforms = { ...(this.device?.attribute_transforms || {}) };
     if (transform) {
       transforms[attr] = transform;
@@ -503,6 +585,52 @@ class DeviceDetail extends LitElement {
     } catch (e) {
       console.error('Failed to update attribute transform:', e);
     }
+  }
+
+  // ── Group mode save helpers ─────────────────────────────────────────────
+
+  async _saveGroupUpdate(fields) {
+    const group = this._groups?.[this.groupId];
+    if (!group) return;
+    try {
+      await updateGroup(this.groupId, { ...group, ...fields });
+      this._groups = { ...this._groups, [this.groupId]: { ...group, ...fields } };
+    } catch (e) {
+      console.error('Failed to update group:', e);
+    }
+  }
+
+  async _setGroupThreshold(name, value, op) {
+    const thresholds = { ...(this.device.threshold_overrides || {}) };
+    if (value === '' || value == null) {
+      delete thresholds[name];
+    } else {
+      thresholds[name] = { op: op || '>', value: Number(value) };
+    }
+    this.device = { ...this.device, threshold_overrides: thresholds };
+    await this._saveGroupUpdate({ thresholds });
+  }
+
+  async _setGroupCritThreshold(name, value, op) {
+    const crit_thresholds = { ...(this.device.crit_threshold_overrides || {}) };
+    if (value === '' || value == null) {
+      delete crit_thresholds[name];
+    } else {
+      crit_thresholds[name] = { op: op || '>', value: Number(value) };
+    }
+    this.device = { ...this.device, crit_threshold_overrides: crit_thresholds };
+    await this._saveGroupUpdate({ crit_thresholds });
+  }
+
+  async _setGroupTransform(attr, transform) {
+    const attribute_transforms = { ...(this.device?.attribute_transforms || {}) };
+    if (transform) {
+      attribute_transforms[attr] = transform;
+    } else {
+      delete attribute_transforms[attr];
+    }
+    this.device = { ...this.device, attribute_transforms: attribute_transforms };
+    await this._saveGroupUpdate({ attribute_transforms });
   }
 
   async _toggleCardAttribute({ name, pinned }) {

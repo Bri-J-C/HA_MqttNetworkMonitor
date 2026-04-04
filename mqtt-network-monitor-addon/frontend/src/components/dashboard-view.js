@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
-import { fetchDevices, fetchGroups } from '../services/api.js';
+import { fetchDevices, fetchGroups, updateGroup } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
 import './device-card.js';
 import './tag-picker.js';
@@ -13,6 +13,7 @@ class DashboardView extends LitElement {
     viewMode: { type: String },
     _groups: { type: Object, state: true },
     _collapsedGroups: { type: Object, state: true },
+    _selectedUngrouped: { type: Array, state: true },
   };
 
   static styles = [sharedStyles, css`
@@ -96,6 +97,30 @@ class DashboardView extends LitElement {
       font-size: 11px; color: #fff; text-transform: uppercase;
       letter-spacing: 1px; margin-bottom: 8px; margin-top: 4px;
     }
+    .edit-policy-btn {
+      background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2);
+      color: #00D4FF; padding: 3px 10px; border-radius: 4px;
+      font-size: 11px; cursor: pointer; margin-left: 8px;
+    }
+    .edit-policy-btn:hover { background: rgba(0,212,255,0.2); }
+    .select-toolbar {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 10px;
+      background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.15);
+      border-radius: 8px; padding: 8px 12px;
+    }
+    .select-toolbar span { font-size: 12px; color: rgba(255,255,255,0.7); }
+    .select-toolbar select, .select-toolbar button {
+      background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1);
+      color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;
+    }
+    .select-toolbar button { background: #00D4FF; color: #0d0d1f; border: none; font-weight: 600; }
+    .device-checkbox {
+      position: relative; cursor: pointer;
+    }
+    .device-checkbox input {
+      position: absolute; top: 8px; left: 8px; z-index: 2; cursor: pointer;
+      width: 16px; height: 16px; accent-color: #00D4FF;
+    }
 
     @media (max-width: 768px) {
       :host { padding: 12px; }
@@ -112,6 +137,7 @@ class DashboardView extends LitElement {
     this.viewMode = 'all';
     this._groups = {};
     this._collapsedGroups = {};
+    this._selectedUngrouped = [];
     this._wsUnsub = null;
     this._lastFetchTime = 0;
   }
@@ -277,10 +303,27 @@ class DashboardView extends LitElement {
       ${ungrouped.length > 0 ? html`
         <div class="group-section">
           <div class="ungrouped-header">Ungrouped (${ungrouped.length})</div>
+          ${this._selectedUngrouped.length > 0 ? html`
+            <div class="select-toolbar">
+              <span>${this._selectedUngrouped.length} selected</span>
+              <select id="group-assign-select">
+                ${groups.map(g => html`<option value=${g.id}>${g.name}</option>`)}
+              </select>
+              <button @click=${this._addSelectedToGroup}>Add to Group</button>
+              <button style="background: rgba(255,255,255,0.1); color: #fff;"
+                @click=${() => { this._selectedUngrouped = []; }}>Cancel</button>
+            </div>
+          ` : ''}
           <div class="grid">
             ${ungrouped.map(([id, device]) => html`
-              <device-card .device=${device} .deviceId=${id}
-                @click=${() => this._selectDevice(id)}></device-card>
+              <div class="device-checkbox">
+                <input type="checkbox"
+                  .checked=${this._selectedUngrouped.includes(id)}
+                  @change=${(e) => this._toggleUngroupedSelection(id, e.target.checked)}
+                  @click=${(e) => e.stopPropagation()}>
+                <device-card .device=${device} .deviceId=${id}
+                  @click=${() => this._selectDevice(id)}></device-card>
+              </div>
             `)}
           </div>
         </div>
@@ -310,6 +353,7 @@ class DashboardView extends LitElement {
               ${onlineCount}/${total} online
             </span>
           </div>
+          <button class="edit-policy-btn" @click=${(e) => { e.stopPropagation(); this._editGroupPolicy(g.id); }}>Edit Policy</button>
         </div>
         ${!isCollapsed ? html`
           <div class="group-body">
@@ -340,6 +384,36 @@ class DashboardView extends LitElement {
     this.dispatchEvent(new CustomEvent('device-select', {
       detail: { deviceId: id }, bubbles: true, composed: true,
     }));
+  }
+
+  _editGroupPolicy(groupId) {
+    this.dispatchEvent(new CustomEvent('group-edit', {
+      detail: { groupId }, bubbles: true, composed: true,
+    }));
+  }
+
+  _toggleUngroupedSelection(id, checked) {
+    if (checked) {
+      this._selectedUngrouped = [...this._selectedUngrouped, id];
+    } else {
+      this._selectedUngrouped = this._selectedUngrouped.filter(d => d !== id);
+    }
+  }
+
+  async _addSelectedToGroup() {
+    const select = this.shadowRoot.querySelector('#group-assign-select');
+    if (!select) return;
+    const groupId = select.value;
+    const group = this._groups[groupId];
+    if (!group) return;
+    const newDeviceIds = [...new Set([...(group.device_ids || []), ...this._selectedUngrouped])];
+    try {
+      await updateGroup(groupId, { ...group, device_ids: newDeviceIds });
+      this._selectedUngrouped = [];
+      this._loadGroups();
+    } catch (e) {
+      console.error('Failed to add devices to group:', e);
+    }
   }
 }
 

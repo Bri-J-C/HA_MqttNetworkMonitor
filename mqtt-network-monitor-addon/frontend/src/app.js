@@ -13,6 +13,7 @@ class NetworkMonitorApp extends LitElement {
   static properties = {
     currentView: { type: String },
     selectedDevice: { type: String },
+    selectedGroup: { type: String },
   };
 
   static styles = [sharedStyles, css`
@@ -50,6 +51,7 @@ class NetworkMonitorApp extends LitElement {
     super();
     this.currentView = 'dashboard';
     this.selectedDevice = null;
+    this.selectedGroup = null;
   }
 
   connectedCallback() {
@@ -72,7 +74,7 @@ class NetworkMonitorApp extends LitElement {
         @view-change=${this._onViewChange}
       ></nav-bar>
       ${this._renderView()}
-      ${this.selectedDevice ? this._renderOverlay() : ''}
+      ${this.selectedDevice || this.selectedGroup ? this._renderOverlay() : ''}
     `;
   }
 
@@ -84,7 +86,7 @@ class NetworkMonitorApp extends LitElement {
         return html`<settings-view></settings-view>`;
       case 'dashboard':
       default:
-        return html`<dashboard-view @device-select=${this._onDeviceSelect}></dashboard-view>`;
+        return html`<dashboard-view @device-select=${this._onDeviceSelect} @group-edit=${this._onGroupEdit}></dashboard-view>`;
     }
   }
 
@@ -92,10 +94,16 @@ class NetworkMonitorApp extends LitElement {
     return html`
       <div class="overlay" @click=${this._onOverlayClick}>
         <div class="overlay-content" @click=${(e) => e.stopPropagation()}>
-          <device-detail
-            .deviceId=${this.selectedDevice}
-            @back=${() => this.selectedDevice = null}
-          ></device-detail>
+          ${this.selectedGroup
+            ? html`<device-detail
+                .groupId=${this.selectedGroup}
+                @back=${() => this.selectedGroup = null}
+              ></device-detail>`
+            : html`<device-detail
+                .deviceId=${this.selectedDevice}
+                @back=${() => this.selectedDevice = null}
+              ></device-detail>`
+          }
         </div>
       </div>
     `;
@@ -103,15 +111,21 @@ class NetworkMonitorApp extends LitElement {
 
   _onOverlayClick() {
     this.selectedDevice = null;
+    this.selectedGroup = null;
   }
 
   _onViewChange(e) {
     this.currentView = e.detail.view;
     this.selectedDevice = null;
+    this.selectedGroup = null;
   }
 
   _onDeviceSelect(e) {
     this.selectedDevice = e.detail.deviceId;
+  }
+
+  _onGroupEdit(e) {
+    this.selectedGroup = e.detail.groupId;
   }
 }
 
