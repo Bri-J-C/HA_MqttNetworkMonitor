@@ -19,6 +19,8 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     },
     "default_ha_exposure": "all",
     "ha_exposed_attributes": [],
+    "device_cleanup_days": 0,
+    "alert_cooldown_minutes": 30,
 }
 
 

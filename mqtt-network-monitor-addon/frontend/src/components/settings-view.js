@@ -102,6 +102,7 @@ class SettingsView extends LitElement {
       <group-policy-settings></group-policy-settings>
       ${this._renderCustomTransforms()}
       ${this._renderGlobalDefaults()}
+      ${this._renderDeviceManagement()}
     `;
   }
 
@@ -290,6 +291,67 @@ class SettingsView extends LitElement {
     _globalThresholdForm.attr = '';
     _globalThresholdForm.value = '';
     this.requestUpdate();
+  }
+
+  // ── Device Management ──────────────────────────────────────────────────────
+
+  _renderDeviceManagement() {
+    const s = this._settings || {};
+    const cleanupDays = s.device_cleanup_days ?? 0;
+    const cooldownMinutes = s.alert_cooldown_minutes ?? 30;
+
+    return html`
+      <div class="section">
+        <div class="section-title">Device Management</div>
+
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <div style="font-size: 11px; color: #fff; margin-bottom: 6px;">Auto-Cleanup Offline Devices</div>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <select class="small-input" style="width: 140px;"
+                .value=${String(cleanupDays)}
+                @change=${(e) => {
+                  this._settings = { ...this._settings, device_cleanup_days: Number(e.target.value) };
+                  this._saveSettings();
+                }}>
+                <option value="0">Disabled</option>
+                <option value="1">After 1 day</option>
+                <option value="3">After 3 days</option>
+                <option value="7">After 7 days</option>
+                <option value="14">After 14 days</option>
+                <option value="30">After 30 days</option>
+              </select>
+            </div>
+            <div style="font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 4px;">
+              Automatically remove devices that have been offline longer than this.
+            </div>
+          </div>
+
+          <div style="flex: 1; min-width: 200px;">
+            <div style="font-size: 11px; color: #fff; margin-bottom: 6px;">Alert Cooldown</div>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <select class="small-input" style="width: 140px;"
+                .value=${String(cooldownMinutes)}
+                @change=${(e) => {
+                  this._settings = { ...this._settings, alert_cooldown_minutes: Number(e.target.value) };
+                  this._saveSettings();
+                }}>
+                <option value="0">Disabled</option>
+                <option value="5">5 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">1 hour</option>
+                <option value="120">2 hours</option>
+                <option value="360">6 hours</option>
+              </select>
+            </div>
+            <div style="font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 4px;">
+              HA notification cooldown for critical threshold alerts.
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   async _saveSettings() {

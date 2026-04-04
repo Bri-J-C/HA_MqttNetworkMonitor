@@ -155,10 +155,100 @@ def create_app():
     init_app(registry, topology_engine, command_sender, mqtt_handler, tag_reg, settings_mgr, ha_entities)
     mqtt_handler.connect()
 
+    # --- Alert cooldown state (in-memory) ---
+    _alert_active: dict[str, float] = {}  # "device_id/attr_name" -> last_alert_time
+
+    def _check_crit_alerts():
+        """Fire HA notifications for crit threshold breaches."""
+        settings = settings_mgr.get_settings()
+        cooldown = settings.get("alert_cooldown_minutes", 30) * 60
+        if cooldown <= 0:
+            return
+        now = time.time()
+        devices = registry.get_all_devices()
+        groups = registry.get_groups()
+
+        for device_id, device in devices.items():
+            if device.get("status") != "online":
+                continue
+            effective = resolve_settings(device, groups, settings)
+            crit_thresholds = effective.get("crit_thresholds", {})
+            attrs = device.get("attributes", {})
+
+            for attr_name, threshold_val in crit_thresholds.items():
+                if threshold_val is None:
+                    continue
+                attr_data = attrs.get(attr_name)
+                if not attr_data:
+                    continue
+                value = attr_data.get("value")
+                try:
+                    value = float(value)
+                    threshold_val = float(threshold_val)
+                except (TypeError, ValueError):
+                    continue
+
+                alert_key = f"{device_id}/{attr_name}"
+                if value >= threshold_val:
+                    last_alert = _alert_active.get(alert_key, 0)
+                    if now - last_alert >= cooldown:
+                        device_name = device.get("device_name", device_id)
+                        _fire_ha_notification(
+                            title=f"Critical: {device_name}",
+                            message=f"{attr_name.replace('_', ' ').title()} at {value} (threshold: {threshold_val})",
+                            notification_id=f"mqtt_monitor_{alert_key.replace('/', '_')}",
+                        )
+                        _alert_active[alert_key] = now
+                else:
+                    # Value back below threshold — clear alert state
+                    _alert_active.pop(alert_key, None)
+
+    def _fire_ha_notification(title: str, message: str, notification_id: str):
+        """Call HA persistent_notification.create via the Supervisor API."""
+        token = os.environ.get("SUPERVISOR_TOKEN")
+        if not token:
+            logger.debug("No SUPERVISOR_TOKEN, skipping HA notification")
+            return
+        try:
+            import urllib.request
+            import json as _json
+            url = "http://supervisor/core/api/services/persistent_notification/create"
+            data = _json.dumps({"title": title, "message": message, "notification_id": notification_id}).encode()
+            req = urllib.request.Request(url, data=data, method="POST", headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            })
+            urllib.request.urlopen(req, timeout=10)
+            logger.info(f"HA notification sent: {title}")
+        except Exception as exc:
+            logger.warning(f"Failed to send HA notification: {exc}")
+
+    def _cleanup_stale_devices():
+        """Delete devices offline longer than the configured TTL."""
+        settings = settings_mgr.get_settings()
+        cleanup_days = settings.get("device_cleanup_days", 0)
+        if cleanup_days <= 0:
+            return
+        now = time.time()
+        cutoff = cleanup_days * 86400
+        devices = registry.get_all_devices()
+        to_delete = []
+        for device_id, device in devices.items():
+            if device.get("status") == "offline":
+                last_seen = device.get("last_seen", 0)
+                if last_seen > 0 and now - last_seen > cutoff:
+                    to_delete.append(device_id)
+        for device_id in to_delete:
+            logger.info(f"Auto-cleanup: removing device {device_id} (offline > {cleanup_days} days)")
+            ha_entities.remove_device_entities(device_id, devices[device_id])
+            registry.delete_device(device_id)
+
     def _heartbeat_worker():
         while True:
             try:
                 registry.check_stale_devices(timeout_seconds=300)
+                _check_crit_alerts()
+                _cleanup_stale_devices()
             except Exception as exc:
                 logger.error(f"Heartbeat checker error: {exc}")
             time.sleep(60)

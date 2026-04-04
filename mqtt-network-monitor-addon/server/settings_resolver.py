@@ -24,6 +24,8 @@ def resolve_settings(
         global_settings.get("ha_exposed_attributes", [])
     )
 
+    effective_crit_thresholds: dict[str, Any] = {}
+
     # Track the source of each threshold for informational purposes
     threshold_sources: dict[str, str] = {k: "global" for k in effective_thresholds}
     ha_exposure_source: str = "global"
@@ -38,6 +40,10 @@ def resolve_settings(
             effective_thresholds[key] = value
             threshold_sources[key] = "group"
 
+        group_crit = group.get("crit_thresholds", {})
+        for key, value in group_crit.items():
+            effective_crit_thresholds[key] = value
+
         if "ha_exposed_attributes" in group:
             effective_ha_attributes = list(group["ha_exposed_attributes"])
             # When a group specifies explicit attribute list, treat as "selective"
@@ -49,6 +55,10 @@ def resolve_settings(
     for key, value in device_threshold_overrides.items():
         effective_thresholds[key] = value
         threshold_sources[key] = "device"
+
+    device_crit_overrides: dict[str, Any] = device.get("crit_threshold_overrides", {})
+    for key, value in device_crit_overrides.items():
+        effective_crit_thresholds[key] = value
 
     device_ha_overrides: dict[str, Any] = device.get("ha_exposure_overrides", {})
     if device_ha_overrides:
@@ -68,6 +78,7 @@ def resolve_settings(
 
     return {
         "thresholds": effective_thresholds,
+        "crit_thresholds": effective_crit_thresholds,
         "threshold_sources": threshold_sources,
         "ha_exposure": effective_ha_exposure,
         "ha_exposed_attributes": effective_ha_attributes,
