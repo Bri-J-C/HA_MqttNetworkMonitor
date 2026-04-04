@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import {
   fetchDevice, fetchDevices, deleteDevice, deleteAttribute, unhideAttribute, hideCommand, unhideCommand, sendCommand, addDeviceTags, removeDeviceTag,
-  fetchGroups, createGroup, updateGroup, pushGroupConfig,
+  fetchGroups, createGroup, updateGroup,
   fetchEffectiveSettings, updateDeviceSettings,
 } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
@@ -148,13 +148,10 @@ class DeviceDetail extends LitElement {
     this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update') {
         if (this._isGroupMode) {
-          // Debounce group aggregate refresh to avoid flicker
-          if (this._groupRefreshTimer) clearTimeout(this._groupRefreshTimer);
-          const group = this._groups?.[this.groupId];
-          if (group && (group.device_ids || []).includes(data.device_id)) {
-            this._groupRefreshTimer = setTimeout(() => this._loadGroupAggregate(), 2000);
-          }
-        } else if (data.device_id === this.deviceId) {
+          // Don't reload — saves are immediate and local state is current
+          return;
+        }
+        if (data.device_id === this.deviceId) {
           this._updateDeviceData(data.device);
         }
       }
@@ -644,11 +641,8 @@ class DeviceDetail extends LitElement {
       const updated = { ...group, ...fields };
       await updateGroup(this.groupId, updated);
       this._groups = { ...this._groups, [this.groupId]: updated };
-      // Auto-deploy config to member devices if config-affecting fields changed
-      const configFields = ['custom_commands', 'custom_sensors', 'interval', 'hidden_commands'];
-      if (configFields.some(f => f in fields)) {
-        await pushGroupConfig(this.groupId, {}).catch(() => {});
-      }
+      // Update local virtual device to reflect changes immediately
+      this.device = { ...this.device, ...fields };
     } catch (e) {
       console.error('Failed to update group:', e);
     }
