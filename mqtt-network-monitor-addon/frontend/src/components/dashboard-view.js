@@ -246,7 +246,7 @@ class DashboardView extends LitElement {
           <button class="view-btn ${this.viewMode === 'all' ? 'active' : ''}"
             @click=${() => this.viewMode = 'all'}>All</button>
           <button class="view-btn ${this.viewMode === 'group' ? 'active' : ''}"
-            @click=${() => this.viewMode = 'group'}>By Group</button>
+            @click=${() => this.viewMode = 'group'}>Groups</button>
         </div>
 
       </div>

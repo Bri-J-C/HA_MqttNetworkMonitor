@@ -148,10 +148,11 @@ class DeviceDetail extends LitElement {
     this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update') {
         if (this._isGroupMode) {
-          // Refresh aggregate if a group member updated
+          // Debounce group aggregate refresh to avoid flicker
+          if (this._groupRefreshTimer) clearTimeout(this._groupRefreshTimer);
           const group = this._groups?.[this.groupId];
           if (group && (group.device_ids || []).includes(data.device_id)) {
-            this._loadGroupAggregate();
+            this._groupRefreshTimer = setTimeout(() => this._loadGroupAggregate(), 2000);
           }
         } else if (data.device_id === this.deviceId) {
           this._updateDeviceData(data.device);
@@ -213,6 +214,16 @@ class DeviceDetail extends LitElement {
         }
       }
 
+      // Build aggregate active_plugins: union of all member plugins
+      const aggregatedPlugins = new Set();
+      for (const member of members) {
+        for (const p of (member.active_plugins || [])) {
+          aggregatedPlugins.add(p);
+        }
+      }
+      // Groups can always have custom commands pushed to members
+      aggregatedPlugins.add('custom_command');
+
       // Create virtual device representing the group
       this.device = {
         device_name: group.name,
@@ -224,6 +235,9 @@ class DeviceDetail extends LitElement {
         crit_threshold_overrides: group.crit_thresholds || {},
         allowed_commands: [...aggregatedCommands],
         hidden_commands: group.hidden_commands || [],
+        hidden_attributes: group.hidden_attributes || [],
+        card_attributes: group.card_attributes || [],
+        active_plugins: [...aggregatedPlugins],
         tags: [],
         server_tags: [],
         group_policy: this.groupId,
@@ -505,10 +519,16 @@ class DeviceDetail extends LitElement {
   // ── Attributes event handlers ──────────────────────────────────────────────
 
   async _deleteAttribute(name) {
+    if (this._isGroupMode) {
+      const hidden = [...(this.device.hidden_attributes || [])];
+      if (!hidden.includes(name)) hidden.push(name);
+      this.device = { ...this.device, hidden_attributes: hidden };
+      await this._saveGroupUpdate({ hidden_attributes: hidden });
+      return;
+    }
     if (!confirm(`Hide attribute "${name}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`)) return;
     try {
       await deleteAttribute(this.deviceId, name);
-      // If the hidden attribute was pinned, remove it from card_attributes
       const cardAttrs = this.device?.card_attributes || [];
       if (cardAttrs.includes(name)) {
         const updated = cardAttrs.filter(n => n !== name);
@@ -521,6 +541,12 @@ class DeviceDetail extends LitElement {
   }
 
   async _unhideAttribute(name) {
+    if (this._isGroupMode) {
+      const hidden = (this.device.hidden_attributes || []).filter(n => n !== name);
+      this.device = { ...this.device, hidden_attributes: hidden };
+      await this._saveGroupUpdate({ hidden_attributes: hidden });
+      return;
+    }
     try {
       await unhideAttribute(this.deviceId, name);
       await this._loadDevice();
@@ -530,11 +556,12 @@ class DeviceDetail extends LitElement {
   }
 
   async _toggleHaExposure(name) {
+    if (this._isGroupMode) return; // HA exposure is per-device, not per-group
     const current = this._haOverrides[name] !== undefined
       ? this._haOverrides[name]
       : (this._effectiveSettings?.ha_exposure_overrides?.[name] !== undefined
           ? this._effectiveSettings.ha_exposure_overrides[name]
-          : true);
+          : false);
     this._haOverrides  = { ...this._haOverrides, [name]: !current };
     try {
       await updateDeviceSettings(this.deviceId, { ha_exposure_overrides: this._haOverrides });
@@ -695,6 +722,11 @@ class DeviceDetail extends LitElement {
     } else {
       updated = current.filter(n => n !== name);
     }
+    if (this._isGroupMode) {
+      this.device = { ...this.device, card_attributes: updated };
+      await this._saveGroupUpdate({ card_attributes: updated });
+      return;
+    }
     try {
       await updateDeviceSettings(this.deviceId, { card_attributes: updated });
       this.device = { ...this.device, card_attributes: updated };
@@ -734,6 +766,13 @@ class DeviceDetail extends LitElement {
   }
 
   async _hideCommand(cmd) {
+    if (this._isGroupMode) {
+      const hidden = [...(this.device.hidden_commands || [])];
+      if (!hidden.includes(cmd)) hidden.push(cmd);
+      this.device = { ...this.device, hidden_commands: hidden };
+      await this._saveGroupUpdate({ hidden_commands: hidden });
+      return;
+    }
     try {
       await hideCommand(this.deviceId, cmd);
       await this._loadDevice();
@@ -743,6 +782,12 @@ class DeviceDetail extends LitElement {
   }
 
   async _unhideCommand(cmd) {
+    if (this._isGroupMode) {
+      const hidden = (this.device.hidden_commands || []).filter(c => c !== cmd);
+      this.device = { ...this.device, hidden_commands: hidden };
+      await this._saveGroupUpdate({ hidden_commands: hidden });
+      return;
+    }
     try {
       await unhideCommand(this.deviceId, cmd);
       await this._loadDevice();
