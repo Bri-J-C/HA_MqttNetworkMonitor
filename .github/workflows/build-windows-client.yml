@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:  # Manual trigger from GitHub UI
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -25,12 +25,12 @@ jobs:
         run: |
           pip install paho-mqtt psutil pyyaml pyinstaller
 
-      - name: Build executable
+      - name: Build installer
         working-directory: monitor-clients/python
         run: |
           python build_windows.py
 
-      - name: Sign executable
+      - name: Sign installer
         working-directory: monitor-clients/python
         run: |
           $cert = New-SelfSignedCertificate `
@@ -39,27 +39,21 @@ jobs:
             -CertStoreLocation Cert:\CurrentUser\My `
             -NotAfter (Get-Date).AddYears(5)
           Set-AuthenticodeSignature `
-            -FilePath "dist\mqtt-network-monitor.exe" `
+            -FilePath "dist\mqtt-network-monitor-setup.exe" `
             -Certificate $cert `
             -TimestampServer "http://timestamp.digicert.com" `
             -HashAlgorithm SHA256
         shell: pwsh
 
-      - name: Package release zip
-        working-directory: monitor-clients/python/dist
-        run: |
-          Compress-Archive -Path mqtt-network-monitor.exe, nssm.exe -DestinationPath MQTTNetworkMonitor-Windows.zip
-        shell: pwsh
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mqtt-network-monitor-windows
-          path: monitor-clients/python/dist/MQTTNetworkMonitor-Windows.zip
+          name: mqtt-network-monitor-setup
+          path: monitor-clients/python/dist/mqtt-network-monitor-setup.exe
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: monitor-clients/python/dist/MQTTNetworkMonitor-Windows.zip
+          files: monitor-clients/python/dist/mqtt-network-monitor-setup.exe
           generate_release_notes: true
