@@ -64,20 +64,30 @@ def main():
     for spec in Path(".").glob("*.spec"):
         spec.unlink()
 
+    # Read version
+    version = "dev"
+    try:
+        spec = {}
+        exec(Path("mqtt_monitor/version.py").read_text(), spec)
+        version = spec.get("__version__", "dev")
+    except Exception:
+        pass
+
     # Stage 2: Build the setup exe, bundling monitor + nssm inside
-    print("Stage 2: Building setup exe (bundling monitor + nssm)...")
+    setup_name = f"mqtt-network-monitor-{version}-setup"
+    print(f"Stage 2: Building {setup_name}.exe (bundling monitor + nssm)...")
     run([
         sys.executable, "-m", "PyInstaller",
         "--onefile",
         "--uac-admin",
-        "--name", "mqtt-network-monitor-setup",
+        "--name", setup_name,
         "--add-data", f"{monitor_exe};bundled",
         "--add-data", f"{nssm};bundled",
         "--hidden-import", "mqtt_monitor.installer_gui",
         "setup_entry.py",
     ])
 
-    setup_exe = dist / "mqtt-network-monitor-setup.exe"
+    setup_exe = dist / f"{setup_name}.exe"
     if not setup_exe.exists():
         print(f"ERROR: Setup build failed — {setup_exe} not found")
         sys.exit(1)
