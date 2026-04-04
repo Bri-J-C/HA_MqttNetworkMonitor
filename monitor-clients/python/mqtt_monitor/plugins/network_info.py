@@ -32,16 +32,29 @@ class NetworkInfoPlugin(BasePlugin):
         self._last_network_info: dict | None = None
 
     def collect(self) -> dict:
-        if not self.interfaces:
-            return {}
-
-        result = {}
         addrs = psutil.net_if_addrs()
         io_counters = psutil.net_io_counters(pernic=True)
 
-        primary_iface = self.interfaces[0]
+        interfaces = self.interfaces
+        # If no interfaces configured, or none of the configured names exist,
+        # auto-detect active interfaces that have an IPv4 address.
+        if not interfaces or not any(iface in addrs for iface in interfaces):
+            if interfaces:
+                logger.warning(
+                    "Configured interfaces %s not found; available: %s. "
+                    "Auto-detecting active interfaces.",
+                    interfaces,
+                    list(addrs.keys()),
+                )
+            interfaces = self._detect_active_interfaces(addrs)
+            if not interfaces:
+                return {}
 
-        for iface in self.interfaces:
+        result = {}
+
+        primary_iface = interfaces[0]
+
+        for iface in interfaces:
             iface_addrs = addrs.get(iface, [])
             ip = None
             mac = None
@@ -69,7 +82,7 @@ class NetworkInfoPlugin(BasePlugin):
         if ssid:
             result["wifi_ssid"] = {"value": ssid, "unit": ""}
 
-        # Cache network info from primary interface for topology
+        # Cache network info from primary interface for topology.
         primary_addrs = addrs.get(primary_iface, [])
         ip = mac = netmask = None
         for addr in primary_addrs:
@@ -91,6 +104,22 @@ class NetworkInfoPlugin(BasePlugin):
             }
 
         return result
+
+    @staticmethod
+    def _detect_active_interfaces(addrs: dict) -> list[str]:
+        """Return interface names that are up and have an IPv4 address."""
+        stats = psutil.net_if_stats()
+        active = []
+        for name, addr_list in addrs.items():
+            # Skip loopback
+            if name.lower() in ("lo", "loopback pseudo-interface 1"):
+                continue
+            st = stats.get(name)
+            if st and st.isup:
+                has_ipv4 = any(a.family == socket.AF_INET for a in addr_list)
+                if has_ipv4:
+                    active.append(name)
+        return active
 
     def get_network_info(self) -> dict | None:
         return self._last_network_info

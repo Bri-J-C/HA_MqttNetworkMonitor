@@ -102,20 +102,7 @@ def _process_count():
 @collector("uptime")
 def _uptime():
     import time
-    seconds = int(time.time() - psutil.boot_time())
-    parts = []
-    days, seconds = divmod(seconds, 86400)
-    hours, seconds = divmod(seconds, 3600)
-    minutes, _ = divmod(seconds, 60)
-    if days:
-        parts.append(f"{days}d")
-    if hours:
-        parts.append(f"{hours}h")
-    if minutes:
-        parts.append(f"{minutes}m")
-    if not parts:
-        parts.append("0m")
-    return {"value": " ".join(parts), "unit": ""}
+    return {"value": int(time.time() - psutil.boot_time()), "unit": "s"}
 
 
 @collector("last_boot")
@@ -177,18 +164,33 @@ class WindowsSystemPlugin(BasePlugin):
     name = "windows_system"
     default_interval = 300  # 5 minutes
 
+    # Attributes that never change at runtime — collected once and cached.
+    _STATIC_ATTRIBUTES = frozenset([
+        "os_version", "os_build", "cpu_model", "installed_ram", "gpu_info",
+    ])
+
     def __init__(self, config):
         super().__init__(config)
         self.requested_attributes = config.get("attributes", list(COLLECTORS.keys()))
         self.monitored_services = config.get("services", [])
+        self._static_cache: dict = {}
 
     def collect(self):
         result = {}
         for attr in self.requested_attributes:
+            # Use cached value for static attributes after first collection.
+            if attr in self._STATIC_ATTRIBUTES and attr in self._static_cache:
+                result[attr] = self._static_cache[attr]
+                continue
+
             func = COLLECTORS.get(attr)
             if func:
                 try:
-                    result[attr] = func()
+                    val = func()
+                    # Cache static attributes on first successful collection.
+                    if attr in self._STATIC_ATTRIBUTES:
+                        self._static_cache[attr] = val
+                    result[attr] = val
                 except Exception:
                     result[attr] = {"value": None, "unit": ""}
 
