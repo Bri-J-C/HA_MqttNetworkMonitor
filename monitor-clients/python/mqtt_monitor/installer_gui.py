@@ -675,11 +675,15 @@ class InstallerWizard:
             ui(lambda: self._mark_step(1, True))
             time.sleep(0.3)
 
-            # Step 2: Write configuration
-            config_yaml = _build_config_yaml(self.data)
+            # Step 2: Write configuration (preserve existing on upgrade)
             config_path = INSTALL_DIR / CONFIG_NAME
-            config_path.write_text(config_yaml, encoding="utf-8")
-            ui(lambda: self._mark_step(2, True))
+            if config_path.exists():
+                # Upgrade — keep existing config
+                ui(lambda: self._mark_step(2, True))
+            else:
+                config_yaml = _build_config_yaml(self.data)
+                config_path.write_text(config_yaml, encoding="utf-8")
+                ui(lambda: self._mark_step(2, True))
             time.sleep(0.3)
 
             # Step 3: Register Windows service via NSSM
