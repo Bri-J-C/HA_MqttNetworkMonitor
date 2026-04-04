@@ -36,8 +36,15 @@ class SettingsManager:
             # Merge with defaults to ensure all keys exist
             self._settings = copy.deepcopy(DEFAULT_SETTINGS)
             self._deep_update(self._settings, data)
+            # Migration: change default_ha_exposure from "all" to "none"
+            if data.get("default_ha_exposure") == "all" and not data.get("_ha_exposure_migrated"):
+                self._settings["default_ha_exposure"] = "none"
+                self._settings["_ha_exposure_migrated"] = True
+                self._save()
+                logger.info("Migrated default_ha_exposure from 'all' to 'none'")
         else:
             self._settings = copy.deepcopy(DEFAULT_SETTINGS)
+            self._settings["_ha_exposure_migrated"] = True
             # Persist defaults on first run
             self._save()
 
