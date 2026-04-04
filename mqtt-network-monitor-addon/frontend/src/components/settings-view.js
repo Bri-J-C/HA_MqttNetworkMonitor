@@ -15,6 +15,7 @@ class SettingsView extends LitElement {
     _loading: { type: Boolean, state: true },
     _savingSettings: { type: Boolean, state: true },
     _settingsSaved: { type: Boolean, state: true },
+    _editingTransformIndex: { type: Number, state: true },
     _transformError: { type: String, state: true },
   };
 
@@ -75,6 +76,7 @@ class SettingsView extends LitElement {
     this._savingSettings = false;
     this._settingsSaved = false;
     this._transformError = '';
+    this._editingTransformIndex = -1;
   }
 
   connectedCallback() {
@@ -120,6 +122,8 @@ class SettingsView extends LitElement {
           <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
             <span style="font-size: 12px; color: rgba(255,255,255,0.8); min-width: 120px;">${t.name}</span>
             <code style="font-size: 11px; color: rgba(255,255,255,0.5); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.expression}</code>
+            <button class="icon-btn" style="color: #00D4FF;"
+              @click=${() => this._editCustomTransform(i)}>Edit</button>
             <button class="icon-btn delete"
               @click=${() => this._removeCustomTransform(i)}>Remove</button>
           </div>
@@ -134,12 +138,32 @@ class SettingsView extends LitElement {
             style="flex: 1; min-width: 200px;"
             .value=${form.expression}
             @input=${(e) => { _customTransformForm.expression = e.target.value; this.requestUpdate(); }}>
-          <button class="small-btn" @click=${this._addCustomTransform.bind(this)}>Add</button>
+          <button class="small-btn" @click=${this._addCustomTransform.bind(this)}>${this._editingTransformIndex >= 0 ? 'Save' : 'Add'}</button>
+          ${this._editingTransformIndex >= 0 ? html`<button class="small-btn" style="background: rgba(255,255,255,0.1); color: #fff;" @click=${() => this._cancelEditTransform()}>Cancel</button>` : ''}
         </div>
 
         ${this._transformError ? html`<div style="font-size: 11px; color: #ef5350; margin-top: 6px;">${this._transformError}</div>` : ''}
       </div>
     `;
+  }
+
+  _editCustomTransform(index) {
+    const transforms = (this._settings || {}).custom_transforms || [];
+    const t = transforms[index];
+    if (!t) return;
+    _customTransformForm.name = t.name;
+    _customTransformForm.expression = t.expression;
+    this._editingTransformIndex = index;
+    this._transformError = '';
+    this.requestUpdate();
+  }
+
+  _cancelEditTransform() {
+    _customTransformForm.name = '';
+    _customTransformForm.expression = '';
+    this._editingTransformIndex = -1;
+    this._transformError = '';
+    this.requestUpdate();
   }
 
   _addCustomTransform() {
@@ -160,23 +184,29 @@ class SettingsView extends LitElement {
       return;
     }
 
-    const id = 'custom:' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
     const s = this._settings || {};
-    const existing = s.custom_transforms || [];
+    const existing = [...(s.custom_transforms || [])];
 
-    if (existing.some(t => t.id === id)) {
-      this._transformError = 'A transform with this name already exists.';
-      return;
+    if (this._editingTransformIndex >= 0) {
+      // Editing existing transform — update in place, keep the same id
+      existing[this._editingTransformIndex] = { ...existing[this._editingTransformIndex], name, expression };
+      this._editingTransformIndex = -1;
+    } else {
+      // Adding new transform
+      const id = 'custom:' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+      if (existing.some(t => t.id === id)) {
+        this._transformError = 'A transform with this name already exists.';
+        return;
+      }
+      existing.push({ id, name, expression });
     }
 
-    this._settings = {
-      ...s,
-      custom_transforms: [...existing, { id, name, expression }],
-    };
+    this._settings = { ...s, custom_transforms: existing };
 
     _customTransformForm.name = '';
     _customTransformForm.expression = '';
     this.requestUpdate();
+    this._saveSettings();
   }
 
   _removeCustomTransform(index) {
@@ -184,6 +214,7 @@ class SettingsView extends LitElement {
     const transforms = [...(s.custom_transforms || [])];
     transforms.splice(index, 1);
     this._settings = { ...s, custom_transforms: transforms };
+    this._saveSettings();
   }
 
   // ── Global Defaults ───────────────────────────────────────────────────────

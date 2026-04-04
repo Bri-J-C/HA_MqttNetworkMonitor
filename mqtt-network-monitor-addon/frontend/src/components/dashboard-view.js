@@ -13,7 +13,6 @@ class DashboardView extends LitElement {
     viewMode: { type: String },
     _groups: { type: Object, state: true },
     _collapsedGroups: { type: Object, state: true },
-    _refreshInterval: { type: Number, state: true },
   };
 
   static styles = [sharedStyles, css`
@@ -70,14 +69,6 @@ class DashboardView extends LitElement {
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 12px;
     }
-    .refresh-control {
-      display: flex; align-items: center; gap: 4px;
-    }
-    .refresh-select {
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;
-      padding: 4px 8px; border-radius: 12px; font-size: 11px; cursor: pointer;
-    }
-    .refresh-select:focus { outline: none; border-color: #00D4FF; }
     .empty {
       text-align: center; padding: 60px; color: #fff;
     }
@@ -122,8 +113,6 @@ class DashboardView extends LitElement {
     this._groups = {};
     this._collapsedGroups = {};
     this._wsUnsub = null;
-    this._refreshInterval = parseInt(localStorage.getItem('mqtt-monitor-refresh') || '5');
-    this._pollTimer = null;
     this._lastFetchTime = 0;
   }
 
@@ -131,7 +120,6 @@ class DashboardView extends LitElement {
     super.connectedCallback();
     this._loadDevices();
     this._loadGroups();
-    this._startPolling();
     this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update') {
         this.devices = { ...this.devices, [data.device_id]: data.device };
@@ -143,13 +131,6 @@ class DashboardView extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     if (this._wsUnsub) this._wsUnsub();
-    if (this._pollTimer) clearInterval(this._pollTimer);
-  }
-
-  _startPolling() {
-    if (this._pollTimer) clearInterval(this._pollTimer);
-    const interval = (this._refreshInterval || 5) * 1000;
-    this._pollTimer = setInterval(() => this._loadDevices(), interval);
   }
 
   async _loadDevices() {
@@ -239,18 +220,6 @@ class DashboardView extends LitElement {
             @click=${() => this.viewMode = 'group'}>By Group</button>
         </div>
 
-        <div class="refresh-control">
-          <select class="refresh-select"
-            .value=${String(this._refreshInterval)}
-            @change=${(e) => { this._refreshInterval = Number(e.target.value); localStorage.setItem('mqtt-monitor-refresh', e.target.value); this._startPolling(); }}>
-            <option value="1">1s</option>
-            <option value="2">2s</option>
-            <option value="5">5s</option>
-            <option value="10">10s</option>
-            <option value="30">30s</option>
-            <option value="60">60s</option>
-          </select>
-        </div>
       </div>
 
       ${this.selectedTags.length > 0 ? html`

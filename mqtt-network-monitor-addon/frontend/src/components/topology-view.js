@@ -131,7 +131,8 @@ class TopologyView extends LitElement {
       background: #0d0d1f; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);
       position: relative; overflow: hidden;
     }
-    svg { width: 100%; height: 500px; display: block; touch-action: none; }
+    svg { width: 100%; height: calc(100vh - 200px); display: block; touch-action: none; cursor: grab; }
+    svg.panning { cursor: grabbing; }
     .zoom-controls {
       position: absolute; bottom: 12px; right: 12px;
       display: flex; flex-direction: column; gap: 4px; z-index: 10;
@@ -331,11 +332,6 @@ class TopologyView extends LitElement {
     super.connectedCallback();
     this._loadTopology();
     this._loadLayouts();
-    // Poll to update node statuses (not positions) every refresh interval
-    const pollInterval = parseInt(localStorage.getItem('mqtt-monitor-refresh') || '5') * 1000;
-    this._pollTimer = setInterval(() => {
-      this._refreshNodeStatuses();
-    }, pollInterval);
     this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update') {
         this._refreshNodeStatuses();
@@ -355,7 +351,6 @@ class TopologyView extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     if (this._wsUnsub) this._wsUnsub();
-    if (this._pollTimer) clearInterval(this._pollTimer);
     if (this._onDocClick) document.removeEventListener('click', this._onDocClick);
   }
 
@@ -535,7 +530,9 @@ class TopologyView extends LitElement {
       ` : ''}
 
       <div class="canvas-container">
-        <svg viewBox="${this._viewBox.x} ${this._viewBox.y} ${this._viewBox.width} ${this._viewBox.height}"
+        <svg class="${this._isMousePanning ? 'panning' : ''}"
+          viewBox="${this._viewBox.x} ${this._viewBox.y} ${this._viewBox.width} ${this._viewBox.height}"
+          @mousedown=${this._onSvgMouseDown}
           @mousemove=${this._onMouseMove}
           @mouseup=${this._onMouseUp}
           @mouseleave=${this._onMouseUp}
@@ -994,7 +991,7 @@ class TopologyView extends LitElement {
       this.manualEdges = layout.manualEdges || [];
       this.hideAutoEdges = layout.hideAutoEdges || false;
       if (layout.viewBox) {
-        this._viewBox = { ...layout.viewBox };
+        this._viewBox = this._adaptViewBox(layout.viewBox);
       } else {
         this._fitAll();
       }
@@ -1094,6 +1091,22 @@ class TopologyView extends LitElement {
 
   // --- Drag handlers ---
 
+  _onSvgMouseDown(e) {
+    // Only start pan if clicking the SVG background (not a node)
+    if (e.target.closest('g[transform]')) return;
+    e.preventDefault();
+    // Exit link mode on background click
+    if (this.linkMode) {
+      this.linkMode = false;
+      this._linkSource = null;
+      this._mousePos = null;
+      return;
+    }
+    this._isMousePanning = true;
+    this._mousePanStart = { x: e.clientX, y: e.clientY };
+    this._mousePanViewBox = { ...this._viewBox };
+  }
+
   _onMouseDown(e, nodeId) {
     this._dragging = nodeId;
     const svgEl = this.shadowRoot.querySelector('svg');
@@ -1104,6 +1117,7 @@ class TopologyView extends LitElement {
     const pos = this.nodePositions[nodeId] || { x: 0, y: 0 };
     this._dragOffset = { x: svgP.x - pos.x, y: svgP.y - pos.y };
     e.preventDefault();
+    e.stopPropagation();
   }
 
   _onMouseMove(e) {
@@ -1117,6 +1131,19 @@ class TopologyView extends LitElement {
     if (this.linkMode && this._linkSource) {
       this._mousePos = { x: svgP.x, y: svgP.y };
       this.requestUpdate();
+    }
+
+    // Mouse pan on background
+    if (this._isMousePanning) {
+      const ctm = svgEl.getScreenCTM();
+      const dx = (e.clientX - this._mousePanStart.x) / ctm.a;
+      const dy = (e.clientY - this._mousePanStart.y) / ctm.d;
+      this._viewBox = {
+        ...this._mousePanViewBox,
+        x: this._mousePanViewBox.x - dx,
+        y: this._mousePanViewBox.y - dy,
+      };
+      return;
     }
 
     if (!this._dragging) return;
@@ -1168,18 +1195,54 @@ class TopologyView extends LitElement {
     if (rect) this._zoomAt(rect.left + rect.width/2, rect.top + rect.height/2, 1.25);
   }
 
+  _adaptViewBox(saved) {
+    const container = this.shadowRoot?.querySelector('.canvas-container');
+    if (!container || !container.clientWidth || !container.clientHeight) return { ...saved };
+    const containerAspect = container.clientWidth / container.clientHeight;
+    const centerX = saved.x + saved.width / 2;
+    const centerY = saved.y + saved.height / 2;
+    const savedArea = saved.width * saved.height;
+    const newWidth = Math.sqrt(savedArea * containerAspect);
+    const newHeight = newWidth / containerAspect;
+    return {
+      x: centerX - newWidth / 2,
+      y: centerY - newHeight / 2,
+      width: newWidth,
+      height: newHeight,
+    };
+  }
+
   _fitAll() {
     const positions = Object.values(this.nodePositions);
     if (!positions.length) return;
     const xs = positions.map(p => p.x);
     const ys = positions.map(p => p.y);
     const pad = 80;
-    this._viewBox = {
-      x: Math.min(...xs) - pad,
-      y: Math.min(...ys) - pad,
-      width: Math.max(...xs) - Math.min(...xs) + pad * 2,
-      height: Math.max(...ys) - Math.min(...ys) + pad * 2,
-    };
+    const contentX = Math.min(...xs) - pad;
+    const contentY = Math.min(...ys) - pad;
+    const contentW = Math.max(...xs) - Math.min(...xs) + pad * 2;
+    const contentH = Math.max(...ys) - Math.min(...ys) + pad * 2;
+
+    // Match viewBox aspect ratio to container so content is truly centered
+    const container = this.shadowRoot?.querySelector('.canvas-container');
+    if (container && container.clientWidth && container.clientHeight) {
+      const containerAspect = container.clientWidth / container.clientHeight;
+      const contentAspect = contentW / contentH;
+      let vbW = contentW, vbH = contentH;
+      if (contentAspect < containerAspect) {
+        vbW = contentH * containerAspect;
+      } else {
+        vbH = contentW / containerAspect;
+      }
+      this._viewBox = {
+        x: contentX - (vbW - contentW) / 2,
+        y: contentY - (vbH - contentH) / 2,
+        width: vbW,
+        height: vbH,
+      };
+    } else {
+      this._viewBox = { x: contentX, y: contentY, width: contentW, height: contentH };
+    }
   }
 
   // --- Touch handlers ---
@@ -1250,6 +1313,13 @@ class TopologyView extends LitElement {
       return;
     }
     if (e.touches.length === 1) {
+      // Exit link mode on background tap
+      if (this.linkMode && !e.target.closest('g[transform]')) {
+        this.linkMode = false;
+        this._linkSource = null;
+        this._mousePos = null;
+        return;
+      }
       const touch = e.touches[0];
       this._isPanning = true;
       this._panStart = { x: touch.clientX, y: touch.clientY, vbX: this._viewBox.x, vbY: this._viewBox.y };
@@ -1399,6 +1469,7 @@ class TopologyView extends LitElement {
       this._markDirty();
     }
     this._dragging = null;
+    this._isMousePanning = false;
   }
 
   // --- Layout management ---

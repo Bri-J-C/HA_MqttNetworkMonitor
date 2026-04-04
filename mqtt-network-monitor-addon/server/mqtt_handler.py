@@ -87,12 +87,6 @@ class MQTTHandler:
             status = msg.payload.decode().strip().strip('"')
             if not status:
                 return  # Empty payload (cleared retained message), skip
-            # Retained "online" messages are stale — they replay on reconnect
-            # and would make truly offline devices appear online. Only trust
-            # non-retained "online" or any "offline" (LWT is always retained).
-            if msg.retain and status == "online":
-                logger.debug(f"Device {device_id}: ignoring retained 'online' (stale)")
-                return
             logger.debug(f"Device {device_id} status: {status}")
             self._registry.set_device_status(device_id, status)
             self._notify_update(device_id)
@@ -119,7 +113,11 @@ class MQTTHandler:
 
         else:
             # Plugin data
-            raw = msg.payload.decode().strip()
+            try:
+                raw = msg.payload.decode().strip()
+            except UnicodeDecodeError:
+                logger.warning(f"Device {device_id}/{subtopic}: non-UTF-8 payload, skipping")
+                return
             if not raw:
                 return  # Empty payload (cleared retained message), skip
             try:

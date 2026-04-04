@@ -89,11 +89,11 @@ export async function createGroup(id, name, deviceIds = []) {
   });
 }
 
-export async function updateGroup(groupId, { name, device_ids, custom_commands, custom_sensors, thresholds, hidden_commands }) {
+export async function updateGroup(groupId, { name, device_ids, custom_commands, custom_sensors, thresholds, crit_thresholds, hidden_commands, interval, attribute_transforms }) {
   return apiCall(`${BASE}/api/groups/${encodeURIComponent(groupId)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, device_ids, custom_commands, custom_sensors, thresholds, hidden_commands }),
+    body: JSON.stringify({ name, device_ids, custom_commands, custom_sensors, thresholds, crit_thresholds, hidden_commands, interval, attribute_transforms }),
   });
 }
 

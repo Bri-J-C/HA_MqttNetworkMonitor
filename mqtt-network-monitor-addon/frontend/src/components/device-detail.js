@@ -136,7 +136,6 @@ class DeviceDetail extends LitElement {
     super.connectedCallback();
     this._loadDevice();
     this._loadGroups();
-    this._startPolling();
     this._wsUnsub = wsService.onMessage((data) => {
       if (data.type === 'device_update' && data.device_id === this.deviceId) {
         this._updateDeviceData(data.device);
@@ -146,14 +145,7 @@ class DeviceDetail extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    if (this._wsUnsub)   this._wsUnsub();
-    if (this._pollTimer) clearInterval(this._pollTimer);
-  }
-
-  _startPolling() {
-    if (this._pollTimer) clearInterval(this._pollTimer);
-    const interval = parseInt(localStorage.getItem('mqtt-monitor-refresh') || '5') * 1000;
-    this._pollTimer = setInterval(() => this._refreshDevice(), interval);
+    if (this._wsUnsub) this._wsUnsub();
   }
 
   async _refreshDevice() {
