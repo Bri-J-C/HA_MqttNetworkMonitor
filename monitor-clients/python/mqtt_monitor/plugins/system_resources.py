@@ -38,6 +38,18 @@ class SystemResourcesPlugin(BasePlugin):
     @staticmethod
     @collector("cpu_usage")
     def _cpu_usage():
+        if sys.platform == "win32":
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command",
+                     "(Get-Counter '\\Processor(_Total)\\% Processor Time').CounterSamples.CookedValue"],
+                    capture_output=True, text=True, timeout=5
+                )
+                if result.returncode == 0:
+                    return {"value": round(float(result.stdout.strip()), 1), "unit": "%"}
+            except Exception:
+                pass
         return {"value": psutil.cpu_percent(interval=0), "unit": "%"}
 
     @staticmethod

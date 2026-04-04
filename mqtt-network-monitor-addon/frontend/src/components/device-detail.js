@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import {
   fetchDevice, fetchDevices, deleteDevice, deleteAttribute, unhideAttribute, hideCommand, unhideCommand, sendCommand, addDeviceTags, removeDeviceTag,
-  fetchGroups, createGroup, updateGroup,
+  fetchGroups, createGroup, updateGroup, pushGroupConfig,
   fetchEffectiveSettings, updateDeviceSettings,
 } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
@@ -641,8 +641,14 @@ class DeviceDetail extends LitElement {
     const group = this._groups?.[this.groupId];
     if (!group) return;
     try {
-      await updateGroup(this.groupId, { ...group, ...fields });
-      this._groups = { ...this._groups, [this.groupId]: { ...group, ...fields } };
+      const updated = { ...group, ...fields };
+      await updateGroup(this.groupId, updated);
+      this._groups = { ...this._groups, [this.groupId]: updated };
+      // Auto-deploy config to member devices if config-affecting fields changed
+      const configFields = ['custom_commands', 'custom_sensors', 'interval', 'hidden_commands'];
+      if (configFields.some(f => f in fields)) {
+        await pushGroupConfig(this.groupId, {}).catch(() => {});
+      }
     } catch (e) {
       console.error('Failed to update group:', e);
     }
