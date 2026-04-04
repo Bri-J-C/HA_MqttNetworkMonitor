@@ -173,7 +173,10 @@ class DeviceAttributes extends LitElement {
     if (this.haOverrides[name] !== undefined) return this.haOverrides[name];
     const es = this.effectiveSettings;
     if (es?.ha_exposure_overrides?.[name] !== undefined) return es.ha_exposure_overrides[name];
-    return true;
+    // Check if ha_exposure mode is "all" — if not, default to unexposed
+    if (es?.ha_exposure === "all") return true;
+    if (es?.ha_exposed_attributes?.includes(name)) return true;
+    return false;
   }
 
   _getThresholdForAttr(name) {
