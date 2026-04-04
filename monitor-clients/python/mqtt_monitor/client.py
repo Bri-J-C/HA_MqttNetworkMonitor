@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import signal
 import sys
 import threading
@@ -273,18 +272,6 @@ def main():
     if len(sys.argv) > 1:
         config_path = Path(sys.argv[1])
 
-    # On Windows, fall back to installed config location
-    if sys.platform == "win32" and not config_path.exists():
-        installed = Path(os.environ.get("PROGRAMFILES", r"C:\Program Files")) / "MQTTNetworkMonitor" / "config.yaml"
-        if installed.exists():
-            config_path = installed
-        elif not config_path.exists():
-            print(f"Config file not found: {config_path}")
-            print(f"")
-            print(f"To install as a service: mqtt-network-monitor.exe install")
-            print(f"To run manually: place config.yaml in the current directory")
-            sys.exit(1)
-
     remote_path = config_path.parent / "config.remote.yaml"
     config = ConfigLoader.load_with_remote(config_path, remote_path)
     logger.info(f"Starting MQTT Monitor for device: {config.device.id}")
@@ -294,15 +281,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        # On Windows, handle install/service/auto-run before loading config
-        if sys.platform == "win32":
-            from mqtt_monitor.windows_service import handle_cli
-            if handle_cli():
-                sys.exit(0)
-        main()
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        if sys.platform == "win32":
-            input("Press Enter to close...")
+    main()
