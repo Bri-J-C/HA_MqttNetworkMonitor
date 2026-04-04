@@ -739,23 +739,33 @@ class DeviceDetail extends LitElement {
     const custom_sensors = { ...this._customSensors };
     if (oldKey && oldKey !== key) {
       delete custom_sensors[oldKey];
+      // Remove old attribute placeholder
+      const attrs = { ...this.device.attributes };
+      delete attrs[oldKey];
+      this.device = { ...this.device, attributes: attrs };
     }
     custom_sensors[key] = sensor;
     this._customSensors = { ...custom_sensors };
+    // Add placeholder attribute immediately so it shows in UI
+    const attrs = { ...this.device.attributes };
+    attrs[key] = { value: '--', unit: sensor.unit || '' };
+    this.device = { ...this.device, attributes: attrs };
     await this._saveGroupUpdate({ custom_sensors });
     this.requestUpdate();
-    // Reload aggregate after delay to pick up new attribute from client
-    setTimeout(() => this._refreshGroupAggregate(), 3000);
+    // Reload aggregate after delay to pick up real value from client
+    setTimeout(() => this._refreshGroupAggregate(), 5000);
   }
 
   async _removeGroupSensor(key) {
     const custom_sensors = { ...this._customSensors };
     delete custom_sensors[key];
     this._customSensors = { ...custom_sensors };
+    // Remove attribute from UI immediately
+    const attrs = { ...this.device.attributes };
+    delete attrs[key];
+    this.device = { ...this.device, attributes: attrs };
     await this._saveGroupUpdate({ custom_sensors });
     this.requestUpdate();
-    // Reload aggregate to remove the deleted attribute
-    setTimeout(() => this._refreshGroupAggregate(), 1000);
   }
 
   async _setGroupTransform(attr, transform) {
