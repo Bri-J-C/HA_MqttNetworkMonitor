@@ -642,10 +642,24 @@ class InstallerWizard:
             time.sleep(0.3)
 
             # Step 1: Copy files
-            exe_src = get_exe_path()
-            exe_dst = INSTALL_DIR / exe_src.name
-            if exe_src.resolve() != exe_dst.resolve():
-                shutil.copy2(exe_src, exe_dst)
+            if getattr(sys, 'frozen', False):
+                exe_src = Path(sys.executable)
+            else:
+                exe_src = Path(sys.argv[0]).resolve()
+            exe_name = "mqtt-network-monitor.exe" if exe_src.suffix == ".exe" else exe_src.name
+            exe_dst = INSTALL_DIR / exe_name
+            try:
+                if exe_src.exists() and exe_src.resolve() != exe_dst.resolve():
+                    shutil.copy2(exe_src, exe_dst)
+                elif not exe_dst.exists():
+                    raise FileNotFoundError(f"Source exe not found: {exe_src}")
+            except Exception as copy_err:
+                ui(lambda: self._mark_step(1, False))
+                ui(lambda: self.status_label.configure(
+                    text=f"Failed to copy exe: {copy_err}\nSource: {exe_src}",
+                    style="Error.TLabel"))
+                ui(lambda: self.close_btn.pack(pady=(16, 0)))
+                return
             ui(lambda: self._mark_step(1, True))
             time.sleep(0.3)
 
