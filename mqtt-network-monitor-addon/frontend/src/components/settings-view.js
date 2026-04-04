@@ -3,7 +3,7 @@ import { sharedStyles } from '../styles/shared.js';
 import { fetchSettings, updateSettings, exportSettings, importSettings } from '../services/api.js';
 import { setCustomTransforms } from '../utils/transforms.js';
 import './tag-registry-settings.js';
-import './group-policy-settings.js';
+
 
 // Global threshold add form (module-level ephemeral state)
 const _globalThresholdForm = { attr: '', value: '' };
@@ -100,7 +100,6 @@ class SettingsView extends LitElement {
     return html`
       <h2>Settings</h2>
       <tag-registry-settings></tag-registry-settings>
-      <group-policy-settings></group-policy-settings>
       ${this._renderCustomTransforms()}
       ${this._renderGlobalDefaults()}
       ${this._renderDeviceManagement()}

@@ -43,6 +43,8 @@ class DeviceDetail extends LitElement {
     }
     .header-left { display: flex; flex-direction: column; gap: 2px; }
     .title       { font-size: 24px; font-weight: 700; }
+    .title[contenteditable] { cursor: text; border-bottom: 1px dashed rgba(255,255,255,0.3); }
+    .title[contenteditable]:focus { outline: none; border-bottom-color: #00D4FF; }
     .device-type { font-size: 12px; color: #fff; }
     .status-badge { padding: 4px 12px; border-radius: 12px; font-size: 13px; }
 
@@ -274,7 +276,13 @@ class DeviceDetail extends LitElement {
       <!-- 1. Header -->
       <div class="header">
         <div class="header-left">
-          <span class="title">${isGroup ? '⚙ ' : ''}${d.device_name || this.deviceId || this.groupId}</span>
+          ${isGroup
+            ? html`<span class="title" contenteditable="true"
+                @blur=${(e) => this._renameGroup(e.target.textContent.trim())}
+                @keydown=${(e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }}
+                >${d.device_name || this.groupId}</span>`
+            : html`<span class="title">${d.device_name || this.deviceId}</span>`
+          }
           <span class="device-type">${d.device_type || ''}${d.client_version ? ` · v${d.client_version}` : ''}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -459,6 +467,19 @@ class DeviceDetail extends LitElement {
     this._showGroupDialog = false;
     await this._loadGroups();
     await this._loadDevice();
+  }
+
+  async _renameGroup(newName) {
+    if (!newName || !this.groupId) return;
+    const group = this._groups?.[this.groupId];
+    if (!group || group.name === newName) return;
+    try {
+      await updateGroup(this.groupId, { ...group, name: newName });
+      this._groups = { ...this._groups, [this.groupId]: { ...group, name: newName } };
+      this.device = { ...this.device, device_name: newName };
+    } catch (e) {
+      console.error('Failed to rename group:', e);
+    }
   }
 
   // ── Network ────────────────────────────────────────────────────────────────

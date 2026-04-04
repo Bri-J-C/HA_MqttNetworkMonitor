@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
-import { fetchDevices, fetchGroups, updateGroup } from '../services/api.js';
+import { fetchDevices, fetchGroups, updateGroup, createGroup, deleteGroup } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
 import './device-card.js';
 import './tag-picker.js';
@@ -14,6 +14,7 @@ class DashboardView extends LitElement {
     _groups: { type: Object, state: true },
     _collapsedGroups: { type: Object, state: true },
     _selectedUngrouped: { type: Array, state: true },
+    _selectedGrouped: { type: Object, state: true },
   };
 
   static styles = [sharedStyles, css`
@@ -109,18 +110,19 @@ class DashboardView extends LitElement {
       border-radius: 8px; padding: 8px 12px;
     }
     .select-toolbar span { font-size: 12px; color: rgba(255,255,255,0.7); }
-    .select-toolbar select, .select-toolbar button {
+    .select-toolbar button {
+      background: #00D4FF; border: none; color: #0d0d1f;
+      padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600;
+    }
+    .select-toolbar select {
       background: #0d0d1f; border: 1px solid rgba(255,255,255,0.1);
       color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;
     }
-    .select-toolbar button { background: #00D4FF; color: #0d0d1f; border: none; font-weight: 600; }
-    .device-checkbox {
-      position: relative; cursor: pointer;
+    device-card.selected {
+      outline: 2px solid #00D4FF;
+      outline-offset: -2px;
     }
-    .device-checkbox input {
-      position: absolute; top: 8px; left: 8px; z-index: 2; cursor: pointer;
-      width: 16px; height: 16px; accent-color: #00D4FF;
-    }
+    .select-hint { font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 6px; }
 
     @media (max-width: 768px) {
       :host { padding: 12px; }
@@ -138,6 +140,7 @@ class DashboardView extends LitElement {
     this._groups = {};
     this._collapsedGroups = {};
     this._selectedUngrouped = [];
+    this._selectedGrouped = {};
     this._wsUnsub = null;
     this._lastFetchTime = 0;
   }
@@ -303,6 +306,7 @@ class DashboardView extends LitElement {
       ${ungrouped.length > 0 ? html`
         <div class="group-section">
           <div class="ungrouped-header">Ungrouped (${ungrouped.length})</div>
+          <div class="select-hint">Ctrl+click to select multiple</div>
           ${this._selectedUngrouped.length > 0 ? html`
             <div class="select-toolbar">
               <span>${this._selectedUngrouped.length} selected</span>
@@ -310,20 +314,24 @@ class DashboardView extends LitElement {
                 ${groups.map(g => html`<option value=${g.id}>${g.name}</option>`)}
               </select>
               <button @click=${this._addSelectedToGroup}>Add to Group</button>
+              <button @click=${this._createNewGroupFromSelected}
+                style="background: rgba(255,255,255,0.1); color: #fff;">New Group</button>
               <button style="background: rgba(255,255,255,0.1); color: #fff;"
                 @click=${() => { this._selectedUngrouped = []; }}>Cancel</button>
             </div>
           ` : ''}
           <div class="grid">
             ${ungrouped.map(([id, device]) => html`
-              <div class="device-checkbox">
-                <input type="checkbox"
-                  .checked=${this._selectedUngrouped.includes(id)}
-                  @change=${(e) => this._toggleUngroupedSelection(id, e.target.checked)}
-                  @click=${(e) => e.stopPropagation()}>
-                <device-card .device=${device} .deviceId=${id}
-                  @click=${() => this._selectDevice(id)}></device-card>
-              </div>
+              <device-card .device=${device} .deviceId=${id}
+                class="${this._selectedUngrouped.includes(id) ? 'selected' : ''}"
+                @click=${(e) => {
+                  if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    this._toggleUngroupedSelection(id);
+                  } else {
+                    this._selectDevice(id);
+                  }
+                }}></device-card>
             `)}
           </div>
         </div>
@@ -354,16 +362,34 @@ class DashboardView extends LitElement {
             </span>
           </div>
           <button class="edit-policy-btn" @click=${(e) => { e.stopPropagation(); this._editGroupPolicy(g.id); }}>Edit Policy</button>
+          <button class="edit-policy-btn" style="background: rgba(239,83,80,0.1); border-color: rgba(239,83,80,0.2); color: #ef5350;"
+            @click=${(e) => { e.stopPropagation(); this._deleteGroup(g.id, g.name); }}>Delete</button>
         </div>
         ${!isCollapsed ? html`
           <div class="group-body">
+            ${(this._selectedGrouped[g.id]?.length > 0) ? html`
+              <div class="select-toolbar">
+                <span>${this._selectedGrouped[g.id].length} selected</span>
+                <button @click=${() => this._removeSelectedFromGroup(g.id)}>Remove from Group</button>
+                <button style="background: rgba(255,255,255,0.1); color: #fff;"
+                  @click=${() => { this._selectedGrouped = {...this._selectedGrouped, [g.id]: []}; }}>Cancel</button>
+              </div>
+            ` : ''}
             ${devices.length === 0
               ? html`<div style="color: #fff; font-size: 13px; padding: 8px 4px;">No devices match current filters</div>`
               : html`
                 <div class="grid">
                   ${devices.map(([id, device]) => html`
                     <device-card .device=${device} .deviceId=${id}
-                      @click=${() => this._selectDevice(id)}></device-card>
+                      class="${(this._selectedGrouped[g.id] || []).includes(id) ? 'selected' : ''}"
+                      @click=${(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          e.preventDefault();
+                          this._toggleGroupedSelection(g.id, id);
+                        } else {
+                          this._selectDevice(id);
+                        }
+                      }}></device-card>
                   `)}
                 </div>
               `}
@@ -392,11 +418,56 @@ class DashboardView extends LitElement {
     }));
   }
 
-  _toggleUngroupedSelection(id, checked) {
-    if (checked) {
-      this._selectedUngrouped = [...this._selectedUngrouped, id];
-    } else {
+  _toggleUngroupedSelection(id) {
+    if (this._selectedUngrouped.includes(id)) {
       this._selectedUngrouped = this._selectedUngrouped.filter(d => d !== id);
+    } else {
+      this._selectedUngrouped = [...this._selectedUngrouped, id];
+    }
+  }
+
+  async _createNewGroupFromSelected() {
+    const name = prompt("Enter group name:");
+    if (!name) return;
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    try {
+      await createGroup(id, name, this._selectedUngrouped);
+      this._selectedUngrouped = [];
+      this._loadGroups();
+    } catch (e) {
+      console.error('Failed to create group:', e);
+    }
+  }
+
+  async _deleteGroup(groupId, groupName) {
+    if (!confirm(`Delete group "${groupName}"? Devices will be ungrouped.`)) return;
+    try {
+      await deleteGroup(groupId);
+      this._loadGroups();
+    } catch (e) {
+      console.error('Failed to delete group:', e);
+    }
+  }
+
+  _toggleGroupedSelection(groupId, deviceId) {
+    const current = this._selectedGrouped[groupId] || [];
+    const updated = current.includes(deviceId)
+      ? current.filter(d => d !== deviceId)
+      : [...current, deviceId];
+    this._selectedGrouped = { ...this._selectedGrouped, [groupId]: updated };
+  }
+
+  async _removeSelectedFromGroup(groupId) {
+    const group = this._groups[groupId];
+    if (!group) return;
+    const toRemove = this._selectedGrouped[groupId] || [];
+    const newDeviceIds = (group.device_ids || []).filter(id => !toRemove.includes(id));
+    try {
+      await updateGroup(groupId, { ...group, device_ids: newDeviceIds });
+      this._selectedGrouped = { ...this._selectedGrouped, [groupId]: [] };
+      this._loadGroups();
+    } catch (e) {
+      console.error('Failed to remove devices from group:', e);
     }
   }
 
