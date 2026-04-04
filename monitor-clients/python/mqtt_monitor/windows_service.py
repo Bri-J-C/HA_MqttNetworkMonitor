@@ -1,18 +1,20 @@
 """Windows service and installer for MQTT Network Monitor.
 
-Double-click behavior:
-  - Not installed yet → requests admin, installs to Program Files,
-    creates default config, opens it in Notepad, starts service.
-  - Already installed → restarts the service.
+Uses Windows Task Scheduler instead of sc.exe services — no service
+protocol handshake needed, works reliably with PyInstaller frozen exes.
 
-CLI commands (optional, for advanced users):
-    mqtt-network-monitor.exe install     Install/reinstall
-    mqtt-network-monitor.exe uninstall   Remove service + files
-    mqtt-network-monitor.exe start       Start the service
-    mqtt-network-monitor.exe stop        Stop the service
-    mqtt-network-monitor.exe status      Check service status
+Double-click behavior:
+  - Not installed yet → requests admin, launches install wizard.
+  - Already installed → restarts the task.
+
+CLI commands:
+    mqtt-network-monitor.exe install     Launch install wizard
+    mqtt-network-monitor.exe uninstall   Remove task + files
+    mqtt-network-monitor.exe start       Start the task
+    mqtt-network-monitor.exe stop        Stop the task
+    mqtt-network-monitor.exe status      Check task status
     mqtt-network-monitor.exe run         Run in foreground (debugging)
-    mqtt-network-monitor.exe service     (internal) Run as Windows service
+    mqtt-network-monitor.exe service     (internal) Run the monitor process
 """
 
 import os
@@ -22,7 +24,8 @@ import subprocess
 import ctypes
 from pathlib import Path
 
-SERVICE_NAME = "MQTTNetworkMonitor"
+TASK_NAME = "MQTTNetworkMonitor"
+SERVICE_NAME = TASK_NAME  # Alias for compatibility with installer_gui imports
 SERVICE_DISPLAY = "MQTT Network Monitor"
 SERVICE_DESC = "Monitors this PC and reports to MQTT Network Monitor addon"
 INSTALL_DIR = Path(os.environ.get("PROGRAMFILES", r"C:\Program Files")) / "MQTTNetworkMonitor"
@@ -40,7 +43,6 @@ def elevate_and_rerun(args=None):
         exe = sys.executable
     else:
         exe = sys.executable
-        # When running as .py, we need to re-run via python
         args = [sys.argv[0]] + (args or sys.argv[1:])
     params = ' '.join(args or sys.argv[1:])
     ctypes.windll.shell32.ShellExecuteW(None, "runas", exe, params, None, 1)
@@ -52,21 +54,92 @@ def get_exe_path():
     return Path(__file__)
 
 def is_installed():
-    """Check if the service is already registered."""
-    result = subprocess.run(["sc.exe", "query", SERVICE_NAME],
-                            capture_output=True, text=True)
+    """Check if the scheduled task exists."""
+    result = subprocess.run(
+        ["schtasks.exe", "/Query", "/TN", TASK_NAME],
+        capture_output=True, text=True
+    )
     return result.returncode == 0
 
 def is_running():
-    result = subprocess.run(["sc.exe", "query", SERVICE_NAME],
-                            capture_output=True, text=True)
-    return "RUNNING" in result.stdout
+    """Check if the monitor process is running."""
+    result = subprocess.run(
+        ["tasklist.exe", "/FI", f"IMAGENAME eq mqtt-network-monitor.exe"],
+        capture_output=True, text=True
+    )
+    return "mqtt-network-monitor.exe" in result.stdout
 
 def run_sc(args, check=True):
-    cmd = ["sc.exe"] + args
+    """Run schtasks.exe with arguments."""
+    cmd = ["schtasks.exe"] + args
     result = subprocess.run(cmd, capture_output=True, text=True)
     if check and result.returncode != 0:
         print(f"  Error: {result.stderr.strip() or result.stdout.strip()}")
+    return result
+
+def register_task(exe_path):
+    """Register a scheduled task that runs at startup and restarts on failure."""
+    exe_path = str(exe_path)
+
+    # Create XML task definition for more control than schtasks CLI
+    xml = f"""<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>{SERVICE_DESC}</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <BootTrigger>
+      <Enabled>true</Enabled>
+      <Delay>PT30S</Delay>
+    </BootTrigger>
+  </Triggers>
+  <Principals>
+    <Principal>
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RestartOnFailure>
+      <Interval>PT1M</Interval>
+      <Count>999</Count>
+    </RestartOnFailure>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+  </Settings>
+  <Actions>
+    <Exec>
+      <Command>"{exe_path}"</Command>
+      <Arguments>service</Arguments>
+      <WorkingDirectory>{str(INSTALL_DIR)}</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>"""
+
+    # Write XML to temp file
+    xml_path = INSTALL_DIR / "task.xml"
+    xml_path.write_text(xml, encoding="utf-16")
+
+    # Register the task
+    result = subprocess.run(
+        ["schtasks.exe", "/Create", "/TN", TASK_NAME, "/XML", str(xml_path), "/F"],
+        capture_output=True, text=True
+    )
+
+    # Clean up XML
+    try:
+        xml_path.unlink()
+    except Exception:
+        pass
+
     return result
 
 def install():
@@ -83,9 +156,20 @@ def uninstall():
         return
 
     print("Uninstalling MQTT Network Monitor...")
-    run_sc(["stop", SERVICE_NAME], check=False)
-    run_sc(["delete", SERVICE_NAME], check=False)
-    print(f"  Service removed.")
+
+    # Stop the process
+    subprocess.run(
+        ["taskkill.exe", "/F", "/IM", "mqtt-network-monitor.exe"],
+        capture_output=True
+    )
+
+    # Remove the scheduled task
+    subprocess.run(
+        ["schtasks.exe", "/Delete", "/TN", TASK_NAME, "/F"],
+        capture_output=True
+    )
+
+    print(f"  Task removed.")
     print(f"  Files remain at {INSTALL_DIR} (delete manually if desired)")
     print()
     input("Press Enter to close...")
@@ -94,43 +178,40 @@ def start():
     if not is_admin():
         elevate_and_rerun(["start"])
         return
-    result = run_sc(["start", SERVICE_NAME])
+    result = subprocess.run(
+        ["schtasks.exe", "/Run", "/TN", TASK_NAME],
+        capture_output=True, text=True
+    )
     if result.returncode == 0:
-        print("Service started.")
+        print("Monitor started.")
+    else:
+        print(f"Failed to start: {result.stderr.strip() or result.stdout.strip()}")
 
 def stop():
     if not is_admin():
         elevate_and_rerun(["stop"])
         return
-    result = run_sc(["stop", SERVICE_NAME])
-    if result.returncode == 0:
-        print("Service stopped.")
+    subprocess.run(
+        ["taskkill.exe", "/F", "/IM", "mqtt-network-monitor.exe"],
+        capture_output=True
+    )
+    print("Monitor stopped.")
 
 def status():
-    result = subprocess.run(["sc.exe", "query", SERVICE_NAME],
-                            capture_output=True, text=True)
-    if result.returncode != 0:
-        print("Service not installed.")
+    if is_installed():
+        running = is_running()
+        print(f"Task: Registered")
+        print(f"Status: {'Running' if running else 'Stopped'}")
+        print(f"Config: {INSTALL_DIR / CONFIG_NAME}")
     else:
-        for line in result.stdout.strip().split('\n'):
-            line = line.strip()
-            if line.startswith("STATE"):
-                print(line)
-                return
-        print(result.stdout.strip())
+        print("Not installed.")
 
 def run_as_service():
-    """Entry point when running as a Windows service.
-
-    sc.exe starts the exe with 'service' arg. We run the monitor directly
-    in this process. The service manager handles stop via process termination.
-    No pywin32 dependency needed — we use a simple long-running process approach.
-    """
+    """Entry point when running as a scheduled task."""
     import logging
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[logging.StreamHandler()],
     )
     logger = logging.getLogger("service")
 
@@ -144,7 +225,7 @@ def run_as_service():
 
     remote_path = INSTALL_DIR / "config.remote.yaml"
     config = ConfigLoader.load_with_remote(config_path, remote_path)
-    logger.info(f"Starting monitor service for device: {config.device.id}")
+    logger.info(f"Starting monitor for device: {config.device.id}")
 
     client = MQTTMonitorClient(config, config_dir=INSTALL_DIR)
     client.run()
@@ -159,7 +240,6 @@ def run_foreground():
 def auto_run():
     """Default double-click behavior: launch installer wizard or show status."""
     if not is_installed():
-        # Launch the GUI installer wizard
         if not is_admin():
             elevate_and_rerun()
             return
@@ -178,60 +258,15 @@ def auto_run():
         print(f"Status: Running")
         print()
         print("Options:")
-        print("  mqtt-network-monitor.exe stop        Stop the service")
-        print("  mqtt-network-monitor.exe uninstall   Remove the service")
+        print("  mqtt-network-monitor.exe stop        Stop the monitor")
+        print("  mqtt-network-monitor.exe uninstall   Remove the task")
         print("  mqtt-network-monitor.exe run         Run in foreground")
         print()
         input("Press Enter to close...")
 
-def _default_config():
-    return """# MQTT Network Monitor — Windows Client
-# Edit this file with your MQTT broker details, then restart the service.
-
-mqtt:
-  broker: 192.168.1.10    # Your MQTT broker IP
-  port: 1883
-  # username: your_user
-  # password: your_password
-
-device:
-  id: my-windows-pc
-  name: "My Windows PC"
-  type: windows
-  tags: [desktop, windows]
-
-plugins:
-  system_resources:
-    interval: 30
-    attributes:
-      - cpu_usage
-      - memory_usage
-      - disk_usage
-      - uptime
-
-  network_info:
-    interval: 60
-    interfaces:
-      - Ethernet
-
-  windows_system:
-    interval: 300
-    attributes:
-      - os_version
-      - cpu_model
-      - installed_ram
-      - process_count
-
-allowed_commands:
-  - shutdown /s /t 60
-  - shutdown /r /t 60
-  - shutdown /a
-"""
-
 def handle_cli():
     """Handle CLI commands. Returns True if handled."""
     if len(sys.argv) < 2:
-        # No arguments — auto-run (install or restart)
         auto_run()
         return True
 

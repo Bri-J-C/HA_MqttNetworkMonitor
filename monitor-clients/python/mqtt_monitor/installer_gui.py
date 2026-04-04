@@ -26,6 +26,7 @@ from mqtt_monitor.windows_service import (
     CONFIG_NAME,
     get_exe_path,
     run_sc,
+    register_task,
     is_installed,
 )
 
@@ -670,31 +671,25 @@ class InstallerWizard:
             ui(lambda: self._mark_step(2, True))
             time.sleep(0.3)
 
-            # Step 3: Register service
-            # Remove old service if exists
+            # Step 3: Register scheduled task
+            # Remove old task if exists
             if is_installed():
-                run_sc(["stop", SERVICE_NAME], check=False)
-                run_sc(["delete", SERVICE_NAME], check=False)
+                subprocess.run(["taskkill.exe", "/F", "/IM", "mqtt-network-monitor.exe"],
+                               capture_output=True)
+                subprocess.run(["schtasks.exe", "/Delete", "/TN", SERVICE_NAME, "/F"],
+                               capture_output=True)
                 time.sleep(0.5)
 
-            bin_path = f'"{exe_dst}" service'
-            result = run_sc(["create", SERVICE_NAME,
-                             f"binPath={bin_path}",
-                             f"DisplayName={SERVICE_DISPLAY}",
-                             "start=auto"], check=False)
+            result = register_task(exe_dst)
             reg_ok = result.returncode == 0
-            if reg_ok:
-                run_sc(["description", SERVICE_NAME, SERVICE_DESC], check=False)
-                subprocess.run([
-                    "sc.exe", "failure", SERVICE_NAME,
-                    "reset=86400",
-                    "actions=restart/10000/restart/10000/restart/10000"
-                ], capture_output=True)
             ui(lambda: self._mark_step(3, reg_ok))
             time.sleep(0.3)
 
-            # Step 4: Start service
-            result = run_sc(["start", SERVICE_NAME], check=False)
+            # Step 4: Start the task
+            result = subprocess.run(
+                ["schtasks.exe", "/Run", "/TN", SERVICE_NAME],
+                capture_output=True, text=True
+            )
             start_ok = result.returncode == 0
             ui(lambda: self._mark_step(4, start_ok))
 
@@ -705,12 +700,12 @@ class InstallerWizard:
                     style="Success.TLabel"))
             elif reg_ok:
                 ui(lambda: self.status_label.configure(
-                    text="Service registered but failed to start. "
+                    text="Task registered but failed to start. "
                          f"Check configuration at {INSTALL_DIR / CONFIG_NAME}",
                     style="Error.TLabel"))
             else:
                 ui(lambda: self.status_label.configure(
-                    text="Service registration failed. Try running as Administrator.",
+                    text="Task registration failed. Try running as Administrator.",
                     style="Error.TLabel"))
 
         except Exception as exc:
