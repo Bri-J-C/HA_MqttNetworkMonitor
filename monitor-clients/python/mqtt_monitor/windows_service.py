@@ -117,7 +117,7 @@ def register_task(exe_path):
   </Settings>
   <Actions>
     <Exec>
-      <Command>"{exe_path}"</Command>
+      <Command>{exe_path}</Command>
       <Arguments>service</Arguments>
       <WorkingDirectory>{str(INSTALL_DIR)}</WorkingDirectory>
     </Exec>
