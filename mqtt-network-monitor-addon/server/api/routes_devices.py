@@ -12,8 +12,21 @@ router = APIRouter(prefix="/api/devices", tags=["devices"])
 def get_devices(since: float = Query(default=0)):
     all_devices = state.registry.get_all_devices()
     if since > 0:
-        return {did: d for did, d in all_devices.items() if d.get("last_seen", 0) > since}
-    return all_devices
+        devices = {did: d for did, d in all_devices.items() if d.get("last_seen", 0) > since}
+    else:
+        devices = dict(all_devices)
+    # Merge effective group settings so frontend sees resolved cascade
+    if state.settings_manager:
+        from server.settings_resolver import resolve_settings
+        groups = state.registry.get_groups()
+        global_settings = state.settings_manager.get_settings()
+        for did, device in devices.items():
+            if device.get("group_policy"):
+                effective = resolve_settings(device, groups, global_settings)
+                device["hidden_attributes"] = effective.get("hidden_attributes", [])
+                device["card_attributes"] = effective.get("card_attributes", device.get("card_attributes", []))
+                device["attribute_transforms"] = effective.get("attribute_transforms", {})
+    return devices
 
 
 @router.get("/{device_id}")
@@ -21,6 +34,17 @@ def get_device(device_id: str):
     device = state.registry.get_device(device_id)
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
+    # Merge effective group settings so frontend sees resolved cascade
+    if device.get("group_policy") and state.settings_manager:
+        from server.settings_resolver import resolve_settings
+        groups = state.registry.get_groups()
+        global_settings = state.settings_manager.get_settings()
+        effective = resolve_settings(device, groups, global_settings)
+        result = dict(device)
+        result["hidden_attributes"] = effective.get("hidden_attributes", [])
+        result["card_attributes"] = effective.get("card_attributes", device.get("card_attributes", []))
+        result["attribute_transforms"] = effective.get("attribute_transforms", {})
+        return result
     return device
 
 

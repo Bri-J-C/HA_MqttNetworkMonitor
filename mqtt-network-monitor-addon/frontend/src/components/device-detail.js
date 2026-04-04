@@ -690,8 +690,12 @@ class DeviceDetail extends LitElement {
     this._groups = { ...this._groups, [this.groupId]: { ...group, custom_commands } };
   }
 
-  async _saveGroupSensor({ key, ...sensor }) {
-    const custom_sensors = { ...this._customSensors, [key]: sensor };
+  async _saveGroupSensor({ key, sensor, oldKey }) {
+    const custom_sensors = { ...this._customSensors };
+    if (oldKey && oldKey !== key) {
+      delete custom_sensors[oldKey];
+    }
+    custom_sensors[key] = sensor;
     this._customSensors = custom_sensors;
     await this._saveGroupUpdate({ custom_sensors });
   }

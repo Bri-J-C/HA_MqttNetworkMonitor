@@ -76,6 +76,30 @@ def resolve_settings(
             # Device has started customising — move to selective mode
             effective_ha_exposure = "selective"
 
+    # ── 4. Resolve display settings (hidden, pinned, transforms) ────────────
+    # Group → device cascade (device wins)
+    effective_hidden_attributes: list[str] = []
+    effective_card_attributes: list[str] = []
+    effective_transforms: dict[str, str] = {}
+
+    if group_policy_id and group_policy_id in groups:
+        group = groups[group_policy_id]
+        effective_hidden_attributes = list(group.get("hidden_attributes") or [])
+        effective_card_attributes = list(group.get("card_attributes") or [])
+        effective_transforms = dict(group.get("attribute_transforms") or {})
+
+    # Device-level overrides merge on top
+    device_hidden = device.get("hidden_attributes") or []
+    if device_hidden:
+        effective_hidden_attributes = list(set(effective_hidden_attributes + device_hidden))
+
+    device_card = device.get("card_attributes") or []
+    if device_card:
+        effective_card_attributes = device_card  # Device fully overrides group pinning
+
+    device_transforms = device.get("attribute_transforms") or {}
+    effective_transforms.update(device_transforms)  # Device wins per-attribute
+
     return {
         "thresholds": effective_thresholds,
         "crit_thresholds": effective_crit_thresholds,
@@ -84,4 +108,7 @@ def resolve_settings(
         "ha_exposed_attributes": effective_ha_attributes,
         "ha_exposure_source": ha_exposure_source,
         "group_policy": group_policy_id,
+        "hidden_attributes": effective_hidden_attributes,
+        "card_attributes": effective_card_attributes,
+        "attribute_transforms": effective_transforms,
     }

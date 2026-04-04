@@ -120,7 +120,8 @@ def create_app():
                 exposed_attrs = effective.get("ha_exposed_attributes")
 
             # Filter out hidden attributes before exposing to HA
-            hidden = device.get("hidden_attributes", [])
+            # Use effective hidden list (group + device merged)
+            hidden = effective.get("hidden_attributes", [])
             if hidden:
                 filtered_device = dict(device)
                 filtered_device["attributes"] = {
@@ -131,11 +132,13 @@ def create_app():
             else:
                 ha_entities.update_device_states(device_id, device, exposed_attrs)
 
-            # Broadcast full device data — frontend handles hidden filtering.
-            # Previously we stripped hidden attrs/commands here, but that caused
-            # flickering because poll responses had the full data while WebSocket
-            # updates had the filtered data, triggering constant re-renders.
+            # Broadcast device data with effective settings merged in.
+            # This gives the frontend the resolved cascade (group + device)
+            # for hidden_attributes, card_attributes, and attribute_transforms.
             broadcast_device = dict(device)
+            broadcast_device["hidden_attributes"] = effective.get("hidden_attributes", [])
+            broadcast_device["card_attributes"] = effective.get("card_attributes", device.get("card_attributes", []))
+            broadcast_device["attribute_transforms"] = effective.get("attribute_transforms", {})
 
             # Skip broadcast if nothing changed
             current_hash = _device_hash(broadcast_device)
