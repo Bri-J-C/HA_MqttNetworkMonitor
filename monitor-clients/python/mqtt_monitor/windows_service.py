@@ -65,78 +65,12 @@ def run_sc(args, check=True):
     return result
 
 def install():
+    """Launch the GUI installer wizard."""
     if not is_admin():
         elevate_and_rerun(["install"])
         return
-
-    print(f"Installing MQTT Network Monitor...")
-    print(f"  Directory: {INSTALL_DIR}")
-    print()
-
-    # Create install directory
-    INSTALL_DIR.mkdir(parents=True, exist_ok=True)
-
-    # Copy executable
-    exe_src = get_exe_path()
-    exe_dst = INSTALL_DIR / exe_src.name
-    if exe_src.resolve() != exe_dst.resolve():
-        shutil.copy2(exe_src, exe_dst)
-        print(f"  Copied {exe_src.name}")
-
-    # Create default config if none exists
-    config_dst = INSTALL_DIR / CONFIG_NAME
-    config_created = False
-    if not config_dst.exists():
-        config_dst.write_text(_default_config())
-        config_created = True
-        print(f"  Created default {CONFIG_NAME}")
-    else:
-        print(f"  Config already exists, keeping current")
-
-    # Remove old service if exists (handles reinstall)
-    if is_installed():
-        run_sc(["stop", SERVICE_NAME], check=False)
-        run_sc(["delete", SERVICE_NAME], check=False)
-        print(f"  Removed old service")
-
-    # Register Windows service
-    bin_path = f'"{exe_dst}" service'
-    run_sc(["create", SERVICE_NAME,
-            f"binPath={bin_path}",
-            f"DisplayName={SERVICE_DISPLAY}",
-            "start=auto"], check=False)
-    run_sc(["description", SERVICE_NAME, SERVICE_DESC], check=False)
-
-    # Auto-restart on failure (10s delay, up to 3 times per day)
-    subprocess.run([
-        "sc.exe", "failure", SERVICE_NAME,
-        "reset=86400", "actions=restart/10000/restart/10000/restart/10000"
-    ], capture_output=True)
-
-    print(f"  Service registered (auto-start)")
-
-    # Open config in Notepad if newly created
-    if config_created:
-        print()
-        print(f"  Opening config for editing...")
-        print(f"  Set your MQTT broker IP and save the file.")
-        print(f"  Then close Notepad — the service will start automatically.")
-        subprocess.Popen(["notepad.exe", str(config_dst)])
-        input("  Press Enter after saving config to start the service...")
-
-    # Start the service
-    result = run_sc(["start", SERVICE_NAME])
-    if result.returncode == 0:
-        print()
-        print(f"  Service started!")
-        print(f"  Your device should appear in the MQTT Network Monitor dashboard.")
-    else:
-        print()
-        print(f"  Service failed to start. Check config at:")
-        print(f"  {config_dst}")
-
-    print()
-    input("Press Enter to close...")
+    from mqtt_monitor.installer_gui import main as installer_main
+    installer_main()
 
 def uninstall():
     if not is_admin():
@@ -234,14 +168,20 @@ def run_foreground():
     main()
 
 def auto_run():
-    """Default double-click behavior: install if needed, otherwise restart."""
+    """Default double-click behavior: launch installer wizard or show status."""
     if not is_installed():
-        install()
+        # Launch the GUI installer wizard
+        if not is_admin():
+            elevate_and_rerun()
+            return
+        from mqtt_monitor.installer_gui import main as installer_main
+        installer_main()
     elif not is_running():
         if not is_admin():
             elevate_and_rerun(["start"])
         else:
             start()
+            input("Press Enter to close...")
     else:
         print("MQTT Network Monitor is already running.")
         print()

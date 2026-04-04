@@ -24,6 +24,7 @@ def main():
         "--hidden-import", "mqtt_monitor.command_handler",
         "--hidden-import", "mqtt_monitor.message",
         "--hidden-import", "mqtt_monitor.windows_service",
+        "--hidden-import", "mqtt_monitor.installer_gui",
         "--hidden-import", "win32serviceutil",
         "--hidden-import", "win32service",
         "--hidden-import", "win32event",
