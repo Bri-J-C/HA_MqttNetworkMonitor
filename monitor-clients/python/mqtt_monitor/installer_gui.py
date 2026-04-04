@@ -198,6 +198,7 @@ class InstallerWizard:
 
         # Wizard data
         self.data: dict = {}
+        self._existing_config = self._load_existing_config()
 
         # Container that holds each screen frame
         self.container = ttk.Frame(self.root)
@@ -218,6 +219,29 @@ class InstallerWizard:
     # ------------------------------------------------------------------
     # Navigation
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _load_existing_config():
+        """Load existing config.yaml if present in install dir."""
+        config_path = INSTALL_DIR / CONFIG_NAME
+        if not config_path.exists():
+            return None
+        try:
+            return yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+
+    def _ec(self, *keys, default=None):
+        """Get a value from existing config by nested keys."""
+        val = self._existing_config
+        if val is None:
+            return default
+        for k in keys:
+            if isinstance(val, dict):
+                val = val.get(k)
+            else:
+                return default
+        return val if val is not None else default
 
     def _show_screen(self, idx: int):
         for s in self.screens:
@@ -265,24 +289,24 @@ class InstallerWizard:
 
         # Broker
         ttk.Label(f, text="Broker IP / Hostname *").pack(anchor="w")
-        self.broker_var = tk.StringVar()
+        self.broker_var = tk.StringVar(value=self._ec("mqtt", "broker", default=""))
         ttk.Entry(f, textvariable=self.broker_var, width=42).pack(anchor="w", pady=(0, 8))
 
         # Port
         ttk.Label(f, text="Port").pack(anchor="w")
-        self.port_var = tk.StringVar(value="1883")
+        self.port_var = tk.StringVar(value=str(self._ec("mqtt", "port", default=1883)))
         ttk.Entry(f, textvariable=self.port_var, width=10).pack(anchor="w", pady=(0, 8))
 
         # Username
         ttk.Label(f, text="Username (optional)").pack(anchor="w")
-        self.mqtt_user_var = tk.StringVar()
+        self.mqtt_user_var = tk.StringVar(value=self._ec("mqtt", "username", default=""))
         ttk.Entry(f, textvariable=self.mqtt_user_var, width=30).pack(anchor="w", pady=(0, 8))
 
         # Password
         ttk.Label(f, text="Password (optional)").pack(anchor="w")
         pw_frame = ttk.Frame(f)
         pw_frame.pack(anchor="w", pady=(0, 8))
-        self.mqtt_pass_var = tk.StringVar()
+        self.mqtt_pass_var = tk.StringVar(value=self._ec("mqtt", "password", default=""))
         self.pw_entry = ttk.Entry(pw_frame, textvariable=self.mqtt_pass_var, width=26, show="*")
         self.pw_entry.pack(side="left")
         self._pw_visible = False
@@ -412,13 +436,13 @@ class InstallerWizard:
 
         # Device name
         ttk.Label(f, text="Device Name").pack(anchor="w")
-        self.device_name_var = tk.StringVar(value=hostname)
+        self.device_name_var = tk.StringVar(value=self._ec("device", "name", default=hostname))
         name_entry = ttk.Entry(f, textvariable=self.device_name_var, width=42)
         name_entry.pack(anchor="w", pady=(0, 8))
 
         # Device ID (auto-derived)
         ttk.Label(f, text="Device ID (used in MQTT topics)").pack(anchor="w")
-        self.device_id_var = tk.StringVar(value=_sanitize_device_id(hostname))
+        self.device_id_var = tk.StringVar(value=self._ec("device", "id", default=_sanitize_device_id(hostname)))
         id_entry = ttk.Entry(f, textvariable=self.device_id_var, width=42)
         id_entry.pack(anchor="w", pady=(0, 4))
         ttk.Label(f, text="Auto-generated from name. Edit if needed.",
@@ -431,7 +455,8 @@ class InstallerWizard:
 
         # Tags
         ttk.Label(f, text="Tags (comma-separated)").pack(anchor="w")
-        self.tags_var = tk.StringVar(value="desktop, windows")
+        existing_tags = self._ec("device", "tags", default=["desktop", "windows"])
+        self.tags_var = tk.StringVar(value=", ".join(existing_tags) if isinstance(existing_tags, list) else "desktop, windows")
         ttk.Entry(f, textvariable=self.tags_var, width=42).pack(anchor="w", pady=(0, 8))
 
         # Nav
@@ -466,10 +491,10 @@ class InstallerWizard:
         # System Resources
         row1 = ttk.Frame(f)
         row1.pack(anchor="w", fill="x", pady=(0, 10))
-        self.chk_sysres = tk.BooleanVar(value=True)
+        self.chk_sysres = tk.BooleanVar(value="system_resources" in self._ec("plugins", default={})  if self._existing_config else True)
         ttk.Checkbutton(row1, text="System Resources (CPU, memory, disk, uptime)",
                         variable=self.chk_sysres).pack(side="left")
-        self.interval_sysres = tk.StringVar(value="30")
+        self.interval_sysres = tk.StringVar(value=str(self._ec("plugins", "system_resources", "interval", default=30)))
         cb1 = ttk.Combobox(row1, textvariable=self.interval_sysres,
                            values=["10", "30", "60"], width=5, state="readonly")
         cb1.pack(side="right")
@@ -478,10 +503,10 @@ class InstallerWizard:
         # Network Info
         row2 = ttk.Frame(f)
         row2.pack(anchor="w", fill="x", pady=(0, 10))
-        self.chk_netinfo = tk.BooleanVar(value=True)
+        self.chk_netinfo = tk.BooleanVar(value="network_info" in self._ec("plugins", default={}) if self._existing_config else True)
         ttk.Checkbutton(row2, text="Network Info (IP, MAC, gateway, WiFi)",
                         variable=self.chk_netinfo).pack(side="left")
-        self.interval_netinfo = tk.StringVar(value="60")
+        self.interval_netinfo = tk.StringVar(value=str(self._ec("plugins", "network_info", "interval", default=60)))
         cb2 = ttk.Combobox(row2, textvariable=self.interval_netinfo,
                            values=["30", "60", "300"], width=5, state="readonly")
         cb2.pack(side="right")
@@ -490,10 +515,10 @@ class InstallerWizard:
         # Windows System
         row3 = ttk.Frame(f)
         row3.pack(anchor="w", fill="x", pady=(0, 10))
-        self.chk_winsys = tk.BooleanVar(value=True)
+        self.chk_winsys = tk.BooleanVar(value="windows_system" in self._ec("plugins", default={}) if self._existing_config else True)
         ttk.Checkbutton(row3, text="Windows System (OS, CPU model, RAM, GPU, processes)",
                         variable=self.chk_winsys).pack(side="left")
-        self.interval_winsys = tk.StringVar(value="300")
+        self.interval_winsys = tk.StringVar(value=str(self._ec("plugins", "windows_system", "interval", default=300)))
         cb3 = ttk.Combobox(row3, textvariable=self.interval_winsys,
                            values=["60", "300", "600"], width=5, state="readonly")
         cb3.pack(side="right")
@@ -541,7 +566,8 @@ class InstallerWizard:
         self.cmd_listbox.configure(yscrollcommand=sb.set)
 
         # Pre-populate
-        for cmd in ["shutdown /s /t 60", "shutdown /r /t 60", "shutdown /a"]:
+        existing_cmds = self._ec("allowed_commands", default=["shutdown /s /t 60", "shutdown /r /t 60", "shutdown /a"])
+        for cmd in (existing_cmds if isinstance(existing_cmds, list) else []):
             self.cmd_listbox.insert("end", cmd)
 
         # Add / remove
@@ -675,15 +701,13 @@ class InstallerWizard:
             ui(lambda: self._mark_step(1, True))
             time.sleep(0.3)
 
-            # Step 2: Write configuration (preserve existing on upgrade)
+            # Step 2: Write configuration
+            # On upgrade, wizard is pre-filled with existing values,
+            # so writing is safe — user's changes are intentional
+            config_yaml = _build_config_yaml(self.data)
             config_path = INSTALL_DIR / CONFIG_NAME
-            if config_path.exists():
-                # Upgrade — keep existing config
-                ui(lambda: self._mark_step(2, True))
-            else:
-                config_yaml = _build_config_yaml(self.data)
-                config_path.write_text(config_yaml, encoding="utf-8")
-                ui(lambda: self._mark_step(2, True))
+            config_path.write_text(config_yaml, encoding="utf-8")
+            ui(lambda: self._mark_step(2, True))
             time.sleep(0.3)
 
             # Step 3: Register Windows service via NSSM
