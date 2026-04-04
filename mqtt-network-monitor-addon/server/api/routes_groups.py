@@ -3,7 +3,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import Any
 from server.api import state
-from server.device_registry import _UNSET
 
 router = APIRouter(prefix="/api/groups", tags=["groups"])
 
@@ -23,31 +22,26 @@ def create_group(body: dict[str, Any]):
     return state.registry.create_group(group_id, name, device_ids)
 
 
+_ALLOWED_GROUP_FIELDS = {
+    "name", "device_ids", "custom_commands", "custom_sensors",
+    "thresholds", "crit_thresholds", "hidden_commands", "hidden_attributes",
+    "card_attributes", "interval", "attribute_transforms",
+}
+
+
 @router.put("/{group_id}")
 def update_group(group_id: str, body: dict[str, Any]):
     from server.config_assembler import assemble_and_push
-    result = state.registry.update_group(
-        group_id,
-        name=body.get("name"),
-        device_ids=body.get("device_ids"),
-        custom_commands=body.get("custom_commands"),
-        custom_sensors=body.get("custom_sensors"),
-        thresholds=body.get("thresholds"),
-        crit_thresholds=body.get("crit_thresholds"),
-        hidden_commands=body.get("hidden_commands"),
-        interval=body.get("interval", _UNSET),
-        attribute_transforms=body.get("attribute_transforms"),
-    )
+    fields = {k: v for k, v in body.items() if k in _ALLOWED_GROUP_FIELDS}
+    if not fields:
+        raise HTTPException(status_code=400, detail="No valid fields provided")
+    result = state.registry.update_group(group_id, fields)
     if not result:
         raise HTTPException(status_code=404, detail="Group not found")
-
-    # If config-affecting fields changed, push to all members
-    config_fields = {"custom_commands", "custom_sensors", "interval", "device_ids"}
-    if config_fields & set(body.keys()):
-        for device_id in result.get("device_ids", []):
-            if state.registry.get_device(device_id) and state.mqtt_handler:
-                assemble_and_push(device_id, state.registry, state.mqtt_handler)
-
+    # Always push config to members after any group change
+    for device_id in result.get("device_ids", []):
+        if state.registry.get_device(device_id) and state.mqtt_handler:
+            assemble_and_push(device_id, state.registry, state.mqtt_handler)
     return result
 
 
