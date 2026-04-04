@@ -1,7 +1,7 @@
 """Build script for Windows standalone executable.
 
 Run this on a Windows machine with Python 3.10+ installed:
-    pip install pyinstaller paho-mqtt psutil pyyaml pywin32
+    pip install pyinstaller paho-mqtt psutil pyyaml
     python build_windows.py
 
 Produces: dist/mqtt-network-monitor.exe
@@ -25,10 +25,6 @@ def main():
         "--hidden-import", "mqtt_monitor.message",
         "--hidden-import", "mqtt_monitor.windows_service",
         "--hidden-import", "mqtt_monitor.installer_gui",
-        "--hidden-import", "win32serviceutil",
-        "--hidden-import", "win32service",
-        "--hidden-import", "win32event",
-        "--hidden-import", "servicemanager",
         "--console",
         "mqtt_monitor/client.py",
     ]
@@ -37,10 +33,7 @@ def main():
     print()
     print("Build complete! -> dist/mqtt-network-monitor.exe")
     print()
-    print("To install on a Windows machine (as Administrator):")
-    print("  mqtt-network-monitor.exe install")
-    print("  Edit C:\\Program Files\\MQTTNetworkMonitor\\config.yaml")
-    print("  mqtt-network-monitor.exe start")
+    print("Double-click the exe to install. That's it.")
 
 if __name__ == "__main__":
     main()

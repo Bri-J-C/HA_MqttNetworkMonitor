@@ -36,7 +36,12 @@ def is_admin():
 
 def elevate_and_rerun(args=None):
     """Re-launch the current exe with admin privileges via UAC prompt."""
-    exe = sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]
+    if getattr(sys, 'frozen', False):
+        exe = sys.executable
+    else:
+        exe = sys.executable
+        # When running as .py, we need to re-run via python
+        args = [sys.argv[0]] + (args or sys.argv[1:])
     params = ' '.join(args or sys.argv[1:])
     ctypes.windll.shell32.ShellExecuteW(None, "runas", exe, params, None, 1)
     sys.exit(0)
@@ -115,50 +120,34 @@ def status():
         print(result.stdout.strip())
 
 def run_as_service():
-    """Entry point when running as a Windows service via sc.exe."""
-    try:
-        import servicemanager
-        import win32serviceutil
-        import win32service
-        import win32event
-    except ImportError:
-        print("Error: pywin32 is required for service mode.")
-        print("Install with: pip install pywin32")
+    """Entry point when running as a Windows service.
+
+    sc.exe starts the exe with 'service' arg. We run the monitor directly
+    in this process. The service manager handles stop via process termination.
+    No pywin32 dependency needed — we use a simple long-running process approach.
+    """
+    import logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[logging.StreamHandler()],
+    )
+    logger = logging.getLogger("service")
+
+    config_path = INSTALL_DIR / CONFIG_NAME
+    if not config_path.exists():
+        logger.error(f"Config not found: {config_path}")
         sys.exit(1)
 
-    class MQTTMonitorService(win32serviceutil.ServiceFramework):
-        _svc_name_ = SERVICE_NAME
-        _svc_display_name_ = SERVICE_DISPLAY
-        _svc_description_ = SERVICE_DESC
+    from mqtt_monitor.client import MQTTMonitorClient
+    from mqtt_monitor.config import ConfigLoader
 
-        def __init__(self, args):
-            win32serviceutil.ServiceFramework.__init__(self, args)
-            self.stop_event = win32event.CreateEvent(None, 0, 0, None)
-            self.running = True
+    remote_path = INSTALL_DIR / "config.remote.yaml"
+    config = ConfigLoader.load_with_remote(config_path, remote_path)
+    logger.info(f"Starting monitor service for device: {config.device.id}")
 
-        def SvcStop(self):
-            self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-            self.running = False
-            win32event.SetEvent(self.stop_event)
-
-        def SvcDoRun(self):
-            from mqtt_monitor.client import MQTTMonitorClient
-            from mqtt_monitor.config import ConfigLoader
-
-            config_path = INSTALL_DIR / CONFIG_NAME
-            remote_path = INSTALL_DIR / "config.remote.yaml"
-            config = ConfigLoader.load_with_remote(config_path, remote_path)
-
-            client = MQTTMonitorClient(config, config_dir=INSTALL_DIR)
-            import threading
-            t = threading.Thread(target=client.run, daemon=True)
-            t.start()
-
-            win32event.WaitForSingleObject(self.stop_event, win32event.INFINITE)
-
-    servicemanager.Initialize()
-    servicemanager.PrepareToHostSingle(MQTTMonitorService)
-    servicemanager.StartServiceCtrlDispatcher()
+    client = MQTTMonitorClient(config, config_dir=INSTALL_DIR)
+    client.run()
 
 def run_foreground():
     """Run the monitor in the foreground (for debugging)."""

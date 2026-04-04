@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install paho-mqtt psutil pyyaml pywin32 pyinstaller
+          pip install paho-mqtt psutil pyyaml pyinstaller
 
       - name: Build executable
         working-directory: monitor-clients/python
