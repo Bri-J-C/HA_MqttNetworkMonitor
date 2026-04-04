@@ -66,6 +66,6 @@ plugins:
 # On Windows, commands run via cmd.exe (shell=True). Prefix with 'powershell
 # -Command' if you need PowerShell.
 allowed_commands:
-  - shutdown /s /t 60
-  - shutdown /r /t 60
+  - Stop-Computer -Force
+  - Restart-Computer -Force
   # - powershell -Command Restart-Service MyService

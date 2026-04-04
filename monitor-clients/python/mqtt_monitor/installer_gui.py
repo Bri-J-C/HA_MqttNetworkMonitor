@@ -579,7 +579,7 @@ class InstallerWizard:
         self.cmd_listbox.configure(yscrollcommand=sb.set)
 
         # Pre-populate
-        existing_cmds = self._ec("allowed_commands", default=["shutdown /s /t 60", "shutdown /r /t 60", "shutdown /a"])
+        existing_cmds = self._ec("allowed_commands", default=["Stop-Computer -Force", "Restart-Computer -Force", "shutdown /a"])
         for cmd in (existing_cmds if isinstance(existing_cmds, list) else []):
             self.cmd_listbox.insert("end", cmd)
 
