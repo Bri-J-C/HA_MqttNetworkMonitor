@@ -319,29 +319,29 @@ class DeviceDetail extends LitElement {
       ${!isGroup ? html`
         <!-- 5. Network -->
         ${this._renderNetwork()}
-
-        <!-- 6. Commands -->
-        <device-commands
-          .device=${this.device}
-          .serverCommands=${this._serverCommands}
-          .commandResult=${this.commandResult}
-          @command-send=${(e) => this._sendCmd(e.detail.command)}
-          @command-hide=${(e) => this._hideCommand(e.detail.name)}
-          @command-unhide=${(e) => this._unhideCommand(e.detail.name)}
-          @server-command-save=${(e) => this._saveServerCommand(e.detail)}
-          @server-command-remove=${(e) => this._removeServerCommand(e.detail.name)}
-        ></device-commands>
-
-        <!-- 7. Agent Configuration -->
-        <device-config
-          .device=${this.device}
-          .configInterval=${this._configInterval}
-          .customSensors=${this._customSensors}
-          @interval-changed=${(e) => this._onIntervalChange(e.detail.value)}
-          @sensor-save=${(e) => this._saveSensor(e.detail)}
-          @sensor-remove=${(e) => this._removeSensor(e.detail.key)}
-        ></device-config>
       ` : ''}
+
+      <!-- 6. Commands -->
+      <device-commands
+        .device=${this.device}
+        .serverCommands=${isGroup ? (this._groups?.[this.groupId]?.custom_commands || {}) : this._serverCommands}
+        .commandResult=${this.commandResult}
+        @command-send=${(e) => this._sendCmd(e.detail.command)}
+        @command-hide=${(e) => this._hideCommand(e.detail.name)}
+        @command-unhide=${(e) => this._unhideCommand(e.detail.name)}
+        @server-command-save=${(e) => isGroup ? this._saveGroupCommand(e.detail) : this._saveServerCommand(e.detail)}
+        @server-command-remove=${(e) => isGroup ? this._removeGroupCommand(e.detail.name) : this._removeServerCommand(e.detail.name)}
+      ></device-commands>
+
+      <!-- 7. Agent Configuration -->
+      <device-config
+        .device=${this.device}
+        .configInterval=${this._configInterval}
+        .customSensors=${this._customSensors}
+        @interval-changed=${(e) => isGroup ? this._setGroupInterval(e.detail.value) : this._onIntervalChange(e.detail.value)}
+        @sensor-save=${(e) => isGroup ? this._saveGroupSensor(e.detail) : this._saveSensor(e.detail)}
+        @sensor-remove=${(e) => isGroup ? this._removeGroupSensor(e.detail.key) : this._removeSensor(e.detail.key)}
+      ></device-config>
 
       ${this._showGroupDialog ? this._renderGroupDialog() : ''}
     `;
@@ -620,6 +620,39 @@ class DeviceDetail extends LitElement {
     }
     this.device = { ...this.device, crit_threshold_overrides: crit_thresholds };
     await this._saveGroupUpdate({ crit_thresholds });
+  }
+
+  async _setGroupInterval(value) {
+    this._configInterval = value;
+    await this._saveGroupUpdate({ interval: value });
+  }
+
+  async _saveGroupCommand({ name, shell }) {
+    const group = this._groups?.[this.groupId];
+    const custom_commands = { ...(group?.custom_commands || {}), [name]: shell };
+    await this._saveGroupUpdate({ custom_commands });
+    this._groups = { ...this._groups, [this.groupId]: { ...group, custom_commands } };
+  }
+
+  async _removeGroupCommand(name) {
+    const group = this._groups?.[this.groupId];
+    const custom_commands = { ...(group?.custom_commands || {}) };
+    delete custom_commands[name];
+    await this._saveGroupUpdate({ custom_commands });
+    this._groups = { ...this._groups, [this.groupId]: { ...group, custom_commands } };
+  }
+
+  async _saveGroupSensor({ key, ...sensor }) {
+    const custom_sensors = { ...this._customSensors, [key]: sensor };
+    this._customSensors = custom_sensors;
+    await this._saveGroupUpdate({ custom_sensors });
+  }
+
+  async _removeGroupSensor(key) {
+    const custom_sensors = { ...this._customSensors };
+    delete custom_sensors[key];
+    this._customSensors = custom_sensors;
+    await this._saveGroupUpdate({ custom_sensors });
   }
 
   async _setGroupTransform(attr, transform) {
