@@ -39,6 +39,10 @@ class CustomCommandPlugin(BasePlugin):
         explicitly choose PowerShell in their config.
         """
         try:
+            if IS_WINDOWS:
+                # Use PowerShell on Windows unless command explicitly uses cmd
+                if not command.lower().startswith(("cmd ", "cmd.exe")):
+                    command = f'powershell -NoProfile -Command "{command}"'
             proc = subprocess.run(
                 command,
                 shell=True,
