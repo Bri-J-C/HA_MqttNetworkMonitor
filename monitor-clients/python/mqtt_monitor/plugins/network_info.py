@@ -36,19 +36,21 @@ class NetworkInfoPlugin(BasePlugin):
         io_counters = psutil.net_io_counters(pernic=True)
 
         interfaces = self.interfaces
-        # If no interfaces configured, or none of the configured names exist,
-        # auto-detect active interfaces that have an IPv4 address.
-        if not interfaces or not any(iface in addrs for iface in interfaces):
-            if interfaces:
-                logger.warning(
-                    "Configured interfaces %s not found; available: %s. "
-                    "Auto-detecting active interfaces.",
-                    interfaces,
-                    list(addrs.keys()),
-                )
+        # If no interfaces configured, or none have a real IP,
+        # auto-detect active interfaces.
+        def _has_real_ip(iface):
+            for a in addrs.get(iface, []):
+                if a.family == socket.AF_INET and not a.address.startswith("169.254."):
+                    return True
+            return False
+
+        configured_with_ip = [i for i in interfaces if i in addrs and _has_real_ip(i)]
+        if not configured_with_ip:
             interfaces = self._detect_active_interfaces(addrs)
             if not interfaces:
                 return {}
+        else:
+            interfaces = configured_with_ip
 
         result = {}
 
@@ -107,7 +109,10 @@ class NetworkInfoPlugin(BasePlugin):
 
     @staticmethod
     def _detect_active_interfaces(addrs: dict) -> list[str]:
-        """Return interface names that are up and have an IPv4 address."""
+        """Return interface names that are up and have a real IPv4 address.
+
+        Skips loopback and link-local (169.254.x.x) addresses.
+        """
         stats = psutil.net_if_stats()
         active = []
         for name, addr_list in addrs.items():
@@ -116,8 +121,11 @@ class NetworkInfoPlugin(BasePlugin):
                 continue
             st = stats.get(name)
             if st and st.isup:
-                has_ipv4 = any(a.family == socket.AF_INET for a in addr_list)
-                if has_ipv4:
+                has_real_ipv4 = any(
+                    a.family == socket.AF_INET and not a.address.startswith("169.254.")
+                    for a in addr_list
+                )
+                if has_real_ipv4:
                     active.append(name)
         return active
 
