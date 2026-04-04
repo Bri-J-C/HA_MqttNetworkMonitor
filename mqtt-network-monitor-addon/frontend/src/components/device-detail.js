@@ -685,10 +685,28 @@ class DeviceDetail extends LitElement {
   // ── Commands event handlers ────────────────────────────────────────────────
 
   async _sendCmd(command, params = {}) {
+    if (this._isGroupMode) return;
     try {
       this.commandResult = `Sending ${command}...`;
       const result = await sendCommand(this.deviceId, command, params);
-      this.commandResult = `Command sent (request: ${result.request_id})`;
+      const reqId = result.request_id;
+      this.commandResult = `Sent ${command}... waiting for response`;
+      // Poll for response in command_history (arrives via WebSocket or fetch)
+      const startTime = Date.now();
+      const poll = () => {
+        const history = this.device?.command_history || [];
+        const response = history.find(h => h.request_id === reqId);
+        if (response) {
+          this.commandResult = `${response.status}: ${response.output || '(no output)'}`;
+          return;
+        }
+        if (Date.now() - startTime < 10000) {
+          setTimeout(poll, 500);
+        } else {
+          this.commandResult = `Command sent (no response received)`;
+        }
+      };
+      setTimeout(poll, 500);
     } catch (e) {
       this.commandResult = `Error: ${e.message}`;
     }
