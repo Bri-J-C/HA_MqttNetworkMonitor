@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import {
   fetchDevice, fetchDevices, deleteDevice, deleteAttribute, unhideAttribute, hideCommand, unhideCommand, sendCommand, addDeviceTags, removeDeviceTag,
-  fetchGroups, createGroup, updateGroup,
+  fetchGroups, createGroup, updateGroup, forceApplyGroup,
   fetchEffectiveSettings, updateDeviceSettings,
 } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
@@ -305,6 +305,8 @@ class DeviceDetail extends LitElement {
               @click=${this._deleteDevice}>Delete</button>
           ` : html`
             <span style="font-size: 11px; color: rgba(255,255,255,0.4);">Group Policy Editor</span>
+            <button class="cmd-btn" style="font-size: 10px; padding: 3px 8px; background: rgba(239,83,80,0.1); color: #ef5350; border: 1px solid rgba(239,83,80,0.2);"
+              @click=${this._forceApplyGroup}>Force Apply</button>
           `}
           <button class="close-btn" @click=${() => this.dispatchEvent(new CustomEvent('back'))}>&#10005;</button>
         </div>
@@ -633,6 +635,17 @@ class DeviceDetail extends LitElement {
   }
 
   // ── Group mode save helpers ─────────────────────────────────────────────
+
+  async _forceApplyGroup() {
+    if (!confirm('This will clear all device-level overrides for every member and enforce the group policy. Devices can still be customized afterwards.\n\nContinue?')) return;
+    try {
+      await forceApplyGroup(this.groupId);
+      // Reload to reflect changes
+      await this._loadGroupAggregate();
+    } catch (e) {
+      console.error('Failed to force apply:', e);
+    }
+  }
 
   async _saveGroupUpdate(fields) {
     const group = this._groups?.[this.groupId];

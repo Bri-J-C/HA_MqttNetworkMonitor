@@ -211,6 +211,12 @@ export async function pushGroupConfig(groupId, config) {
   });
 }
 
+export async function forceApplyGroup(groupId) {
+  return apiCall(`${BASE}/api/groups/${encodeURIComponent(groupId)}/force-apply`, {
+    method: 'POST',
+  });
+}
+
 export async function checkGroupConflicts(groupId, newDeviceId = null) {
   return apiCall(`${BASE}/api/groups/${encodeURIComponent(groupId)}/check-conflicts`, {
     method: 'POST',

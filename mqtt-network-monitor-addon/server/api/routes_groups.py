@@ -98,3 +98,33 @@ def group_push_config(group_id: str, body: dict[str, Any] = None):
         else:
             results.append({"device_id": device_id, "status": "device_not_found"})
     return {"results": results}
+
+
+@router.post("/{group_id}/force-apply")
+def force_apply_group(group_id: str):
+    """Clear all device-level overrides for group members, enforcing group policy."""
+    from server.config_assembler import assemble_and_push
+    groups = state.registry.get_groups()
+    group = groups.get(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    clear_fields = {
+        "threshold_overrides": {},
+        "crit_threshold_overrides": {},
+        "attribute_transforms": {},
+        "card_attributes": [],
+        "hidden_attributes": [],
+        "ha_exposure_overrides": {},
+    }
+
+    results = []
+    for device_id in group.get("device_ids", []):
+        device = state.registry.get_device(device_id)
+        if device:
+            state.registry.set_device_settings(device_id, clear_fields)
+            assemble_and_push(device_id, state.registry, state.mqtt_handler)
+            results.append({"device_id": device_id, "status": "applied"})
+        else:
+            results.append({"device_id": device_id, "status": "device_not_found"})
+    return {"results": results}
