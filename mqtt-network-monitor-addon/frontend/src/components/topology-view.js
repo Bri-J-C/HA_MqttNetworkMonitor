@@ -453,6 +453,9 @@ class TopologyView extends LitElement {
     if (this.selectedLayout && this.layouts[this.selectedLayout]) {
       this.manualEdges = this.layouts[this.selectedLayout].manualEdges || [];
     }
+
+    // Fit all nodes in view after layout
+    this._fitAll();
   }
 
   get _allEdges() {
