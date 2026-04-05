@@ -350,10 +350,12 @@ def get_attribute_history(device_id: str, attr_name: str, hours: int = Query(def
     if hours not in (1, 6, 24, 168):
         hours = 24
 
-    # HA sanitizes entity IDs — replace hyphens and spaces with underscores
-    safe_id = device_id.replace("-", "_").replace(" ", "_").lower()
-    safe_attr = attr_name.replace("-", "_").replace(" ", "_").lower()
-    entity_id = f"sensor.network_monitor_{safe_id}_{safe_attr}"
+    # Look up actual entity_id from HA entity registry using our unique_id
+    unique_id = f"network_monitor_{device_id}_{attr_name}"
+    entity_id = _resolve_entity_id(token, unique_id)
+    if not entity_id:
+        raise HTTPException(status_code=404, detail=f"HA entity not found for {unique_id}")
+
     start = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
     url = f"http://supervisor/core/api/history/period/{start}?filter_entity_id={entity_id}&minimal_response&no_attributes"
 
@@ -370,3 +372,57 @@ def get_attribute_history(device_id: str, attr_name: str, hours: int = Query(def
             return []
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to fetch history: {e}")
+
+
+# Cache entity registry lookups (unique_id → entity_id)
+_entity_id_cache: dict[str, str] = {}
+_entity_cache_time: float = 0
+
+
+def _resolve_entity_id(token: str, unique_id: str) -> str | None:
+    """Look up the actual HA entity_id from the entity registry by unique_id."""
+    import time
+    import urllib.request
+    import json as _json
+
+    global _entity_id_cache, _entity_cache_time
+
+    # Use cache if fresh (refresh every 60s)
+    now = time.time()
+    if unique_id in _entity_id_cache and now - _entity_cache_time < 60:
+        return _entity_id_cache[unique_id]
+
+    # Fetch full entity registry
+    try:
+        url = "http://supervisor/core/api/states"
+        req = urllib.request.Request(url, headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        })
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            states = _json.loads(resp.read())
+
+        # Build cache from states — match by checking if entity_id contains our unique_id pattern
+        _entity_id_cache.clear()
+        for state in states:
+            eid = state.get("entity_id", "")
+            if "network_monitor" in eid:
+                # Extract what would be the unique_id from the entity_id
+                # entity_id format: sensor.network_monitor_deviceid_attrname
+                # unique_id format: network_monitor_deviceid_attrname
+                uid_guess = eid.replace("sensor.", "", 1)
+                _entity_id_cache[uid_guess] = eid
+        _entity_cache_time = now
+
+        # Try exact match first
+        if unique_id in _entity_id_cache:
+            return _entity_id_cache[unique_id]
+
+        # Try with hyphens replaced (HA sanitizes)
+        sanitized = unique_id.replace("-", "_")
+        if sanitized in _entity_id_cache:
+            return _entity_id_cache[sanitized]
+
+        return None
+    except Exception:
+        return None
