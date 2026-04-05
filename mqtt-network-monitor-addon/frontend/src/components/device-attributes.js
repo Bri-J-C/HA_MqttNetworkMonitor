@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import { applyTransform, getAllTransforms } from '../utils/transforms.js';
+import './attribute-chart.js';
 
 /**
  * device-attributes — attributes grid with HA exposure toggles, threshold editing, hide/unhide.
@@ -32,6 +33,7 @@ class DeviceAttributes extends LitElement {
     attributeTransforms: { type: Object },
     groupTransforms: { type: Object },
     _showHidden:       { type: Boolean, state: true },
+    _expandedChart:    { type: String, state: true },
   };
 
   static styles = [sharedStyles, css`
@@ -165,6 +167,7 @@ class DeviceAttributes extends LitElement {
     this.attributeTransforms = {};
     this.groupTransforms = {};
     this._showHidden       = false;
+    this._expandedChart    = null;
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -397,6 +400,20 @@ class DeviceAttributes extends LitElement {
           ${(this.groupTransforms || {})[name] && !(this.device?.attribute_transforms || {})[name]
             ? html`<span class="transform-source">Group Policy</span>` : ''}
         </div>
+        ${this._isExposed(name) ? html`
+          <div style="margin-top: 4px;">
+            <button style="background: none; border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; color: ${this._expandedChart === name ? '#00D4FF' : 'rgba(255,255,255,0.25)'}; cursor: pointer; padding: 2px 6px; font-size: 10px; transition: all 0.15s;"
+              @click=${(e) => { e.stopPropagation(); this._expandedChart = this._expandedChart === name ? null : name; }}>
+              ${this._expandedChart === name ? '▾ History' : '▸ History'}
+            </button>
+          </div>
+          ${this._expandedChart === name ? html`
+            <attribute-chart
+              .deviceId=${this.device?.device_id || ''}
+              .attrName=${name}
+            ></attribute-chart>
+          ` : ''}
+        ` : ''}
       </div>
     `;
   }

@@ -3,23 +3,23 @@
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,s=Symbol(),i=new WeakMap;let o=class{constructor(t,e,i){if(this._$cssResult$=!0,i!==s)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e}get styleSheet(){let t=this.o;const s=this.t;if(e&&void 0===t){const e=void 0!==s&&1===s.length;e&&(t=i.get(s)),void 0===t&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),e&&i.set(s,t))}return t}toString(){return this.cssText}};const n=(t,...e)=>{const i=1===t.length?t[0]:e.reduce((e,s,i)=>e+(t=>{if(!0===t._$cssResult$)return t.cssText;if("number"==typeof t)return t;throw Error("Value passed to 'css' function must be a 'css' function result: "+t+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(s)+t[i+1],t[0]);return new o(i,t,s)},r=e?t=>t:t=>t instanceof CSSStyleSheet?(t=>{let e="";for(const s of t.cssRules)e+=s.cssText;return(t=>new o("string"==typeof t?t:t+"",void 0,s))(e)})(t):t,{is:a,defineProperty:d,getOwnPropertyDescriptor:l,getOwnPropertyNames:c,getOwnPropertySymbols:p,getPrototypeOf:h}=Object,u=globalThis,g=u.trustedTypes,m=g?g.emptyScript:"",f=u.reactiveElementPolyfillSupport,b=(t,e)=>t,v={toAttribute(t,e){switch(e){case Boolean:t=t?m:null;break;case Object:case Array:t=null==t?t:JSON.stringify(t)}return t},fromAttribute(t,e){let s=t;switch(e){case Boolean:s=null!==t;break;case Number:s=null===t?null:Number(t);break;case Object:case Array:try{s=JSON.parse(t)}catch(t){s=null}}return s}},_=(t,e)=>!a(t,e),x={attribute:!0,type:String,converter:v,reflect:!1,useDefault:!1,hasChanged:_};
+const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,i=Symbol(),s=new WeakMap;let o=class{constructor(e,t,s){if(this._$cssResult$=!0,s!==i)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=e,this.t=t}get styleSheet(){let e=this.o;const i=this.t;if(t&&void 0===e){const t=void 0!==i&&1===i.length;t&&(e=s.get(i)),void 0===e&&((this.o=e=new CSSStyleSheet).replaceSync(this.cssText),t&&s.set(i,e))}return e}toString(){return this.cssText}};const n=(e,...t)=>{const s=1===e.length?e[0]:t.reduce((t,i,s)=>t+(e=>{if(!0===e._$cssResult$)return e.cssText;if("number"==typeof e)return e;throw Error("Value passed to 'css' function must be a 'css' function result: "+e+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(i)+e[s+1],e[0]);return new o(s,e,i)},r=t?e=>e:e=>e instanceof CSSStyleSheet?(e=>{let t="";for(const i of e.cssRules)t+=i.cssText;return(e=>new o("string"==typeof e?e:e+"",void 0,i))(t)})(e):e,{is:a,defineProperty:l,getOwnPropertyDescriptor:d,getOwnPropertyNames:c,getOwnPropertySymbols:p,getPrototypeOf:u}=Object,h=globalThis,g=h.trustedTypes,f=g?g.emptyScript:"",m=h.reactiveElementPolyfillSupport,b=(e,t)=>e,v={toAttribute(e,t){switch(t){case Boolean:e=e?f:null;break;case Object:case Array:e=null==e?e:JSON.stringify(e)}return e},fromAttribute(e,t){let i=e;switch(t){case Boolean:i=null!==e;break;case Number:i=null===e?null:Number(e);break;case Object:case Array:try{i=JSON.parse(e)}catch(e){i=null}}return i}},_=(e,t)=>!a(e,t),x={attribute:!0,type:String,converter:v,reflect:!1,useDefault:!1,hasChanged:_};
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */Symbol.metadata??=Symbol("metadata"),u.litPropertyMetadata??=new WeakMap;let y=class extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,e=x){if(e.state&&(e.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(t)&&((e=Object.create(e)).wrapped=!0),this.elementProperties.set(t,e),!e.noAccessor){const s=Symbol(),i=this.getPropertyDescriptor(t,s,e);void 0!==i&&d(this.prototype,t,i)}}static getPropertyDescriptor(t,e,s){const{get:i,set:o}=l(this.prototype,t)??{get(){return this[e]},set(t){this[e]=t}};return{get:i,set(e){const n=i?.call(this);o?.call(this,e),this.requestUpdate(t,n,s)},configurable:!0,enumerable:!0}}static getPropertyOptions(t){return this.elementProperties.get(t)??x}static _$Ei(){if(this.hasOwnProperty(b("elementProperties")))return;const t=h(this);t.finalize(),void 0!==t.l&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties)}static finalize(){if(this.hasOwnProperty(b("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(b("properties"))){const t=this.properties,e=[...c(t),...p(t)];for(const s of e)this.createProperty(s,t[s])}const t=this[Symbol.metadata];if(null!==t){const e=litPropertyMetadata.get(t);if(void 0!==e)for(const[t,s]of e)this.elementProperties.set(t,s)}this._$Eh=new Map;for(const[t,e]of this.elementProperties){const s=this._$Eu(t,e);void 0!==s&&this._$Eh.set(s,t)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(t){const e=[];if(Array.isArray(t)){const s=new Set(t.flat(1/0).reverse());for(const t of s)e.unshift(r(t))}else void 0!==t&&e.push(r(t));return e}static _$Eu(t,e){const s=e.attribute;return!1===s?void 0:"string"==typeof s?s:"string"==typeof t?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this))}addController(t){(this._$EO??=new Set).add(t),void 0!==this.renderRoot&&this.isConnected&&t.hostConnected?.()}removeController(t){this._$EO?.delete(t)}_$E_(){const t=new Map,e=this.constructor.elementProperties;for(const s of e.keys())this.hasOwnProperty(s)&&(t.set(s,this[s]),delete this[s]);t.size>0&&(this._$Ep=t)}createRenderRoot(){const s=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return((s,i)=>{if(e)s.adoptedStyleSheets=i.map(t=>t instanceof CSSStyleSheet?t:t.styleSheet);else for(const e of i){const i=document.createElement("style"),o=t.litNonce;void 0!==o&&i.setAttribute("nonce",o),i.textContent=e.cssText,s.appendChild(i)}})(s,this.constructor.elementStyles),s}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(t=>t.hostConnected?.())}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.())}attributeChangedCallback(t,e,s){this._$AK(t,s)}_$ET(t,e){const s=this.constructor.elementProperties.get(t),i=this.constructor._$Eu(t,s);if(void 0!==i&&!0===s.reflect){const o=(void 0!==s.converter?.toAttribute?s.converter:v).toAttribute(e,s.type);this._$Em=t,null==o?this.removeAttribute(i):this.setAttribute(i,o),this._$Em=null}}_$AK(t,e){const s=this.constructor,i=s._$Eh.get(t);if(void 0!==i&&this._$Em!==i){const t=s.getPropertyOptions(i),o="function"==typeof t.converter?{fromAttribute:t.converter}:void 0!==t.converter?.fromAttribute?t.converter:v;this._$Em=i;const n=o.fromAttribute(e,t.type);this[i]=n??this._$Ej?.get(i)??n,this._$Em=null}}requestUpdate(t,e,s,i=!1,o){if(void 0!==t){const n=this.constructor;if(!1===i&&(o=this[t]),s??=n.getPropertyOptions(t),!((s.hasChanged??_)(o,e)||s.useDefault&&s.reflect&&o===this._$Ej?.get(t)&&!this.hasAttribute(n._$Eu(t,s))))return;this.C(t,e,s)}!1===this.isUpdatePending&&(this._$ES=this._$EP())}C(t,e,{useDefault:s,reflect:i,wrapped:o},n){s&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,n??e??this[t]),!0!==o||void 0!==n)||(this._$AL.has(t)||(this.hasUpdated||s||(e=void 0),this._$AL.set(t,e)),!0===i&&this._$Em!==t&&(this._$Eq??=new Set).add(t))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(t){Promise.reject(t)}const t=this.scheduleUpdate();return null!=t&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[t,e]of this._$Ep)this[t]=e;this._$Ep=void 0}const t=this.constructor.elementProperties;if(t.size>0)for(const[e,s]of t){const{wrapped:t}=s,i=this[e];!0!==t||this._$AL.has(e)||void 0===i||this.C(e,void 0,s,i)}}let t=!1;const e=this._$AL;try{t=this.shouldUpdate(e),t?(this.willUpdate(e),this._$EO?.forEach(t=>t.hostUpdate?.()),this.update(e)):this._$EM()}catch(e){throw t=!1,this._$EM(),e}t&&this._$AE(e)}willUpdate(t){}_$AE(t){this._$EO?.forEach(t=>t.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(t)),this.updated(t)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return!0}update(t){this._$Eq&&=this._$Eq.forEach(t=>this._$ET(t,this[t])),this._$EM()}updated(t){}firstUpdated(t){}};y.elementStyles=[],y.shadowRootOptions={mode:"open"},y[b("elementProperties")]=new Map,y[b("finalized")]=new Map,f?.({ReactiveElement:y}),(u.reactiveElementVersions??=[]).push("2.1.2");
+ */Symbol.metadata??=Symbol("metadata"),h.litPropertyMetadata??=new WeakMap;let y=class extends HTMLElement{static addInitializer(e){this._$Ei(),(this.l??=[]).push(e)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(e,t=x){if(t.state&&(t.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(e)&&((t=Object.create(t)).wrapped=!0),this.elementProperties.set(e,t),!t.noAccessor){const i=Symbol(),s=this.getPropertyDescriptor(e,i,t);void 0!==s&&l(this.prototype,e,s)}}static getPropertyDescriptor(e,t,i){const{get:s,set:o}=d(this.prototype,e)??{get(){return this[t]},set(e){this[t]=e}};return{get:s,set(t){const n=s?.call(this);o?.call(this,t),this.requestUpdate(e,n,i)},configurable:!0,enumerable:!0}}static getPropertyOptions(e){return this.elementProperties.get(e)??x}static _$Ei(){if(this.hasOwnProperty(b("elementProperties")))return;const e=u(this);e.finalize(),void 0!==e.l&&(this.l=[...e.l]),this.elementProperties=new Map(e.elementProperties)}static finalize(){if(this.hasOwnProperty(b("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(b("properties"))){const e=this.properties,t=[...c(e),...p(e)];for(const i of t)this.createProperty(i,e[i])}const e=this[Symbol.metadata];if(null!==e){const t=litPropertyMetadata.get(e);if(void 0!==t)for(const[e,i]of t)this.elementProperties.set(e,i)}this._$Eh=new Map;for(const[e,t]of this.elementProperties){const i=this._$Eu(e,t);void 0!==i&&this._$Eh.set(i,e)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(e){const t=[];if(Array.isArray(e)){const i=new Set(e.flat(1/0).reverse());for(const e of i)t.unshift(r(e))}else void 0!==e&&t.push(r(e));return t}static _$Eu(e,t){const i=t.attribute;return!1===i?void 0:"string"==typeof i?i:"string"==typeof e?e.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(e=>this.enableUpdating=e),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(e=>e(this))}addController(e){(this._$EO??=new Set).add(e),void 0!==this.renderRoot&&this.isConnected&&e.hostConnected?.()}removeController(e){this._$EO?.delete(e)}_$E_(){const e=new Map,t=this.constructor.elementProperties;for(const i of t.keys())this.hasOwnProperty(i)&&(e.set(i,this[i]),delete this[i]);e.size>0&&(this._$Ep=e)}createRenderRoot(){const i=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return((i,s)=>{if(t)i.adoptedStyleSheets=s.map(e=>e instanceof CSSStyleSheet?e:e.styleSheet);else for(const t of s){const s=document.createElement("style"),o=e.litNonce;void 0!==o&&s.setAttribute("nonce",o),s.textContent=t.cssText,i.appendChild(s)}})(i,this.constructor.elementStyles),i}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(e=>e.hostConnected?.())}enableUpdating(e){}disconnectedCallback(){this._$EO?.forEach(e=>e.hostDisconnected?.())}attributeChangedCallback(e,t,i){this._$AK(e,i)}_$ET(e,t){const i=this.constructor.elementProperties.get(e),s=this.constructor._$Eu(e,i);if(void 0!==s&&!0===i.reflect){const o=(void 0!==i.converter?.toAttribute?i.converter:v).toAttribute(t,i.type);this._$Em=e,null==o?this.removeAttribute(s):this.setAttribute(s,o),this._$Em=null}}_$AK(e,t){const i=this.constructor,s=i._$Eh.get(e);if(void 0!==s&&this._$Em!==s){const e=i.getPropertyOptions(s),o="function"==typeof e.converter?{fromAttribute:e.converter}:void 0!==e.converter?.fromAttribute?e.converter:v;this._$Em=s;const n=o.fromAttribute(t,e.type);this[s]=n??this._$Ej?.get(s)??n,this._$Em=null}}requestUpdate(e,t,i,s=!1,o){if(void 0!==e){const n=this.constructor;if(!1===s&&(o=this[e]),i??=n.getPropertyOptions(e),!((i.hasChanged??_)(o,t)||i.useDefault&&i.reflect&&o===this._$Ej?.get(e)&&!this.hasAttribute(n._$Eu(e,i))))return;this.C(e,t,i)}!1===this.isUpdatePending&&(this._$ES=this._$EP())}C(e,t,{useDefault:i,reflect:s,wrapped:o},n){i&&!(this._$Ej??=new Map).has(e)&&(this._$Ej.set(e,n??t??this[e]),!0!==o||void 0!==n)||(this._$AL.has(e)||(this.hasUpdated||i||(t=void 0),this._$AL.set(e,t)),!0===s&&this._$Em!==e&&(this._$Eq??=new Set).add(e))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(e){Promise.reject(e)}const e=this.scheduleUpdate();return null!=e&&await e,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[e,t]of this._$Ep)this[e]=t;this._$Ep=void 0}const e=this.constructor.elementProperties;if(e.size>0)for(const[t,i]of e){const{wrapped:e}=i,s=this[t];!0!==e||this._$AL.has(t)||void 0===s||this.C(t,void 0,i,s)}}let e=!1;const t=this._$AL;try{e=this.shouldUpdate(t),e?(this.willUpdate(t),this._$EO?.forEach(e=>e.hostUpdate?.()),this.update(t)):this._$EM()}catch(t){throw e=!1,this._$EM(),t}e&&this._$AE(t)}willUpdate(e){}_$AE(e){this._$EO?.forEach(e=>e.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(e)),this.updated(e)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(e){return!0}update(e){this._$Eq&&=this._$Eq.forEach(e=>this._$ET(e,this[e])),this._$EM()}updated(e){}firstUpdated(e){}};y.elementStyles=[],y.shadowRootOptions={mode:"open"},y[b("elementProperties")]=new Map,y[b("finalized")]=new Map,m?.({ReactiveElement:y}),(h.reactiveElementVersions??=[]).push("2.1.2");
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{createHTML:t=>t}):void 0,E="$lit$",C=`lit$${Math.random().toFixed(9).slice(2)}$`,D="?"+C,T=`<${D}>`,A=document,z=()=>A.createComment(""),F=t=>null===t||"object"!=typeof t&&"function"!=typeof t,N=Array.isArray,M="[ \t\n\f\r]",P=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,L=/-->/g,O=/>/g,G=RegExp(`>|${M}(?:([^\\s"'>=/]+)(${M}*=${M}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),I=/'/g,U=/"/g,R=/^(?:script|style|textarea|title)$/i,j=t=>(e,...s)=>({_$litType$:t,strings:e,values:s}),B=j(1),H=j(2),V=Symbol.for("lit-noChange"),q=Symbol.for("lit-nothing"),Y=new WeakMap,J=A.createTreeWalker(A,129);function W(t,e){if(!N(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(e):e}const X=(t,e)=>{const s=t.length-1,i=[];let o,n=2===e?"<svg>":3===e?"<math>":"",r=P;for(let e=0;e<s;e++){const s=t[e];let a,d,l=-1,c=0;for(;c<s.length&&(r.lastIndex=c,d=r.exec(s),null!==d);)c=r.lastIndex,r===P?"!--"===d[1]?r=L:void 0!==d[1]?r=O:void 0!==d[2]?(R.test(d[2])&&(o=RegExp("</"+d[2],"g")),r=G):void 0!==d[3]&&(r=G):r===G?">"===d[0]?(r=o??P,l=-1):void 0===d[1]?l=-2:(l=r.lastIndex-d[2].length,a=d[1],r=void 0===d[3]?G:'"'===d[3]?U:I):r===U||r===I?r=G:r===L||r===O?r=P:(r=G,o=void 0);const p=r===G&&t[e+1].startsWith("/>")?" ":"";n+=r===P?s+T:l>=0?(i.push(a),s.slice(0,l)+E+s.slice(l)+C+p):s+C+(-2===l?e:p)}return[W(t,n+(t[s]||"<?>")+(2===e?"</svg>":3===e?"</math>":"")),i]};class K{constructor({strings:t,_$litType$:e},s){let i;this.parts=[];let o=0,n=0;const r=t.length-1,a=this.parts,[d,l]=X(t,e);if(this.el=K.createElement(d,s),J.currentNode=this.el.content,2===e||3===e){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes)}for(;null!==(i=J.nextNode())&&a.length<r;){if(1===i.nodeType){if(i.hasAttributes())for(const t of i.getAttributeNames())if(t.endsWith(E)){const e=l[n++],s=i.getAttribute(t).split(C),r=/([.?@])?(.*)/.exec(e);a.push({type:1,index:o,name:r[2],strings:s,ctor:"."===r[1]?st:"?"===r[1]?it:"@"===r[1]?ot:et}),i.removeAttribute(t)}else t.startsWith(C)&&(a.push({type:6,index:o}),i.removeAttribute(t));if(R.test(i.tagName)){const t=i.textContent.split(C),e=t.length-1;if(e>0){i.textContent=k?k.emptyScript:"";for(let s=0;s<e;s++)i.append(t[s],z()),J.nextNode(),a.push({type:2,index:++o});i.append(t[e],z())}}}else if(8===i.nodeType)if(i.data===D)a.push({type:2,index:o});else{let t=-1;for(;-1!==(t=i.data.indexOf(C,t+1));)a.push({type:7,index:o}),t+=C.length-1}o++}}static createElement(t,e){const s=A.createElement("template");return s.innerHTML=t,s}}function Z(t,e,s=t,i){if(e===V)return e;let o=void 0!==i?s._$Co?.[i]:s._$Cl;const n=F(e)?void 0:e._$litDirective$;return o?.constructor!==n&&(o?._$AO?.(!1),void 0===n?o=void 0:(o=new n(t),o._$AT(t,s,i)),void 0!==i?(s._$Co??=[])[i]=o:s._$Cl=o),void 0!==o&&(e=Z(t,o._$AS(t,e.values),o,i)),e}class Q{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:s}=this._$AD,i=(t?.creationScope??A).importNode(e,!0);J.currentNode=i;let o=J.nextNode(),n=0,r=0,a=s[0];for(;void 0!==a;){if(n===a.index){let e;2===a.type?e=new tt(o,o.nextSibling,this,t):1===a.type?e=new a.ctor(o,a.name,a.strings,this,t):6===a.type&&(e=new nt(o,this,t)),this._$AV.push(e),a=s[++r]}n!==a?.index&&(o=J.nextNode(),n++)}return J.currentNode=A,i}p(t){let e=0;for(const s of this._$AV)void 0!==s&&(void 0!==s.strings?(s._$AI(t,s,e),e+=s.strings.length-2):s._$AI(t[e])),e++}}class tt{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,s,i){this.type=2,this._$AH=q,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=s,this.options=i,this._$Cv=i?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return void 0!==e&&11===t?.nodeType&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=Z(this,t,e),F(t)?t===q||null==t||""===t?(this._$AH!==q&&this._$AR(),this._$AH=q):t!==this._$AH&&t!==V&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):(t=>N(t)||"function"==typeof t?.[Symbol.iterator])(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==q&&F(this._$AH)?this._$AA.nextSibling.data=t:this.T(A.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:s}=t,i="number"==typeof s?this._$AC(t):(void 0===s.el&&(s.el=K.createElement(W(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===i)this._$AH.p(e);else{const t=new Q(i,this),s=t.u(this.options);t.p(e),this.T(s),this._$AH=t}}_$AC(t){let e=Y.get(t.strings);return void 0===e&&Y.set(t.strings,e=new K(t)),e}k(t){N(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let s,i=0;for(const o of t)i===e.length?e.push(s=new tt(this.O(z()),this.O(z()),this,this.options)):s=e[i],s._$AI(o),i++;i<e.length&&(this._$AR(s&&s._$AB.nextSibling,i),e.length=i)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const e=w(t).nextSibling;w(t).remove(),t=e}}setConnected(t){void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t))}}class et{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,s,i,o){this.type=1,this._$AH=q,this._$AN=void 0,this.element=t,this.name=e,this._$AM=i,this.options=o,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=q}_$AI(t,e=this,s,i){const o=this.strings;let n=!1;if(void 0===o)t=Z(this,t,e,0),n=!F(t)||t!==this._$AH&&t!==V,n&&(this._$AH=t);else{const i=t;let r,a;for(t=o[0],r=0;r<o.length-1;r++)a=Z(this,i[s+r],e,r),a===V&&(a=this._$AH[r]),n||=!F(a)||a!==this._$AH[r],a===q?t=q:t!==q&&(t+=(a??"")+o[r+1]),this._$AH[r]=a}n&&!i&&this.j(t)}j(t){t===q?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class st extends et{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===q?void 0:t}}class it extends et{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==q)}}class ot extends et{constructor(t,e,s,i,o){super(t,e,s,i,o),this.type=5}_$AI(t,e=this){if((t=Z(this,t,e,0)??q)===V)return;const s=this._$AH,i=t===q&&s!==q||t.capture!==s.capture||t.once!==s.once||t.passive!==s.passive,o=t!==q&&(s===q||i);i&&this.element.removeEventListener(this.name,this,s),o&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class nt{constructor(t,e,s){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=s}get _$AU(){return this._$AM._$AU}_$AI(t){Z(this,t)}}const rt=$.litHtmlPolyfillSupport;rt?.(K,tt),($.litHtmlVersions??=[]).push("3.3.2");const at=globalThis;
+const w=globalThis,$=e=>e,k=w.trustedTypes,S=k?k.createPolicy("lit-html",{createHTML:e=>e}):void 0,E="$lit$",C=`lit$${Math.random().toFixed(9).slice(2)}$`,D="?"+C,T=`<${D}>`,A=document,z=()=>A.createComment(""),F=e=>null===e||"object"!=typeof e&&"function"!=typeof e,M=Array.isArray,P="[ \t\n\f\r]",N=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,O=/-->/g,L=/>/g,I=RegExp(`>|${P}(?:([^\\s"'>=/]+)(${P}*=${P}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),G=/'/g,U=/"/g,R=/^(?:script|style|textarea|title)$/i,j=e=>(t,...i)=>({_$litType$:e,strings:t,values:i}),B=j(1),H=j(2),V=Symbol.for("lit-noChange"),q=Symbol.for("lit-nothing"),W=new WeakMap,Y=A.createTreeWalker(A,129);function J(e,t){if(!M(e)||!e.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(t):t}const X=(e,t)=>{const i=e.length-1,s=[];let o,n=2===t?"<svg>":3===t?"<math>":"",r=N;for(let t=0;t<i;t++){const i=e[t];let a,l,d=-1,c=0;for(;c<i.length&&(r.lastIndex=c,l=r.exec(i),null!==l);)c=r.lastIndex,r===N?"!--"===l[1]?r=O:void 0!==l[1]?r=L:void 0!==l[2]?(R.test(l[2])&&(o=RegExp("</"+l[2],"g")),r=I):void 0!==l[3]&&(r=I):r===I?">"===l[0]?(r=o??N,d=-1):void 0===l[1]?d=-2:(d=r.lastIndex-l[2].length,a=l[1],r=void 0===l[3]?I:'"'===l[3]?U:G):r===U||r===G?r=I:r===O||r===L?r=N:(r=I,o=void 0);const p=r===I&&e[t+1].startsWith("/>")?" ":"";n+=r===N?i+T:d>=0?(s.push(a),i.slice(0,d)+E+i.slice(d)+C+p):i+C+(-2===d?t:p)}return[J(e,n+(e[i]||"<?>")+(2===t?"</svg>":3===t?"</math>":"")),s]};class K{constructor({strings:e,_$litType$:t},i){let s;this.parts=[];let o=0,n=0;const r=e.length-1,a=this.parts,[l,d]=X(e,t);if(this.el=K.createElement(l,i),Y.currentNode=this.el.content,2===t||3===t){const e=this.el.content.firstChild;e.replaceWith(...e.childNodes)}for(;null!==(s=Y.nextNode())&&a.length<r;){if(1===s.nodeType){if(s.hasAttributes())for(const e of s.getAttributeNames())if(e.endsWith(E)){const t=d[n++],i=s.getAttribute(e).split(C),r=/([.?@])?(.*)/.exec(t);a.push({type:1,index:o,name:r[2],strings:i,ctor:"."===r[1]?ie:"?"===r[1]?se:"@"===r[1]?oe:te}),s.removeAttribute(e)}else e.startsWith(C)&&(a.push({type:6,index:o}),s.removeAttribute(e));if(R.test(s.tagName)){const e=s.textContent.split(C),t=e.length-1;if(t>0){s.textContent=k?k.emptyScript:"";for(let i=0;i<t;i++)s.append(e[i],z()),Y.nextNode(),a.push({type:2,index:++o});s.append(e[t],z())}}}else if(8===s.nodeType)if(s.data===D)a.push({type:2,index:o});else{let e=-1;for(;-1!==(e=s.data.indexOf(C,e+1));)a.push({type:7,index:o}),e+=C.length-1}o++}}static createElement(e,t){const i=A.createElement("template");return i.innerHTML=e,i}}function Z(e,t,i=e,s){if(t===V)return t;let o=void 0!==s?i._$Co?.[s]:i._$Cl;const n=F(t)?void 0:t._$litDirective$;return o?.constructor!==n&&(o?._$AO?.(!1),void 0===n?o=void 0:(o=new n(e),o._$AT(e,i,s)),void 0!==s?(i._$Co??=[])[s]=o:i._$Cl=o),void 0!==o&&(t=Z(e,o._$AS(e,t.values),o,s)),t}class Q{constructor(e,t){this._$AV=[],this._$AN=void 0,this._$AD=e,this._$AM=t}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(e){const{el:{content:t},parts:i}=this._$AD,s=(e?.creationScope??A).importNode(t,!0);Y.currentNode=s;let o=Y.nextNode(),n=0,r=0,a=i[0];for(;void 0!==a;){if(n===a.index){let t;2===a.type?t=new ee(o,o.nextSibling,this,e):1===a.type?t=new a.ctor(o,a.name,a.strings,this,e):6===a.type&&(t=new ne(o,this,e)),this._$AV.push(t),a=i[++r]}n!==a?.index&&(o=Y.nextNode(),n++)}return Y.currentNode=A,s}p(e){let t=0;for(const i of this._$AV)void 0!==i&&(void 0!==i.strings?(i._$AI(e,i,t),t+=i.strings.length-2):i._$AI(e[t])),t++}}class ee{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(e,t,i,s){this.type=2,this._$AH=q,this._$AN=void 0,this._$AA=e,this._$AB=t,this._$AM=i,this.options=s,this._$Cv=s?.isConnected??!0}get parentNode(){let e=this._$AA.parentNode;const t=this._$AM;return void 0!==t&&11===e?.nodeType&&(e=t.parentNode),e}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(e,t=this){e=Z(this,e,t),F(e)?e===q||null==e||""===e?(this._$AH!==q&&this._$AR(),this._$AH=q):e!==this._$AH&&e!==V&&this._(e):void 0!==e._$litType$?this.$(e):void 0!==e.nodeType?this.T(e):(e=>M(e)||"function"==typeof e?.[Symbol.iterator])(e)?this.k(e):this._(e)}O(e){return this._$AA.parentNode.insertBefore(e,this._$AB)}T(e){this._$AH!==e&&(this._$AR(),this._$AH=this.O(e))}_(e){this._$AH!==q&&F(this._$AH)?this._$AA.nextSibling.data=e:this.T(A.createTextNode(e)),this._$AH=e}$(e){const{values:t,_$litType$:i}=e,s="number"==typeof i?this._$AC(e):(void 0===i.el&&(i.el=K.createElement(J(i.h,i.h[0]),this.options)),i);if(this._$AH?._$AD===s)this._$AH.p(t);else{const e=new Q(s,this),i=e.u(this.options);e.p(t),this.T(i),this._$AH=e}}_$AC(e){let t=W.get(e.strings);return void 0===t&&W.set(e.strings,t=new K(e)),t}k(e){M(this._$AH)||(this._$AH=[],this._$AR());const t=this._$AH;let i,s=0;for(const o of e)s===t.length?t.push(i=new ee(this.O(z()),this.O(z()),this,this.options)):i=t[s],i._$AI(o),s++;s<t.length&&(this._$AR(i&&i._$AB.nextSibling,s),t.length=s)}_$AR(e=this._$AA.nextSibling,t){for(this._$AP?.(!1,!0,t);e!==this._$AB;){const t=$(e).nextSibling;$(e).remove(),e=t}}setConnected(e){void 0===this._$AM&&(this._$Cv=e,this._$AP?.(e))}}class te{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(e,t,i,s,o){this.type=1,this._$AH=q,this._$AN=void 0,this.element=e,this.name=t,this._$AM=s,this.options=o,i.length>2||""!==i[0]||""!==i[1]?(this._$AH=Array(i.length-1).fill(new String),this.strings=i):this._$AH=q}_$AI(e,t=this,i,s){const o=this.strings;let n=!1;if(void 0===o)e=Z(this,e,t,0),n=!F(e)||e!==this._$AH&&e!==V,n&&(this._$AH=e);else{const s=e;let r,a;for(e=o[0],r=0;r<o.length-1;r++)a=Z(this,s[i+r],t,r),a===V&&(a=this._$AH[r]),n||=!F(a)||a!==this._$AH[r],a===q?e=q:e!==q&&(e+=(a??"")+o[r+1]),this._$AH[r]=a}n&&!s&&this.j(e)}j(e){e===q?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,e??"")}}class ie extends te{constructor(){super(...arguments),this.type=3}j(e){this.element[this.name]=e===q?void 0:e}}class se extends te{constructor(){super(...arguments),this.type=4}j(e){this.element.toggleAttribute(this.name,!!e&&e!==q)}}class oe extends te{constructor(e,t,i,s,o){super(e,t,i,s,o),this.type=5}_$AI(e,t=this){if((e=Z(this,e,t,0)??q)===V)return;const i=this._$AH,s=e===q&&i!==q||e.capture!==i.capture||e.once!==i.once||e.passive!==i.passive,o=e!==q&&(i===q||s);s&&this.element.removeEventListener(this.name,this,i),o&&this.element.addEventListener(this.name,this,e),this._$AH=e}handleEvent(e){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,e):this._$AH.handleEvent(e)}}class ne{constructor(e,t,i){this.element=e,this.type=6,this._$AN=void 0,this._$AM=t,this.options=i}get _$AU(){return this._$AM._$AU}_$AI(e){Z(this,e)}}const re=w.litHtmlPolyfillSupport;re?.(K,ee),(w.litHtmlVersions??=[]).push("3.3.2");const ae=globalThis;
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */class dt extends y{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=((t,e,s)=>{const i=s?.renderBefore??e;let o=i._$litPart$;if(void 0===o){const t=s?.renderBefore??null;i._$litPart$=o=new tt(e.insertBefore(z(),t),t,void 0,s??{})}return o._$AI(t),o})(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return V}}dt._$litElement$=!0,dt.finalized=!0,at.litElementHydrateSupport?.({LitElement:dt});const lt=at.litElementPolyfillSupport;lt?.({LitElement:dt}),(at.litElementVersions??=[]).push("4.2.2");const ct=n`
+ */class le extends y{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const e=super.createRenderRoot();return this.renderOptions.renderBefore??=e.firstChild,e}update(e){const t=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(e),this._$Do=((e,t,i)=>{const s=i?.renderBefore??t;let o=s._$litPart$;if(void 0===o){const e=i?.renderBefore??null;s._$litPart$=o=new ee(t.insertBefore(z(),e),e,void 0,i??{})}return o._$AI(e),o})(t,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return V}}le._$litElement$=!0,le.finalized=!0,ae.litElementHydrateSupport?.({LitElement:le});const de=ae.litElementPolyfillSupport;de?.({LitElement:le}),(ae.litElementVersions??=[]).push("4.2.2");const ce=n`
   :host {
     --bg-primary: #0a0a1a;
     --bg-card: #0d0d1f;
@@ -48,7 +48,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     --shadow-modal: 0 20px 60px rgba(0,0,0,0.5);
     --transition: 0.2s ease;
   }
-`;const pt=new class{constructor(){this._ws=null,this._listeners=[],this._reconnectDelay=1e3,this._reconnectAttempts=0,this._maxReconnectAttempts=50}connect(){const t="https:"===location.protocol?"wss:":"ws:",e=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/),s=e?e[1]:"",i=`${t}//${location.host}${s}/api/ws`;this._ws=new WebSocket(i),this._ws.onmessage=t=>{try{const e=JSON.parse(t.data);this._listeners.forEach(t=>t(e))}catch(t){console.error("WebSocket parse error:",t)}},this._ws.onclose=()=>{this._reconnectAttempts>=this._maxReconnectAttempts?console.error("WebSocket: max reconnect attempts reached"):(this._reconnectAttempts++,setTimeout(()=>this.connect(),this._reconnectDelay),this._reconnectDelay=Math.min(2*this._reconnectDelay,3e4))},this._ws.onopen=()=>{this._reconnectDelay=1e3,this._reconnectAttempts=0}}onMessage(t){return this._listeners.push(t),()=>{this._listeners=this._listeners.filter(e=>e!==t)}}disconnect(){this._ws&&this._ws.close()}};function ht(t,e){if(null==t||!e)return t;if("duration"===e){const e=Number(t);if(isNaN(e))return t;const s=[],i=Math.floor(e/86400),o=Math.floor(e%86400/3600),n=Math.floor(e%3600/60),r=Math.floor(e%60);return i&&s.push(`${i}d`),o&&s.push(`${o}h`),n&&s.push(`${n}m`),s.length||s.push(`${r}s`),s.join(" ")}if("bytes"===e){const e=Number(t);return isNaN(e)?t:e>=1e12?(e/1e12).toFixed(1)+" TB":e>=1e9?(e/1e9).toFixed(1)+" GB":e>=1e6?(e/1e6).toFixed(1)+" MB":e>=1e3?(e/1e3).toFixed(1)+" KB":e+" B"}if("percentage"===e){const e=Number(t);return isNaN(e)?t:(100*e).toFixed(1)+"%"}if(e.startsWith("round:")){const s=parseInt(e.split(":")[1])||0,i=Number(t);return isNaN(i)?t:i.toFixed(s)}if(e.startsWith("prefix:"))return e.slice(7)+t;if(e.startsWith("suffix:"))return t+e.slice(7);if(e.startsWith("custom:")){const s=ut.find(t=>t.id===e);if(s)try{return new Function("value","return ("+s.expression+")")(t)}catch{return t}}return t}let ut=[];function gt(t){ut=Array.isArray(t)?t:[]}const mt=[{value:"",label:"None"},{value:"duration",label:"Duration (seconds → 2d 5h)"},{value:"bytes",label:"Bytes (→ KB/MB/GB)"},{value:"percentage",label:"Percentage (0-1 → %)"},{value:"round:0",label:"Round (0 decimals)"},{value:"round:1",label:"Round (1 decimal)"},{value:"round:2",label:"Round (2 decimals)"}];const ft=function(){const t=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);return t?t[1]:""}();async function bt(t,e={}){const s=await fetch(t,e);if(!s.ok){const t=await s.text().catch(()=>s.statusText);throw new Error(`API error ${s.status}: ${t}`)}const i=s.headers.get("content-type");return i&&i.includes("application/json")?s.json():null}async function vt(t=0){return bt(t>0?`${ft}/api/devices?since=${t}`:`${ft}/api/devices`)}async function _t(t){return bt(`${ft}/api/devices/${encodeURIComponent(t)}`)}async function xt(t){return bt(`${ft}/api/devices/${encodeURIComponent(t)}`,{method:"DELETE"})}async function yt(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/attributes/${encodeURIComponent(e)}`,{method:"DELETE"})}async function $t(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/attributes/${encodeURIComponent(e)}/unhide`,{method:"POST"})}async function wt(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/commands/${encodeURIComponent(e)}`,{method:"DELETE"})}async function kt(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/commands/${encodeURIComponent(e)}/unhide`,{method:"POST"})}async function St(){return bt(`${ft}/api/topology`)}async function Et(){return bt(`${ft}/api/topology/layouts`)}async function Ct(t){return bt(`${ft}/api/topology/layouts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function Dt(t){return bt(`${ft}/api/topology/layouts/${encodeURIComponent(t)}`,{method:"DELETE"})}async function Tt(t,e,s={}){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/command`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:e,params:s})})}async function At(){return bt(`${ft}/api/groups`)}async function zt(t,e,s=[]){return bt(`${ft}/api/groups`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:t,name:e,device_ids:s})})}async function Ft(t,e){return bt(`${ft}/api/groups/${encodeURIComponent(t)}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})}async function Nt(t){return bt(`${ft}/api/groups/${encodeURIComponent(t)}`,{method:"DELETE"})}async function Mt(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/tags/add`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tags:e})})}async function Pt(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/tags/${encodeURIComponent(e)}`,{method:"DELETE"})}async function Lt(){return bt(`${ft}/api/tags`)}async function Ot(t){return bt(`${ft}/api/tags`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tag:t})})}async function Gt(t,e){return bt(`${ft}/api/tags/${encodeURIComponent(t)}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({new_name:e})})}async function It(t){return bt(`${ft}/api/tags/${encodeURIComponent(t)}`,{method:"DELETE"})}async function Ut(){return bt(`${ft}/api/settings`)}async function Rt(t){return bt(`${ft}/api/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function jt(){return bt(`${ft}/api/settings/export`)}async function Bt(t){return bt(`${ft}/api/settings/import`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function Ht(t){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/effective-settings`)}async function Vt(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})}async function qt(t){return bt(`${ft}/api/groups/${encodeURIComponent(t)}/force-apply`,{method:"POST"})}var Yt=Object.freeze({__proto__:null,addDeviceTags:Mt,addServerCommand:async function(t,e,s){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/server-commands`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:e,shell:s})})},addServerSensor:async function(t,e,s){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/server-sensors`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:e,...s})})},createGroup:zt,createTag:Ot,deleteAttribute:yt,deleteDevice:xt,deleteGroup:Nt,deleteLayout:Dt,deleteTag:It,exportSettings:jt,fetchDevice:_t,fetchDevices:vt,fetchEffectiveSettings:Ht,fetchGroups:At,fetchLayouts:Et,fetchSettings:Ut,fetchTags:Lt,fetchTopology:St,forceApplyGroup:qt,hideCommand:wt,importSettings:Bt,removeDeviceTag:Pt,removeServerCommand:async function(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/server-commands/${encodeURIComponent(e)}`,{method:"DELETE"})},removeServerSensor:async function(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/server-sensors/${encodeURIComponent(e)}`,{method:"DELETE"})},renameTag:Gt,saveLayout:Ct,sendCommand:Tt,setDeviceInterval:async function(t,e){return bt(`${ft}/api/devices/${encodeURIComponent(t)}/config-interval`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({interval:e})})},unhideAttribute:$t,unhideCommand:kt,updateDeviceSettings:Vt,updateGroup:Ft,updateSettings:Rt});class Jt extends dt{static properties={currentView:{type:String}};static styles=[ct,n`
+`;const pe=new class{constructor(){this._ws=null,this._listeners=[],this._reconnectDelay=1e3,this._reconnectAttempts=0,this._maxReconnectAttempts=50}connect(){const e="https:"===location.protocol?"wss:":"ws:",t=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/),i=t?t[1]:"",s=`${e}//${location.host}${i}/api/ws`;this._ws=new WebSocket(s),this._ws.onmessage=e=>{try{const t=JSON.parse(e.data);this._listeners.forEach(e=>e(t))}catch(e){console.error("WebSocket parse error:",e)}},this._ws.onclose=()=>{this._reconnectAttempts>=this._maxReconnectAttempts?console.error("WebSocket: max reconnect attempts reached"):(this._reconnectAttempts++,setTimeout(()=>this.connect(),this._reconnectDelay),this._reconnectDelay=Math.min(2*this._reconnectDelay,3e4))},this._ws.onopen=()=>{this._reconnectDelay=1e3,this._reconnectAttempts=0}}onMessage(e){return this._listeners.push(e),()=>{this._listeners=this._listeners.filter(t=>t!==e)}}disconnect(){this._ws&&this._ws.close()}};function ue(e,t){if(null==e||!t)return e;if("duration"===t){const t=Number(e);if(isNaN(t))return e;const i=[],s=Math.floor(t/86400),o=Math.floor(t%86400/3600),n=Math.floor(t%3600/60),r=Math.floor(t%60);return s&&i.push(`${s}d`),o&&i.push(`${o}h`),n&&i.push(`${n}m`),i.length||i.push(`${r}s`),i.join(" ")}if("bytes"===t){const t=Number(e);return isNaN(t)?e:t>=1e12?(t/1e12).toFixed(1)+" TB":t>=1e9?(t/1e9).toFixed(1)+" GB":t>=1e6?(t/1e6).toFixed(1)+" MB":t>=1e3?(t/1e3).toFixed(1)+" KB":t+" B"}if("percentage"===t){const t=Number(e);return isNaN(t)?e:(100*t).toFixed(1)+"%"}if(t.startsWith("round:")){const i=parseInt(t.split(":")[1])||0,s=Number(e);return isNaN(s)?e:s.toFixed(i)}if(t.startsWith("prefix:"))return t.slice(7)+e;if(t.startsWith("suffix:"))return e+t.slice(7);if(t.startsWith("custom:")){const i=he.find(e=>e.id===t);if(i)try{return new Function("value","return ("+i.expression+")")(e)}catch{return e}}return e}let he=[];function ge(e){he=Array.isArray(e)?e:[]}const fe=[{value:"",label:"None"},{value:"duration",label:"Duration (seconds → 2d 5h)"},{value:"bytes",label:"Bytes (→ KB/MB/GB)"},{value:"percentage",label:"Percentage (0-1 → %)"},{value:"round:0",label:"Round (0 decimals)"},{value:"round:1",label:"Round (1 decimal)"},{value:"round:2",label:"Round (2 decimals)"}];const me=function(){const e=location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);return e?e[1]:""}();async function be(e,t={}){const i=await fetch(e,t);if(!i.ok){const e=await i.text().catch(()=>i.statusText);throw new Error(`API error ${i.status}: ${e}`)}const s=i.headers.get("content-type");return s&&s.includes("application/json")?i.json():null}async function ve(e=0){return be(e>0?`${me}/api/devices?since=${e}`:`${me}/api/devices`)}async function _e(e){return be(`${me}/api/devices/${encodeURIComponent(e)}`)}async function xe(e){return be(`${me}/api/devices/${encodeURIComponent(e)}`,{method:"DELETE"})}async function ye(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/attributes/${encodeURIComponent(t)}`,{method:"DELETE"})}async function we(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/attributes/${encodeURIComponent(t)}/unhide`,{method:"POST"})}async function $e(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/commands/${encodeURIComponent(t)}`,{method:"DELETE"})}async function ke(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/commands/${encodeURIComponent(t)}/unhide`,{method:"POST"})}async function Se(){return be(`${me}/api/topology`)}async function Ee(){return be(`${me}/api/topology/layouts`)}async function Ce(e){return be(`${me}/api/topology/layouts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})}async function De(e){return be(`${me}/api/topology/layouts/${encodeURIComponent(e)}`,{method:"DELETE"})}async function Te(e,t,i={}){return be(`${me}/api/devices/${encodeURIComponent(e)}/command`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:t,params:i})})}async function Ae(){return be(`${me}/api/groups`)}async function ze(e,t,i=[]){return be(`${me}/api/groups`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e,name:t,device_ids:i})})}async function Fe(e,t){return be(`${me}/api/groups/${encodeURIComponent(e)}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function Me(e){return be(`${me}/api/groups/${encodeURIComponent(e)}`,{method:"DELETE"})}async function Pe(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/tags/add`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tags:t})})}async function Ne(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/tags/${encodeURIComponent(t)}`,{method:"DELETE"})}async function Oe(){return be(`${me}/api/tags`)}async function Le(e){return be(`${me}/api/tags`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tag:e})})}async function Ie(e,t){return be(`${me}/api/tags/${encodeURIComponent(e)}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({new_name:t})})}async function Ge(e){return be(`${me}/api/tags/${encodeURIComponent(e)}`,{method:"DELETE"})}async function Ue(){return be(`${me}/api/settings`)}async function Re(e){return be(`${me}/api/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})}async function je(){return be(`${me}/api/settings/export`)}async function Be(e){return be(`${me}/api/settings/import`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(e)})}async function He(e){return be(`${me}/api/devices/${encodeURIComponent(e)}/effective-settings`)}async function Ve(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/settings`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})}async function qe(e){return be(`${me}/api/groups/${encodeURIComponent(e)}/force-apply`,{method:"POST"})}var We=Object.freeze({__proto__:null,addDeviceTags:Pe,addServerCommand:async function(e,t,i){return be(`${me}/api/devices/${encodeURIComponent(e)}/server-commands`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t,shell:i})})},addServerSensor:async function(e,t,i){return be(`${me}/api/devices/${encodeURIComponent(e)}/server-sensors`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:t,...i})})},checkGroupConflicts:async function(e,t=null){return be(`${me}/api/groups/${encodeURIComponent(e)}/check-conflicts`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t?{new_device_id:t}:{})})},createGroup:ze,createTag:Le,deleteAttribute:ye,deleteDevice:xe,deleteGroup:Me,deleteLayout:De,deleteTag:Ge,exportSettings:je,fetchAttributeHistory:async function(e,t,i=24){return be(`${me}/api/devices/${encodeURIComponent(e)}/history/${encodeURIComponent(t)}?hours=${i}`)},fetchDevice:_e,fetchDevices:ve,fetchEffectiveSettings:He,fetchGroups:Ae,fetchLayouts:Ee,fetchSettings:Ue,fetchTags:Oe,fetchTopology:Se,forceApplyGroup:qe,hideCommand:$e,importSettings:Be,pushDeviceConfig:async function(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})},pushGroupConfig:async function(e,t){return be(`${me}/api/groups/${encodeURIComponent(e)}/push-config`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)})},removeDeviceTag:Ne,removeServerCommand:async function(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/server-commands/${encodeURIComponent(t)}`,{method:"DELETE"})},removeServerSensor:async function(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/server-sensors/${encodeURIComponent(t)}`,{method:"DELETE"})},renameTag:Ie,saveLayout:Ce,sendCommand:Te,sendGroupCommand:async function(e,t,i={}){return be(`${me}/api/groups/${encodeURIComponent(e)}/command`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command:t,params:i})})},setDeviceInterval:async function(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/config-interval`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({interval:t})})},setDeviceTags:async function(e,t){return be(`${me}/api/devices/${encodeURIComponent(e)}/tags`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tags:t})})},unhideAttribute:we,unhideCommand:ke,updateDeviceSettings:Ve,updateGroup:Fe,updateSettings:Re});class Ye extends le{static properties={currentView:{type:String}};static styles=[ce,n`
     /* ── Desktop top bar ── */
     :host {
       display: block;
@@ -191,13 +191,13 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/4 19:35"}</span>
+        <span class="version">v0.2.1 build ${"4/5 16:37"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/4 19:35"}</span>
+        <span class="version">build ${"4/5 16:37"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
@@ -233,7 +233,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           Settings
         </button>
       </nav>
-    `}_navigate(t){this.dispatchEvent(new CustomEvent("view-change",{detail:{view:t}}))}}customElements.define("nav-bar",Jt);class Wt extends dt{static properties={selectedTags:{type:Array},_allTags:{type:Array,state:!0},_open:{type:Boolean,state:!0},_showCreate:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_creating:{type:Boolean,state:!0}};static styles=[ct,n`
+    `}_navigate(e){this.dispatchEvent(new CustomEvent("view-change",{detail:{view:e}}))}}customElements.define("nav-bar",Ye);class Je extends le{static properties={selectedTags:{type:Array},_allTags:{type:Array,state:!0},_open:{type:Boolean,state:!0},_showCreate:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_creating:{type:Boolean,state:!0}};static styles=[ce,n`
     :host { display: inline-block; position: relative; }
 
     .trigger {
@@ -299,19 +299,19 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .cancel-btn:hover { color: rgba(255,255,255,0.8); }
 
     .empty { padding: 12px 14px; color: #fff; font-size: 12px; text-align: center; }
-  `];constructor(){super(),this.selectedTags=[],this._allTags=[],this._open=!1,this._showCreate=!1,this._newTagName="",this._creating=!1,this._onDocClick=this._onDocClick.bind(this)}connectedCallback(){super.connectedCallback(),this._loadTags(),document.addEventListener("click",this._onDocClick)}disconnectedCallback(){super.disconnectedCallback(),document.removeEventListener("click",this._onDocClick)}async _loadTags(){try{const t=await Lt();Array.isArray(t)&&(this._allTags=t.map(t=>"string"==typeof t?t:t.tag).sort())}catch(t){console.error("Failed to load tags:",t)}}_onDocClick(t){if(!this._open)return;t.composedPath().includes(this)||(this._open=!1,this._showCreate=!1)}_toggle(t){t.stopPropagation(),this._open=!this._open,this._open||(this._showCreate=!1)}_toggleTag(t){(this.selectedTags||[]).includes(t)?this.dispatchEvent(new CustomEvent("tag-remove",{detail:{tag:t},bubbles:!0,composed:!0})):this.dispatchEvent(new CustomEvent("tag-add",{detail:{tag:t},bubbles:!0,composed:!0}))}async _createTag(){const t=this._newTagName.trim();if(t&&!this._creating){this._creating=!0;try{await Ot(t),await this._loadTags(),this.dispatchEvent(new CustomEvent("tag-add",{detail:{tag:t},bubbles:!0,composed:!0})),this._newTagName="",this._showCreate=!1}catch(t){console.error("Failed to create tag:",t)}finally{this._creating=!1}}}render(){const t=this.selectedTags||[],e=t.length>0;return B`
-      <button class="trigger ${e?"has-selected":""}" @click=${this._toggle}>
-        Tags${e?` (${t.length})`:""}
+  `];constructor(){super(),this.selectedTags=[],this._allTags=[],this._open=!1,this._showCreate=!1,this._newTagName="",this._creating=!1,this._onDocClick=this._onDocClick.bind(this)}connectedCallback(){super.connectedCallback(),this._loadTags(),document.addEventListener("click",this._onDocClick)}disconnectedCallback(){super.disconnectedCallback(),document.removeEventListener("click",this._onDocClick)}async _loadTags(){try{const e=await Oe();Array.isArray(e)&&(this._allTags=e.map(e=>"string"==typeof e?e:e.tag).sort())}catch(e){console.error("Failed to load tags:",e)}}_onDocClick(e){if(!this._open)return;e.composedPath().includes(this)||(this._open=!1,this._showCreate=!1)}_toggle(e){e.stopPropagation(),this._open=!this._open,this._open||(this._showCreate=!1)}_toggleTag(e){(this.selectedTags||[]).includes(e)?this.dispatchEvent(new CustomEvent("tag-remove",{detail:{tag:e},bubbles:!0,composed:!0})):this.dispatchEvent(new CustomEvent("tag-add",{detail:{tag:e},bubbles:!0,composed:!0}))}async _createTag(){const e=this._newTagName.trim();if(e&&!this._creating){this._creating=!0;try{await Le(e),await this._loadTags(),this.dispatchEvent(new CustomEvent("tag-add",{detail:{tag:e},bubbles:!0,composed:!0})),this._newTagName="",this._showCreate=!1}catch(e){console.error("Failed to create tag:",e)}finally{this._creating=!1}}}render(){const e=this.selectedTags||[],t=e.length>0;return B`
+      <button class="trigger ${t?"has-selected":""}" @click=${this._toggle}>
+        Tags${t?` (${e.length})`:""}
         <span class="arrow">${this._open?"▲":"▼"}</span>
       </button>
 
       ${this._open?B`
-        <div class="dropdown" @click=${t=>t.stopPropagation()}>
-          ${0!==this._allTags.length||this._showCreate?this._allTags.map(e=>B`
-              <div class="dropdown-item ${t.includes(e)?"checked":""}"
-                @click=${()=>this._toggleTag(e)}>
-                <span class="checkbox">${t.includes(e)?"✓":""}</span>
-                ${e}
+        <div class="dropdown" @click=${e=>e.stopPropagation()}>
+          ${0!==this._allTags.length||this._showCreate?this._allTags.map(t=>B`
+              <div class="dropdown-item ${e.includes(t)?"checked":""}"
+                @click=${()=>this._toggleTag(t)}>
+                <span class="checkbox">${e.includes(t)?"✓":""}</span>
+                ${t}
               </div>
             `):B`<div class="empty">No tags in registry</div>`}
 
@@ -321,8 +321,8 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             <div class="create-row">
               <input class="create-input" type="text" placeholder="New tag name..."
                 .value=${this._newTagName}
-                @input=${t=>this._newTagName=t.target.value}
-                @keydown=${t=>"Enter"===t.key&&this._createTag()}
+                @input=${e=>this._newTagName=e.target.value}
+                @keydown=${e=>"Enter"===e.key&&this._createTag()}
                 autofocus>
               <button class="create-btn" ?disabled=${this._creating||!this._newTagName.trim()}
                 @click=${this._createTag}>
@@ -337,7 +337,46 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           `}
         </div>
       `:""}
-    `}}customElements.define("tag-picker",Wt);class Xt extends dt{static properties={device:{type:Object},effectiveSettings:{type:Object},haOverrides:{type:Object},groups:{type:Object},cardAttributes:{type:Array},attributeTransforms:{type:Object},groupTransforms:{type:Object},_showHidden:{type:Boolean,state:!0}};static styles=[ct,n`
+    `}}customElements.define("tag-picker",Je);const Xe="u-off",Ke="u-label",Ze="width",Qe="height",et="top",tt="bottom",it="left",st="right",ot="#000",nt=ot+"0",rt="mousemove",at="mousedown",lt="mouseup",dt="mouseenter",ct="mouseleave",pt="dblclick",ut="change",ht="dppxchange",gt="--",ft="undefined"!=typeof window,mt=ft?document:null,bt=ft?window:null,vt=ft?navigator:null;let _t,xt;function yt(e,t){if(null!=t){let i=e.classList;!i.contains(t)&&i.add(t)}}function wt(e,t){let i=e.classList;i.contains(t)&&i.remove(t)}function $t(e,t,i){e.style[t]=i+"px"}function kt(e,t,i,s){let o=mt.createElement(e);return null!=t&&yt(o,t),null!=i&&i.insertBefore(o,s),o}function St(e,t){return kt("div",e,t)}const Et=new WeakMap;function Ct(e,t,i,s,o){let n="translate("+t+"px,"+i+"px)";n!=Et.get(e)&&(e.style.transform=n,Et.set(e,n),t<0||i<0||t>s||i>o?yt(e,Xe):wt(e,Xe))}const Dt=new WeakMap;function Tt(e,t,i){let s=t+i;s!=Dt.get(e)&&(Dt.set(e,s),e.style.background=t,e.style.borderColor=i)}const At=new WeakMap;function zt(e,t,i,s){let o=t+""+i;o!=At.get(e)&&(At.set(e,o),e.style.height=i+"px",e.style.width=t+"px",e.style.marginLeft=s?-t/2+"px":0,e.style.marginTop=s?-i/2+"px":0)}const Ft={passive:!0},Mt={...Ft,capture:!0};function Pt(e,t,i,s){t.addEventListener(e,i,s?Mt:Ft)}function Nt(e,t,i,s){t.removeEventListener(e,i,Ft)}function Ot(e,t,i,s){let o;i=i||0;let n=(s=s||t.length-1)<=2147483647;for(;s-i>1;)o=n?i+s>>1:ti((i+s)/2),t[o]<e?i=o:s=o;return e-t[i]<=t[s]-e?i:s}function Lt(e){return(t,i,s)=>{let o=-1,n=-1;for(let n=i;n<=s;n++)if(e(t[n])){o=n;break}for(let o=s;o>=i;o--)if(e(t[o])){n=o;break}return[o,n]}}ft&&function e(){let t=devicePixelRatio;_t!=t&&(_t=t,xt&&Nt(ut,xt,e),xt=matchMedia(`(min-resolution: ${_t-.001}dppx) and (max-resolution: ${_t+.001}dppx)`),Pt(ut,xt,e),bt.dispatchEvent(new CustomEvent(ht)))}();const It=e=>null!=e,Gt=e=>null!=e&&e>0,Ut=Lt(It),Rt=Lt(Gt);function jt(e,t,i,s){let o=ai(e),n=ai(t);e==t&&(-1==o?(e*=i,t/=i):(e/=i,t*=i));let r=10==i?li:di,a=1==n?si:ti,l=(1==o?ti:si)(r(ei(e))),d=a(r(ei(t))),c=ri(i,l),p=ri(i,d);return 10==i&&(l<0&&(c=Ei(c,-l)),d<0&&(p=Ei(p,-d))),s||2==i?(e=c*o,t=p*n):(e=Si(e,c),t=ki(t,p)),[e,t]}function Bt(e,t,i,s){let o=jt(e,t,i,s);return 0==e&&(o[0]=0),0==t&&(o[1]=0),o}const Ht={mode:3,pad:.1},Vt={pad:0,soft:null,mode:0},qt={min:Vt,max:Vt};function Wt(e,t,i,s){return Oi(i)?Jt(e,t,i):(Vt.pad=i,Vt.soft=s?0:null,Vt.mode=s?3:0,Jt(e,t,qt))}function Yt(e,t){return null==e?t:e}function Jt(e,t,i){let s=i.min,o=i.max,n=Yt(s.pad,0),r=Yt(o.pad,0),a=Yt(s.hard,-pi),l=Yt(o.hard,pi),d=Yt(s.soft,pi),c=Yt(o.soft,-pi),p=Yt(s.mode,0),u=Yt(o.mode,0),h=t-e,g=li(h),f=ni(ei(e),ei(t)),m=li(f),b=ei(m-g);(h<1e-24||b>10)&&(h=0,0!=e&&0!=t||(h=1e-24,2==p&&d!=pi&&(n=0),2==u&&c!=-pi&&(r=0)));let v=h||f||1e3,_=li(v),x=ri(10,ti(_)),y=Ei(Si(e-v*(0==h?0==e?.1:1:n),x/10),24),w=e>=d&&(1==p||3==p&&y<=d||2==p&&y>=d)?d:pi,$=ni(a,y<w&&e>=w?w:oi(w,y)),k=Ei(ki(t+v*(0==h?0==t?.1:1:r),x/10),24),S=t<=c&&(1==u||3==u&&k>=c||2==u&&k<=c)?c:-pi,E=oi(l,k>S&&t<=S?S:ni(S,k));return $==E&&0==$&&(E=100),[$,E]}const Xt=new Intl.NumberFormat(ft?vt.language:"en-US"),Kt=e=>Xt.format(e),Zt=Math,Qt=Zt.PI,ei=Zt.abs,ti=Zt.floor,ii=Zt.round,si=Zt.ceil,oi=Zt.min,ni=Zt.max,ri=Zt.pow,ai=Zt.sign,li=Zt.log10,di=Zt.log2,ci=(e,t=1)=>Zt.asinh(e/t),pi=1/0;function ui(e){return 1+(0|li((e^e>>31)-(e>>31)))}function hi(e,t,i){return oi(ni(e,t),i)}function gi(e){return"function"==typeof e}function fi(e){return gi(e)?e:()=>e}const mi=e=>e,bi=(e,t)=>t,vi=e=>null,_i=e=>!0,xi=(e,t)=>e==t,yi=/\.\d*?(?=9{6,}|0{6,})/gm,wi=e=>{if(Pi(e)||Ci.has(e))return e;const t=`${e}`,i=t.match(yi);if(null==i)return e;let s=i[0].length-1;if(-1!=t.indexOf("e-")){let[e,i]=t.split("e");return+`${wi(e)}e${i}`}return Ei(e,s)};function $i(e,t){return wi(Ei(wi(e/t))*t)}function ki(e,t){return wi(si(wi(e/t))*t)}function Si(e,t){return wi(ti(wi(e/t))*t)}function Ei(e,t=0){if(Pi(e))return e;let i=10**t,s=e*i*(1+Number.EPSILON);return ii(s)/i}const Ci=new Map;function Di(e){return((""+e).split(".")[1]||"").length}function Ti(e,t,i,s){let o=[],n=s.map(Di);for(let r=t;r<i;r++){let t=ei(r),i=Ei(ri(e,r),t);for(let a=0;a<s.length;a++){let l=10==e?+`${s[a]}e${r}`:s[a]*i,d=(r>=0?0:t)+(r>=n[a]?0:n[a]),c=10==e?l:Ei(l,d);o.push(c),Ci.set(c,d)}}return o}const Ai={},zi=[],Fi=[null,null],Mi=Array.isArray,Pi=Number.isInteger;function Ni(e){return"string"==typeof e}function Oi(e){let t=!1;if(null!=e){let i=e.constructor;t=null==i||i==Object}return t}function Li(e){return null!=e&&"object"==typeof e}const Ii=Object.getPrototypeOf(Uint8Array),Gi="__proto__";function Ui(e,t=Oi){let i;if(Mi(e)){let s=e.find(e=>null!=e);if(Mi(s)||t(s)){i=Array(e.length);for(let s=0;s<e.length;s++)i[s]=Ui(e[s],t)}else i=e.slice()}else if(e instanceof Ii)i=e.slice();else if(t(e)){i={};for(let s in e)s!=Gi&&(i[s]=Ui(e[s],t))}else i=e;return i}function Ri(e){let t=arguments;for(let i=1;i<t.length;i++){let s=t[i];for(let t in s)t!=Gi&&(Oi(e[t])?Ri(e[t],Ui(s[t])):e[t]=Ui(s[t]))}return e}function ji(e,t,i){for(let s,o=0,n=-1;o<t.length;o++){let r=t[o];if(r>n){for(s=r-1;s>=0&&null==e[s];)e[s--]=null;for(s=r+1;s<i&&null==e[s];)e[n=s++]=null}}}const Bi="undefined"==typeof queueMicrotask?e=>Promise.resolve().then(e):queueMicrotask;const Hi=["January","February","March","April","May","June","July","August","September","October","November","December"],Vi=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];function qi(e){return e.slice(0,3)}const Wi=Vi.map(qi),Yi=Hi.map(qi),Ji={MMMM:Hi,MMM:Yi,WWWW:Vi,WWW:Wi};function Xi(e){return(e<10?"0":"")+e}const Ki={YYYY:e=>e.getFullYear(),YY:e=>(e.getFullYear()+"").slice(2),MMMM:(e,t)=>t.MMMM[e.getMonth()],MMM:(e,t)=>t.MMM[e.getMonth()],MM:e=>Xi(e.getMonth()+1),M:e=>e.getMonth()+1,DD:e=>Xi(e.getDate()),D:e=>e.getDate(),WWWW:(e,t)=>t.WWWW[e.getDay()],WWW:(e,t)=>t.WWW[e.getDay()],HH:e=>Xi(e.getHours()),H:e=>e.getHours(),h:e=>{let t=e.getHours();return 0==t?12:t>12?t-12:t},AA:e=>e.getHours()>=12?"PM":"AM",aa:e=>e.getHours()>=12?"pm":"am",a:e=>e.getHours()>=12?"p":"a",mm:e=>Xi(e.getMinutes()),m:e=>e.getMinutes(),ss:e=>Xi(e.getSeconds()),s:e=>e.getSeconds(),fff:e=>{return((t=e.getMilliseconds())<10?"00":t<100?"0":"")+t;var t}};function Zi(e,t){t=t||Ji;let i,s=[],o=/\{([a-z]+)\}|[^{]+/gi;for(;i=o.exec(e);)s.push("{"==i[0][0]?Ki[i[1]]:i[0]);return e=>{let i="";for(let o=0;o<s.length;o++)i+="string"==typeof s[o]?s[o]:s[o](e,t);return i}}const Qi=(new Intl.DateTimeFormat).resolvedOptions().timeZone;const es=e=>e%1==0,ts=[1,2,2.5,5],is=Ti(10,-32,0,ts),ss=Ti(10,0,32,ts),os=ss.filter(es),ns=is.concat(ss),rs="{YYYY}",as="\n"+rs,ls="{M}/{D}",ds="\n"+ls,cs=ds+"/{YY}",ps="{aa}",us="{h}:{mm}"+ps,hs="\n"+us,gs=":{ss}",fs=null;function ms(e){let t=1e3*e,i=60*t,s=60*i,o=24*s,n=30*o,r=365*o;return[(1==e?Ti(10,0,3,ts).filter(es):Ti(10,-3,0,ts)).concat([t,5*t,10*t,15*t,30*t,i,5*i,10*i,15*i,30*i,s,2*s,3*s,4*s,6*s,8*s,12*s,o,2*o,3*o,4*o,5*o,6*o,7*o,8*o,9*o,10*o,15*o,n,2*n,3*n,4*n,6*n,r,2*r,5*r,10*r,25*r,50*r,100*r]),[[r,rs,fs,fs,fs,fs,fs,fs,1],[28*o,"{MMM}",as,fs,fs,fs,fs,fs,1],[o,ls,as,fs,fs,fs,fs,fs,1],[s,"{h}"+ps,cs,fs,ds,fs,fs,fs,1],[i,us,cs,fs,ds,fs,fs,fs,1],[t,gs,cs+" "+us,fs,ds+" "+us,fs,hs,fs,1],[e,gs+".{fff}",cs+" "+us,fs,ds+" "+us,fs,hs,fs,1]],function(t){return(a,l,d,c,p,u)=>{let h=[],g=p>=r,f=p>=n&&p<r,m=t(d),b=Ei(m*e,3),v=Ss(m.getFullYear(),g?0:m.getMonth(),f||g?1:m.getDate()),_=Ei(v*e,3);if(f||g){let i=f?p/n:0,s=g?p/r:0,o=b==_?b:Ei(Ss(v.getFullYear()+s,v.getMonth()+i,1)*e,3),a=new Date(ii(o/e)),l=a.getFullYear(),d=a.getMonth();for(let n=0;o<=c;n++){let r=Ss(l+s*n,d+i*n,1),a=r-t(Ei(r*e,3));o=Ei((+r+a)*e,3),o<=c&&h.push(o)}}else{let n=p>=o?o:p,r=_+(ti(d)-ti(b))+ki(b-_,n);h.push(r);let g=t(r),f=g.getHours()+g.getMinutes()/i+g.getSeconds()/s,m=p/s,v=u/a.axes[l]._space;for(;r=Ei(r+p,1==e?0:3),!(r>c);)if(m>1){let e=ti(Ei(f+m,6))%24,i=t(r).getHours()-e;i>1&&(i=-1),r-=i*s,f=(f+m)%24,Ei((r-h[h.length-1])/p,3)*v>=.7&&h.push(r)}else h.push(r)}return h}}]}const[bs,vs,_s]=ms(1),[xs,ys,ws]=ms(.001);function $s(e,t){return e.map(e=>e.map((i,s)=>0==s||8==s||null==i?i:t(1==s||0==e[8]?i:e[1]+i)))}function ks(e,t){return(i,s,o,n,r)=>{let a,l,d,c,p,u,h=t.find(e=>r>=e[0])||t[t.length-1];return s.map(t=>{let i=e(t),s=i.getFullYear(),o=i.getMonth(),n=i.getDate(),r=i.getHours(),g=i.getMinutes(),f=i.getSeconds(),m=s!=a&&h[2]||o!=l&&h[3]||n!=d&&h[4]||r!=c&&h[5]||g!=p&&h[6]||f!=u&&h[7]||h[1];return a=s,l=o,d=n,c=r,p=g,u=f,m(i)})}}function Ss(e,t,i){return new Date(e,t,i)}function Es(e,t){return t(e)}Ti(2,-53,53,[1]);function Cs(e,t){return(i,s,o,n)=>null==n?gt:t(e(s))}const Ds={show:!0,live:!0,isolate:!1,mount:()=>{},markers:{show:!0,width:2,stroke:function(e,t){let i=e.series[t];return i.width?i.stroke(e,t):i.points.width?i.points.stroke(e,t):null},fill:function(e,t){return e.series[t].fill(e,t)},dash:"solid"},idx:null,idxs:null,values:[]};const Ts=[0,0];function As(e,t,i,s=!0){return e=>{0==e.button&&(!s||e.target==t)&&i(e)}}function zs(e,t,i,s=!0){return e=>{(!s||e.target==t)&&i(e)}}const Fs={show:!0,x:!0,y:!0,lock:!1,move:function(e,t,i){return Ts[0]=t,Ts[1]=i,Ts},points:{one:!1,show:function(e,t){let i=e.cursor.points,s=St(),o=i.size(e,t);$t(s,Ze,o),$t(s,Qe,o);let n=o/-2;$t(s,"marginLeft",n),$t(s,"marginTop",n);let r=i.width(e,t,o);return r&&$t(s,"borderWidth",r),s},size:function(e,t){return e.series[t].points.size},width:0,stroke:function(e,t){let i=e.series[t].points;return i._stroke||i._fill},fill:function(e,t){let i=e.series[t].points;return i._fill||i._stroke}},bind:{mousedown:As,mouseup:As,click:As,dblclick:As,mousemove:zs,mouseleave:zs,mouseenter:zs},drag:{setScale:!0,x:!0,y:!1,dist:0,uni:null,click:(e,t)=>{t.stopPropagation(),t.stopImmediatePropagation()},_x:!1,_y:!1},focus:{dist:(e,t,i,s,o)=>s-o,prox:-1,bias:0},hover:{skip:[void 0],prox:null,bias:0},left:-10,top:-10,idx:null,dataIdx:null,idxs:null,event:null},Ms={show:!0,stroke:"rgba(0,0,0,0.07)",width:2},Ps=Ri({},Ms,{filter:bi}),Ns=Ri({},Ps,{size:10}),Os=Ri({},Ms,{show:!1}),Ls='12px system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',Is="bold "+Ls,Gs={show:!0,scale:"x",stroke:ot,space:50,gap:5,alignTo:1,size:50,labelGap:0,labelSize:30,labelFont:Is,side:2,grid:Ps,ticks:Ns,border:Os,font:Ls,lineGap:1.5,rotate:0},Us={show:!0,scale:"x",auto:!1,sorted:1,min:pi,max:-pi,idxs:[]};function Rs(e,t,i,s,o){return t.map(e=>null==e?"":Kt(e))}function js(e,t,i,s,o,n,r){let a=[],l=Ci.get(o)||0;for(let e=i=r?i:Ei(ki(i,o),l);e<=s;e=Ei(e+o,l))a.push(Object.is(e,-0)?0:e);return a}function Bs(e,t,i,s,o,n,r){const a=[],l=e.scales[e.axes[t].scale].log,d=ti((10==l?li:di)(i));o=ri(l,d),10==l&&(o=ns[Ot(o,ns)]);let c=i,p=o*l;10==l&&(p=ns[Ot(p,ns)]);do{a.push(c),c+=o,10!=l||Ci.has(c)||(c=Ei(c,Ci.get(o))),c>=p&&(p=(o=c)*l,10==l&&(p=ns[Ot(p,ns)]))}while(c<=s);return a}function Hs(e,t,i,s,o,n,r){let a=e.scales[e.axes[t].scale].asinh,l=s>a?Bs(e,t,ni(a,i),s,o):[a],d=s>=0&&i<=0?[0]:[];return(i<-a?Bs(e,t,ni(a,-s),-i,o):[a]).reverse().map(e=>-e).concat(d,l)}const Vs=/./,qs=/[12357]/,Ws=/[125]/,Ys=/1/,Js=(e,t,i,s)=>e.map((e,o)=>4==t&&0==e||o%s==0&&i.test(e.toExponential()[e<0?1:0])?e:null);function Xs(e,t,i,s,o){let n=e.axes[i],r=n.scale,a=e.scales[r],l=e.valToPos,d=n._space,c=l(10,r),p=l(9,r)-c>=d?Vs:l(7,r)-c>=d?qs:l(5,r)-c>=d?Ws:Ys;if(p==Ys){let e=ei(l(1,r)-c);if(e<d)return Js(t.slice().reverse(),a.distr,p,si(d/e)).reverse()}return Js(t,a.distr,p,1)}function Ks(e,t,i,s,o){let n=e.axes[i],r=n.scale,a=n._space,l=e.valToPos,d=ei(l(1,r)-l(2,r));return d<a?Js(t.slice().reverse(),3,Vs,si(a/d)).reverse():t}function Zs(e,t,i,s){return null==s?gt:null==t?"":Kt(t)}const Qs={show:!0,scale:"y",stroke:ot,space:30,gap:5,alignTo:1,size:50,labelGap:0,labelSize:30,labelFont:Is,side:3,grid:Ps,ticks:Ns,border:Os,font:Ls,lineGap:1.5,rotate:0};const eo={scale:null,auto:!0,sorted:0,min:pi,max:-pi},to=(e,t,i,s,o)=>o,io={show:!0,auto:!0,sorted:0,gaps:to,alpha:1,facets:[Ri({},eo,{scale:"x"}),Ri({},eo,{scale:"y"})]},so={scale:"y",auto:!0,sorted:0,show:!0,spanGaps:!1,gaps:to,alpha:1,points:{show:function(e,t){let{scale:i,idxs:s}=e.series[0],o=e._data[0],n=e.valToPos(o[s[0]],i,!0),r=e.valToPos(o[s[1]],i,!0),a=ei(r-n)/(e.series[t].points.space*_t);return s[1]-s[0]<=a},filter:null},values:null,min:pi,max:-pi,idxs:[],path:null,clip:null};function oo(e,t,i,s,o){return i/10}const no={time:!0,auto:!0,distr:1,log:10,asinh:1,min:null,max:null,dir:1,ori:0},ro=Ri({},no,{time:!1,ori:1}),ao={};function lo(e,t){let i=ao[e];return i||(i={key:e,plots:[],sub(e){i.plots.push(e)},unsub(e){i.plots=i.plots.filter(t=>t!=e)},pub(e,t,s,o,n,r,a){for(let l=0;l<i.plots.length;l++)i.plots[l]!=t&&i.plots[l].pub(e,t,s,o,n,r,a)}},null!=e&&(ao[e]=i)),i}function co(e,t,i){const s=e.mode,o=e.series[t],n=2==s?e._data[t]:e._data,r=e.scales,a=e.bbox;let l=n[0],d=2==s?n[1]:n[t],c=2==s?r[o.facets[0].scale]:r[e.series[0].scale],p=2==s?r[o.facets[1].scale]:r[o.scale],u=a.left,h=a.top,g=a.width,f=a.height,m=e.valToPosH,b=e.valToPosV;return 0==c.ori?i(o,l,d,c,p,m,b,u,h,g,f,vo,xo,wo,ko,Eo):i(o,l,d,c,p,b,m,h,u,f,g,_o,yo,$o,So,Co)}function po(e,t){let i=0,s=0,o=Yt(e.bands,zi);for(let e=0;e<o.length;e++){let n=o[e];n.series[0]==t?i=n.dir:n.series[1]==t&&(1==n.dir?s|=1:s|=2)}return[i,1==s?-1:2==s?1:3==s?2:0]}function uo(e,t,i,s,o){let n=e.mode,r=e.series[t],a=2==n?r.facets[1].scale:r.scale,l=e.scales[a];return-1==o?l.min:1==o?l.max:3==l.distr?1==l.dir?l.min:l.max:0}function ho(e,t,i,s,o,n){return co(e,t,(e,t,r,a,l,d,c,p,u,h,g)=>{let f=e.pxRound;const m=a.dir*(0==a.ori?1:-1),b=0==a.ori?xo:yo;let v,_;1==m?(v=i,_=s):(v=s,_=i);let x=f(d(t[v],a,h,p)),y=f(c(r[v],l,g,u)),w=f(d(t[_],a,h,p)),$=f(c(1==n?l.max:l.min,l,g,u)),k=new Path2D(o);return b(k,w,$),b(k,x,$),b(k,x,y),k})}function go(e,t,i,s,o,n){let r=null;if(e.length>0){r=new Path2D;const a=0==t?wo:$o;let l=i;for(let t=0;t<e.length;t++){let i=e[t];if(i[1]>i[0]){let e=i[0]-l;e>0&&a(r,l,s,e,s+n),l=i[1]}}let d=i+o-l,c=10;d>0&&a(r,l,s-c/2,d,s+n+c)}return r}function fo(e,t,i,s,o,n,r){let a=[],l=e.length;for(let d=1==o?i:s;d>=i&&d<=s;d+=o){if(null===t[d]){let c=d,p=d;if(1==o)for(;++d<=s&&null===t[d];)p=d;else for(;--d>=i&&null===t[d];)p=d;let u=n(e[c]),h=p==c?u:n(e[p]),g=c-o;u=r<=0&&g>=0&&g<l?n(e[g]):u;let f=p+o;h=r>=0&&f>=0&&f<l?n(e[f]):h,h>=u&&a.push([u,h])}}return a}function mo(e){return 0==e?mi:1==e?ii:t=>$i(t,e)}function bo(e){let t=0==e?vo:_o,i=0==e?(e,t,i,s,o,n)=>{e.arcTo(t,i,s,o,n)}:(e,t,i,s,o,n)=>{e.arcTo(i,t,o,s,n)},s=0==e?(e,t,i,s,o)=>{e.rect(t,i,s,o)}:(e,t,i,s,o)=>{e.rect(i,t,o,s)};return(e,o,n,r,a,l=0,d=0)=>{0==l&&0==d?s(e,o,n,r,a):(l=oi(l,r/2,a/2),d=oi(d,r/2,a/2),t(e,o+l,n),i(e,o+r,n,o+r,n+a,l),i(e,o+r,n+a,o,n+a,d),i(e,o,n+a,o,n,d),i(e,o,n,o+r,n,l),e.closePath())}}const vo=(e,t,i)=>{e.moveTo(t,i)},_o=(e,t,i)=>{e.moveTo(i,t)},xo=(e,t,i)=>{e.lineTo(t,i)},yo=(e,t,i)=>{e.lineTo(i,t)},wo=bo(0),$o=bo(1),ko=(e,t,i,s,o,n)=>{e.arc(t,i,s,o,n)},So=(e,t,i,s,o,n)=>{e.arc(i,t,s,o,n)},Eo=(e,t,i,s,o,n,r)=>{e.bezierCurveTo(t,i,s,o,n,r)},Co=(e,t,i,s,o,n,r)=>{e.bezierCurveTo(i,t,o,s,r,n)};function Do(e){return(e,t,i,s,o)=>co(e,t,(t,n,r,a,l,d,c,p,u,h,g)=>{let f,m,{pxRound:b,points:v}=t;0==a.ori?(f=vo,m=ko):(f=_o,m=So);const _=Ei(v.width*_t,3);let x=(v.size-v.width)/2*_t,y=Ei(2*x,3),w=new Path2D,$=new Path2D,{left:k,top:S,width:E,height:C}=e.bbox;wo($,k-y,S-y,E+2*y,C+2*y);const D=e=>{if(null!=r[e]){let t=b(d(n[e],a,h,p)),i=b(c(r[e],l,g,u));f(w,t+x,i),m(w,t,i,x,0,2*Qt)}};if(o)o.forEach(D);else for(let e=i;e<=s;e++)D(e);return{stroke:_>0?w:null,fill:w,clip:$,flags:3}})}function To(e){return(t,i,s,o,n,r)=>{s!=o&&(n!=s&&r!=s&&e(t,i,s),n!=o&&r!=o&&e(t,i,o),e(t,i,r))}}const Ao=To(xo),zo=To(yo);function Fo(e){const t=Yt(e?.alignGaps,0);return(e,i,s,o)=>co(e,i,(n,r,a,l,d,c,p,u,h,g,f)=>{[s,o]=Ut(a,s,o);let m,b,v=n.pxRound,_=e=>v(c(e,l,g,u)),x=e=>v(p(e,d,f,h));0==l.ori?(m=xo,b=Ao):(m=yo,b=zo);const y=l.dir*(0==l.ori?1:-1),w={stroke:new Path2D,fill:null,clip:null,band:null,gaps:null,flags:1},$=w.stroke;let k=!1;if(o-s>=4*g){let t,i,n,d=t=>e.posToVal(t,l.key,!0),c=null,p=null,u=_(r[1==y?s:o]),h=_(r[s]),g=_(r[o]),f=d(1==y?h+1:g-1);for(let e=1==y?s:o;e>=s&&e<=o;e+=y){let s=r[e],o=(1==y?s<f:s>f)?u:_(s),n=a[e];o==u?null!=n?(i=n,null==c?(m($,o,x(i)),t=c=p=i):i<c?c=i:i>p&&(p=i)):null===n&&(k=!0):(null!=c&&b($,u,x(c),x(p),x(t),x(i)),null!=n?(i=n,m($,o,x(i)),c=p=t=i):(c=p=null,null===n&&(k=!0)),u=o,f=d(u+y))}null!=c&&c!=p&&n!=u&&b($,u,x(c),x(p),x(t),x(i))}else for(let e=1==y?s:o;e>=s&&e<=o;e+=y){let t=a[e];null===t?k=!0:null!=t&&m($,_(r[e]),x(t))}let[S,E]=po(e,i);if(null!=n.fill||0!=S){let t=w.fill=new Path2D($),a=x(n.fillTo(e,i,n.min,n.max,S)),l=_(r[s]),d=_(r[o]);-1==y&&([d,l]=[l,d]),m(t,d,a),m(t,l,a)}if(!n.spanGaps){let d=[];k&&d.push(...fo(r,a,s,o,y,_,t)),w.gaps=d=n.gaps(e,i,s,o,d),w.clip=go(d,l.ori,u,h,g,f)}return 0!=E&&(w.band=2==E?[ho(e,i,s,o,$,-1),ho(e,i,s,o,$,1)]:ho(e,i,s,o,$,E)),w})}function Mo(e,t,i,s,o,n,r=pi){if(e.length>1){let a=null;for(let l=0,d=1/0;l<e.length;l++)if(void 0!==t[l]){if(null!=a){let t=ei(e[l]-e[a]);t<d&&(d=t,r=ei(i(e[l],s,o,n)-i(e[a],s,o,n)))}a=l}}return r}function Po(e,t,i,s,o,n){const r=e.length;if(r<2)return null;const a=new Path2D;if(i(a,e[0],t[0]),2==r)s(a,e[1],t[1]);else{let i=Array(r),s=Array(r-1),n=Array(r-1),l=Array(r-1);for(let i=0;i<r-1;i++)n[i]=t[i+1]-t[i],l[i]=e[i+1]-e[i],s[i]=n[i]/l[i];i[0]=s[0];for(let e=1;e<r-1;e++)0===s[e]||0===s[e-1]||s[e-1]>0!=s[e]>0?i[e]=0:(i[e]=3*(l[e-1]+l[e])/((2*l[e]+l[e-1])/s[e-1]+(l[e]+2*l[e-1])/s[e]),isFinite(i[e])||(i[e]=0));i[r-1]=s[r-2];for(let s=0;s<r-1;s++)o(a,e[s]+l[s]/3,t[s]+i[s]*l[s]/3,e[s+1]-l[s]/3,t[s+1]-i[s+1]*l[s]/3,e[s+1],t[s+1])}return a}const No=new Set;function Oo(){for(let e of No)e.syncRect(!0)}ft&&(Pt("resize",bt,Oo),Pt("scroll",bt,Oo,!0),Pt(ht,bt,()=>{Ko.pxRatio=_t}));const Lo=Fo(),Io=Do();function Go(e,t,i,s){return(s?[e[0],e[1]].concat(e.slice(2)):[e[0]].concat(e.slice(1))).map((e,s)=>Uo(e,s,t,i))}function Uo(e,t,i,s){return Ri({},0==t?i:s,e)}function Ro(e,t,i){return null==t?Fi:[t,i]}const jo=Ro;function Bo(e,t,i){return null==t?Fi:Wt(t,i,.1,!0)}function Ho(e,t,i,s){return null==t?Fi:jt(t,i,e.scales[s].log,!1)}const Vo=Ho;function qo(e,t,i,s){return null==t?Fi:Bt(t,i,e.scales[s].log,!1)}const Wo=qo;function Yo(e,t,i,s,o){let n=ni(ui(e),ui(t)),r=t-e,a=Ot(o/s*r,i);do{let e=i[a],t=s*e/r;if(t>=o&&n+(e<5?Ci.get(e):0)<=17)return[e,t]}while(++a<i.length);return[0,0]}function Jo(e){let t,i;return[e=e.replace(/(\d+)px/,(e,s)=>(t=ii((i=+s)*_t))+"px"),t,i]}function Xo(e){e.show&&[e.font,e.labelFont].forEach(e=>{let t=Ei(e[2]*_t,1);e[0]=e[0].replace(/[0-9.]+px/,t+"px"),e[1]=t})}function Ko(e,t,i){const s={mode:Yt(e.mode,1)},o=s.mode;function n(e,t,i,s){let o=t.valToPct(e);return s+i*(-1==t.dir?1-o:o)}function r(e,t,i,s){let o=t.valToPct(e);return s+i*(-1==t.dir?o:1-o)}function a(e,t,i,s){return 0==t.ori?n(e,t,i,s):r(e,t,i,s)}s.valToPosH=n,s.valToPosV=r;let l=!1;s.status=0;const d=s.root=St("uplot");if(null!=e.id&&(d.id=e.id),yt(d,e.class),e.title){St("u-title",d).textContent=e.title}const c=kt("canvas"),p=s.ctx=c.getContext("2d"),u=St("u-wrap",d);Pt("click",u,e=>{if(e.target===g){(qi!=Gi||Wi!=ji)&&ss.click(s,e)}},!0);const h=s.under=St("u-under",u);u.appendChild(c);const g=s.over=St("u-over",u),f=+Yt((e=Ui(e)).pxAlign,1),m=mo(f);(e.plugins||[]).forEach(t=>{t.opts&&(e=t.opts(s,e)||e)});const b=e.ms||.001,v=s.series=1==o?Go(e.series||[],Us,so,!1):function(e,t){return e.map((e,i)=>0==i?{}:Ri({},t,e))}(e.series||[null],io),_=s.axes=Go(e.axes||[],Gs,Qs,!0),x=s.scales={},y=s.bands=e.bands||[];y.forEach(e=>{e.fill=fi(e.fill||null),e.dir=Yt(e.dir,-1)});const w=2==o?v[1].facets[0].scale:v[0].scale,$={axes:function(){for(let e=0;e<_.length;e++){let t=_[e];if(!t.show||!t._show)continue;let i,o,n=t.side,r=n%2,l=t.stroke(s,e),d=0==n||3==n?-1:1,[c,u]=t._found;if(null!=t.label){let a=t.labelGap*d,h=ii((t._lpos+a)*_t);Mt(t.labelFont[0],l,"center",2==n?et:tt),p.save(),1==r?(i=o=0,p.translate(h,ii(ge+me/2)),p.rotate((3==n?-Qt:Qt)/2)):(i=ii(he+fe/2),o=h);let g=gi(t.label)?t.label(s,e,c,u):t.label;p.fillText(g,i,o),p.restore()}if(0==u)continue;let h=x[t.scale],g=0==r?fe:me,f=0==r?he:ge,b=t._splits,v=2==h.distr?b.map(e=>xt[e]):b,y=2==h.distr?xt[b[1]]-xt[b[0]]:c,w=t.ticks,$=t.border,k=w.show?w.size:0,S=ii(k*_t),E=ii((2==t.alignTo?t._size-k-t.gap:t.gap)*_t),C=t._rotate*-Qt/180,D=m(t._pos*_t),T=D+(S+E)*d;o=0==r?T:0,i=1==r?T:0,Mt(t.font[0],l,1==t.align?it:2==t.align?st:C>0?it:C<0?st:0==r?"center":3==n?st:it,C||1==r?"middle":2==n?et:tt);let A=t.font[1]*t.lineGap,z=b.map(e=>m(a(e,h,g,f))),F=t._values;for(let e=0;e<F.length;e++){let t=F[e];if(null!=t){0==r?i=z[e]:o=z[e],t=""+t;let s=-1==t.indexOf("\n")?[t]:t.split(/\n/gm);for(let e=0;e<s.length;e++){let t=s[e];C?(p.save(),p.translate(i,o+e*A),p.rotate(C),p.fillText(t,0,0),p.restore()):p.fillText(t,i,o+e*A)}}}w.show&&di(z,w.filter(s,v,e,u,y),r,n,D,S,Ei(w.width*_t,3),w.stroke(s,e),w.dash,w.cap);let M=t.grid;M.show&&di(z,M.filter(s,v,e,u,y),r,0==r?2:1,0==r?ge:he,0==r?me:fe,Ei(M.width*_t,3),M.stroke(s,e),M.dash,M.cap),$.show&&di([D],[1],0==r?1:0,0==r?1:2,1==r?ge:he,1==r?me:fe,Ei($.width*_t,3),$.stroke(s,e),$.dash,$.cap)}vo("drawAxes")},series:function(){if(Ue>0){let e=v.some(e=>e._focus)&&vt!=De.alpha;e&&(p.globalAlpha=vt=De.alpha),v.forEach((e,i)=>{if(i>0&&e.show&&(qt(i,!1),qt(i,!0),null==e._paths)){let n=vt;vt!=e.alpha&&(p.globalAlpha=vt=e.alpha);let r=2==o?[0,t[i][0].length-1]:function(e){let t=hi(Re-1,0,Ue-1),i=hi(je+1,0,Ue-1);for(;null==e[t]&&t>0;)t--;for(;null==e[i]&&i<Ue-1;)i++;return[t,i]}(t[i]);e._paths=e.paths(s,i,r[0],r[1]),vt!=n&&(p.globalAlpha=vt=n)}}),v.forEach((e,t)=>{if(t>0&&e.show){let i=vt;vt!=e.alpha&&(p.globalAlpha=vt=e.alpha),null!=e._paths&&Jt(t,!1);{let i=null!=e._paths?e._paths.gaps:null,o=e.points.show(s,t,Re,je,i),n=e.points.filter(s,t,o,i);(o||n)&&(e.points._paths=e.points.paths(s,t,Re,je,n),Jt(t,!0))}vt!=i&&(p.globalAlpha=vt=i),vo("drawSeries",t)}}),e&&(p.globalAlpha=vt=1)}}},k=(e.drawOrder||["axes","series"]).map(e=>$[e]);function S(e){const t=3==e.distr?t=>li(t>0?t:e.clamp(s,t,e.min,e.max,e.key)):4==e.distr?t=>ci(t,e.asinh):100==e.distr?t=>e.fwd(t):e=>e;return i=>{let s=t(i),{_min:o,_max:n}=e;return(s-o)/(n-o)}}function E(t){let i=x[t];if(null==i){let s=(e.scales||Ai)[t]||Ai;if(null!=s.from){E(s.from);let e=Ri({},x[s.from],s,{key:t});e.valToPct=S(e),x[t]=e}else{i=x[t]=Ri({},t==w?no:ro,s),i.key=t;let e=i.time,n=i.range,r=Mi(n);if((t!=w||2==o&&!e)&&(!r||null!=n[0]&&null!=n[1]||(n={min:null==n[0]?Ht:{mode:1,hard:n[0],soft:n[0]},max:null==n[1]?Ht:{mode:1,hard:n[1],soft:n[1]}},r=!1),!r&&Oi(n))){let e=n;n=(t,i,s)=>null==i?Fi:Wt(i,s,e)}i.range=fi(n||(e?jo:t==w?3==i.distr?Vo:4==i.distr?Wo:Ro:3==i.distr?Ho:4==i.distr?qo:Bo)),i.auto=fi(!r&&i.auto),i.clamp=fi(i.clamp||oo),i._min=i._max=null,i.valToPct=S(i)}}}E("x"),E("y"),1==o&&v.forEach(e=>{E(e.scale)}),_.forEach(e=>{E(e.scale)});for(let t in e.scales)E(t);const C=x[w],D=C.distr;let T,A;0==C.ori?(yt(d,"u-hz"),T=n,A=r):(yt(d,"u-vt"),T=r,A=n);const z={};for(let e in x){let t=x[e];null==t.min&&null==t.max||(z[e]={min:t.min,max:t.max},t.min=t.max=null)}const F=e.tzDate||(e=>new Date(ii(e/b))),M=e.fmtDate||Zi,P=1==b?_s(F):ws(F),N=ks(F,$s(1==b?vs:ys,M)),O=Cs(F,Es("{YYYY}-{MM}-{DD} {h}:{mm}{aa}",M)),L=[],I=s.legend=Ri({},Ds,e.legend),G=s.cursor=Ri({},Fs,{drag:{y:2==o}},e.cursor),U=I.show,R=G.show,j=I.markers;let B,H,V;I.idxs=L,j.width=fi(j.width),j.dash=fi(j.dash),j.stroke=fi(j.stroke),j.fill=fi(j.fill);let q,W=[],Y=[],J=!1,X={};if(I.live){const e=v[1]?v[1].values:null;J=null!=e,q=J?e(s,1,0):{_:0};for(let e in q)X[e]=gt}if(U)if(B=kt("table","u-legend",d),V=kt("tbody",null,B),I.mount(s,B),J){H=kt("thead",null,B,V);let e=kt("tr",null,H);for(var K in kt("th",null,e),q)kt("th",Ke,e).textContent=K}else yt(B,"u-inline"),I.live&&yt(B,"u-live");const Z={show:!0},Q={show:!1};const ee=new Map;function te(e,t,i,o=!0){const n=ee.get(t)||{},r=G.bind[e](s,t,i,o);r&&(Pt(e,t,n[e]=r),ee.set(t,n))}function ie(e,t,i){const s=ee.get(t)||{};for(let i in s)null!=e&&i!=e||(Nt(i,t,s[i]),delete s[i]);null==e&&ee.delete(t)}let se=0,oe=0,ne=0,re=0,ae=0,le=0,de=ae,ce=le,pe=ne,ue=re,he=0,ge=0,fe=0,me=0;s.bbox={};let be=!1,ve=!1,_e=!1,xe=!1,ye=!1,we=!1;function $e(e,t,i){(i||e!=s.width||t!=s.height)&&ke(e,t),yi(!1),_e=!0,ve=!0,Qi()}function ke(e,t){s.width=se=ne=e,s.height=oe=re=t,ae=le=0,function(){let e=!1,t=!1,i=!1,s=!1;_.forEach((o,n)=>{if(o.show&&o._show){let{side:n,_size:r}=o,a=n%2,l=r+(null!=o.label?o.labelSize:0);l>0&&(a?(ne-=l,3==n?(ae+=l,s=!0):i=!0):(re-=l,0==n?(le+=l,e=!0):t=!0))}}),Oe[0]=e,Oe[1]=i,Oe[2]=t,Oe[3]=s,ne-=Ge[1]+Ge[3],ae+=Ge[3],re-=Ge[2]+Ge[0],le+=Ge[0]}(),function(){let e=ae+ne,t=le+re,i=ae,s=le;function o(o,n){switch(o){case 1:return e+=n,e-n;case 2:return t+=n,t-n;case 3:return i-=n,i+n;case 0:return s-=n,s+n}}_.forEach((e,t)=>{if(e.show&&e._show){let t=e.side;e._pos=o(t,e._size),null!=e.label&&(e._lpos=o(t,e.labelSize))}})}();let i=s.bbox;he=i.left=$i(ae*_t,.5),ge=i.top=$i(le*_t,.5),fe=i.width=$i(ne*_t,.5),me=i.height=$i(re*_t,.5)}const Se=3;if(s.setSize=function({width:e,height:t}){$e(e,t)},null==G.dataIdx){let e=G.hover,i=e.skip=new Set(e.skip??[]);i.add(void 0);let s=e.prox=fi(e.prox),o=e.bias??=0;G.dataIdx=(e,n,r,a)=>{if(0==n)return r;let l=r,d=s(e,n,r,a)??pi,c=d>=0&&d<pi,p=0==C.ori?ne:re,u=G.left,h=t[0],g=t[n];if(i.has(g[r])){l=null;let e,t=null,s=null;if(0==o||-1==o)for(e=r;null==t&&e-- >0;)i.has(g[e])||(t=e);if(0==o||1==o)for(e=r;null==s&&e++<g.length;)i.has(g[e])||(s=e);if(null!=t||null!=s)if(c){let e=u-(null==t?-1/0:T(h[t],C,p,0)),i=(null==s?1/0:T(h[s],C,p,0))-u;e<=i?e<=d&&(l=t):i<=d&&(l=s)}else l=null==s?t:null==t?s:r-t<=s-r?t:s}else if(c){ei(u-T(h[r],C,p,0))>d&&(l=null)}return l}}const Ee=e=>{G.event=e};G.idxs=L,G._lock=!1;let Ce=G.points;Ce.show=fi(Ce.show),Ce.size=fi(Ce.size),Ce.stroke=fi(Ce.stroke),Ce.width=fi(Ce.width),Ce.fill=fi(Ce.fill);const De=s.focus=Ri({},e.focus||{alpha:.3},G.focus),Te=De.prox>=0,Ae=Te&&Ce.one;let ze=[],Fe=[],Me=[];function Pe(e,t){let i=Ce.show(s,t);if(i instanceof HTMLElement)return yt(i,"u-cursor-pt"),yt(i,e.class),Ct(i,-10,-10,ne,re),g.insertBefore(i,ze[t]),i}function Ne(e,t){if(1==o||t>0){let t=1==o&&x[e.scale].time,i=e.value;e.value=t?Ni(i)?Cs(F,Es(i,M)):i||O:i||Zs,e.label=e.label||(t?"Time":"Value")}if(Ae||t>0){e.width=null==e.width?1:e.width,e.paths=e.paths||Lo||vi,e.fillTo=fi(e.fillTo||uo),e.pxAlign=+Yt(e.pxAlign,f),e.pxRound=mo(e.pxAlign),e.stroke=fi(e.stroke||null),e.fill=fi(e.fill||null),e._stroke=e._fill=e._paths=e._focus=null;let t=Ei((3+2*(ni(1,e.width)||1))*1,3),i=e.points=Ri({},{size:t,width:ni(1,.2*t),stroke:e.stroke,space:2*t,paths:Io,_stroke:null,_fill:null},e.points);i.show=fi(i.show),i.filter=fi(i.filter),i.fill=fi(i.fill),i.stroke=fi(i.stroke),i.paths=fi(i.paths),i.pxAlign=e.pxAlign}if(U){let i=function(e,t){if(0==t&&(J||!I.live||2==o))return Fi;let i=[],n=kt("tr","u-series",V,V.childNodes[t]);yt(n,e.class),e.show||yt(n,Xe);let r=kt("th",null,n);if(j.show){let e=St("u-marker",r);if(t>0){let i=j.width(s,t);i&&(e.style.border=i+"px "+j.dash(s,t)+" "+j.stroke(s,t)),e.style.background=j.fill(s,t)}}let a=St(Ke,r);for(var l in e.label instanceof HTMLElement?a.appendChild(e.label):a.textContent=e.label,t>0&&(j.show||(a.style.color=e.width>0?j.stroke(s,t):j.fill(s,t)),te("click",r,t=>{if(G._lock)return;Ee(t);let i=v.indexOf(e);if((t.ctrlKey||t.metaKey)!=I.isolate){let e=v.some((e,t)=>t>0&&t!=i&&e.show);v.forEach((t,s)=>{s>0&&us(s,e?s==i?Z:Q:Z,!0,xo.setSeries)})}else us(i,{show:!e.show},!0,xo.setSeries)},!1),Te&&te(dt,r,t=>{G._lock||(Ee(t),us(v.indexOf(e),ms,!0,xo.setSeries))},!1)),q){let e=kt("td","u-value",n);e.textContent="--",i.push(e)}return[n,i]}(e,t);W.splice(t,0,i[0]),Y.splice(t,0,i[1]),I.values.push(null)}if(R){L.splice(t,0,null);let i=null;Ae?0==t&&(i=Pe(e,t)):t>0&&(i=Pe(e,t)),ze.splice(t,0,i),Fe.splice(t,0,0),Me.splice(t,0,0)}vo("addSeries",t)}s.addSeries=function(e,t){t=null==t?v.length:t,e=1==o?Uo(e,t,Us,so):Uo(e,t,{},io),v.splice(t,0,e),Ne(v[t],t)},s.delSeries=function(e){if(v.splice(e,1),U){I.values.splice(e,1),Y.splice(e,1);let t=W.splice(e,1)[0];ie(null,t.firstChild),t.remove()}R&&(L.splice(e,1),ze.splice(e,1)[0].remove(),Fe.splice(e,1),Me.splice(e,1)),vo("delSeries",e)};const Oe=[!1,!1,!1,!1];function Le(e,t,i,s){let[o,n,r,a]=i,l=t%2,d=0;return 0==l&&(a||n)&&(d=0==t&&!o||2==t&&!r?ii(Gs.size/3):0),1==l&&(o||r)&&(d=1==t&&!n||3==t&&!a?ii(Qs.size/2):0),d}const Ie=s.padding=(e.padding||[Le,Le,Le,Le]).map(e=>fi(Yt(e,Le))),Ge=s._padding=Ie.map((e,t)=>e(s,t,Oe,0));let Ue,Re=null,je=null;const Be=1==o?v[0].idxs:null;let He,Ve,qe,We,Ye,Je,ot,ut,ft,vt,xt=null,Et=!1;function Dt(e,i){if(t=null==e?[]:e,s.data=s._data=t,2==o){Ue=0;for(let e=1;e<v.length;e++)Ue+=t[e][0].length}else{0==t.length&&(s.data=s._data=t=[[]]),xt=t[0],Ue=xt.length;let e=t;if(2==D){e=t.slice();let i=e[0]=Array(Ue);for(let e=0;e<Ue;e++)i[e]=e}s._data=t=e}if(yi(!0),vo("setData"),2==D&&(_e=!0),!1!==i){let e=C;e.auto(s,Et)?At():ps(w,e.min,e.max),xe=xe||G.left>=0,we=!0,Qi()}}function At(){let e,i;Et=!0,1==o&&(Ue>0?(Re=Be[0]=0,je=Be[1]=Ue-1,e=t[0][Re],i=t[0][je],2==D?(e=Re,i=je):e==i&&(3==D?[e,i]=jt(e,e,C.log,!1):4==D?[e,i]=Bt(e,e,C.log,!1):C.time?i=e+ii(86400/b):[e,i]=Wt(e,i,.1,!0))):(Re=Be[0]=e=null,je=Be[1]=i=null)),ps(w,e,i)}function Ft(e,t,i,s,o,n){e??=nt,i??=zi,s??="butt",o??=nt,n??="round",e!=He&&(p.strokeStyle=He=e),o!=Ve&&(p.fillStyle=Ve=o),t!=qe&&(p.lineWidth=qe=t),n!=Ye&&(p.lineJoin=Ye=n),s!=Je&&(p.lineCap=Je=s),i!=We&&p.setLineDash(We=i)}function Mt(e,t,i,s){t!=Ve&&(p.fillStyle=Ve=t),e!=ot&&(p.font=ot=e),i!=ut&&(p.textAlign=ut=i),s!=ft&&(p.textBaseline=ft=s)}function Lt(e,t,i,o,n=0){if(o.length>0&&e.auto(s,Et)&&(null==t||null==t.min)){let t=Yt(Re,0),s=Yt(je,o.length-1),r=null==i.min?function(e,t,i,s=0,o=!1){let n=o?Rt:Ut,r=o?Gt:It;[t,i]=n(e,t,i);let a=e[t],l=e[t];if(t>-1)if(1==s)a=e[t],l=e[i];else if(-1==s)a=e[i],l=e[t];else for(let s=t;s<=i;s++){let t=e[s];r(t)&&(t<a?a=t:t>l&&(l=t))}return[a??pi,l??-pi]}(o,t,s,n,3==e.distr):[i.min,i.max];e.min=oi(e.min,i.min=r[0]),e.max=ni(e.max,i.max=r[1])}}s.setData=Dt;const Vt={min:null,max:null};function qt(e,t){let i=t?v[e].points:v[e];i._stroke=i.stroke(s,e),i._fill=i.fill(s,e)}function Jt(e,i){let o=i?v[e].points:v[e],{stroke:n,fill:r,clip:a,flags:l,_stroke:d=o._stroke,_fill:c=o._fill,_width:u=o.width}=o._paths;u=Ei(u*_t,3);let h=null,g=u%2/2;i&&null==c&&(c=u>0?"#fff":d);let f=1==o.pxAlign&&g>0;if(f&&p.translate(g,g),!i){let e=he-u/2,t=ge-u/2,i=fe+u,s=me+u;h=new Path2D,h.rect(e,t,i,s)}i?Kt(d,u,o.dash,o.cap,c,n,r,l,a):function(e,i,o,n,r,a,l,d,c,p,u){let h=!1;0!=c&&y.forEach((g,f)=>{if(g.series[0]==e){let e,m=v[g.series[1]],b=t[g.series[1]],_=(m._paths||Ai).band;Mi(_)&&(_=1==g.dir?_[0]:_[1]);let x=null;m.show&&_&&function(e,t,i){for(t=Yt(t,0),i=Yt(i,e.length-1);t<=i;){if(null!=e[t])return!0;t++}return!1}(b,Re,je)?(x=g.fill(s,f)||a,e=m._paths.clip):_=null,Kt(i,o,n,r,x,l,d,c,p,u,e,_),h=!0}}),h||Kt(i,o,n,r,a,l,d,c,p,u)}(e,d,u,o.dash,o.cap,c,n,r,l,h,a),f&&p.translate(-g,-g)}const Xt=3;function Kt(e,t,i,s,o,n,r,a,l,d,c,u){Ft(e,t,i,s,o),(l||d||u)&&(p.save(),l&&p.clip(l),d&&p.clip(d)),u?(a&Xt)==Xt?(p.clip(u),c&&p.clip(c),ai(o,r),ti(e,n,t)):2&a?(ai(o,r),p.clip(u),ti(e,n,t)):1&a&&(p.save(),p.clip(u),c&&p.clip(c),ai(o,r),p.restore(),ti(e,n,t)):(ai(o,r),ti(e,n,t)),(l||d||u)&&p.restore()}function ti(e,t,i){i>0&&(t instanceof Map?t.forEach((e,t)=>{p.strokeStyle=He=t,p.stroke(e)}):null!=t&&e&&p.stroke(t))}function ai(e,t){t instanceof Map?t.forEach((e,t)=>{p.fillStyle=Ve=t,p.fill(e)}):null!=t&&e&&p.fill(t)}function di(e,t,i,s,o,n,r,a,l,d){let c=r%2/2;1==f&&p.translate(c,c),Ft(a,r,l,d,a),p.beginPath();let u,h,g,m,b=o+(0==s||3==s?-n:n);0==i?(h=o,m=b):(u=o,g=b);for(let s=0;s<e.length;s++)null!=t[s]&&(0==i?u=g=e[s]:h=m=e[s],p.moveTo(u,h),p.lineTo(g,m));p.stroke(),1==f&&p.translate(-c,-c)}function ui(e){let t=!0;return _.forEach((i,o)=>{if(!i.show)return;let n=x[i.scale];if(null==n.min)return void(i._show&&(t=!1,i._show=!1,yi(!1)));i._show||(t=!1,i._show=!0,yi(!1));let r=i.side,a=r%2,{min:l,max:d}=n,[c,p]=function(e,t,i,o){let n,r=_[e];if(o<=0)n=[0,0];else{let a=r._space=r.space(s,e,t,i,o);n=Yo(t,i,r._incrs=r.incrs(s,e,t,i,o,a),o,a)}return r._found=n}(o,l,d,0==a?ne:re);if(0==p)return;let u=2==n.distr,h=i._splits=i.splits(s,o,l,d,c,p,u),g=2==n.distr?h.map(e=>xt[e]):h,f=2==n.distr?xt[h[1]]-xt[h[0]]:c,m=i._values=i.values(s,i.filter(s,g,o,p,f),o,p,f);i._rotate=2==r?i.rotate(s,m,o,p):0;let b=i._size;i._size=si(i.size(s,m,o,e)),null!=b&&i._size!=b&&(t=!1)}),t}function mi(e){let t=!0;return Ie.forEach((i,o)=>{let n=i(s,o,Oe,e);n!=Ge[o]&&(t=!1),Ge[o]=n}),t}function yi(e){v.forEach((t,i)=>{i>0&&(t._paths=null,e&&(1==o?(t.min=null,t.max=null):t.facets.forEach(e=>{e.min=null,e.max=null})))})}let wi,ki,Si,Ti,Pi,Ii,Gi,ji,Hi,Vi,qi,Wi,Yi=!1,Ji=!1,Xi=[];function Ki(){Ji=!1;for(let e=0;e<Xi.length;e++)vo(...Xi[e]);Xi.length=0}function Qi(){Yi||(Bi(es),Yi=!0)}function es(){if(be&&(!function(){for(let e in x){let t=x[e];null==z[e]&&(null==t.min||null!=z[w]&&t.auto(s,Et))&&(z[e]=Vt)}for(let e in x){let t=x[e];null==z[e]&&null!=t.from&&null!=z[t.from]&&(z[e]=Vt)}null!=z[w]&&yi(!0);let e={};for(let t in z){let i=z[t];if(null!=i){let n=e[t]=Ui(x[t],Li);if(null!=i.min)Ri(n,i);else if(t!=w||2==o)if(0==Ue&&null==n.from){let e=n.range(s,null,null,t);n.min=e[0],n.max=e[1]}else n.min=pi,n.max=-pi}}if(Ue>0){v.forEach((i,n)=>{if(1==o){let o=i.scale,r=z[o];if(null==r)return;let a=e[o];if(0==n){let e=a.range(s,a.min,a.max,o);a.min=e[0],a.max=e[1],Re=Ot(a.min,t[0]),je=Ot(a.max,t[0]),je-Re>1&&(t[0][Re]<a.min&&Re++,t[0][je]>a.max&&je--),i.min=xt[Re],i.max=xt[je]}else i.show&&i.auto&&Lt(a,r,i,t[n],i.sorted);i.idxs[0]=Re,i.idxs[1]=je}else if(n>0&&i.show&&i.auto){let[s,o]=i.facets,r=s.scale,a=o.scale,[l,d]=t[n],c=e[r],p=e[a];null!=c&&Lt(c,z[r],s,l,s.sorted),null!=p&&Lt(p,z[a],o,d,o.sorted),i.min=o.min,i.max=o.max}});for(let t in e){let i=e[t],o=z[t];if(null==i.from&&(null==o||null==o.min)){let e=i.range(s,i.min==pi?null:i.min,i.max==-pi?null:i.max,t);i.min=e[0],i.max=e[1]}}}for(let t in e){let i=e[t];if(null!=i.from){let o=e[i.from];if(null==o.min)i.min=i.max=null;else{let e=i.range(s,o.min,o.max,t);i.min=e[0],i.max=e[1]}}}let i={},n=!1;for(let t in e){let s=e[t],o=x[t];if(o.min!=s.min||o.max!=s.max){o.min=s.min,o.max=s.max;let e=o.distr;o._min=3==e?li(o.min):4==e?ci(o.min,o.asinh):100==e?o.fwd(o.min):o.min,o._max=3==e?li(o.max):4==e?ci(o.max,o.asinh):100==e?o.fwd(o.max):o.max,i[t]=n=!0}}if(n){v.forEach((e,t)=>{2==o?t>0&&i.y&&(e._paths=null):i[e.scale]&&(e._paths=null)});for(let e in i)_e=!0,vo("setScale",e);R&&G.left>=0&&(xe=we=!0)}for(let e in z)z[e]=null}(),be=!1),_e&&(!function(){let e=!1,t=0;for(;!e;){t++;let i=ui(t),o=mi(t);e=t==Se||i&&o,e||(ke(s.width,s.height),ve=!0)}}(),_e=!1),ve){if($t(h,it,ae),$t(h,et,le),$t(h,Ze,ne),$t(h,Qe,re),$t(g,it,ae),$t(g,et,le),$t(g,Ze,ne),$t(g,Qe,re),$t(u,Ze,se),$t(u,Qe,oe),c.width=ii(se*_t),c.height=ii(oe*_t),_.forEach(({_el:e,_show:t,_size:i,_pos:s,side:o})=>{if(null!=e)if(t){let t=o%2==1;$t(e,t?"left":"top",s-(3===o||0===o?i:0)),$t(e,t?"width":"height",i),$t(e,t?"top":"left",t?le:ae),$t(e,t?"height":"width",t?re:ne),wt(e,Xe)}else yt(e,Xe)}),He=Ve=qe=Ye=Je=ot=ut=ft=We=null,vt=1,Is(!0),ae!=de||le!=ce||ne!=pe||re!=ue){yi(!1);let e=ne/pe,t=re/ue;if(R&&!xe&&G.left>=0){G.left*=e,G.top*=t,Si&&Ct(Si,ii(G.left),0,ne,re),Ti&&Ct(Ti,0,ii(G.top),ne,re);for(let i=0;i<ze.length;i++){let s=ze[i];null!=s&&(Fe[i]*=e,Me[i]*=t,Ct(s,si(Fe[i]),si(Me[i]),ne,re))}}if(ls.show&&!ye&&ls.left>=0&&ls.width>0){ls.left*=e,ls.width*=e,ls.top*=t,ls.height*=t;for(let e in Ws)$t(ds,e,ls[e])}de=ae,ce=le,pe=ne,ue=re}vo("setSize"),ve=!1}se>0&&oe>0&&(p.clearRect(0,0,c.width,c.height),vo("drawClear"),k.forEach(e=>e()),vo("draw")),ls.show&&ye&&(cs(ls),ye=!1),R&&xe&&(Os(null,!0,!1),xe=!1),I.show&&I.live&&we&&(Ps(),we=!1),l||(l=!0,s.status=1,vo("ready")),Et=!1,Yi=!1}function ts(e,i){let o=x[e];if(null==o.from){if(0==Ue){let t=o.range(s,i.min,i.max,e);i.min=t[0],i.max=t[1]}if(i.min>i.max){let e=i.min;i.min=i.max,i.max=e}if(Ue>1&&null!=i.min&&null!=i.max&&i.max-i.min<1e-16)return;e==w&&2==o.distr&&Ue>0&&(i.min=Ot(i.min,t[0]),i.max=Ot(i.max,t[0]),i.min==i.max&&i.max++),z[e]=i,be=!0,Qi()}}s.batch=function(e,t=!1){Yi=!0,Ji=t,e(s),es(),t&&Xi.length>0&&queueMicrotask(Ki)},s.redraw=(e,t)=>{_e=t||!1,!1!==e?ps(w,C.min,C.max):Qi()},s.setScale=ts;let is=!1;const ss=G.drag;let rs=ss.x,as=ss.y;R&&(G.x&&(wi=St("u-cursor-x",g)),G.y&&(ki=St("u-cursor-y",g)),0==C.ori?(Si=wi,Ti=ki):(Si=ki,Ti=wi),qi=G.left,Wi=G.top);const ls=s.select=Ri({show:!0,over:!0,left:0,width:0,top:0,height:0},e.select),ds=ls.show?St("u-select",ls.over?g:h):null;function cs(e,t){if(ls.show){for(let t in e)ls[t]=e[t],t in Ws&&$t(ds,t,e[t]);!1!==t&&vo("setSelect")}}function ps(e,t,i){ts(e,{min:t,max:i})}function us(e,t,i,n){null!=t.focus&&function(e){if(e!=fs){let t=null==e,i=1!=De.alpha;v.forEach((s,n)=>{if(1==o||n>0){let o=t||0==n||n==e;s._focus=t?null:o,i&&function(e,t){v[e].alpha=t,R&&null!=ze[e]&&(ze[e].style.opacity=t);U&&W[e]&&(W[e].style.opacity=t)}(n,o?1:De.alpha)}}),fs=e,i&&Qi()}}(e),null!=t.show&&v.forEach((i,s)=>{s>0&&(e==s||null==e)&&(i.show=t.show,function(e){if(v[e].show)U&&wt(W[e],Xe);else if(U&&yt(W[e],Xe),R){let t=Ae?ze[0]:ze[e];null!=t&&Ct(t,-10,-10,ne,re)}}(s),2==o?(ps(i.facets[0].scale,null,null),ps(i.facets[1].scale,null,null)):ps(i.scale,null,null),Qi())}),!1!==i&&vo("setSeries",e,t),n&&$o("setSeries",s,e,t)}let hs,gs,fs;s.setSelect=cs,s.setSeries=us,s.addBand=function(e,t){e.fill=fi(e.fill||null),e.dir=Yt(e.dir,-1),t=null==t?y.length:t,y.splice(t,0,e)},s.setBand=function(e,t){Ri(y[e],t)},s.delBand=function(e){null==e?y.length=0:y.splice(e,1)};const ms={focus:!0};function Ss(e,t,i){let s=x[t];i&&(e=e/_t-(1==s.ori?le:ae));let o=ne;1==s.ori&&(o=re,e=o-e),-1==s.dir&&(e=o-e);let n=s._min,r=n+(s._max-n)*(e/o),a=s.distr;return 3==a?ri(10,r):4==a?((e,t=1)=>Zt.sinh(e)*t)(r,s.asinh):100==a?s.bwd(r):r}function Ts(e,t){$t(ds,it,ls.left=e),$t(ds,Ze,ls.width=t)}function As(e,t){$t(ds,et,ls.top=e),$t(ds,Qe,ls.height=t)}U&&Te&&te(ct,B,e=>{G._lock||(Ee(e),null!=fs&&us(null,ms,!0,xo.setSeries))}),s.valToIdx=e=>Ot(e,t[0]),s.posToIdx=function(e,i){return Ot(Ss(e,w,i),t[0],Re,je)},s.posToVal=Ss,s.valToPos=(e,t,i)=>0==x[t].ori?n(e,x[t],i?fe:ne,i?he:0):r(e,x[t],i?me:re,i?ge:0),s.setCursor=(e,t,i)=>{qi=e.left,Wi=e.top,Os(null,t,i)};let zs=0==C.ori?Ts:As,Ms=1==C.ori?Ts:As;function Ps(e,t){if(null!=e&&(e.idxs?e.idxs.forEach((e,t)=>{L[t]=e}):(e=>void 0===e)(e.idx)||L.fill(e.idx),I.idx=L[0]),U&&I.live){for(let e=0;e<v.length;e++)(e>0||1==o&&!J)&&Ns(e,L[e]);!function(){if(U&&I.live)for(let e=2==o?1:0;e<v.length;e++){if(0==e&&J)continue;let t=I.values[e],i=0;for(let s in t)Y[e][i++].firstChild.nodeValue=t[s]}}()}we=!1,!1!==t&&vo("setLegend")}function Ns(e,i){let o,n=v[e],r=0==e&&2==D?xt:t[e];J?o=n.values(s,e,i)??X:(o=n.value(s,null==i?null:r[i],e,i),o=null==o?X:{_:o}),I.values[e]=o}function Os(e,i,n){let r;Hi=qi,Vi=Wi,[qi,Wi]=G.move(s,qi,Wi),G.left=qi,G.top=Wi,R&&(Si&&Ct(Si,ii(qi),0,ne,re),Ti&&Ct(Ti,0,ii(Wi),ne,re));let a=Re>je;hs=pi,gs=null;let l=0==C.ori?ne:re,d=1==C.ori?ne:re;if(qi<0||0==Ue||a){r=G.idx=null;for(let e=0;e<v.length;e++){let t=ze[e];null!=t&&Ct(t,-10,-10,ne,re)}Te&&us(null,ms,!0,null==e&&xo.setSeries),I.live&&(L.fill(r),we=!0)}else{let e,i,n;1==o&&(e=0==C.ori?qi:Wi,i=Ss(e,w),r=G.idx=Ot(i,t[0],Re,je),n=T(t[0][r],C,l,0));let a=-10,c=-10,p=0,u=0,h=!0,g="",f="";for(let e=2==o?1:0;e<v.length;e++){let m=v[e],b=L[e],_=null==b?null:1==o?t[e][b]:t[e][1][b],y=G.dataIdx(s,e,r,i),w=null==y?null:1==o?t[e][y]:t[e][1][y];if(we=we||w!=_||y!=b,L[e]=y,e>0&&m.show){let i=null==y?-10:y==r?n:T(1==o?t[0][y]:t[e][0][y],C,l,0),b=null==w?-10:A(w,1==o?x[m.scale]:x[m.facets[1].scale],d,0);if(Te&&null!=w){let t=1==C.ori?qi:Wi,i=ei(De.dist(s,e,y,b,t));if(i<hs){let s=De.bias;if(0!=s){let o=Ss(t,m.scale),n=o>=0?1:-1;n==(w>=0?1:-1)&&(1==n?1==s?w>=o:w<=o:1==s?w<=o:w>=o)&&(hs=i,gs=e)}else hs=i,gs=e}}if(we||Ae){let t,o;0==C.ori?(t=i,o=b):(t=b,o=i);let n,r,l,d,m,v,_=!0,x=Ce.bbox;if(null!=x){_=!1;let t=x(s,e);l=t.left,d=t.top,n=t.width,r=t.height}else l=t,d=o,n=r=Ce.size(s,e);if(v=Ce.fill(s,e),m=Ce.stroke(s,e),Ae)e==gs&&hs<=De.prox&&(a=l,c=d,p=n,u=r,h=_,g=v,f=m);else{let t=ze[e];null!=t&&(Fe[e]=l,Me[e]=d,zt(t,n,r,_),Tt(t,v,m),Ct(t,si(l),si(d),ne,re))}}}}if(Ae){let e=De.prox;if(we||(null==fs?hs<=e:hs>e||gs!=fs)){let e=ze[0];null!=e&&(Fe[0]=a,Me[0]=c,zt(e,p,u,h),Tt(e,g,f),Ct(e,si(a),si(c),ne,re))}}}if(ls.show&&is)if(null!=e){let[t,i]=xo.scales,[s,o]=xo.match,[n,r]=e.cursor.sync.scales,a=e.cursor.drag;if(rs=a._x,as=a._y,rs||as){let a,c,p,u,h,{left:g,top:f,width:m,height:b}=e.select,v=e.scales[n].ori,_=e.posToVal,y=null!=t&&s(t,n),w=null!=i&&o(i,r);y&&rs?(0==v?(a=g,c=m):(a=f,c=b),p=x[t],u=T(_(a,n),p,l,0),h=T(_(a+c,n),p,l,0),zs(oi(u,h),ei(h-u))):zs(0,l),w&&as?(1==v?(a=g,c=m):(a=f,c=b),p=x[i],u=A(_(a,r),p,d,0),h=A(_(a+c,r),p,d,0),Ms(oi(u,h),ei(h-u))):Ms(0,d)}else Ys()}else{let e=ei(Hi-Pi),t=ei(Vi-Ii);if(1==C.ori){let i=e;e=t,t=i}rs=ss.x&&e>=ss.dist,as=ss.y&&t>=ss.dist;let i,s,o=ss.uni;null!=o?rs&&as&&(rs=e>=o,as=t>=o,rs||as||(t>e?as=!0:rs=!0)):ss.x&&ss.y&&(rs||as)&&(rs=as=!0),rs&&(0==C.ori?(i=Gi,s=qi):(i=ji,s=Wi),zs(oi(i,s),ei(s-i)),as||Ms(0,d)),as&&(1==C.ori?(i=Gi,s=qi):(i=ji,s=Wi),Ms(oi(i,s),ei(s-i)),rs||zs(0,l)),rs||as||(zs(0,0),Ms(0,0))}if(ss._x=rs,ss._y=as,null==e){if(n){if(null!=yo){let[e,t]=xo.scales;xo.values[0]=null!=e?Ss(0==C.ori?qi:Wi,e):null,xo.values[1]=null!=t?Ss(1==C.ori?qi:Wi,t):null}$o(rt,s,qi,Wi,ne,re,r)}if(Te){let e=n&&xo.setSeries,t=De.prox;null==fs?hs<=t&&us(gs,ms,!0,e):hs>t?us(null,ms,!0,e):gs!=fs&&us(gs,ms,!0,e)}}we&&(I.idx=r,Ps()),!1!==i&&vo("setCursor")}s.setLegend=Ps;let Ls=null;function Is(e=!1){e?Ls=null:(Ls=g.getBoundingClientRect(),vo("syncRect",Ls))}function Vs(e,t,i,s,o,n,r){G._lock||is&&null!=e&&0==e.movementX&&0==e.movementY||(qs(e,t,i,s,o,n,r,!1,null!=e),null!=e?Os(null,!0,!0):Os(t,!0,!1))}function qs(e,t,i,o,n,r,l,d,c){if(null==Ls&&Is(!1),Ee(e),null!=e)i=e.clientX-Ls.left,o=e.clientY-Ls.top;else{if(i<0||o<0)return qi=-10,void(Wi=-10);let[e,s]=xo.scales,l=t.cursor.sync,[d,c]=l.values,[p,u]=l.scales,[h,g]=xo.match,f=t.axes[0].side%2==1,m=0==C.ori?ne:re,b=1==C.ori?ne:re,v=f?r:n,_=f?n:r,y=f?o:i,w=f?i:o;if(i=null!=p?h(e,p)?a(d,x[e],m,0):-10:m*(y/v),o=null!=u?g(s,u)?a(c,x[s],b,0):-10:b*(w/_),1==C.ori){let e=i;i=o,o=e}}!c||null!=t&&t.cursor.event.type!=rt||((i<=1||i>=ne-1)&&(i=$i(i,ne)),(o<=1||o>=re-1)&&(o=$i(o,re))),d?(Pi=i,Ii=o,[Gi,ji]=G.move(s,i,o)):(qi=i,Wi=o)}Object.defineProperty(s,"rect",{get:()=>(null==Ls&&Is(!1),Ls)});const Ws={width:0,height:0,left:0,top:0};function Ys(){cs(Ws,!1)}let Js,eo,to,ao;function co(e,t,i,o,n,r,a){is=!0,rs=as=ss._x=ss._y=!1,qs(e,t,i,o,n,r,0,!0,!1),null!=e&&(te(lt,mt,po,!1),$o(at,s,Gi,ji,ne,re,null));let{left:l,top:d,width:c,height:p}=ls;Js=l,eo=d,to=c,ao=p}function po(e,t,i,o,n,r,a){is=ss._x=ss._y=!1,qs(e,t,i,o,n,r,0,!1,!0);let{left:l,top:d,width:c,height:p}=ls,u=c>0||p>0,h=Js!=l||eo!=d||to!=c||ao!=p;if(u&&h&&cs(ls),ss.setScale&&u&&h){let e=l,t=c,i=d,s=p;if(1==C.ori&&(e=d,t=p,i=l,s=c),rs&&ps(w,Ss(e,w),Ss(e+t,w)),as)for(let e in x){let t=x[e];e!=w&&null==t.from&&t.min!=pi&&ps(e,Ss(i+s,e),Ss(i,e))}Ys()}else G.lock&&(G._lock=!G._lock,Os(t,!0,null!=e));null!=e&&(ie(lt,mt),$o(lt,s,qi,Wi,ne,re,null))}function ho(e,t,i,o,n,r,a){G._lock||(Ee(e),At(),Ys(),null!=e&&$o(pt,s,qi,Wi,ne,re,null))}function go(){_.forEach(Xo),$e(s.width,s.height,!0)}Pt(ht,bt,go);const fo={};fo.mousedown=co,fo.mousemove=Vs,fo.mouseup=po,fo.dblclick=ho,fo.setSeries=(e,t,i,o)=>{-1!=(i=(0,xo.match[2])(s,t,i))&&us(i,o,!0,!1)},R&&(te(at,g,co),te(rt,g,Vs),te(dt,g,e=>{Ee(e),Is(!1)}),te(ct,g,function(e,t,i,s,o,n,r){if(G._lock)return;Ee(e);let a=is;if(is){let e,t,i=!0,s=!0,o=10;0==C.ori?(e=rs,t=as):(e=as,t=rs),e&&t&&(i=qi<=o||qi>=ne-o,s=Wi<=o||Wi>=re-o),e&&i&&(qi=qi<Gi?0:ne),t&&s&&(Wi=Wi<ji?0:re),Os(null,!0,!0),is=!1}qi=-10,Wi=-10,L.fill(null),Os(null,!0,!0),a&&(is=a)}),te(pt,g,ho),No.add(s),s.syncRect=Is);const bo=s.hooks=e.hooks||{};function vo(e,t,i){Ji?Xi.push([e,t,i]):e in bo&&bo[e].forEach(e=>{e.call(null,s,t,i)})}(e.plugins||[]).forEach(e=>{for(let t in e.hooks)bo[t]=(bo[t]||[]).concat(e.hooks[t])});const _o=(e,t,i)=>i,xo=Ri({key:null,setSeries:!1,filters:{pub:_i,sub:_i},scales:[w,v[1]?v[1].scale:null],match:[xi,xi,_o],values:[null,null]},G.sync);2==xo.match.length&&xo.match.push(_o),G.sync=xo;const yo=xo.key,wo=lo(yo);function $o(e,t,i,s,o,n,r){xo.filters.pub(e,t,i,s,o,n,r)&&wo.pub(e,t,i,s,o,n,r)}function ko(){vo("init",e,t),Dt(t||e.data,!1),z[w]?ts(w,z[w]):At(),ye=ls.show&&(ls.width>0||ls.height>0),xe=we=!0,$e(e.width,e.height)}return wo.sub(s),s.pub=function(e,t,i,s,o,n,r){xo.filters.sub(e,t,i,s,o,n,r)&&fo[e](null,t,i,s,o,n,r)},s.destroy=function(){wo.unsub(s),No.delete(s),ee.clear(),Nt(ht,bt,go),d.remove(),B?.remove(),vo("destroy")},v.forEach(Ne),_.forEach(function(e,t){if(e._show=e.show,e.show){let i=e.side%2,o=x[e.scale];null==o&&(e.scale=i?v[1].scale:w,o=x[e.scale]);let n=o.time;e.size=fi(e.size),e.space=fi(e.space),e.rotate=fi(e.rotate),Mi(e.incrs)&&e.incrs.forEach(e=>{!Ci.has(e)&&Ci.set(e,Di(e))}),e.incrs=fi(e.incrs||(2==o.distr?os:n?1==b?bs:xs:ns)),e.splits=fi(e.splits||(n&&1==o.distr?P:3==o.distr?Bs:4==o.distr?Hs:js)),e.stroke=fi(e.stroke),e.grid.stroke=fi(e.grid.stroke),e.ticks.stroke=fi(e.ticks.stroke),e.border.stroke=fi(e.border.stroke);let r=e.values;e.values=Mi(r)&&!Mi(r[0])?fi(r):n?Mi(r)?ks(F,$s(r,M)):Ni(r)?function(e,t){let i=Zi(t);return(t,s,o,n,r)=>s.map(t=>i(e(t)))}(F,r):r||N:r||Rs,e.filter=fi(e.filter||(o.distr>=3&&10==o.log?Xs:3==o.distr&&2==o.log?Ks:bi)),e.font=Jo(e.font),e.labelFont=Jo(e.labelFont),e._size=e.size(s,null,t,0),e._space=e._rotate=e._incrs=e._found=e._splits=e._values=null,e._size>0&&(Oe[t]=!0,e._el=St("u-axis",u))}}),i?i instanceof HTMLElement?(i.appendChild(d),ko()):i(s,ko):ko(),s}Ko.assign=Ri,Ko.fmtNum=Kt,Ko.rangeNum=Wt,Ko.rangeLog=jt,Ko.rangeAsinh=Bt,Ko.orient=co,Ko.pxRatio=_t,Ko.join=function(e,t){if(function(e){let t=e[0][0],i=t.length;for(let s=1;s<e.length;s++){let o=e[s][0];if(o.length!=i)return!1;if(o!=t)for(let e=0;e<i;e++)if(o[e]!=t[e])return!1}return!0}(e)){let t=e[0].slice();for(let i=1;i<e.length;i++)t.push(...e[i].slice(1));return function(e,t=100){const i=e.length;if(i<=1)return!0;let s=0,o=i-1;for(;s<=o&&null==e[s];)s++;for(;o>=s&&null==e[o];)o--;if(o<=s)return!0;const n=ni(1,ti((o-s+1)/t));for(let t=e[s],i=s+n;i<=o;i+=n){const s=e[i];if(null!=s){if(s<=t)return!1;t=s}}return!0}(t[0])||(t=function(e){let t=e[0],i=t.length,s=Array(i);for(let e=0;e<s.length;e++)s[e]=e;s.sort((e,i)=>t[e]-t[i]);let o=[];for(let t=0;t<e.length;t++){let n=e[t],r=Array(i);for(let e=0;e<i;e++)r[e]=n[s[e]];o.push(r)}return o}(t)),t}let i=new Set;for(let t=0;t<e.length;t++){let s=e[t][0],o=s.length;for(let e=0;e<o;e++)i.add(s[e])}let s=[Array.from(i).sort((e,t)=>e-t)],o=s[0].length,n=new Map;for(let e=0;e<o;e++)n.set(s[0][e],e);for(let i=0;i<e.length;i++){let r=e[i],a=r[0];for(let e=1;e<r.length;e++){let l=r[e],d=Array(o).fill(void 0),c=t?t[i][e]:1,p=[];for(let e=0;e<l.length;e++){let t=l[e],i=n.get(a[e]);null===t?0!=c&&(d[i]=t,2==c&&p.push(i)):d[i]=t}ji(d,p,o),s.push(d)}}return s},Ko.fmtDate=Zi,Ko.tzDate=function(e,t){let i;return"UTC"==t||"Etc/UTC"==t?i=new Date(+e+6e4*e.getTimezoneOffset()):t==Qi?i=e:(i=new Date(e.toLocaleString("en-US",{timeZone:t})),i.setMilliseconds(e.getMilliseconds())),i},Ko.sync=lo;{Ko.addGap=function(e,t,i){let s=e[e.length-1];s&&s[0]==t?s[1]=i:e.push([t,i])},Ko.clipGaps=go;let e=Ko.paths={points:Do};e.linear=Fo,e.stepped=function(e){const t=Yt(e.align,1),i=Yt(e.ascDesc,!1),s=Yt(e.alignGaps,0),o=Yt(e.extend,!1);return(e,n,r,a)=>co(e,n,(l,d,c,p,u,h,g,f,m,b,v)=>{[r,a]=Ut(c,r,a);let _=l.pxRound,{left:x,width:y}=e.bbox,w=e=>_(h(e,p,b,f)),$=e=>_(g(e,u,v,m)),k=0==p.ori?xo:yo;const S={stroke:new Path2D,fill:null,clip:null,band:null,gaps:null,flags:1},E=S.stroke,C=p.dir*(0==p.ori?1:-1);let D=$(c[1==C?r:a]),T=w(d[1==C?r:a]),A=T,z=T;o&&-1==t&&(z=x,k(E,z,D)),k(E,T,D);for(let e=1==C?r:a;e>=r&&e<=a;e+=C){let i=c[e];if(null==i)continue;let s=w(d[e]),o=$(i);1==t?k(E,s,D):k(E,A,o),k(E,s,o),D=o,A=s}let F=A;o&&1==t&&(F=x+y,k(E,F,D));let[M,P]=po(e,n);if(null!=l.fill||0!=M){let t=S.fill=new Path2D(E),i=$(l.fillTo(e,n,l.min,l.max,M));k(t,F,i),k(t,z,i)}if(!l.spanGaps){let o=[];o.push(...fo(d,c,r,a,C,w,s));let u=l.width*_t/2,h=i||1==t?u:-u,g=i||-1==t?-u:u;o.forEach(e=>{e[0]+=h,e[1]+=g}),S.gaps=o=l.gaps(e,n,r,a,o),S.clip=go(o,p.ori,f,m,b,v)}return 0!=P&&(S.band=2==P?[ho(e,n,r,a,E,-1),ho(e,n,r,a,E,1)]:ho(e,n,r,a,E,P)),S})},e.bars=function(e){const t=Yt((e=e||Ai).size,[.6,pi,1]),i=e.align||0,s=e.gap||0;let o=e.radius;o=null==o?[0,0]:"number"==typeof o?[o,0]:o;const n=fi(o),r=1-t[0],a=Yt(t[1],pi),l=Yt(t[2],1),d=Yt(e.disp,Ai),c=Yt(e.each,e=>{}),{fill:p,stroke:u}=d;return(e,t,o,h)=>co(e,t,(g,f,m,b,v,_,x,y,w,$,k)=>{let S,E,C=g.pxRound,D=i,T=s*_t,A=a*_t,z=l*_t;0==b.ori?[S,E]=n(e,t):[E,S]=n(e,t);const F=b.dir*(0==b.ori?1:-1);let M,P,N,O=0==b.ori?wo:$o,L=0==b.ori?c:(e,t,i,s,o,n,r)=>{c(e,t,i,o,s,r,n)},I=Yt(e.bands,zi).find(e=>e.series[0]==t),G=null!=I?I.dir:0,U=g.fillTo(e,t,g.min,g.max,G),R=C(x(U,v,k,w)),j=$,B=C(g.width*_t),H=!1,V=null,q=null,W=null,Y=null;null==p||0!=B&&null==u||(H=!0,V=p.values(e,t,o,h),q=new Map,new Set(V).forEach(e=>{null!=e&&q.set(e,new Path2D)}),B>0&&(W=u.values(e,t,o,h),Y=new Map,new Set(W).forEach(e=>{null!=e&&Y.set(e,new Path2D)})));let{x0:J,size:X}=d;if(null!=J&&null!=X){D=1,f=J.values(e,t,o,h),2==J.unit&&(f=f.map(t=>e.posToVal(y+t*$,b.key,!0)));let i=X.values(e,t,o,h);P=2==X.unit?i[0]*$:_(i[0],b,$,y)-_(0,b,$,y),j=Mo(f,m,_,b,$,y,j),N=j-P+T}else j=Mo(f,m,_,b,$,y,j),N=j*r+T,P=j-N;N<1&&(N=0),B>=P/2&&(B=0),N<5&&(C=mi);let K=N>0;P=C(hi(j-N-(K?B:0),z,A)),M=(0==D?P/2:D==F?0:P)-D*F*((0==D?T/2:0)+(K?B/2:0));const Z={stroke:null,fill:null,clip:null,band:null,gaps:null,flags:0},Q=H?null:new Path2D;let ee=null;if(null!=I)ee=e.data[I.series[1]];else{let{y0:i,y1:s}=d;null!=i&&null!=s&&(m=s.values(e,t,o,h),ee=i.values(e,t,o,h))}let te=S*P,ie=E*P;for(let i=1==F?o:h;i>=o&&i<=h;i+=F){let s=m[i];if(null==s)continue;if(null!=ee){let e=ee[i]??0;if(s-e==0)continue;R=x(e,v,k,w)}let o=_(2!=b.distr||null!=d?f[i]:i,b,$,y),n=x(Yt(s,U),v,k,w),r=C(o-M),a=C(ni(n,R)),l=C(oi(n,R)),c=a-l;if(null!=s){let o=s<0?ie:te,n=s<0?te:ie;H?(B>0&&null!=W[i]&&O(Y.get(W[i]),r,l+ti(B/2),P,ni(0,c-B),o,n),null!=V[i]&&O(q.get(V[i]),r,l+ti(B/2),P,ni(0,c-B),o,n)):O(Q,r,l+ti(B/2),P,ni(0,c-B),o,n),L(e,t,i,r-B/2,l,P+B,c)}}return B>0?Z.stroke=H?Y:Q:H||(Z._fill=0==g.width?g._fill:g._stroke??g._fill,Z.width=0),Z.fill=H?q:Q,Z})},e.spline=function(e){return function(e,t){const i=Yt(t?.alignGaps,0);return(t,s,o,n)=>co(t,s,(r,a,l,d,c,p,u,h,g,f,m)=>{[o,n]=Ut(l,o,n);let b,v,_,x=r.pxRound,y=e=>x(p(e,d,f,h)),w=e=>x(u(e,c,m,g));0==d.ori?(b=vo,_=xo,v=Eo):(b=_o,_=yo,v=Co);const $=d.dir*(0==d.ori?1:-1);let k=y(a[1==$?o:n]),S=k,E=[],C=[];for(let e=1==$?o:n;e>=o&&e<=n;e+=$)if(null!=l[e]){let t=y(a[e]);E.push(S=t),C.push(w(l[e]))}const D={stroke:e(E,C,b,_,v,x),fill:null,clip:null,band:null,gaps:null,flags:1},T=D.stroke;let[A,z]=po(t,s);if(null!=r.fill||0!=A){let e=D.fill=new Path2D(T),i=w(r.fillTo(t,s,r.min,r.max,A));_(e,S,i),_(e,k,i)}if(!r.spanGaps){let e=[];e.push(...fo(a,l,o,n,$,y,i)),D.gaps=e=r.gaps(t,s,o,n,e),D.clip=go(e,d.ori,h,g,f,m)}return 0!=z&&(D.band=2==z?[ho(t,s,o,n,T,-1),ho(t,s,o,n,T,1)]:ho(t,s,o,n,T,z)),D})}(Po,e)}}class Zo extends le{static properties={deviceId:{type:String},attrName:{type:String},hours:{type:Number,state:!0},_loading:{type:Boolean,state:!0},_error:{type:String,state:!0}};static styles=n`
+    :host { display: block; margin-top: 8px; }
+    .chart-container {
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+      padding: 8px;
+    }
+    .time-range {
+      display: flex; gap: 4px; margin-bottom: 6px;
+    }
+    .range-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    .range-btn:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+    .range-btn.active { background: rgba(0,212,255,0.15); color: #00D4FF; border-color: rgba(0,212,255,0.3); }
+    .chart-wrap { width: 100%; height: 120px; position: relative; }
+    .loading, .error, .no-data {
+      display: flex; align-items: center; justify-content: center;
+      height: 120px; font-size: 11px; color: rgba(255,255,255,0.4);
+    }
+    .error { color: #ef5350; }
+  `;constructor(){super(),this.hours=24,this._loading=!1,this._error="",this._chart=null,this._data=null}connectedCallback(){super.connectedCallback(),this._fetchData()}disconnectedCallback(){super.disconnectedCallback(),this._chart&&(this._chart.destroy(),this._chart=null)}async _fetchData(){this._loading=!0,this._error="";try{const{fetchAttributeHistory:e}=await Promise.resolve().then(function(){return We}),t=await e(this.deviceId,this.attrName,this.hours);this._data=t,this._loading=!1,await this.updateComplete,this._renderChart()}catch(e){this._error=e.message||"Failed to load history",this._loading=!1}}_renderChart(){if(!this._data||0===this._data.length)return;const e=this.shadowRoot.querySelector(".chart-wrap");if(!e)return;this._chart&&(this._chart.destroy(),this._chart=null),e.innerHTML="";const t=[],i=[];for(const e of this._data){const s=new Date(e.last_changed).getTime()/1e3,o=parseFloat(e.state);isNaN(o)||(t.push(s),i.push(o))}if(0===t.length)return;const s={width:e.clientWidth||300,height:120,cursor:{show:!0},select:{show:!1},legend:{show:!1},axes:[{stroke:"rgba(255,255,255,0.2)",grid:{stroke:"rgba(255,255,255,0.05)",width:1},ticks:{stroke:"rgba(255,255,255,0.1)",width:1},font:"9px Segoe UI, sans-serif",values:(e,t)=>t.map(e=>{const t=new Date(1e3*e);return`${t.getHours()}:${String(t.getMinutes()).padStart(2,"0")}`})},{stroke:"rgba(255,255,255,0.2)",grid:{stroke:"rgba(255,255,255,0.05)",width:1},ticks:{stroke:"rgba(255,255,255,0.1)",width:1},font:"9px Segoe UI, sans-serif",size:40}],series:[{},{stroke:"#00D4FF",width:1.5,fill:"rgba(0,212,255,0.08)"}]};this._chart=new Ko(s,[t,i],e)}_setHours(e){this.hours=e,this._fetchData()}render(){return B`
+      <div class="chart-container">
+        <div class="time-range">
+          ${[1,6,24,168].map(e=>B`
+            <button class="range-btn ${this.hours===e?"active":""}"
+              @click=${()=>this._setHours(e)}>
+              ${e<=24?`${e}h`:"7d"}
+            </button>
+          `)}
+        </div>
+        ${this._loading?B`<div class="loading">Loading...</div>`:this._error?B`<div class="error">${this._error}</div>`:this._data&&0!==this._data.length||this._loading?B`<div class="chart-wrap"></div>`:B`<div class="no-data">No history data</div>`}
+      </div>
+    `}}customElements.define("attribute-chart",Zo);class Qo extends le{static properties={device:{type:Object},effectiveSettings:{type:Object},haOverrides:{type:Object},groups:{type:Object},cardAttributes:{type:Array},attributeTransforms:{type:Object},groupTransforms:{type:Object},_showHidden:{type:Boolean,state:!0},_expandedChart:{type:String,state:!0}};static styles=[ce,n`
     /* Attributes + HA exposure */
     .section {
       background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
@@ -456,25 +495,25 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     @media (max-width: 768px) {
       .attr-grid { grid-template-columns: 1fr; }
     }
-  `];constructor(){super(),this.device=null,this.effectiveSettings=null,this.haOverrides={},this.groups={},this.cardAttributes=[],this.attributeTransforms={},this.groupTransforms={},this._showHidden=!1}_isExposed(t){if(void 0!==this.haOverrides[t])return this.haOverrides[t];const e=this.effectiveSettings;return void 0!==e?.ha_exposure_overrides?.[t]?e.ha_exposure_overrides[t]:"all"===e?.ha_exposure||!!e?.ha_exposed_attributes?.includes(t)}_getThresholdForAttr(t){const e=this.effectiveSettings;if(!e)return null;const s=(e.thresholds||{})[t];if(null==s)return null;const i="object"==typeof s?s.value:s;if(null==i)return null;const o=this.device?.threshold_overrides||{},n=this.device?.group_policy,r=n?this.groups[n]:null;let a="global";return null!=o[t]?a="device":null!=r?.thresholds?.[t]&&(a="Group Policy"),{value:i,source:a}}_checkThreshold(t,e){if(!e||null==t||"number"!=typeof t)return!1;const s="object"==typeof e?e.value:e,i="object"==typeof e&&e.op||">";if(null==s)return!1;switch(i){case">":default:return t>s;case"<":return t<s;case">=":return t>=s;case"<=":return t<=s;case"==":return t===s;case"!=":return t!==s}}_getThresholdOp(t){const e=(this.device?.threshold_overrides||{})[t];if(null!=e&&"object"==typeof e)return e.op||">";const s=this.effectiveSettings;if(!s)return">";const i=(s.thresholds||{})[t];return null!=i&&"object"==typeof i&&i.op||">"}_getThresholdVal(t){const e=(this.device?.threshold_overrides||{})[t];if(null!=e)return"object"==typeof e?e.value:e;const s=this._getThresholdForAttr(t);return s?s.value:null}_getCritThresholdOp(t){const e=(this.device?.crit_threshold_overrides||{})[t];return null!=e&&"object"==typeof e&&e.op||">"}_getCritThresholdVal(t){const e=(this.device?.crit_threshold_overrides||{})[t];return null!=e?"object"==typeof e?e.value:e:null}render(){if(!this.device)return B``;const t=Object.entries(this.device.attributes||{}).sort(([t],[e])=>t.localeCompare(e)),e=this.device.hidden_attributes||[],s=t.filter(([t])=>!e.includes(t)),i=t.filter(([t])=>e.includes(t));return 0===t.length?B``:B`
+  `];constructor(){super(),this.device=null,this.effectiveSettings=null,this.haOverrides={},this.groups={},this.cardAttributes=[],this.attributeTransforms={},this.groupTransforms={},this._showHidden=!1,this._expandedChart=null}_isExposed(e){if(void 0!==this.haOverrides[e])return this.haOverrides[e];const t=this.effectiveSettings;return void 0!==t?.ha_exposure_overrides?.[e]?t.ha_exposure_overrides[e]:"all"===t?.ha_exposure||!!t?.ha_exposed_attributes?.includes(e)}_getThresholdForAttr(e){const t=this.effectiveSettings;if(!t)return null;const i=(t.thresholds||{})[e];if(null==i)return null;const s="object"==typeof i?i.value:i;if(null==s)return null;const o=this.device?.threshold_overrides||{},n=this.device?.group_policy,r=n?this.groups[n]:null;let a="global";return null!=o[e]?a="device":null!=r?.thresholds?.[e]&&(a="Group Policy"),{value:s,source:a}}_checkThreshold(e,t){if(!t||null==e||"number"!=typeof e)return!1;const i="object"==typeof t?t.value:t,s="object"==typeof t&&t.op||">";if(null==i)return!1;switch(s){case">":default:return e>i;case"<":return e<i;case">=":return e>=i;case"<=":return e<=i;case"==":return e===i;case"!=":return e!==i}}_getThresholdOp(e){const t=(this.device?.threshold_overrides||{})[e];if(null!=t&&"object"==typeof t)return t.op||">";const i=this.effectiveSettings;if(!i)return">";const s=(i.thresholds||{})[e];return null!=s&&"object"==typeof s&&s.op||">"}_getThresholdVal(e){const t=(this.device?.threshold_overrides||{})[e];if(null!=t)return"object"==typeof t?t.value:t;const i=this._getThresholdForAttr(e);return i?i.value:null}_getCritThresholdOp(e){const t=(this.device?.crit_threshold_overrides||{})[e];return null!=t&&"object"==typeof t&&t.op||">"}_getCritThresholdVal(e){const t=(this.device?.crit_threshold_overrides||{})[e];return null!=t?"object"==typeof t?t.value:t:null}render(){if(!this.device)return B``;const e=Object.entries(this.device.attributes||{}).sort(([e],[t])=>e.localeCompare(t)),t=this.device.hidden_attributes||[],i=e.filter(([e])=>!t.includes(e)),s=e.filter(([e])=>t.includes(e));return 0===e.length?B``:B`
       <div class="section">
         <div class="section-title">Attributes</div>
         <div class="attr-grid">
-          ${s.map(([t,e])=>this._renderAttrTile(t,e))}
+          ${i.map(([e,t])=>this._renderAttrTile(e,t))}
         </div>
-        ${i.length>0?B`
+        ${s.length>0?B`
           <div style="margin-top: 12px;">
             <div style="font-size: 10px; color: #fff; margin-bottom: 6px; cursor: pointer;"
               @click=${()=>this._showHidden=!this._showHidden}>
-              ${this._showHidden?"▾":"▸"} ${i.length} hidden attribute${1!==i.length?"s":""}
+              ${this._showHidden?"▾":"▸"} ${s.length} hidden attribute${1!==s.length?"s":""}
             </div>
             ${this._showHidden?B`
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                ${i.map(([t])=>B`
+                ${s.map(([e])=>B`
                   <span style="font-size: 11px; background: #0d0d1f; color: #fff; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
-                    ${t.replace(/_/g," ")}
+                    ${e.replace(/_/g," ")}
                     <span style="cursor: pointer; color: #00D4FF; font-size: 10px;"
-                      @click=${()=>this._onUnhide(t)}>show</span>
+                      @click=${()=>this._onUnhide(e)}>show</span>
                   </span>
                 `)}
               </div>
@@ -482,39 +521,39 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         `:""}
       </div>
-    `}_renderAttrTile(t,e){const s=this._isExposed(t),i=this._getThresholdForAttr(t),o=null!=e.value?e.value:null,n=(this.device?.threshold_overrides||{})[t],r=null!=n?n:i?i.value:null,a=this._checkThreshold(o,r),d=this._getThresholdOp(t),l=this._getThresholdVal(t),c=(this.cardAttributes||[]).includes(t),p=(this.attributeTransforms||{})[t]||"",h=this._getCritThresholdOp(t),u=this._getCritThresholdVal(t),g=this.device?.crit_threshold_overrides||{},m=null!=g[t]?g[t]:null,f=this._checkThreshold(o,m),b=f?"critical-val":a?"exceeded-val":"";return B`
-      <div class="attr-tile ${s?"":"dimmed"} ${f?"critical":a?"exceeded":""}">
+    `}_renderAttrTile(e,t){const i=this._isExposed(e),s=this._getThresholdForAttr(e),o=null!=t.value?t.value:null,n=(this.device?.threshold_overrides||{})[e],r=null!=n?n:s?s.value:null,a=this._checkThreshold(o,r),l=this._getThresholdOp(e),d=this._getThresholdVal(e),c=(this.cardAttributes||[]).includes(e),p=(this.attributeTransforms||{})[e]||"",u=this._getCritThresholdOp(e),h=this._getCritThresholdVal(e),g=this.device?.crit_threshold_overrides||{},f=null!=g[e]?g[e]:null,m=this._checkThreshold(o,f),b=m?"critical-val":a?"exceeded-val":"";return B`
+      <div class="attr-tile ${i?"":"dimmed"} ${m?"critical":a?"exceeded":""}">
         <div class="attr-tile-top">
-          <span class="attr-label">${t.replace(/_/g," ")}
+          <span class="attr-label">${e.replace(/_/g," ")}
             <span class="attr-pin ${c?"pinned":""}"
               title="${c?"Unpin from card":"Pin to card"}"
-              @click=${e=>{e.stopPropagation(),this._togglePin(t)}}>&#x1F4CC;</span>
+              @click=${t=>{t.stopPropagation(),this._togglePin(e)}}>&#x1F4CC;</span>
             <span class="attr-delete" title="Remove attribute"
-              @click=${()=>this._onDelete(t)}>&times;</span>
+              @click=${()=>this._onDelete(e)}>&times;</span>
           </span>
           <span class="toggle-wrap"
             role="switch"
-            aria-checked=${s?"true":"false"}
-            aria-label="Expose ${t.replace(/_/g," ")} to Home Assistant"
+            aria-checked=${i?"true":"false"}
+            aria-label="Expose ${e.replace(/_/g," ")} to Home Assistant"
             tabindex="0"
-            @click=${()=>this._onToggleExposure(t)}
-            @keydown=${e=>("Enter"===e.key||" "===e.key)&&this._onToggleExposure(t)}>
-            <div class="toggle ${s?"on":"off"}">
+            @click=${()=>this._onToggleExposure(e)}
+            @keydown=${t=>("Enter"===t.key||" "===t.key)&&this._onToggleExposure(e)}>
+            <div class="toggle ${i?"on":"off"}">
               <div class="toggle-knob"></div>
             </div>
           </span>
         </div>
-        <div class="attr-val ${s?"":"dimmed-val"} ${b}">
-          ${this._formatValue(o,e.unit,p)}
+        <div class="attr-val ${i?"":"dimmed-val"} ${b}">
+          ${this._formatValue(o,t.unit,p)}
         </div>
         <div class="attr-thresholds">
           <div class="attr-threshold-row">
             ${a?B`<span style="color: #ffb74d; font-size: 11px;">\u26A0</span>`:""}
             <span class="threshold-label warn">warn</span>
             <select class="threshold-op"
-              aria-label="Warning threshold operator for ${t.replace(/_/g," ")}"
-              .value=${d}
-              @change=${e=>this._onThresholdChange(t,l,e.target.value)}>
+              aria-label="Warning threshold operator for ${e.replace(/_/g," ")}"
+              .value=${l}
+              @change=${t=>this._onThresholdChange(e,d,t.target.value)}>
               <option value=">">&gt;</option>
               <option value="<">&lt;</option>
               <option value=">=">&gt;=</option>
@@ -523,21 +562,21 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
               <option value="!=">!=</option>
             </select>
             <input class="threshold-inline" type="number"
-              aria-label="Warning threshold value for ${t.replace(/_/g," ")}"
+              aria-label="Warning threshold value for ${e.replace(/_/g," ")}"
               placeholder="\u2014"
-              .value=${null!=l?String(l):""}
-              @change=${e=>this._onThresholdChange(t,e.target.value,d)}>
-            ${i&&"device"!==i.source&&null==n?B`
-              <span class="threshold-source">${i.source}</span>
+              .value=${null!=d?String(d):""}
+              @change=${t=>this._onThresholdChange(e,t.target.value,l)}>
+            ${s&&"device"!==s.source&&null==n?B`
+              <span class="threshold-source">${s.source}</span>
             `:""}
           </div>
           <div class="attr-threshold-row">
-            ${f?B`<span style="color: #ef5350; font-size: 11px;">\u26A0</span>`:""}
+            ${m?B`<span style="color: #ef5350; font-size: 11px;">\u26A0</span>`:""}
             <span class="threshold-label crit">crit</span>
             <select class="threshold-op"
-              aria-label="Critical threshold operator for ${t.replace(/_/g," ")}"
-              .value=${h}
-              @change=${e=>this._onCritThresholdChange(t,u,e.target.value)}>
+              aria-label="Critical threshold operator for ${e.replace(/_/g," ")}"
+              .value=${u}
+              @change=${t=>this._onCritThresholdChange(e,h,t.target.value)}>
               <option value=">">&gt;</option>
               <option value="<">&lt;</option>
               <option value=">=">&gt;=</option>
@@ -546,26 +585,40 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
               <option value="!=">!=</option>
             </select>
             <input class="threshold-inline" type="number"
-              aria-label="Critical threshold value for ${t.replace(/_/g," ")}"
+              aria-label="Critical threshold value for ${e.replace(/_/g," ")}"
               placeholder="\u2014"
-              .value=${null!=u?String(u):""}
-              @change=${e=>this._onCritThresholdChange(t,e.target.value,h)}>
+              .value=${null!=h?String(h):""}
+              @change=${t=>this._onCritThresholdChange(e,t.target.value,u)}>
           </div>
         </div>
         <div class="attr-transform">
           <div class="transform-label">Transform</div>
           <select class="transform-select"
-            aria-label="Value transform for ${t.replace(/_/g," ")}"
+            aria-label="Value transform for ${e.replace(/_/g," ")}"
             .value=${p}
-            @change=${e=>this._onTransformChange(t,e.target.value)}>
-            ${function(){const t=ut.map(t=>({value:t.id,label:t.name}));return[...mt,...t]}().map(t=>B`
-              <option value=${t.value} ?selected=${t.value===p}>${t.label}</option>
+            @change=${t=>this._onTransformChange(e,t.target.value)}>
+            ${function(){const e=he.map(e=>({value:e.id,label:e.name}));return[...fe,...e]}().map(e=>B`
+              <option value=${e.value} ?selected=${e.value===p}>${e.label}</option>
             `)}
           </select>
-          ${(this.groupTransforms||{})[t]&&!(this.device?.attribute_transforms||{})[t]?B`<span class="transform-source">Group Policy</span>`:""}
+          ${(this.groupTransforms||{})[e]&&!(this.device?.attribute_transforms||{})[e]?B`<span class="transform-source">Group Policy</span>`:""}
         </div>
+        ${this._isExposed(e)?B`
+          <div style="margin-top: 4px;">
+            <button style="background: none; border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; color: ${this._expandedChart===e?"#00D4FF":"rgba(255,255,255,0.25)"}; cursor: pointer; padding: 2px 6px; font-size: 10px; transition: all 0.15s;"
+              @click=${t=>{t.stopPropagation(),this._expandedChart=this._expandedChart===e?null:e}}>
+              ${this._expandedChart===e?"▾ History":"▸ History"}
+            </button>
+          </div>
+          ${this._expandedChart===e?B`
+            <attribute-chart
+              .deviceId=${this.device?.device_id||""}
+              .attrName=${e}
+            ></attribute-chart>
+          `:""}
+        `:""}
       </div>
-    `}_onDelete(t){this.dispatchEvent(new CustomEvent("attribute-deleted",{detail:{name:t},bubbles:!0,composed:!0}))}_onUnhide(t){this.dispatchEvent(new CustomEvent("attribute-unhidden",{detail:{name:t},bubbles:!0,composed:!0}))}_onToggleExposure(t){this.dispatchEvent(new CustomEvent("ha-exposure-toggled",{detail:{name:t},bubbles:!0,composed:!0}))}_onThresholdChange(t,e,s){this.dispatchEvent(new CustomEvent("threshold-changed",{detail:{name:t,value:e,op:s},bubbles:!0,composed:!0}))}_onCritThresholdChange(t,e,s){this.dispatchEvent(new CustomEvent("crit-threshold-changed",{detail:{name:t,value:e,op:s},bubbles:!0,composed:!0}))}_formatValue(t,e,s){if(null==t)return"—";if(s){return ht(t,s)}return B`${t}<span class="attr-unit">${e||""}</span>`}_onTransformChange(t,e){this.dispatchEvent(new CustomEvent("transform-changed",{detail:{attr:t,transform:e||null},bubbles:!0,composed:!0}))}_togglePin(t){this.dispatchEvent(new CustomEvent("pin-attribute",{detail:{name:t,pinned:!(this.cardAttributes||[]).includes(t)},bubbles:!0,composed:!0}))}}customElements.define("device-attributes",Xt);const Kt=["shutdown","halt","poweroff","destroy"];class Zt extends dt{static properties={device:{type:Object},serverCommands:{type:Object},commandResult:{type:String},_showHiddenCmds:{type:Boolean,state:!0},_showAddCommand:{type:Boolean,state:!0},_editingCommandName:{type:String,state:!0},_editCommandForm:{type:Object,state:!0}};static styles=[ct,n`
+    `}_onDelete(e){this.dispatchEvent(new CustomEvent("attribute-deleted",{detail:{name:e},bubbles:!0,composed:!0}))}_onUnhide(e){this.dispatchEvent(new CustomEvent("attribute-unhidden",{detail:{name:e},bubbles:!0,composed:!0}))}_onToggleExposure(e){this.dispatchEvent(new CustomEvent("ha-exposure-toggled",{detail:{name:e},bubbles:!0,composed:!0}))}_onThresholdChange(e,t,i){this.dispatchEvent(new CustomEvent("threshold-changed",{detail:{name:e,value:t,op:i},bubbles:!0,composed:!0}))}_onCritThresholdChange(e,t,i){this.dispatchEvent(new CustomEvent("crit-threshold-changed",{detail:{name:e,value:t,op:i},bubbles:!0,composed:!0}))}_formatValue(e,t,i){if(null==e)return"—";if(i){return ue(e,i)}return B`${e}<span class="attr-unit">${t||""}</span>`}_onTransformChange(e,t){this.dispatchEvent(new CustomEvent("transform-changed",{detail:{attr:e,transform:t||null},bubbles:!0,composed:!0}))}_togglePin(e){this.dispatchEvent(new CustomEvent("pin-attribute",{detail:{name:e,pinned:!(this.cardAttributes||[]).includes(e)},bubbles:!0,composed:!0}))}}customElements.define("device-attributes",Qo);const en=["shutdown","halt","poweroff","destroy"];class tn extends le{static properties={device:{type:Object},serverCommands:{type:Object},commandResult:{type:String},_showHiddenCmds:{type:Boolean,state:!0},_showAddCommand:{type:Boolean,state:!0},_editingCommandName:{type:String,state:!0},_editCommandForm:{type:Object,state:!0}};static styles=[ce,n`
     .section {
       background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
@@ -644,37 +697,37 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     @media (max-width: 768px) {
       .commands { grid-template-columns: 1fr; }
     }
-  `];constructor(){super(),this.device=null,this.serverCommands={},this.commandResult="",this._showHiddenCmds=!1,this._showAddCommand=!1,this._editingCommandName=null,this._editCommandForm=null}render(){if(!this.device)return B``;const t=this.device.allowed_commands||[],e=this.serverCommands||{},s=Object.keys(e),i=[...new Set([...t,...s])],o=this.device.hidden_commands||[],n=i.filter(t=>!o.includes(t)),r=i.filter(t=>o.includes(t)),a=(this.device.active_plugins||[]).includes("custom_command");return B`
+  `];constructor(){super(),this.device=null,this.serverCommands={},this.commandResult="",this._showHiddenCmds=!1,this._showAddCommand=!1,this._editingCommandName=null,this._editCommandForm=null}render(){if(!this.device)return B``;const e=this.device.allowed_commands||[],t=this.serverCommands||{},i=Object.keys(t),s=[...new Set([...e,...i])],o=this.device.hidden_commands||[],n=s.filter(e=>!o.includes(e)),r=s.filter(e=>o.includes(e)),a=(this.device.active_plugins||[]).includes("custom_command");return B`
       <div class="section">
         <div class="section-title">Commands</div>
 
         ${n.length>0?B`
           <div class="commands" style="margin-bottom: 12px;">
-            ${n.map(t=>B`
+            ${n.map(e=>B`
               <span class="cmd-wrap">
-                <button class="cmd-btn ${function(t){const e=t.toLowerCase();return Kt.some(t=>e.includes(t))}(t)?"danger":""}"
-                  @click=${()=>this._onSend(t)}>${t}</button>
+                <button class="cmd-btn ${function(e){const t=e.toLowerCase();return en.some(e=>t.includes(e))}(e)?"danger":""}"
+                  @click=${()=>this._onSend(e)}>${e}</button>
                 <span class="cmd-eye" title="Hide command"
-                  @click=${e=>{e.stopPropagation(),this._onHide(t)}}>&#128065;</span>
+                  @click=${t=>{t.stopPropagation(),this._onHide(e)}}>&#128065;</span>
               </span>
             `)}
           </div>
         `:""}
         ${this.commandResult?B`<div class="cmd-result">${this.commandResult}</div>`:""}
 
-        ${s.length>0?B`
+        ${i.length>0?B`
           <div style="margin-top: 8px; font-size: 11px; color: #fff; margin-bottom: 6px;">Server-managed commands</div>
           <table class="sensor-table">
             <thead><tr><th>Name</th><th>Shell Command</th><th></th></tr></thead>
             <tbody>
-              ${Object.entries(e).map(([t,e])=>B`
+              ${Object.entries(t).map(([e,t])=>B`
                 <tr>
-                  <td>${t}</td>
-                  <td class="mono">${e}</td>
+                  <td>${e}</td>
+                  <td class="mono">${t}</td>
                   <td>
                     <div class="sensor-actions">
-                      ${a?B`<button class="sensor-btn edit" @click=${()=>this._startEdit(t,e)}>Edit</button>`:""}
-                      <button class="sensor-btn remove" @click=${()=>this._onRemove(t)}>Delete</button>
+                      ${a?B`<button class="sensor-btn edit" @click=${()=>this._startEdit(e,t)}>Edit</button>`:""}
+                      <button class="sensor-btn remove" @click=${()=>this._onRemove(e)}>Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -689,11 +742,11 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
               <input type="text" placeholder="Command name"
                 .value=${this._editCommandForm?.name||""}
                 ?disabled=${!!this._editingCommandName}
-                @input=${t=>this._editCommandForm={...this._editCommandForm,name:t.target.value}}>
+                @input=${e=>this._editCommandForm={...this._editCommandForm,name:e.target.value}}>
               <input type="text" placeholder="Shell command (e.g. notify-send 'Hello')"
                 .value=${this._editCommandForm?.shell||""}
-                @input=${t=>this._editCommandForm={...this._editCommandForm,shell:t.target.value}}
-                @keydown=${t=>"Enter"===t.key&&this._saveForm()}>
+                @input=${e=>this._editCommandForm={...this._editCommandForm,shell:e.target.value}}
+                @keydown=${e=>"Enter"===e.key&&this._saveForm()}>
             </div>
             <div class="sensor-form-actions">
               <button class="form-btn save" @click=${this._saveForm}>${this._editingCommandName?"Update":"Add"}</button>
@@ -712,11 +765,11 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             </div>
             ${this._showHiddenCmds?B`
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                ${r.map(t=>B`
+                ${r.map(e=>B`
                   <span style="font-size: 11px; background: #0d0d1f; color: #fff; padding: 3px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px;">
-                    ${t}
+                    ${e}
                     <span style="cursor: pointer; color: #00D4FF; font-size: 10px;"
-                      @click=${()=>this._onUnhide(t)}>show</span>
+                      @click=${()=>this._onUnhide(e)}>show</span>
                   </span>
                 `)}
               </div>
@@ -724,7 +777,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         `:""}
       </div>
-    `}_startAdd(){this._showAddCommand=!0,this._editingCommandName=null,this._editCommandForm={name:"",shell:""}}_startEdit(t,e){this._editingCommandName=t,this._showAddCommand=!1,this._editCommandForm={name:t,shell:e}}_saveForm(){const t=this._editCommandForm;if(!t)return;const e=(t.name||"").trim(),s=(t.shell||"").trim();e&&s&&(this.dispatchEvent(new CustomEvent("server-command-save",{detail:{name:e,shell:s,editing:this._editingCommandName},bubbles:!0,composed:!0})),this._cancelForm())}_cancelForm(){this._showAddCommand=!1,this._editingCommandName=null,this._editCommandForm=null}_onSend(t){this.dispatchEvent(new CustomEvent("command-send",{detail:{command:t},bubbles:!0,composed:!0}))}_onHide(t){this.dispatchEvent(new CustomEvent("command-hide",{detail:{name:t},bubbles:!0,composed:!0}))}_onUnhide(t){this.dispatchEvent(new CustomEvent("command-unhide",{detail:{name:t},bubbles:!0,composed:!0}))}_onRemove(t){this.dispatchEvent(new CustomEvent("server-command-remove",{detail:{name:t},bubbles:!0,composed:!0}))}}customElements.define("device-commands",Zt);class Qt extends dt{static properties={device:{type:Object},configInterval:{type:Number},customSensors:{type:Object},_showAddSensor:{type:Boolean,state:!0},_editSensorKey:{type:String,state:!0},_sensorForm:{type:Object,state:!0}};static styles=[ct,n`
+    `}_startAdd(){this._showAddCommand=!0,this._editingCommandName=null,this._editCommandForm={name:"",shell:""}}_startEdit(e,t){this._editingCommandName=e,this._showAddCommand=!1,this._editCommandForm={name:e,shell:t}}_saveForm(){const e=this._editCommandForm;if(!e)return;const t=(e.name||"").trim(),i=(e.shell||"").trim();t&&i&&(this.dispatchEvent(new CustomEvent("server-command-save",{detail:{name:t,shell:i,editing:this._editingCommandName},bubbles:!0,composed:!0})),this._cancelForm())}_cancelForm(){this._showAddCommand=!1,this._editingCommandName=null,this._editCommandForm=null}_onSend(e){this.dispatchEvent(new CustomEvent("command-send",{detail:{command:e},bubbles:!0,composed:!0}))}_onHide(e){this.dispatchEvent(new CustomEvent("command-hide",{detail:{name:e},bubbles:!0,composed:!0}))}_onUnhide(e){this.dispatchEvent(new CustomEvent("command-unhide",{detail:{name:e},bubbles:!0,composed:!0}))}_onRemove(e){this.dispatchEvent(new CustomEvent("server-command-remove",{detail:{name:e},bubbles:!0,composed:!0}))}}customElements.define("device-commands",tn);class sn extends le{static properties={device:{type:Object},configInterval:{type:Number},customSensors:{type:Object},_showAddSensor:{type:Boolean,state:!0},_editSensorKey:{type:String,state:!0},_sensorForm:{type:Object,state:!0}};static styles=[ce,n`
     .section {
       background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
@@ -813,7 +866,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       .sensor-form-grid { flex-direction: column; }
       .sensor-form-grid input { width: 100%; box-sizing: border-box; }
     }
-  `];constructor(){super(),this.device=null,this.configInterval=30,this.customSensors={},this.pushing=!1,this.pushStatus="",this.lastPushed="",this._showAddSensor=!1,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}render(){if(!this.device)return B``;const t=this.device.remote_config||{},e=this.device.active_plugins||(t.plugins?Object.keys(t.plugins):[]),s=this.customSensors;return B`
+  `];constructor(){super(),this.device=null,this.configInterval=30,this.customSensors={},this.pushing=!1,this.pushStatus="",this.lastPushed="",this._showAddSensor=!1,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}render(){if(!this.device)return B``;const e=this.device.remote_config||{},t=this.device.active_plugins||(e.plugins?Object.keys(e.plugins):[]),i=this.customSensors;return B`
       <div class="section">
         <div class="section-title">Agent Configuration</div>
 
@@ -821,22 +874,22 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <span class="config-label">Collection interval</span>
           <input class="config-input" type="number" min="5"
             .value=${String(this.configInterval)}
-            @input=${t=>this._onIntervalChange(Number(t.target.value))}>
+            @input=${e=>this._onIntervalChange(Number(e.target.value))}>
           <span style="font-size: 12px; color: #fff; margin-left: 4px;">seconds</span>
         </div>
 
-        ${e.length>0?B`
+        ${t.length>0?B`
           <div class="config-row">
             <span class="config-label">Active plugins</span>
             <div class="plugins-list">
-              ${e.map(t=>B`<span class="plugin-badge">${t}</span>`)}
+              ${t.map(e=>B`<span class="plugin-badge">${e}</span>`)}
             </div>
           </div>
         `:""}
 
         <div style="margin-bottom: 10px;">
           <div class="section-title" style="margin-bottom: 8px;">Custom Sensors</div>
-          ${Object.keys(s).length>0?B`
+          ${Object.keys(i).length>0?B`
             <table class="sensor-table">
               <thead>
                 <tr>
@@ -844,16 +897,16 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
                 </tr>
               </thead>
               <tbody>
-                ${Object.entries(s).map(([t,e])=>B`
+                ${Object.entries(i).map(([e,t])=>B`
                   <tr>
-                    <td>${t}</td>
-                    <td>${e.command}</td>
-                    <td>${e.interval}s</td>
-                    <td>${e.unit||"—"}</td>
+                    <td>${e}</td>
+                    <td>${t.command}</td>
+                    <td>${t.interval}s</td>
+                    <td>${t.unit||"—"}</td>
                     <td>
                       <div class="sensor-actions">
-                        <button class="sensor-btn edit"   @click=${()=>this._startEdit(t,e)}>Edit</button>
-                        <button class="sensor-btn remove" @click=${()=>this._onRemove(t)}>Remove</button>
+                        <button class="sensor-btn edit"   @click=${()=>this._startEdit(e,t)}>Edit</button>
+                        <button class="sensor-btn remove" @click=${()=>this._onRemove(e)}>Remove</button>
                       </div>
                     </td>
                   </tr>
@@ -870,28 +923,28 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
 
 
       </div>
-    `}_renderSensorForm(){const t=this._sensorForm;return B`
+    `}_renderSensorForm(){const e=this._sensorForm;return B`
       <div class="sensor-form">
         <div class="sensor-form-grid">
           <input type="text" placeholder="Name (e.g. ping_gw)"
-            .value=${t.name}
-            @input=${e=>this._sensorForm={...t,name:e.target.value}}>
+            .value=${e.name}
+            @input=${t=>this._sensorForm={...e,name:t.target.value}}>
           <input type="text" placeholder="Command (e.g. ping -c1 10.0.0.1)"
-            .value=${t.command}
-            @input=${e=>this._sensorForm={...t,command:e.target.value}}>
+            .value=${e.command}
+            @input=${t=>this._sensorForm={...e,command:t.target.value}}>
           <input type="number" placeholder="60"
-            .value=${String(t.interval)}
-            @input=${e=>this._sensorForm={...t,interval:Number(e.target.value)}}>
+            .value=${String(e.interval)}
+            @input=${t=>this._sensorForm={...e,interval:Number(t.target.value)}}>
           <input type="text" placeholder="Unit"
-            .value=${t.unit}
-            @input=${e=>this._sensorForm={...t,unit:e.target.value}}>
+            .value=${e.unit}
+            @input=${t=>this._sensorForm={...e,unit:t.target.value}}>
         </div>
         <div class="sensor-form-actions">
           <button class="form-btn save"   @click=${this._saveForm}>Save</button>
           <button class="form-btn cancel" @click=${this._cancelForm}>Cancel</button>
         </div>
       </div>
-    `}_startAdd(){this._showAddSensor=!0,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}_startEdit(t,e){this._editSensorKey=t,this._showAddSensor=!1,this._sensorForm={name:t,command:e.command,interval:e.interval||30,unit:e.unit||""}}_saveForm(){const{name:t,command:e,interval:s,unit:i}=this._sensorForm;t.trim()&&e.trim()&&(this.dispatchEvent(new CustomEvent("sensor-save",{detail:{key:t.trim(),sensor:{command:e,interval:s||30,unit:i},oldKey:this._editSensorKey},bubbles:!0,composed:!0})),this._cancelForm())}_cancelForm(){this._showAddSensor=!1,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}_onIntervalChange(t){this.dispatchEvent(new CustomEvent("interval-changed",{detail:{value:t},bubbles:!0,composed:!0}))}_onRemove(t){this.dispatchEvent(new CustomEvent("sensor-remove",{detail:{key:t},bubbles:!0,composed:!0}))}}customElements.define("device-config",Qt);class te extends dt{static properties={deviceId:{type:String},groupId:{type:String},device:{type:Object},commandResult:{type:String},_groups:{type:Object,state:!0},_effectiveSettings:{type:Object,state:!0},_haOverrides:{type:Object,state:!0},_configInterval:{type:Number,state:!0},_customSensors:{type:Object,state:!0},_showGroupDialog:{type:Boolean,state:!0},_newGroupName:{type:String,state:!0},_serverCommands:{type:Object,state:!0}};static styles=[ct,n`
+    `}_startAdd(){this._showAddSensor=!0,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}_startEdit(e,t){this._editSensorKey=e,this._showAddSensor=!1,this._sensorForm={name:e,command:t.command,interval:t.interval||30,unit:t.unit||""}}_saveForm(){const{name:e,command:t,interval:i,unit:s}=this._sensorForm;e.trim()&&t.trim()&&(this.dispatchEvent(new CustomEvent("sensor-save",{detail:{key:e.trim(),sensor:{command:t,interval:i||30,unit:s},oldKey:this._editSensorKey},bubbles:!0,composed:!0})),this._cancelForm())}_cancelForm(){this._showAddSensor=!1,this._editSensorKey=null,this._sensorForm={name:"",command:"",interval:30,unit:""}}_onIntervalChange(e){this.dispatchEvent(new CustomEvent("interval-changed",{detail:{value:e},bubbles:!0,composed:!0}))}_onRemove(e){this.dispatchEvent(new CustomEvent("sensor-remove",{detail:{key:e},bubbles:!0,composed:!0}))}}customElements.define("device-config",sn);class on extends le{static properties={deviceId:{type:String},groupId:{type:String},device:{type:Object},commandResult:{type:String},_groups:{type:Object,state:!0},_effectiveSettings:{type:Object,state:!0},_haOverrides:{type:Object,state:!0},_configInterval:{type:Number,state:!0},_customSensors:{type:Object,state:!0},_showGroupDialog:{type:Boolean,state:!0},_newGroupName:{type:String,state:!0},_serverCommands:{type:Object,state:!0}};static styles=[ce,n`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     .close-btn {
@@ -983,24 +1036,24 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .dialog-btn { border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; }
     .dialog-btn.save   { background: #00D4FF; color: #0d0d1f; font-weight: 600; }
     .dialog-btn.cancel { background: rgba(255,255,255,0.1); color: #fff; }
-  `];constructor(){super(),this.device=null,this.commandResult="",this._groups={},this._effectiveSettings=null,this._haOverrides={},this._configInterval=30,this._customSensors={},this._showGroupDialog=!1,this._newGroupName="",this._serverCommands={}}get _isGroupMode(){return!!this.groupId&&!this.deviceId}connectedCallback(){super.connectedCallback(),this._loadGroups(),this._isGroupMode?this._loadGroupAggregate():this._loadDevice(),this._wsUnsub=pt.onMessage(t=>{if("device_update"===t.type){if(this._isGroupMode)return;t.device_id===this.deviceId&&this._updateDeviceData(t.device)}})}disconnectedCallback(){super.disconnectedCallback(),this._wsUnsub&&this._wsUnsub()}async _refreshDevice(){try{const t=await _t(this.deviceId);this._updateDeviceData(t)}catch(t){}}_updateDeviceData(t){if(!t)return;const e={...this.device||{},...t};JSON.stringify(this.device)!==JSON.stringify(e)&&(this.device=e)}async _loadGroupAggregate(){try{const t=await At();this._groups=t;const e=t[this.groupId];if(!e)return;const s=await vt(),i=e.device_ids||[],o=i.map(t=>s[t]).filter(Boolean),n={};for(const t of o)for(const[e,s]of Object.entries(t.attributes||{}))n[e]||(n[e]={...s});const r=new Set;for(const t of o)for(const e of t.allowed_commands||[])r.add(e);const a=new Set;for(const t of o)for(const e of t.active_plugins||[])a.add(e);a.add("custom_command"),this.device={device_name:e.name,device_type:`Group · ${i.length} device${1!==i.length?"s":""}`,status:o.some(t=>"online"===t.status)?"online":"offline",attributes:n,attribute_transforms:e.attribute_transforms||{},threshold_overrides:e.thresholds||{},crit_threshold_overrides:e.crit_thresholds||{},allowed_commands:[...r],hidden_commands:e.hidden_commands||[],hidden_attributes:e.hidden_attributes||[],card_attributes:e.card_attributes||[],active_plugins:[...a],tags:[],server_tags:[],group_policy:this.groupId,_isGroupAggregate:!0},this._configInterval=e.interval??30,this._serverCommands={},this._customSensors=e.custom_sensors||{},this._haOverrides={},this._effectiveSettings=null}catch(t){console.error("Failed to load group aggregate:",t)}}async _refreshGroupAggregate(){try{const t=(await At())[this.groupId];if(!t)return;const e=await vt(),s=(t.device_ids||[]).map(t=>e[t]).filter(Boolean),i={};for(const t of s)for(const[e,s]of Object.entries(t.attributes||{}))i[e]||(i[e]={...s});this.device={...this.device,attributes:i},this._groups={...this._groups,[this.groupId]:t},this._customSensors=t.custom_sensors||{},this.requestUpdate()}catch(t){}}async _loadDevice(){try{this.device=await _t(this.deviceId),this._haOverrides={...this.device.ha_exposure_overrides||{}};const t=this.device.server_commands;this._serverCommands=t&&!Array.isArray(t)?{...t}:{},this._configInterval=this.device.config_interval??this.device.collection_interval??this.device.remote_config?.interval??30;const e=this.device.server_sensors;this._customSensors=e&&"object"==typeof e?{...e}:{};try{this._effectiveSettings=await Ht(this.deviceId)}catch(t){}}catch(t){console.error("Failed to load device:",t)}}async _loadGroups(){try{this._groups=await At()}catch(t){console.error("Failed to load groups:",t)}}render(){if(!this.device)return B`<div style="padding: 40px; text-align: center; color: #fff;">Loading...</div>`;const t=this.device,e=this._isGroupMode,s="online"===t.status?"#04d65c":"offline"===t.status?"#ef5350":"#ffb74d";return B`
+  `];constructor(){super(),this.device=null,this.commandResult="",this._groups={},this._effectiveSettings=null,this._haOverrides={},this._configInterval=30,this._customSensors={},this._showGroupDialog=!1,this._newGroupName="",this._serverCommands={}}get _isGroupMode(){return!!this.groupId&&!this.deviceId}connectedCallback(){super.connectedCallback(),this._loadGroups(),this._isGroupMode?this._loadGroupAggregate():this._loadDevice(),this._wsUnsub=pe.onMessage(e=>{if("device_update"===e.type){if(this._isGroupMode)return;e.device_id===this.deviceId&&this._updateDeviceData(e.device)}})}disconnectedCallback(){super.disconnectedCallback(),this._wsUnsub&&this._wsUnsub()}async _refreshDevice(){try{const e=await _e(this.deviceId);this._updateDeviceData(e)}catch(e){}}_updateDeviceData(e){if(!e)return;const t={...this.device||{},...e};JSON.stringify(this.device)!==JSON.stringify(t)&&(this.device=t)}async _loadGroupAggregate(){try{const e=await Ae();this._groups=e;const t=e[this.groupId];if(!t)return;const i=await ve(),s=t.device_ids||[],o=s.map(e=>i[e]).filter(Boolean),n={};for(const e of o)for(const[t,i]of Object.entries(e.attributes||{}))n[t]||(n[t]={...i});const r=new Set;for(const e of o)for(const t of e.allowed_commands||[])r.add(t);const a=new Set;for(const e of o)for(const t of e.active_plugins||[])a.add(t);a.add("custom_command"),this.device={device_name:t.name,device_type:`Group · ${s.length} device${1!==s.length?"s":""}`,status:o.some(e=>"online"===e.status)?"online":"offline",attributes:n,attribute_transforms:t.attribute_transforms||{},threshold_overrides:t.thresholds||{},crit_threshold_overrides:t.crit_thresholds||{},allowed_commands:[...r],hidden_commands:t.hidden_commands||[],hidden_attributes:t.hidden_attributes||[],card_attributes:t.card_attributes||[],active_plugins:[...a],tags:[],server_tags:[],group_policy:this.groupId,_isGroupAggregate:!0},this._configInterval=t.interval??30,this._serverCommands={},this._customSensors=t.custom_sensors||{},this._haOverrides={},this._effectiveSettings=null}catch(e){console.error("Failed to load group aggregate:",e)}}async _refreshGroupAggregate(){try{const e=(await Ae())[this.groupId];if(!e)return;const t=await ve(),i=(e.device_ids||[]).map(e=>t[e]).filter(Boolean),s={};for(const e of i)for(const[t,i]of Object.entries(e.attributes||{}))s[t]||(s[t]={...i});this.device={...this.device,attributes:s},this._groups={...this._groups,[this.groupId]:e},this._customSensors=e.custom_sensors||{},this.requestUpdate()}catch(e){}}async _loadDevice(){try{this.device=await _e(this.deviceId),this._haOverrides={...this.device.ha_exposure_overrides||{}};const e=this.device.server_commands;this._serverCommands=e&&!Array.isArray(e)?{...e}:{},this._configInterval=this.device.config_interval??this.device.collection_interval??this.device.remote_config?.interval??30;const t=this.device.server_sensors;this._customSensors=t&&"object"==typeof t?{...t}:{};try{this._effectiveSettings=await He(this.deviceId)}catch(e){}}catch(e){console.error("Failed to load device:",e)}}async _loadGroups(){try{this._groups=await Ae()}catch(e){console.error("Failed to load groups:",e)}}render(){if(!this.device)return B`<div style="padding: 40px; text-align: center; color: #fff;">Loading...</div>`;const e=this.device,t=this._isGroupMode,i="online"===e.status?"#04d65c":"offline"===e.status?"#ef5350":"#ffb74d";return B`
       <!-- 1. Header -->
       <div class="header">
         <div class="header-left">
-          ${e?B`<span class="title" contenteditable="true"
-                @blur=${t=>this._renameGroup(t.target.textContent.trim())}
-                @keydown=${t=>{"Enter"===t.key&&(t.preventDefault(),t.target.blur())}}
-                >${t.device_name||this.groupId}</span>`:B`<span class="title">${t.device_name||this.deviceId}</span>`}
-          <span class="device-type">${t.device_type||""}${t.client_version?` · v${t.client_version}`:""}</span>
+          ${t?B`<span class="title" contenteditable="true"
+                @blur=${e=>this._renameGroup(e.target.textContent.trim())}
+                @keydown=${e=>{"Enter"===e.key&&(e.preventDefault(),e.target.blur())}}
+                >${e.device_name||this.groupId}</span>`:B`<span class="title">${e.device_name||this.deviceId}</span>`}
+          <span class="device-type">${e.device_type||""}${e.client_version?` · v${e.client_version}`:""}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-          ${e?B`
+          ${t?B`
             <span style="font-size: 11px; color: rgba(255,255,255,0.4);">Group Policy Editor</span>
             <button class="cmd-btn" style="font-size: 10px; padding: 3px 8px; background: rgba(239,83,80,0.1); color: #ef5350; border: 1px solid rgba(239,83,80,0.2);"
               @click=${this._forceApplyGroup}>Force Apply</button>
           `:B`
-            <span class="status-badge" style="background: ${s}20; color: ${s}">
-              ${t.status}
+            <span class="status-badge" style="background: ${i}20; color: ${i}">
+              ${e.status}
             </span>
             <button class="cmd-btn danger" style="font-size: 11px; padding: 4px 10px;"
               @click=${this._deleteDevice}>Delete</button>
@@ -1009,7 +1062,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         </div>
       </div>
 
-      ${e?"":B`
+      ${t?"":B`
         <!-- 2. Tags -->
         ${this._renderTagsSection()}
         <!-- 3. Group Policy -->
@@ -1025,16 +1078,16 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         .cardAttributes=${this.device?.card_attributes||[]}
         .attributeTransforms=${this._effectiveTransforms()}
         .groupTransforms=${this._groupTransforms()}
-        @attribute-deleted=${t=>this._deleteAttribute(t.detail.name)}
-        @attribute-unhidden=${t=>this._unhideAttribute(t.detail.name)}
-        @ha-exposure-toggled=${t=>this._toggleHaExposure(t.detail.name)}
-        @threshold-changed=${t=>this._setThreshold(t.detail.name,t.detail.value,t.detail.op)}
-        @crit-threshold-changed=${t=>this._setCritThreshold(t.detail.name,t.detail.value,t.detail.op)}
-        @pin-attribute=${t=>this._toggleCardAttribute(t.detail)}
-        @transform-changed=${t=>this._setAttributeTransform(t.detail.attr,t.detail.transform)}
+        @attribute-deleted=${e=>this._deleteAttribute(e.detail.name)}
+        @attribute-unhidden=${e=>this._unhideAttribute(e.detail.name)}
+        @ha-exposure-toggled=${e=>this._toggleHaExposure(e.detail.name)}
+        @threshold-changed=${e=>this._setThreshold(e.detail.name,e.detail.value,e.detail.op)}
+        @crit-threshold-changed=${e=>this._setCritThreshold(e.detail.name,e.detail.value,e.detail.op)}
+        @pin-attribute=${e=>this._toggleCardAttribute(e.detail)}
+        @transform-changed=${e=>this._setAttributeTransform(e.detail.attr,e.detail.transform)}
       ></device-attributes>
 
-      ${e?"":B`
+      ${t?"":B`
         <!-- 5. Network -->
         ${this._renderNetwork()}
       `}
@@ -1042,13 +1095,13 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       <!-- 6. Commands -->
       <device-commands
         .device=${this.device}
-        .serverCommands=${e?this._groups?.[this.groupId]?.custom_commands||{}:this._serverCommands}
+        .serverCommands=${t?this._groups?.[this.groupId]?.custom_commands||{}:this._serverCommands}
         .commandResult=${this.commandResult}
-        @command-send=${t=>this._sendCmd(t.detail.command)}
-        @command-hide=${t=>this._hideCommand(t.detail.name)}
-        @command-unhide=${t=>this._unhideCommand(t.detail.name)}
-        @server-command-save=${t=>e?this._saveGroupCommand(t.detail):this._saveServerCommand(t.detail)}
-        @server-command-remove=${t=>e?this._removeGroupCommand(t.detail.name):this._removeServerCommand(t.detail.name)}
+        @command-send=${e=>this._sendCmd(e.detail.command)}
+        @command-hide=${e=>this._hideCommand(e.detail.name)}
+        @command-unhide=${e=>this._unhideCommand(e.detail.name)}
+        @server-command-save=${e=>t?this._saveGroupCommand(e.detail):this._saveServerCommand(e.detail)}
+        @server-command-remove=${e=>t?this._removeGroupCommand(e.detail.name):this._removeServerCommand(e.detail.name)}
       ></device-commands>
 
       <!-- 7. Agent Configuration -->
@@ -1056,43 +1109,43 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         .device=${this.device}
         .configInterval=${this._configInterval}
         .customSensors=${this._customSensors}
-        @interval-changed=${t=>e?this._setGroupInterval(t.detail.value):this._onIntervalChange(t.detail.value)}
-        @sensor-save=${t=>e?this._saveGroupSensor(t.detail):this._saveSensor(t.detail)}
-        @sensor-remove=${t=>e?this._removeGroupSensor(t.detail.key):this._removeSensor(t.detail.key)}
+        @interval-changed=${e=>t?this._setGroupInterval(e.detail.value):this._onIntervalChange(e.detail.value)}
+        @sensor-save=${e=>t?this._saveGroupSensor(e.detail):this._saveSensor(e.detail)}
+        @sensor-remove=${e=>t?this._removeGroupSensor(e.detail.key):this._removeSensor(e.detail.key)}
       ></device-config>
 
       ${this._showGroupDialog?this._renderGroupDialog():""}
-    `}_renderTagsSection(){const t=this.device.tags||[],e=this.device.server_tags||[];return B`
+    `}_renderTagsSection(){const e=this.device.tags||[],t=this.device.server_tags||[];return B`
       <div class="section">
         <div class="section-title">Tags</div>
         <div class="tags-row">
-          ${t.map(t=>B`<span class="tag client">${t}</span>`)}
-          ${e.map(t=>B`
+          ${e.map(e=>B`<span class="tag client">${e}</span>`)}
+          ${t.map(e=>B`
             <span class="tag server">
-              ${t}
-              <span class="remove" @click=${()=>this._removeTag(t)}>&times;</span>
+              ${e}
+              <span class="remove" @click=${()=>this._removeTag(e)}>&times;</span>
             </span>
           `)}
           <tag-picker
-            .selectedTags=${e}
-            @tag-add=${t=>this._addTag(t.detail.tag)}
-            @tag-remove=${t=>this._removeTag(t.detail.tag)}
+            .selectedTags=${t}
+            @tag-add=${e=>this._addTag(e.detail.tag)}
+            @tag-remove=${e=>this._removeTag(e.detail.tag)}
           ></tag-picker>
         </div>
         <div class="tag-hint">
           Client tags (blue) come from the device config. Server tags (purple) are managed here.
         </div>
       </div>
-    `}async _addTag(t){t&&(await Mt(this.deviceId,[t]),await this._loadDevice())}async _removeTag(t){await Pt(this.deviceId,t),await this._loadDevice()}_renderGroupPolicy(){const t=Object.values(this._groups),e=this.device.group_policy||"";e&&this._groups[e];return B`
+    `}async _addTag(e){e&&(await Pe(this.deviceId,[e]),await this._loadDevice())}async _removeTag(e){await Ne(this.deviceId,e),await this._loadDevice()}_renderGroupPolicy(){const e=Object.values(this._groups),t=this.device.group_policy||"";t&&this._groups[t];return B`
       <div class="section">
         <div class="section-title">Group Policy</div>
         <div class="group-policy-row">
           <select class="group-select"
-            .value=${e}
+            .value=${t}
             @change=${this._onGroupPolicyChange}>
             <option value="">None — use global defaults</option>
-            ${t.map(t=>B`
-              <option value=${t.id} ?selected=${t.id===e}>${t.name}</option>
+            ${e.map(e=>B`
+              <option value=${e.id} ?selected=${e.id===t}>${e.name}</option>
             `)}
           </select>
         </div>
@@ -1103,16 +1156,16 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           Manage groups in Settings.
         </div>
       </div>
-    `}async _onGroupPolicyChange(t){const e=t.target.value||null;try{await Vt(this.deviceId,{group_policy:e}),await this._loadDevice()}catch(t){console.error("Failed to update group policy:",t)}}_renderGroupDialog(){return B`
+    `}async _onGroupPolicyChange(e){const t=e.target.value||null;try{await Ve(this.deviceId,{group_policy:t}),await this._loadDevice()}catch(e){console.error("Failed to update group policy:",e)}}_renderGroupDialog(){return B`
       <div class="overlay" @click=${()=>this._showGroupDialog=!1}>
-        <div class="dialog" @click=${t=>t.stopPropagation()}>
+        <div class="dialog" @click=${e=>e.stopPropagation()}>
           <h3>Create Group</h3>
           <div class="dialog-field">
             <label>Group Name</label>
             <input type="text" placeholder="e.g. Infrastructure, IoT Sensors"
               .value=${this._newGroupName}
-              @input=${t=>this._newGroupName=t.target.value}
-              @keydown=${t=>"Enter"===t.key&&this._createGroup()}>
+              @input=${e=>this._newGroupName=e.target.value}
+              @keydown=${e=>"Enter"===e.key&&this._createGroup()}>
           </div>
           <div class="dialog-buttons">
             <button class="dialog-btn cancel" @click=${()=>this._showGroupDialog=!1}>Cancel</button>
@@ -1120,18 +1173,18 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         </div>
       </div>
-    `}async _createGroup(){const t=this._newGroupName.trim();if(!t)return;const e=t.toLowerCase().replace(/[^a-z0-9]+/g,"_");await zt(e,t,[this.deviceId]),this._newGroupName="",this._showGroupDialog=!1,await this._loadGroups(),await this._loadDevice()}async _renameGroup(t){if(!t||!this.groupId)return;const e=this._groups?.[this.groupId];if(e&&e.name!==t)try{await Ft(this.groupId,{...e,name:t}),this._groups={...this._groups,[this.groupId]:{...e,name:t}},this.device={...this.device,device_name:t}}catch(t){console.error("Failed to rename group:",t)}}_renderNetwork(){const t=this.device.network||{};return 0===Object.keys(t).length?B``:B`
+    `}async _createGroup(){const e=this._newGroupName.trim();if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_");await ze(t,e,[this.deviceId]),this._newGroupName="",this._showGroupDialog=!1,await this._loadGroups(),await this._loadDevice()}async _renameGroup(e){if(!e||!this.groupId)return;const t=this._groups?.[this.groupId];if(t&&t.name!==e)try{await Fe(this.groupId,{...t,name:e}),this._groups={...this._groups,[this.groupId]:{...t,name:e}},this.device={...this.device,device_name:e}}catch(e){console.error("Failed to rename group:",e)}}_renderNetwork(){const e=this.device.network||{};return 0===Object.keys(e).length?B``:B`
       <div class="section">
         <div class="section-title">Network</div>
         <div class="network-grid">
-          ${Object.entries(t).map(([t,e])=>B`
+          ${Object.entries(e).map(([e,t])=>B`
             <div class="net-item">
-              <span class="net-label">${t}:</span>${e}
+              <span class="net-label">${e}:</span>${t}
             </div>
           `)}
         </div>
       </div>
-    `}async _deleteAttribute(t){if(this._isGroupMode){const e=[...this.device.hidden_attributes||[]];return e.includes(t)||e.push(t),this.device={...this.device,hidden_attributes:e},void await this._saveGroupUpdate({hidden_attributes:e})}if(confirm(`Hide attribute "${t}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`))try{await yt(this.deviceId,t);const e=this.device?.card_attributes||[];if(e.includes(t)){const s=e.filter(e=>e!==t);await Vt(this.deviceId,{card_attributes:s})}await this._loadDevice()}catch(t){console.error("Failed to hide attribute:",t)}}async _unhideAttribute(t){if(this._isGroupMode){const e=(this.device.hidden_attributes||[]).filter(e=>e!==t);return this.device={...this.device,hidden_attributes:e},void await this._saveGroupUpdate({hidden_attributes:e})}try{await $t(this.deviceId,t),await this._loadDevice()}catch(t){console.error("Failed to unhide attribute:",t)}}async _toggleHaExposure(t){if(this._isGroupMode)return;const e=void 0!==this._haOverrides[t]?this._haOverrides[t]:void 0!==this._effectiveSettings?.ha_exposure_overrides?.[t]&&this._effectiveSettings.ha_exposure_overrides[t];this._haOverrides={...this._haOverrides,[t]:!e};try{await Vt(this.deviceId,{ha_exposure_overrides:this._haOverrides})}catch(t){console.error("Failed to update HA exposure:",t)}}async _setThreshold(t,e,s){if(this._isGroupMode)return this._setGroupThreshold(t,e,s);const i={...this.device.threshold_overrides||{}};""===e||null==e?delete i[t]:i[t]={op:s||">",value:Number(e)};try{await Vt(this.deviceId,{threshold_overrides:i}),this.device={...this.device,threshold_overrides:i},this._effectiveSettings=await Ht(this.deviceId)}catch(t){console.error("Failed to set threshold:",t)}}async _setCritThreshold(t,e,s){if(this._isGroupMode)return this._setGroupCritThreshold(t,e,s);const i={...this.device.crit_threshold_overrides||{}};""===e||null==e?delete i[t]:i[t]={op:s||">",value:Number(e)};try{await Vt(this.deviceId,{crit_threshold_overrides:i}),this.device={...this.device,crit_threshold_overrides:i}}catch(t){console.error("Failed to set crit threshold:",t)}}_effectiveTransforms(){if(this._isGroupMode)return this.device?.attribute_transforms||{};const t=this.device?.group_policy,e=t?this._groups[t]:null;return{...e?.attribute_transforms||{},...this.device?.attribute_transforms||{}}}_groupTransforms(){if(this._isGroupMode)return{};const t=this.device?.group_policy,e=t?this._groups[t]:null;return e?.attribute_transforms||{}}async _setAttributeTransform(t,e){if(this._isGroupMode)return this._setGroupTransform(t,e);const s={...this.device?.attribute_transforms||{}};e?s[t]=e:delete s[t];try{await Vt(this.deviceId,{attribute_transforms:s}),this.device={...this.device,attribute_transforms:s}}catch(t){console.error("Failed to update attribute transform:",t)}}async _forceApplyGroup(){if(confirm("This will clear all device-level overrides for every member and enforce the group policy. Devices can still be customized afterwards.\n\nContinue?"))try{await qt(this.groupId),await this._loadGroupAggregate()}catch(t){console.error("Failed to force apply:",t)}}async _saveGroupUpdate(t){const e=this._groups?.[this.groupId];if(e)try{const s={...e,...t};await Ft(this.groupId,s),this._groups={...this._groups,[this.groupId]:s};const i=Object.assign({},this.device,t);this.device=i,this.requestUpdate()}catch(t){console.error("Failed to update group:",t)}}async _setGroupThreshold(t,e,s){const i={...this.device.threshold_overrides||{}};""===e||null==e?delete i[t]:i[t]={op:s||">",value:Number(e)},this.device={...this.device,threshold_overrides:i},await this._saveGroupUpdate({thresholds:i})}async _setGroupCritThreshold(t,e,s){const i={...this.device.crit_threshold_overrides||{}};""===e||null==e?delete i[t]:i[t]={op:s||">",value:Number(e)},this.device={...this.device,crit_threshold_overrides:i},await this._saveGroupUpdate({crit_thresholds:i})}async _setGroupInterval(t){this._configInterval=t,await this._saveGroupUpdate({interval:t})}async _saveGroupCommand({name:t,shell:e}){const s=this._groups?.[this.groupId],i={...s?.custom_commands||{},[t]:e};await this._saveGroupUpdate({custom_commands:i}),this._groups={...this._groups,[this.groupId]:{...s,custom_commands:i}},this.requestUpdate()}async _removeGroupCommand(t){const e=this._groups?.[this.groupId],s={...e?.custom_commands||{}};delete s[t],await this._saveGroupUpdate({custom_commands:s}),this._groups={...this._groups,[this.groupId]:{...e,custom_commands:s}},this.requestUpdate()}async _saveGroupSensor({key:t,sensor:e,oldKey:s}){const i={...this._customSensors};if(s&&s!==t){delete i[s];const t={...this.device.attributes};delete t[s],this.device={...this.device,attributes:t}}i[t]=e,this._customSensors={...i};const o={...this.device.attributes};o[t]={value:"--",unit:e.unit||""},this.device={...this.device,attributes:o},await this._saveGroupUpdate({custom_sensors:i}),this.requestUpdate(),setTimeout(()=>this._refreshGroupAggregate(),5e3)}async _removeGroupSensor(t){const e={...this._customSensors};delete e[t],this._customSensors={...e};const s={...this.device.attributes};delete s[t],this.device={...this.device,attributes:s},await this._saveGroupUpdate({custom_sensors:e}),this.requestUpdate()}async _setGroupTransform(t,e){const s={...this.device?.attribute_transforms||{}};e?s[t]=e:delete s[t],this.device={...this.device,attribute_transforms:s},await this._saveGroupUpdate({attribute_transforms:s})}async _toggleCardAttribute({name:t,pinned:e}){const s=[...this.device?.card_attributes||[]];let i;if(i=e?[...s,t]:s.filter(e=>e!==t),this._isGroupMode)return this.device={...this.device,card_attributes:i},void await this._saveGroupUpdate({card_attributes:i});try{await Vt(this.deviceId,{card_attributes:i}),this.device={...this.device,card_attributes:i}}catch(t){console.error("Failed to update card attributes:",t)}}async _sendCmd(t,e={}){if(!this._isGroupMode)try{this.commandResult=`Sending ${t}...`;const s=(await Tt(this.deviceId,t,e)).request_id;this.commandResult=`Sent ${t}... waiting for response`;const i=Date.now(),o=()=>{const t=(this.device?.command_history||[]).find(t=>t.request_id===s);t?this.commandResult=`${t.status}: ${t.output||"(no output)"}`:Date.now()-i<1e4?setTimeout(o,500):this.commandResult="Command sent (no response received)"};setTimeout(o,500)}catch(t){this.commandResult=`Error: ${t.message}`}}async _hideCommand(t){if(this._isGroupMode){const e=[...this.device.hidden_commands||[]];return e.includes(t)||e.push(t),this.device={...this.device,hidden_commands:e},void await this._saveGroupUpdate({hidden_commands:e})}try{await wt(this.deviceId,t),await this._loadDevice()}catch(t){console.error("Failed to hide command:",t)}}async _unhideCommand(t){if(this._isGroupMode){const e=(this.device.hidden_commands||[]).filter(e=>e!==t);return this.device={...this.device,hidden_commands:e},void await this._saveGroupUpdate({hidden_commands:e})}try{await kt(this.deviceId,t),await this._loadDevice()}catch(t){console.error("Failed to unhide command:",t)}}async _saveServerCommand({name:t,shell:e}){const{addServerCommand:s}=await Promise.resolve().then(function(){return Yt});await s(this.deviceId,t,e),await this._loadDevice()}async _removeServerCommand(t){const{removeServerCommand:e}=await Promise.resolve().then(function(){return Yt});await e(this.deviceId,t),await this._loadDevice()}async _saveSensor({key:t,sensor:e,oldKey:s}){const{addServerSensor:i,removeServerSensor:o}=await Promise.resolve().then(function(){return Yt});s&&s!==t&&await o(this.deviceId,s),await i(this.deviceId,t,e),await this._loadDevice()}async _removeSensor(t){const{removeServerSensor:e}=await Promise.resolve().then(function(){return Yt});await e(this.deviceId,t),await this._loadDevice()}async _onIntervalChange(t){const{setDeviceInterval:e}=await Promise.resolve().then(function(){return Yt});await e(this.deviceId,t),await this._loadDevice()}async _deleteDevice(){if(confirm(`Delete device "${this.device?.device_name||this.deviceId}"? This removes it from the registry. It will reappear if the client agent is still running.`))try{await xt(this.deviceId),this.dispatchEvent(new CustomEvent("back"))}catch(t){console.error("Failed to delete device:",t)}}}customElements.define("device-detail",te);class ee extends dt{static properties={_open:{type:Boolean,state:!0},_type:{type:String,state:!0},_title:{type:String,state:!0},_message:{type:String,state:!0},_placeholder:{type:String,state:!0},_confirmLabel:{type:String,state:!0},_confirmDanger:{type:Boolean,state:!0},_inputValue:{type:String,state:!0}};static styles=[ct,n`
+    `}async _deleteAttribute(e){if(this._isGroupMode){const t=[...this.device.hidden_attributes||[]];return t.includes(e)||t.push(e),this.device={...this.device,hidden_attributes:t},void await this._saveGroupUpdate({hidden_attributes:t})}if(confirm(`Hide attribute "${e}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`))try{await ye(this.deviceId,e);const t=this.device?.card_attributes||[];if(t.includes(e)){const i=t.filter(t=>t!==e);await Ve(this.deviceId,{card_attributes:i})}await this._loadDevice()}catch(e){console.error("Failed to hide attribute:",e)}}async _unhideAttribute(e){if(this._isGroupMode){const t=(this.device.hidden_attributes||[]).filter(t=>t!==e);return this.device={...this.device,hidden_attributes:t},void await this._saveGroupUpdate({hidden_attributes:t})}try{await we(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to unhide attribute:",e)}}async _toggleHaExposure(e){if(this._isGroupMode)return;const t=void 0!==this._haOverrides[e]?this._haOverrides[e]:void 0!==this._effectiveSettings?.ha_exposure_overrides?.[e]&&this._effectiveSettings.ha_exposure_overrides[e];this._haOverrides={...this._haOverrides,[e]:!t};try{await Ve(this.deviceId,{ha_exposure_overrides:this._haOverrides})}catch(e){console.error("Failed to update HA exposure:",e)}}async _setThreshold(e,t,i){if(this._isGroupMode)return this._setGroupThreshold(e,t,i);const s={...this.device.threshold_overrides||{}};""===t||null==t?delete s[e]:s[e]={op:i||">",value:Number(t)};try{await Ve(this.deviceId,{threshold_overrides:s}),this.device={...this.device,threshold_overrides:s},this._effectiveSettings=await He(this.deviceId)}catch(e){console.error("Failed to set threshold:",e)}}async _setCritThreshold(e,t,i){if(this._isGroupMode)return this._setGroupCritThreshold(e,t,i);const s={...this.device.crit_threshold_overrides||{}};""===t||null==t?delete s[e]:s[e]={op:i||">",value:Number(t)};try{await Ve(this.deviceId,{crit_threshold_overrides:s}),this.device={...this.device,crit_threshold_overrides:s}}catch(e){console.error("Failed to set crit threshold:",e)}}_effectiveTransforms(){if(this._isGroupMode)return this.device?.attribute_transforms||{};const e=this.device?.group_policy,t=e?this._groups[e]:null;return{...t?.attribute_transforms||{},...this.device?.attribute_transforms||{}}}_groupTransforms(){if(this._isGroupMode)return{};const e=this.device?.group_policy,t=e?this._groups[e]:null;return t?.attribute_transforms||{}}async _setAttributeTransform(e,t){if(this._isGroupMode)return this._setGroupTransform(e,t);const i={...this.device?.attribute_transforms||{}};t?i[e]=t:delete i[e];try{await Ve(this.deviceId,{attribute_transforms:i}),this.device={...this.device,attribute_transforms:i}}catch(e){console.error("Failed to update attribute transform:",e)}}async _forceApplyGroup(){if(confirm("This will clear all device-level overrides for every member and enforce the group policy. Devices can still be customized afterwards.\n\nContinue?"))try{await qe(this.groupId),await this._loadGroupAggregate()}catch(e){console.error("Failed to force apply:",e)}}async _saveGroupUpdate(e){const t=this._groups?.[this.groupId];if(t)try{const i={...t,...e};await Fe(this.groupId,i),this._groups={...this._groups,[this.groupId]:i};const s=Object.assign({},this.device,e);this.device=s,this.requestUpdate()}catch(e){console.error("Failed to update group:",e)}}async _setGroupThreshold(e,t,i){const s={...this.device.threshold_overrides||{}};""===t||null==t?delete s[e]:s[e]={op:i||">",value:Number(t)},this.device={...this.device,threshold_overrides:s},await this._saveGroupUpdate({thresholds:s})}async _setGroupCritThreshold(e,t,i){const s={...this.device.crit_threshold_overrides||{}};""===t||null==t?delete s[e]:s[e]={op:i||">",value:Number(t)},this.device={...this.device,crit_threshold_overrides:s},await this._saveGroupUpdate({crit_thresholds:s})}async _setGroupInterval(e){this._configInterval=e,await this._saveGroupUpdate({interval:e})}async _saveGroupCommand({name:e,shell:t}){const i=this._groups?.[this.groupId],s={...i?.custom_commands||{},[e]:t};await this._saveGroupUpdate({custom_commands:s}),this._groups={...this._groups,[this.groupId]:{...i,custom_commands:s}},this.requestUpdate()}async _removeGroupCommand(e){const t=this._groups?.[this.groupId],i={...t?.custom_commands||{}};delete i[e],await this._saveGroupUpdate({custom_commands:i}),this._groups={...this._groups,[this.groupId]:{...t,custom_commands:i}},this.requestUpdate()}async _saveGroupSensor({key:e,sensor:t,oldKey:i}){const s={...this._customSensors};if(i&&i!==e){delete s[i];const e={...this.device.attributes};delete e[i],this.device={...this.device,attributes:e}}s[e]=t,this._customSensors={...s};const o={...this.device.attributes};o[e]={value:"--",unit:t.unit||""},this.device={...this.device,attributes:o},await this._saveGroupUpdate({custom_sensors:s}),this.requestUpdate(),setTimeout(()=>this._refreshGroupAggregate(),5e3)}async _removeGroupSensor(e){const t={...this._customSensors};delete t[e],this._customSensors={...t};const i={...this.device.attributes};delete i[e],this.device={...this.device,attributes:i},await this._saveGroupUpdate({custom_sensors:t}),this.requestUpdate()}async _setGroupTransform(e,t){const i={...this.device?.attribute_transforms||{}};t?i[e]=t:delete i[e],this.device={...this.device,attribute_transforms:i},await this._saveGroupUpdate({attribute_transforms:i})}async _toggleCardAttribute({name:e,pinned:t}){const i=[...this.device?.card_attributes||[]];let s;if(s=t?[...i,e]:i.filter(t=>t!==e),this._isGroupMode)return this.device={...this.device,card_attributes:s},void await this._saveGroupUpdate({card_attributes:s});try{await Ve(this.deviceId,{card_attributes:s}),this.device={...this.device,card_attributes:s}}catch(e){console.error("Failed to update card attributes:",e)}}async _sendCmd(e,t={}){if(!this._isGroupMode)try{this.commandResult=`Sending ${e}...`;const i=(await Te(this.deviceId,e,t)).request_id;this.commandResult=`Sent ${e}... waiting for response`;const s=Date.now(),o=()=>{const e=(this.device?.command_history||[]).find(e=>e.request_id===i);e?this.commandResult=`${e.status}: ${e.output||"(no output)"}`:Date.now()-s<1e4?setTimeout(o,500):this.commandResult="Command sent (no response received)"};setTimeout(o,500)}catch(e){this.commandResult=`Error: ${e.message}`}}async _hideCommand(e){if(this._isGroupMode){const t=[...this.device.hidden_commands||[]];return t.includes(e)||t.push(e),this.device={...this.device,hidden_commands:t},void await this._saveGroupUpdate({hidden_commands:t})}try{await $e(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to hide command:",e)}}async _unhideCommand(e){if(this._isGroupMode){const t=(this.device.hidden_commands||[]).filter(t=>t!==e);return this.device={...this.device,hidden_commands:t},void await this._saveGroupUpdate({hidden_commands:t})}try{await ke(this.deviceId,e),await this._loadDevice()}catch(e){console.error("Failed to unhide command:",e)}}async _saveServerCommand({name:e,shell:t}){const{addServerCommand:i}=await Promise.resolve().then(function(){return We});await i(this.deviceId,e,t),await this._loadDevice()}async _removeServerCommand(e){const{removeServerCommand:t}=await Promise.resolve().then(function(){return We});await t(this.deviceId,e),await this._loadDevice()}async _saveSensor({key:e,sensor:t,oldKey:i}){const{addServerSensor:s,removeServerSensor:o}=await Promise.resolve().then(function(){return We});i&&i!==e&&await o(this.deviceId,i),await s(this.deviceId,e,t),await this._loadDevice()}async _removeSensor(e){const{removeServerSensor:t}=await Promise.resolve().then(function(){return We});await t(this.deviceId,e),await this._loadDevice()}async _onIntervalChange(e){const{setDeviceInterval:t}=await Promise.resolve().then(function(){return We});await t(this.deviceId,e),await this._loadDevice()}async _deleteDevice(){if(confirm(`Delete device "${this.device?.device_name||this.deviceId}"? This removes it from the registry. It will reappear if the client agent is still running.`))try{await xe(this.deviceId),this.dispatchEvent(new CustomEvent("back"))}catch(e){console.error("Failed to delete device:",e)}}}customElements.define("device-detail",on);class nn extends le{static properties={_open:{type:Boolean,state:!0},_type:{type:String,state:!0},_title:{type:String,state:!0},_message:{type:String,state:!0},_placeholder:{type:String,state:!0},_confirmLabel:{type:String,state:!0},_confirmDanger:{type:Boolean,state:!0},_inputValue:{type:String,state:!0}};static styles=[ce,n`
     :host { display: contents; }
 
     .overlay {
@@ -1264,9 +1317,9 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         text-align: center;
       }
     }
-  `];constructor(){super(),this._open=!1,this._type="confirm",this._title="",this._message="",this._placeholder="",this._confirmLabel="",this._confirmDanger=!1,this._inputValue="",this._resolve=null}show({type:t="confirm",title:e="",message:s="",placeholder:i="",defaultValue:o="",confirmLabel:n="",confirmDanger:r=!1}={}){return this._type=t,this._title=e,this._message=s,this._placeholder=i,this._confirmLabel=n||("prompt"===t?"Submit":"Confirm"),this._confirmDanger=r,this._inputValue=o,this._open=!0,new Promise(t=>{this._resolve=t})}_cancel(){this._open=!1,this._resolve&&(this._resolve("prompt"===this._type&&null),this._resolve=null)}_confirm(){this._open=!1,this._resolve&&(this._resolve("prompt"!==this._type||this._inputValue),this._resolve=null)}_onKeyDown(t){"Enter"===t.key&&(t.preventDefault(),this._confirm())}_onInput(t){this._inputValue=t.target.value}updated(t){t.has("_open")&&this._open&&"prompt"===this._type&&this.updateComplete.then(()=>{const t=this.renderRoot.querySelector(".dialog-input");t&&t.focus()})}render(){if(!this._open)return B``;const t=this._confirmDanger?"btn btn-confirm danger":"btn btn-confirm";return B`
+  `];constructor(){super(),this._open=!1,this._type="confirm",this._title="",this._message="",this._placeholder="",this._confirmLabel="",this._confirmDanger=!1,this._inputValue="",this._resolve=null}show({type:e="confirm",title:t="",message:i="",placeholder:s="",defaultValue:o="",confirmLabel:n="",confirmDanger:r=!1}={}){return this._type=e,this._title=t,this._message=i,this._placeholder=s,this._confirmLabel=n||("prompt"===e?"Submit":"Confirm"),this._confirmDanger=r,this._inputValue=o,this._open=!0,new Promise(e=>{this._resolve=e})}_cancel(){this._open=!1,this._resolve&&(this._resolve("prompt"===this._type&&null),this._resolve=null)}_confirm(){this._open=!1,this._resolve&&(this._resolve("prompt"!==this._type||this._inputValue),this._resolve=null)}_onKeyDown(e){"Enter"===e.key&&(e.preventDefault(),this._confirm())}_onInput(e){this._inputValue=e.target.value}updated(e){e.has("_open")&&this._open&&"prompt"===this._type&&this.updateComplete.then(()=>{const e=this.renderRoot.querySelector(".dialog-input");e&&e.focus()})}render(){if(!this._open)return B``;const e=this._confirmDanger?"btn btn-confirm danger":"btn btn-confirm";return B`
       <div class="overlay" @click=${this._cancel}>
-        <div class="dialog" @click=${t=>t.stopPropagation()}>
+        <div class="dialog" @click=${e=>e.stopPropagation()}>
           <h3 class="dialog-title">${this._title}</h3>
           ${this._message?B`<p class="dialog-message">${this._message}</p>`:""}
           ${"prompt"===this._type?B`
@@ -1281,11 +1334,11 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           `:""}
           <div class="dialog-footer">
             <button class="btn btn-cancel" @click=${this._cancel}>Cancel</button>
-            <button class=${t} @click=${this._confirm}>${this._confirmLabel}</button>
+            <button class=${e} @click=${this._confirm}>${this._confirmLabel}</button>
           </div>
         </div>
       </div>
-    `}}customElements.define("themed-dialog",ee);const se={online:"#04d65c",offline:"#ef5350",warning:"#ffb74d",inferred:"#00D4FF",unknown:"#666"};class ie extends dt{static properties={topology:{type:Object},layouts:{type:Object},selectedLayout:{type:String},editMode:{type:Boolean},linkMode:{type:Boolean},selectedNode:{type:String},nodePositions:{type:Object},manualEdges:{type:Array},_dragging:{type:String,state:!0},_linkSource:{type:String,state:!0},_error:{type:String,state:!0},_loading:{type:Boolean,state:!0},_selectedEdge:{type:Number,state:!0},_selectedDeviceData:{type:Object,state:!0},_dirty:{type:Boolean,state:!0},_layoutDropdownOpen:{type:Boolean,state:!0},_showLabelDialog:{type:Boolean,state:!0},_labelEdgeIndex:{type:Number,state:!0},hideAutoEdges:{type:Boolean},_viewBox:{type:Object,state:!0}};static styles=[ct,n`
+    `}}customElements.define("themed-dialog",nn);const rn={online:"#04d65c",offline:"#ef5350",warning:"#ffb74d",inferred:"#00D4FF",unknown:"#666"};class an extends le{static properties={topology:{type:Object},layouts:{type:Object},selectedLayout:{type:String},editMode:{type:Boolean},linkMode:{type:Boolean},selectedNode:{type:String},nodePositions:{type:Object},manualEdges:{type:Array},_dragging:{type:String,state:!0},_linkSource:{type:String,state:!0},_error:{type:String,state:!0},_loading:{type:Boolean,state:!0},_selectedEdge:{type:Number,state:!0},_selectedDeviceData:{type:Object,state:!0},_dirty:{type:Boolean,state:!0},_layoutDropdownOpen:{type:Boolean,state:!0},_showLabelDialog:{type:Boolean,state:!0},_labelEdgeIndex:{type:Number,state:!0},hideAutoEdges:{type:Boolean},_viewBox:{type:Object,state:!0}};static styles=[ce,n`
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
     .toolbar {
       display: flex; justify-content: space-between; align-items: center;
@@ -1534,7 +1587,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       .layout-trigger { width: 100%; box-sizing: border-box; }
       svg { height: 60vh; }
     }
-  `];constructor(){super(),this.topology={nodes:[],edges:[]},this.layouts={},this.selectedLayout="",this.editMode=!1,this.linkMode=!1,this.selectedNode=null,this.nodePositions={},this.manualEdges=[],this._dragging=null,this._dragOffset={x:0,y:0},this._linkSource=null,this._error="",this._loading=!0,this._selectedEdge=-1,this._selectedDeviceData=null,this._commandResult="",this._dirty=!1,this._layoutDropdownOpen=!1,this._showLabelDialog=!1,this._labelEdgeIndex=-1,this._savedPositions=null,this._savedManualEdges=null,this.hideAutoEdges=!1,this._viewBox={x:0,y:0,width:900,height:500},this._isPanning=!1,this._panStart=null,this._pinchActive=!1,this._pinchAnchor0=null,this._pinchAnchor1=null,this._pinchPrevDist=0}connectedCallback(){super.connectedCallback(),this._loadTopology(),this._loadLayouts(),this._wsUnsub=pt.onMessage(t=>{"device_update"===t.type&&this._refreshNodeStatuses()}),this._onDocClick=t=>{if(this._layoutDropdownOpen){const e=this.shadowRoot?.querySelector(".layout-dropdown");e&&!t.composedPath().includes(e)&&(this._layoutDropdownOpen=!1)}},document.addEventListener("click",this._onDocClick)}disconnectedCallback(){super.disconnectedCallback(),this._wsUnsub&&this._wsUnsub(),this._onDocClick&&document.removeEventListener("click",this._onDocClick)}async _refreshNodeStatuses(){try{const t=await St();if(!t||!t.nodes)return;const e={};for(const s of t.nodes)e[s.id]=s.status;if(this.topology&&this.topology.nodes){let s=!1;const i=this.topology.nodes.map(t=>e[t.id]&&e[t.id]!==t.status?(s=!0,{...t,status:e[t.id]}):t);for(const e of t.nodes)this.topology.nodes.find(t=>t.id===e.id)||(i.push(e),s=!0);s&&(this.topology={...this.topology,nodes:i})}}catch(t){}}async _loadTopology(){try{this._loading=!0,this._error="";const t=await St();this.topology=t,this._autoLayout(),this._loading=!1}catch(t){console.error("Failed to load topology:",t),this._error=`Failed to load: ${t.message}`,this._loading=!1}}async _loadLayouts(){try{if(this.layouts=await Et(),!this._layoutsLoaded){this._layoutsLoaded=!0;const t=Object.entries(this.layouts).find(([,t])=>t.isDefault);t&&(this.selectedLayout=t[0],this.nodePositions=t[1].positions||{},this.manualEdges=t[1].manualEdges||[],this.hideAutoEdges=t[1].hideAutoEdges||!1,t[1].viewBox&&(this._viewBox={...t[1].viewBox}))}}catch(t){console.error("Failed to load layouts:",t)}}_autoLayout(){const t=this.topology.nodes;if(!t.length)return;const e={...this.selectedLayout&&this.layouts[this.selectedLayout]&&this.layouts[this.selectedLayout].positions||{}},s=Math.ceil(Math.sqrt(t.length));t.forEach((t,i)=>{if(!e[t.id]){const o=i%s,n=Math.floor(i/s);e[t.id]={x:100+o*(800/(s+1)),y:80+100*n}}}),this.nodePositions=e,this.selectedLayout&&this.layouts[this.selectedLayout]&&(this.manualEdges=this.layouts[this.selectedLayout].manualEdges||[]),this._fitAll()}get _allEdges(){const t=this.hideAutoEdges?[]:this.topology.edges||[],e=this.manualEdges.map(t=>({...t,type:"manual"}));return[...t,...e]}_getNodeName(t){const e=this.topology.nodes.find(e=>e.id===t);return e&&e.name||t}render(){if(this._loading&&!this.topology.nodes.length)return B`<div style="padding: 40px; text-align: center; color: #fff;">Loading topology...</div>`;if(this._error)return B`<div style="padding: 40px; text-align: center; color: #ef5350;">${this._error}</div>`;const t=this.topology.nodes,e=this._allEdges,s=t.filter(t=>"online"===t.status).length,i=t.filter(t=>"offline"===t.status).length,o=t.filter(t=>"warning"===t.status).length;return B`
+  `];constructor(){super(),this.topology={nodes:[],edges:[]},this.layouts={},this.selectedLayout="",this.editMode=!1,this.linkMode=!1,this.selectedNode=null,this.nodePositions={},this.manualEdges=[],this._dragging=null,this._dragOffset={x:0,y:0},this._linkSource=null,this._error="",this._loading=!0,this._selectedEdge=-1,this._selectedDeviceData=null,this._commandResult="",this._dirty=!1,this._layoutDropdownOpen=!1,this._showLabelDialog=!1,this._labelEdgeIndex=-1,this._savedPositions=null,this._savedManualEdges=null,this.hideAutoEdges=!1,this._viewBox={x:0,y:0,width:900,height:500},this._isPanning=!1,this._panStart=null,this._pinchActive=!1,this._pinchAnchor0=null,this._pinchAnchor1=null,this._pinchPrevDist=0}connectedCallback(){super.connectedCallback(),this._loadTopology(),this._loadLayouts(),this._wsUnsub=pe.onMessage(e=>{"device_update"===e.type&&this._refreshNodeStatuses()}),this._onDocClick=e=>{if(this._layoutDropdownOpen){const t=this.shadowRoot?.querySelector(".layout-dropdown");t&&!e.composedPath().includes(t)&&(this._layoutDropdownOpen=!1)}},document.addEventListener("click",this._onDocClick)}disconnectedCallback(){super.disconnectedCallback(),this._wsUnsub&&this._wsUnsub(),this._onDocClick&&document.removeEventListener("click",this._onDocClick)}async _refreshNodeStatuses(){try{const e=await Se();if(!e||!e.nodes)return;const t={};for(const i of e.nodes)t[i.id]=i.status;if(this.topology&&this.topology.nodes){let i=!1;const s=this.topology.nodes.map(e=>t[e.id]&&t[e.id]!==e.status?(i=!0,{...e,status:t[e.id]}):e);for(const t of e.nodes)this.topology.nodes.find(e=>e.id===t.id)||(s.push(t),i=!0);i&&(this.topology={...this.topology,nodes:s})}}catch(e){}}async _loadTopology(){try{this._loading=!0,this._error="";const e=await Se();this.topology=e,this._autoLayout(),this._loading=!1}catch(e){console.error("Failed to load topology:",e),this._error=`Failed to load: ${e.message}`,this._loading=!1}}async _loadLayouts(){try{if(this.layouts=await Ee(),!this._layoutsLoaded){this._layoutsLoaded=!0;const e=Object.entries(this.layouts).find(([,e])=>e.isDefault);e&&(this.selectedLayout=e[0],this.nodePositions=e[1].positions||{},this.manualEdges=e[1].manualEdges||[],this.hideAutoEdges=e[1].hideAutoEdges||!1,e[1].viewBox&&(this._viewBox={...e[1].viewBox}))}}catch(e){console.error("Failed to load layouts:",e)}}_autoLayout(){const e=this.topology.nodes;if(!e.length)return;const t={...this.selectedLayout&&this.layouts[this.selectedLayout]&&this.layouts[this.selectedLayout].positions||{}},i=Math.ceil(Math.sqrt(e.length));e.forEach((e,s)=>{if(!t[e.id]){const o=s%i,n=Math.floor(s/i);t[e.id]={x:100+o*(800/(i+1)),y:80+100*n}}}),this.nodePositions=t,this.selectedLayout&&this.layouts[this.selectedLayout]&&(this.manualEdges=this.layouts[this.selectedLayout].manualEdges||[]),this._fitAll()}get _allEdges(){const e=this.hideAutoEdges?[]:this.topology.edges||[],t=this.manualEdges.map(e=>({...e,type:"manual"}));return[...e,...t]}_getNodeName(e){const t=this.topology.nodes.find(t=>t.id===e);return t&&t.name||e}render(){if(this._loading&&!this.topology.nodes.length)return B`<div style="padding: 40px; text-align: center; color: #fff;">Loading topology...</div>`;if(this._error)return B`<div style="padding: 40px; text-align: center; color: #ef5350;">${this._error}</div>`;const e=this.topology.nodes,t=this._allEdges,i=e.filter(e=>"online"===e.status).length,s=e.filter(e=>"offline"===e.status).length,o=e.filter(e=>"warning"===e.status).length;return B`
       <div class="toolbar">
         <div class="toolbar-left">
           ${this._renderLayoutDropdown()}
@@ -1591,10 +1644,10 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           @touchstart=${this._onTouchStart}
           @touchmove=${this._onTouchMove}
           @touchend=${this._onTouchEnd}>
-          ${e.map((t,e)=>this._renderEdgeLine(t,e))}
+          ${t.map((e,t)=>this._renderEdgeLine(e,t))}
           ${this._renderLinkPreview()}
-          ${t.map(t=>this._renderNode(t))}
-          ${e.map((t,e)=>this._renderEdgeLabels(t,e))}
+          ${e.map(e=>this._renderNode(e))}
+          ${t.map((e,t)=>this._renderEdgeLabels(e,t))}
         </svg>
         <div class="zoom-controls">
           <button class="zoom-btn" @click=${this._zoomIn} title="Zoom in">+</button>
@@ -1602,8 +1655,8 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <button class="zoom-btn fit" @click=${this._fitAll} title="Fit all">\u229E</button>
         </div>
         <div class="status-counts">
-          <span class="status-pill online">${s}</span>
-          <span class="status-pill offline">${i}</span>
+          <span class="status-pill online">${i}</span>
+          <span class="status-pill offline">${s}</span>
           <span class="status-pill warning">${o}</span>
         </div>
       </div>
@@ -1612,59 +1665,59 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       ${this.editMode&&this.manualEdges.length>0?this._renderManualEdgesList():""}
       ${this._showLabelDialog?this._renderLabelDialog():""}
       <themed-dialog></themed-dialog>
-    `}_renderNode(t){const e=this.nodePositions[t.id]||{x:100,y:100},s=se[t.status]||se.unknown,i=this.selectedNode===t.id,o=this._linkSource===t.id,n=i||o?2.5:1.5,r=i?"4,2":o?"2,2":"none",a=o?"#ffb74d":s;return"gateway"===t.type?H`
-        <g transform="translate(${e.x}, ${e.y})"
-          @click=${e=>this._onNodeClick(e,t.id)}
-          @mousedown=${e=>this.editMode&&!this.linkMode&&this._onMouseDown(e,t.id)}
-          @touchstart=${e=>this.editMode&&!this.linkMode&&this._onTouchNodeStart(e,t.id)}
+    `}_renderNode(e){const t=this.nodePositions[e.id]||{x:100,y:100},i=rn[e.status]||rn.unknown,s=this.selectedNode===e.id,o=this._linkSource===e.id,n=s||o?2.5:1.5,r=s?"4,2":o?"2,2":"none",a=o?"#ffb74d":i;return"gateway"===e.type?H`
+        <g transform="translate(${t.x}, ${t.y})"
+          @click=${t=>this._onNodeClick(t,e.id)}
+          @mousedown=${t=>this.editMode&&!this.linkMode&&this._onMouseDown(t,e.id)}
+          @touchstart=${t=>this.editMode&&!this.linkMode&&this._onTouchNodeStart(t,e.id)}
           style="cursor:pointer">
           <circle r="22" fill="#1a1a2e" stroke="${a}" stroke-width="${n}"
             stroke-dasharray="${r}"/>
-          <text text-anchor="middle" dy="4" fill="${a}" font-size="10">${t.name.substring(0,12)}</text>
+          <text text-anchor="middle" dy="4" fill="${a}" font-size="10">${e.name.substring(0,12)}</text>
         </g>
       `:H`
-      <g transform="translate(${e.x}, ${e.y})"
-        @click=${e=>this._onNodeClick(e,t.id)}
-        @mousedown=${e=>this.editMode&&!this.linkMode&&this._onMouseDown(e,t.id)}
-        @touchstart=${e=>this.editMode&&!this.linkMode&&this._onTouchNodeStart(e,t.id)}
+      <g transform="translate(${t.x}, ${t.y})"
+        @click=${t=>this._onNodeClick(t,e.id)}
+        @mousedown=${t=>this.editMode&&!this.linkMode&&this._onMouseDown(t,e.id)}
+        @touchstart=${t=>this.editMode&&!this.linkMode&&this._onTouchNodeStart(t,e.id)}
         style="cursor:pointer">
         <rect x="-45" y="-18" width="90" height="36" rx="6"
           fill="#1a1a2e" stroke="${a}" stroke-width="${n}"
           stroke-dasharray="${r}"/>
         <text text-anchor="middle" dy="-3" fill="${a}" font-size="10">
-          ${(t.name||t.id).substring(0,12)}
+          ${(e.name||e.id).substring(0,12)}
         </text>
-        <text text-anchor="middle" dy="10" fill="#666" font-size="8">${t.status}</text>
+        <text text-anchor="middle" dy="10" fill="#666" font-size="8">${e.status}</text>
       </g>
-    `}_edgeGeometry(t){const e=this.nodePositions[t.source],s=this.nodePositions[t.target];if(!e||!s)return null;const i=s.x-e.x,o=s.y-e.y,n=Math.sqrt(i*i+o*o)||1,r=i/n,a=o/n;let d=-a,l=r;l>0&&(d=-d,l=-l);const c=this._boxExitDistance(r,a);return{from:e,to:s,ux:r,uy:a,perpX:d,perpY:l,len:n,srcDist:c+8,tgtDist:c+8}}_boxExitDistance(t,e){if(Math.abs(t)<.001)return 22;if(Math.abs(e)<.001)return 48;const s=48/Math.abs(t),i=22/Math.abs(e);return Math.min(s,i)}_renderEdgeLine(t,e){const s=this._edgeGeometry(t);if(!s)return H``;const i="manual"===t.type,o=i?"#00D4FF":"#555",n=i&&this._selectedEdge===e-(this.topology.edges?.length||0)?2.5:1.5,r=i?"none":"4,2";return H`
-      <line x1="${s.from.x}" y1="${s.from.y}" x2="${s.to.x}" y2="${s.to.y}"
+    `}_edgeGeometry(e){const t=this.nodePositions[e.source],i=this.nodePositions[e.target];if(!t||!i)return null;const s=i.x-t.x,o=i.y-t.y,n=Math.sqrt(s*s+o*o)||1,r=s/n,a=o/n;let l=-a,d=r;d>0&&(l=-l,d=-d);const c=this._boxExitDistance(r,a);return{from:t,to:i,ux:r,uy:a,perpX:l,perpY:d,len:n,srcDist:c+8,tgtDist:c+8}}_boxExitDistance(e,t){if(Math.abs(e)<.001)return 22;if(Math.abs(t)<.001)return 48;const i=48/Math.abs(e),s=22/Math.abs(t);return Math.min(i,s)}_renderEdgeLine(e,t){const i=this._edgeGeometry(e);if(!i)return H``;const s="manual"===e.type,o=s?"#00D4FF":"#555",n=s&&this._selectedEdge===t-(this.topology.edges?.length||0)?2.5:1.5,r=s?"none":"4,2";return H`
+      <line x1="${i.from.x}" y1="${i.from.y}" x2="${i.to.x}" y2="${i.to.y}"
         stroke="${o}" stroke-width="${n}"
         stroke-dasharray="${r}"
-        @click=${i&&this.editMode?()=>this._selectEdge(e-(this.topology.edges?.length||0)):null}
-        style="${i&&this.editMode?"cursor:pointer":""}"/>
-    `}_renderEdgeLabels(t,e){if(!t.label&&!t.sourceLabel&&!t.targetLabel)return H``;const s=this._edgeGeometry(t);if(!s)return H``;const{from:i,to:o,ux:n,uy:r,perpX:a,perpY:d,srcDist:l,tgtDist:c}=s,p=i.x+n*l,h=i.y+r*l,u=o.x-n*c,g=o.y-r*c,m=(i.x+o.x)/2+14*a,f=(i.y+o.y)/2+14*d;return H`
-      ${t.label?H`
-        <rect x="${m-3*t.label.length-3}" y="${f-9}"
-          width="${6*t.label.length+6}" height="13" rx="2" fill="#0d0d1f" opacity="0.9"/>
-        <text x="${m}" y="${f}" text-anchor="middle"
-          fill="#888" font-size="9" style="pointer-events:none">${t.label}</text>
+        @click=${s&&this.editMode?()=>this._selectEdge(t-(this.topology.edges?.length||0)):null}
+        style="${s&&this.editMode?"cursor:pointer":""}"/>
+    `}_renderEdgeLabels(e,t){if(!e.label&&!e.sourceLabel&&!e.targetLabel)return H``;const i=this._edgeGeometry(e);if(!i)return H``;const{from:s,to:o,ux:n,uy:r,perpX:a,perpY:l,srcDist:d,tgtDist:c}=i,p=s.x+n*d,u=s.y+r*d,h=o.x-n*c,g=o.y-r*c,f=(s.x+o.x)/2+14*a,m=(s.y+o.y)/2+14*l;return H`
+      ${e.label?H`
+        <rect x="${f-3*e.label.length-3}" y="${m-9}"
+          width="${6*e.label.length+6}" height="13" rx="2" fill="#0d0d1f" opacity="0.9"/>
+        <text x="${f}" y="${m}" text-anchor="middle"
+          fill="#888" font-size="9" style="pointer-events:none">${e.label}</text>
       `:H``}
-      ${t.sourceLabel?H`
-        <rect x="${p-2.5*t.sourceLabel.length-3}" y="${h-8}"
-          width="${5*t.sourceLabel.length+6}" height="12" rx="2" fill="#0d0d1f" opacity="0.9"/>
-        <text x="${p}" y="${h}" text-anchor="middle"
-          fill="#00D4FF" font-size="8" style="pointer-events:none">${t.sourceLabel}</text>
+      ${e.sourceLabel?H`
+        <rect x="${p-2.5*e.sourceLabel.length-3}" y="${u-8}"
+          width="${5*e.sourceLabel.length+6}" height="12" rx="2" fill="#0d0d1f" opacity="0.9"/>
+        <text x="${p}" y="${u}" text-anchor="middle"
+          fill="#00D4FF" font-size="8" style="pointer-events:none">${e.sourceLabel}</text>
       `:H``}
-      ${t.targetLabel?H`
-        <rect x="${u-2.5*t.targetLabel.length-3}" y="${g-8}"
-          width="${5*t.targetLabel.length+6}" height="12" rx="2" fill="#0d0d1f" opacity="0.9"/>
-        <text x="${u}" y="${g}" text-anchor="middle"
-          fill="#00D4FF" font-size="8" style="pointer-events:none">${t.targetLabel}</text>
+      ${e.targetLabel?H`
+        <rect x="${h-2.5*e.targetLabel.length-3}" y="${g-8}"
+          width="${5*e.targetLabel.length+6}" height="12" rx="2" fill="#0d0d1f" opacity="0.9"/>
+        <text x="${h}" y="${g}" text-anchor="middle"
+          fill="#00D4FF" font-size="8" style="pointer-events:none">${e.targetLabel}</text>
       `:H``}
-    `}_renderLinkPreview(){if(!this._linkSource||!this._mousePos)return H``;const t=this.nodePositions[this._linkSource];return t?H`
-      <line x1="${t.x}" y1="${t.y}" x2="${this._mousePos.x}" y2="${this._mousePos.y}"
+    `}_renderLinkPreview(){if(!this._linkSource||!this._mousePos)return H``;const e=this.nodePositions[this._linkSource];return e?H`
+      <line x1="${e.x}" y1="${e.y}" x2="${this._mousePos.x}" y2="${this._mousePos.y}"
         stroke="#ffb74d" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.6"/>
-    `:H``}_renderDetailPanel(){if(!this.selectedNode)return B``;const t=this.topology.nodes.find(t=>t.id===this.selectedNode);return t&&"gateway"!==t.type?B`
+    `:H``}_renderDetailPanel(){if(!this.selectedNode)return B``;const e=this.topology.nodes.find(e=>e.id===this.selectedNode);return e&&"gateway"!==e.type?B`
       <device-detail
         .deviceId=${this.selectedNode}
         @back=${()=>{this.selectedNode=null,this._selectedDeviceData=null}}
@@ -1672,10 +1725,10 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     `:B`
         <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 14px; margin-top: 12px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 16px; font-weight: 600; color: #00D4FF;">${t?t.name:this.selectedNode}</span>
+            <span style="font-size: 16px; font-weight: 600; color: #00D4FF;">${e?e.name:this.selectedNode}</span>
             <button class="tool-btn" @click=${()=>{this.selectedNode=null}}>✕</button>
           </div>
-          <div style="color: #fff; font-size: 12px; margin-top: 4px;">${t?t.type:"unknown"}</div>
+          <div style="color: #fff; font-size: 12px; margin-top: 4px;">${e?e.type:"unknown"}</div>
         </div>
       `}_renderManualEdgesList(){return B`
       <div class="edge-panel">
@@ -1683,39 +1736,39 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           <span style="font-size: 13px; color: rgba(255,255,255,0.8); font-weight: 600;">Manual Links</span>
         </div>
         <div class="edge-list">
-          ${this.manualEdges.map((t,e)=>B`
+          ${this.manualEdges.map((e,t)=>B`
             <div class="edge-item">
               <span>
-                ${this._getNodeName(t.source)}
-                ${t.sourceLabel?B`<span style="color: #00D4FF; font-size: 10px;"> [${t.sourceLabel}]</span>`:""}
+                ${this._getNodeName(e.source)}
+                ${e.sourceLabel?B`<span style="color: #00D4FF; font-size: 10px;"> [${e.sourceLabel}]</span>`:""}
                 <span style="color: #fff;"> &#8594; </span>
-                ${t.label?B`<span style="color: #fff; font-size: 10px;">(${t.label})</span><span style="color: #fff;"> &#8594; </span>`:""}
-                ${t.targetLabel?B`<span style="color: #00D4FF; font-size: 10px;">[${t.targetLabel}] </span>`:""}
-                ${this._getNodeName(t.target)}
+                ${e.label?B`<span style="color: #fff; font-size: 10px;">(${e.label})</span><span style="color: #fff;"> &#8594; </span>`:""}
+                ${e.targetLabel?B`<span style="color: #00D4FF; font-size: 10px;">[${e.targetLabel}] </span>`:""}
+                ${this._getNodeName(e.target)}
               </span>
               <span style="display: flex; gap: 4px;">
-                <button class="tool-btn" @click=${()=>this._labelEdge(e)}>Label</button>
-                <button class="tool-btn danger" @click=${()=>this._removeEdge(e)}>Remove</button>
+                <button class="tool-btn" @click=${()=>this._labelEdge(t)}>Label</button>
+                <button class="tool-btn danger" @click=${()=>this._removeEdge(t)}>Remove</button>
               </span>
             </div>
           `)}
         </div>
       </div>
-    `}_renderLayoutDropdown(){const t=this.selectedLayout&&this.layouts[this.selectedLayout]?this.layouts[this.selectedLayout].name:"Auto Discovery";return B`
+    `}_renderLayoutDropdown(){const e=this.selectedLayout&&this.layouts[this.selectedLayout]?this.layouts[this.selectedLayout].name:"Auto Discovery";return B`
       <div class="layout-dropdown">
         <button class="layout-trigger ${this._layoutDropdownOpen?"open":""}"
-          @click=${t=>{t.stopPropagation(),this._layoutDropdownOpen=!this._layoutDropdownOpen}}>
-          ${t}
+          @click=${e=>{e.stopPropagation(),this._layoutDropdownOpen=!this._layoutDropdownOpen}}>
+          ${e}
         </button>
         ${this._layoutDropdownOpen?B`
           <div class="layout-menu">
             <div class="layout-option ${this.selectedLayout?"":"selected"}"
               @click=${()=>this._selectLayout("")}>Auto Discovery</div>
-            ${Object.entries(this.layouts).map(([t,e])=>B`
-              <div class="layout-option ${this.selectedLayout===t?"selected":""}"
-                @click=${()=>this._selectLayout(t)}>
-                ${e.name}
-                ${e.isDefault?B`<span class="default-badge">default</span>`:""}
+            ${Object.entries(this.layouts).map(([e,t])=>B`
+              <div class="layout-option ${this.selectedLayout===e?"selected":""}"
+                @click=${()=>this._selectLayout(e)}>
+                ${t.name}
+                ${t.isDefault?B`<span class="default-badge">default</span>`:""}
               </div>
             `)}
             <div class="layout-divider"></div>
@@ -1723,36 +1776,36 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         `:""}
       </div>
-    `}_renderLabelDialog(){const t=this.manualEdges[this._labelEdgeIndex];if(!t)return B``;const e=this._getNodeName(t.source),s=this._getNodeName(t.target);return B`
+    `}_renderLabelDialog(){const e=this.manualEdges[this._labelEdgeIndex];if(!e)return B``;const t=this._getNodeName(e.source),i=this._getNodeName(e.target);return B`
       <div class="save-overlay" @click=${this._cancelLabelDialog}>
-        <div class="label-dialog" @click=${t=>t.stopPropagation()}>
+        <div class="label-dialog" @click=${e=>e.stopPropagation()}>
           <h3>Link Labels</h3>
-          <div class="subtitle">${e} &#8594; ${s}</div>
+          <div class="subtitle">${t} &#8594; ${i}</div>
 
           <div class="label-field">
-            <label>Source Interface (${e})</label>
+            <label>Source Interface (${t})</label>
             <input id="source-label" type="text"
-              .value=${t.sourceLabel||""}
+              .value=${e.sourceLabel||""}
               placeholder="e.g., eth0, port 24, WAN"
-              @keydown=${t=>"Enter"===t.key&&this._saveLabelDialog()}>
+              @keydown=${e=>"Enter"===e.key&&this._saveLabelDialog()}>
             <div class="hint">Shown near the source device</div>
           </div>
 
           <div class="label-field">
             <label>Link Description</label>
             <input id="link-label" type="text"
-              .value=${t.label||""}
+              .value=${e.label||""}
               placeholder="e.g., 1Gbps, WiFi, VLAN 10"
-              @keydown=${t=>"Enter"===t.key&&this._saveLabelDialog()}>
+              @keydown=${e=>"Enter"===e.key&&this._saveLabelDialog()}>
             <div class="hint">Shown in the middle of the link</div>
           </div>
 
           <div class="label-field">
-            <label>Target Interface (${s})</label>
+            <label>Target Interface (${i})</label>
             <input id="target-label" type="text"
-              .value=${t.targetLabel||""}
+              .value=${e.targetLabel||""}
               placeholder="e.g., eth1, port 1, LAN"
-              @keydown=${t=>"Enter"===t.key&&this._saveLabelDialog()}>
+              @keydown=${e=>"Enter"===e.key&&this._saveLabelDialog()}>
             <div class="hint">Shown near the target device</div>
           </div>
 
@@ -1762,7 +1815,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           </div>
         </div>
       </div>
-    `}_onNodeClick(t,e){t.stopPropagation(),this.linkMode?this._handleLinkClick(e):this._selectNode(e)}_handleLinkClick(t){if(this._linkSource)if(this._linkSource===t)this._linkSource=null;else{const e=this.manualEdges.some(e=>e.source===this._linkSource&&e.target===t||e.source===t&&e.target===this._linkSource);e||(this.manualEdges=[...this.manualEdges,{source:this._linkSource,target:t,sourceLabel:"",label:"",targetLabel:""}],this._markDirty(),this._labelEdgeIndex=this.manualEdges.length-1,this._showLabelDialog=!0),this._linkSource=null}else this._linkSource=t}_enterEditMode(){this.editMode=!0,this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges),this._dirty=!1}_exitEditMode(){this.editMode=!1,this.linkMode=!1,this._linkSource=null,this._selectedEdge=-1,this._dirty=!1}_markDirty(){this.editMode&&(this._dirty=!0)}async _doneEditing(){if(this.selectedLayout)await this._saveToCurrentLayout(),this._exitEditMode();else{const t=this.shadowRoot.querySelector("themed-dialog"),e=await t.show({type:"prompt",title:"Save Layout",message:"Enter a name for this layout:",placeholder:"My Layout"});if(!e)return;await this._saveNewLayout(e),this._exitEditMode()}}_discardAndExit(){this._savedPositions&&(this.nodePositions=JSON.parse(this._savedPositions)),this._savedManualEdges&&(this.manualEdges=JSON.parse(this._savedManualEdges)),this._exitEditMode()}async _saveAsLayout(){const t=this.shadowRoot.querySelector("themed-dialog"),e=await t.show({type:"prompt",title:"Save As New Layout",message:"Enter a name for the new layout:",placeholder:"Layout copy"});e&&await this._saveNewLayout(e)}async _saveToCurrentLayout(){if(!this.selectedLayout||!this.layouts[this.selectedLayout])return;const t=this.layouts[this.selectedLayout];await Ct({id:this.selectedLayout,name:t.name,positions:this.nodePositions,manualEdges:this.manualEdges,hideAutoEdges:this.hideAutoEdges,viewBox:this._viewBox,isDefault:t.isDefault||!1}),await this._loadLayouts(),this._dirty=!1,this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges)}async _saveNewLayout(t){const e=await Ct({name:t,positions:this.nodePositions,manualEdges:this.manualEdges,hideAutoEdges:this.hideAutoEdges,viewBox:this._viewBox,isDefault:!1});this.selectedLayout=e.id,await this._loadLayouts(),this._dirty=!1,this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges)}_selectLayout(t){if(this._layoutDropdownOpen=!1,this.selectedLayout=t,t&&this.layouts[t]){const e=this.layouts[t];this.nodePositions=e.positions||{},this.manualEdges=e.manualEdges||[],this.hideAutoEdges=e.hideAutoEdges||!1,e.viewBox?this._viewBox=this._adaptViewBox(e.viewBox):this._fitAll()}else this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._autoLayout()}_createNewLayout(){this._layoutDropdownOpen=!1,this.selectedLayout="",this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._autoLayout(),this._enterEditMode()}_toggleLinkMode(){this.linkMode=!this.linkMode,this._linkSource=null,this.linkMode&&(this.selectedNode=null)}async _selectNode(t){if(this.selectedNode===t)return this.selectedNode=null,this._selectedDeviceData=null,void(this._commandResult="");this.selectedNode=t,this._selectedDeviceData=null,this._commandResult="";try{this._selectedDeviceData=await fetchDevice(t)}catch(t){this._selectedDeviceData={status:"inferred",attributes:{},tags:[]}}}async _sendCmd(t){if(this.selectedNode)try{this._commandResult=`Sending ${t}...`;const e=await sendCommand(this.selectedNode,t);this._commandResult=`Sent (request: ${e.request_id})`}catch(t){this._commandResult=`Error: ${t.message}`}}_selectEdge(t){this._selectedEdge=this._selectedEdge===t?-1:t}_labelEdge(t){this._labelEdgeIndex=t,this._showLabelDialog=!0}_saveLabelDialog(){const t=this.shadowRoot.querySelector(".label-dialog"),e=t.querySelector("#source-label").value,s=t.querySelector("#link-label").value,i=t.querySelector("#target-label").value,o=[...this.manualEdges];o[this._labelEdgeIndex]={...o[this._labelEdgeIndex],sourceLabel:e,label:s,targetLabel:i},this.manualEdges=o,this._markDirty(),this._showLabelDialog=!1,this._labelEdgeIndex=-1}_cancelLabelDialog(){this._showLabelDialog=!1,this._labelEdgeIndex=-1}_removeEdge(t){this.manualEdges=this.manualEdges.filter((e,s)=>s!==t),this._selectedEdge=-1,this._markDirty()}_onSvgMouseDown(t){if(!t.target.closest("g[transform]")){if(t.preventDefault(),this.linkMode)return this.linkMode=!1,this._linkSource=null,void(this._mousePos=null);this._isMousePanning=!0,this._mousePanStart={x:t.clientX,y:t.clientY},this._mousePanViewBox={...this._viewBox}}}_onMouseDown(t,e){this._dragging=e;const s=this.shadowRoot.querySelector("svg"),i=s.createSVGPoint();i.x=t.clientX,i.y=t.clientY;const o=i.matrixTransform(s.getScreenCTM().inverse()),n=this.nodePositions[e]||{x:0,y:0};this._dragOffset={x:o.x-n.x,y:o.y-n.y},t.preventDefault(),t.stopPropagation()}_onMouseMove(t){const e=this.shadowRoot.querySelector("svg"),s=e.createSVGPoint();s.x=t.clientX,s.y=t.clientY;const i=s.matrixTransform(e.getScreenCTM().inverse());if(this.linkMode&&this._linkSource&&(this._mousePos={x:i.x,y:i.y},this.requestUpdate()),this._isMousePanning){const s=e.getScreenCTM(),i=(t.clientX-this._mousePanStart.x)/s.a,o=(t.clientY-this._mousePanStart.y)/s.d;return void(this._viewBox={...this._mousePanViewBox,x:this._mousePanViewBox.x-i,y:this._mousePanViewBox.y-o})}this._dragging&&(this.nodePositions={...this.nodePositions,[this._dragging]:{x:i.x-this._dragOffset.x,y:i.y-this._dragOffset.y}})}_onWheel(t){if(!t.ctrlKey)return;t.preventDefault();const e=t.deltaY>0?1.1:.9;this._zoomAt(t.clientX,t.clientY,e)}_zoomAt(t,e,s){const i=this.shadowRoot.querySelector("svg");if(!i)return;const o=i.createSVGPoint();o.x=t,o.y=e;const n=o.matrixTransform(i.getScreenCTM().inverse()),r={...this._viewBox},a=Math.max(300,Math.min(2700,r.width*s)),d=Math.max(167,Math.min(1500,r.height*s)),l=a/r.width,c=d/r.height;r.x=n.x-(n.x-r.x)*l,r.y=n.y-(n.y-r.y)*c,r.width=a,r.height=d,this._viewBox=r}_zoomIn(){const t=this.shadowRoot.querySelector("svg")?.getBoundingClientRect();t&&this._zoomAt(t.left+t.width/2,t.top+t.height/2,.8)}_zoomOut(){const t=this.shadowRoot.querySelector("svg")?.getBoundingClientRect();t&&this._zoomAt(t.left+t.width/2,t.top+t.height/2,1.25)}_adaptViewBox(t){const e=this.shadowRoot?.querySelector(".canvas-container");if(!e||!e.clientWidth||!e.clientHeight)return{...t};const s=e.clientWidth/e.clientHeight,i=t.x+t.width/2,o=t.y+t.height/2,n=t.width*t.height,r=Math.sqrt(n*s),a=r/s;return{x:i-r/2,y:o-a/2,width:r,height:a}}_fitAll(){const t=Object.values(this.nodePositions);if(!t.length)return;const e=t.map(t=>t.x),s=t.map(t=>t.y),i=Math.min(...e)-80,o=Math.min(...s)-80,n=Math.max(...e)-Math.min(...e)+160,r=Math.max(...s)-Math.min(...s)+160,a=this.shadowRoot?.querySelector(".canvas-container");if(a&&a.clientWidth&&a.clientHeight){const t=a.clientWidth/a.clientHeight;let e=n,s=r;n/r<t?e=r*t:s=n/t,this._viewBox={x:i-(e-n)/2,y:o-(s-r)/2,width:e,height:s}}else this._viewBox={x:i,y:o,width:n,height:r}}_clientToSvg(t,e){const s=this.shadowRoot.querySelector("svg");if(!s)return null;const i=s.createSVGPoint();return i.x=t,i.y=e,i.matrixTransform(s.getScreenCTM().inverse())}_onTouchStart(t){if(2===t.touches.length){t.preventDefault();const e=t.touches[0].clientX-t.touches[1].clientX,s=t.touches[0].clientY-t.touches[1].clientY;return this._pinchPrevDist=Math.sqrt(e*e+s*s),this._pinchActive=!0,this._pinchAnchor0=this._clientToSvg(t.touches[0].clientX,t.touches[0].clientY),this._pinchAnchor1=this._clientToSvg(t.touches[1].clientX,t.touches[1].clientY),this._isPanning=!1,void(this._panStart=null)}if(1===t.touches.length){if(this.linkMode&&!t.target.closest("g[transform]"))return this.linkMode=!1,this._linkSource=null,void(this._mousePos=null);const e=t.touches[0];this._isPanning=!0,this._panStart={x:e.clientX,y:e.clientY,vbX:this._viewBox.x,vbY:this._viewBox.y}}}_onTouchMove(t){if(2===t.touches.length&&this._pinchActive){if(t.preventDefault(),!this._pinchAnchor0||!this._pinchAnchor1)return;const e=t.touches[0].clientX-t.touches[1].clientX,s=t.touches[0].clientY-t.touches[1].clientY,i=Math.sqrt(e*e+s*s);if(!this._pinchPrevDist||0===i)return void(this._pinchPrevDist=i);const o=this._pinchPrevDist/i,n=(this._pinchAnchor0.x+this._pinchAnchor1.x)/2,r=(this._pinchAnchor0.y+this._pinchAnchor1.y)/2,a=this._viewBox,d=Math.max(300,Math.min(2700,a.width*o)),l=d/a.width,c=Math.max(167,Math.min(1500,a.height*l));let p=n-(n-a.x)*l,h=r-(r-a.y)*(c/a.height);const u=this.shadowRoot.querySelector("svg");if(u){const e=u.getBoundingClientRect();if(e.width>0&&e.height>0){const s=(t.touches[0].clientX+t.touches[1].clientX)/2,i=(t.touches[0].clientY+t.touches[1].clientY)/2;p=n-(s-e.left)*(d/e.width),h=r-(i-e.top)*(c/e.height)}}if(this._viewBox={x:p,y:h,width:d,height:c},u){const e=u.getBoundingClientRect();if(e.width>0&&e.height>0){const s=t=>p+(t-e.left)*(d/e.width),i=t=>h+(t-e.top)*(c/e.height);this._pinchAnchor0={x:s(t.touches[0].clientX),y:i(t.touches[0].clientY)},this._pinchAnchor1={x:s(t.touches[1].clientX),y:i(t.touches[1].clientY)}}}return void(this._pinchPrevDist=i)}if(1===t.touches.length&&this._dragging){t.preventDefault();const e=t.touches[0],s=this._clientToSvg(e.clientX,e.clientY);if(!s)return;return void(this.nodePositions={...this.nodePositions,[this._dragging]:{x:s.x-this._dragOffset.x,y:s.y-this._dragOffset.y}})}if(1===t.touches.length&&this._isPanning&&this._panStart){const e=t.touches[0],s=this.shadowRoot.querySelector("svg");if(!s)return;const i=s.getScreenCTM(),o=(e.clientX-this._panStart.x)/i.a,n=(e.clientY-this._panStart.y)/i.d;this._viewBox={...this._viewBox,x:this._panStart.vbX-o,y:this._panStart.vbY-n}}}_onTouchEnd(t){if(t.touches.length<2&&(this._pinchActive=!1,this._pinchPrevDist=0,this._pinchAnchor0=null,this._pinchAnchor1=null,1===t.touches.length&&!this._dragging)){const e=t.touches[0];this._isPanning=!0,this._panStart={x:e.clientX,y:e.clientY,vbX:this._viewBox.x,vbY:this._viewBox.y}}0===t.touches.length&&(this._dragging&&this._markDirty(),this._dragging=null,this._isPanning=!1,this._panStart=null)}_onTouchNodeStart(t,e){if(1!==t.touches.length)return;t.stopPropagation(),this._isPanning=!1;const s=t.touches[0],i=this._clientToSvg(s.clientX,s.clientY);if(!i)return;const o=this.nodePositions[e]||{x:0,y:0};this._dragOffset={x:i.x-o.x,y:i.y-o.y},this._dragging=e}_onMouseUp(){this._dragging&&this._markDirty(),this._dragging=null,this._isMousePanning=!1}async _setAsDefault(){if(!this.selectedLayout)return;for(const[t,e]of Object.entries(this.layouts))e.isDefault&&(e.isDefault=!1,await Ct(e));const t=this.layouts[this.selectedLayout];t&&(t.isDefault=!0,await Ct(t)),await this._loadLayouts(),this._layoutsLoaded=!0}async _deleteCurrentLayout(){if(!this.selectedLayout)return;const t=this.layouts[this.selectedLayout]?.name||this.selectedLayout,e=this.shadowRoot.querySelector("themed-dialog");await e.show({type:"confirm",title:"Delete Layout",message:`Delete "${t}"? This cannot be undone.`,confirmLabel:"Delete",confirmDanger:!0})&&(await Dt(this.selectedLayout),this.selectedLayout="",this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._dirty=!1,await this._loadLayouts(),this._autoLayout())}}customElements.define("topology-view",ie);const oe={online:"#04d65c",offline:"#ef5350",warning:"#ffb74d",critical:"#ef5350",unknown:"#666"};class ne extends dt{static properties={device:{type:Object},deviceId:{type:String}};static styles=[ct,n`
+    `}_onNodeClick(e,t){e.stopPropagation(),this.linkMode?this._handleLinkClick(t):this._selectNode(t)}_handleLinkClick(e){if(this._linkSource)if(this._linkSource===e)this._linkSource=null;else{const t=this.manualEdges.some(t=>t.source===this._linkSource&&t.target===e||t.source===e&&t.target===this._linkSource);t||(this.manualEdges=[...this.manualEdges,{source:this._linkSource,target:e,sourceLabel:"",label:"",targetLabel:""}],this._markDirty(),this._labelEdgeIndex=this.manualEdges.length-1,this._showLabelDialog=!0),this._linkSource=null}else this._linkSource=e}_enterEditMode(){this.editMode=!0,this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges),this._dirty=!1}_exitEditMode(){this.editMode=!1,this.linkMode=!1,this._linkSource=null,this._selectedEdge=-1,this._dirty=!1}_markDirty(){this.editMode&&(this._dirty=!0)}async _doneEditing(){if(this.selectedLayout)await this._saveToCurrentLayout(),this._exitEditMode();else{const e=this.shadowRoot.querySelector("themed-dialog"),t=await e.show({type:"prompt",title:"Save Layout",message:"Enter a name for this layout:",placeholder:"My Layout"});if(!t)return;await this._saveNewLayout(t),this._exitEditMode()}}_discardAndExit(){this._savedPositions&&(this.nodePositions=JSON.parse(this._savedPositions)),this._savedManualEdges&&(this.manualEdges=JSON.parse(this._savedManualEdges)),this._exitEditMode()}async _saveAsLayout(){const e=this.shadowRoot.querySelector("themed-dialog"),t=await e.show({type:"prompt",title:"Save As New Layout",message:"Enter a name for the new layout:",placeholder:"Layout copy"});t&&await this._saveNewLayout(t)}async _saveToCurrentLayout(){if(!this.selectedLayout||!this.layouts[this.selectedLayout])return;const e=this.layouts[this.selectedLayout];await Ce({id:this.selectedLayout,name:e.name,positions:this.nodePositions,manualEdges:this.manualEdges,hideAutoEdges:this.hideAutoEdges,viewBox:this._viewBox,isDefault:e.isDefault||!1}),await this._loadLayouts(),this._dirty=!1,this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges)}async _saveNewLayout(e){const t=await Ce({name:e,positions:this.nodePositions,manualEdges:this.manualEdges,hideAutoEdges:this.hideAutoEdges,viewBox:this._viewBox,isDefault:!1});this.selectedLayout=t.id,await this._loadLayouts(),this._dirty=!1,this._savedPositions=JSON.stringify(this.nodePositions),this._savedManualEdges=JSON.stringify(this.manualEdges)}_selectLayout(e){if(this._layoutDropdownOpen=!1,this.selectedLayout=e,e&&this.layouts[e]){const t=this.layouts[e];this.nodePositions=t.positions||{},this.manualEdges=t.manualEdges||[],this.hideAutoEdges=t.hideAutoEdges||!1,t.viewBox?this._viewBox=this._adaptViewBox(t.viewBox):this._fitAll()}else this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._autoLayout()}_createNewLayout(){this._layoutDropdownOpen=!1,this.selectedLayout="",this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._autoLayout(),this._enterEditMode()}_toggleLinkMode(){this.linkMode=!this.linkMode,this._linkSource=null,this.linkMode&&(this.selectedNode=null)}async _selectNode(e){if(this.selectedNode===e)return this.selectedNode=null,this._selectedDeviceData=null,void(this._commandResult="");this.selectedNode=e,this._selectedDeviceData=null,this._commandResult="";try{this._selectedDeviceData=await fetchDevice(e)}catch(e){this._selectedDeviceData={status:"inferred",attributes:{},tags:[]}}}async _sendCmd(e){if(this.selectedNode)try{this._commandResult=`Sending ${e}...`;const t=await sendCommand(this.selectedNode,e);this._commandResult=`Sent (request: ${t.request_id})`}catch(e){this._commandResult=`Error: ${e.message}`}}_selectEdge(e){this._selectedEdge=this._selectedEdge===e?-1:e}_labelEdge(e){this._labelEdgeIndex=e,this._showLabelDialog=!0}_saveLabelDialog(){const e=this.shadowRoot.querySelector(".label-dialog"),t=e.querySelector("#source-label").value,i=e.querySelector("#link-label").value,s=e.querySelector("#target-label").value,o=[...this.manualEdges];o[this._labelEdgeIndex]={...o[this._labelEdgeIndex],sourceLabel:t,label:i,targetLabel:s},this.manualEdges=o,this._markDirty(),this._showLabelDialog=!1,this._labelEdgeIndex=-1}_cancelLabelDialog(){this._showLabelDialog=!1,this._labelEdgeIndex=-1}_removeEdge(e){this.manualEdges=this.manualEdges.filter((t,i)=>i!==e),this._selectedEdge=-1,this._markDirty()}_onSvgMouseDown(e){if(!e.target.closest("g[transform]")){if(e.preventDefault(),this.linkMode)return this.linkMode=!1,this._linkSource=null,void(this._mousePos=null);this._isMousePanning=!0,this._mousePanStart={x:e.clientX,y:e.clientY},this._mousePanViewBox={...this._viewBox}}}_onMouseDown(e,t){this._dragging=t;const i=this.shadowRoot.querySelector("svg"),s=i.createSVGPoint();s.x=e.clientX,s.y=e.clientY;const o=s.matrixTransform(i.getScreenCTM().inverse()),n=this.nodePositions[t]||{x:0,y:0};this._dragOffset={x:o.x-n.x,y:o.y-n.y},e.preventDefault(),e.stopPropagation()}_onMouseMove(e){const t=this.shadowRoot.querySelector("svg"),i=t.createSVGPoint();i.x=e.clientX,i.y=e.clientY;const s=i.matrixTransform(t.getScreenCTM().inverse());if(this.linkMode&&this._linkSource&&(this._mousePos={x:s.x,y:s.y},this.requestUpdate()),this._isMousePanning){const i=t.getScreenCTM(),s=(e.clientX-this._mousePanStart.x)/i.a,o=(e.clientY-this._mousePanStart.y)/i.d;return void(this._viewBox={...this._mousePanViewBox,x:this._mousePanViewBox.x-s,y:this._mousePanViewBox.y-o})}this._dragging&&(this.nodePositions={...this.nodePositions,[this._dragging]:{x:s.x-this._dragOffset.x,y:s.y-this._dragOffset.y}})}_onWheel(e){if(!e.ctrlKey)return;e.preventDefault();const t=e.deltaY>0?1.1:.9;this._zoomAt(e.clientX,e.clientY,t)}_zoomAt(e,t,i){const s=this.shadowRoot.querySelector("svg");if(!s)return;const o=s.createSVGPoint();o.x=e,o.y=t;const n=o.matrixTransform(s.getScreenCTM().inverse()),r={...this._viewBox},a=Math.max(300,Math.min(2700,r.width*i)),l=Math.max(167,Math.min(1500,r.height*i)),d=a/r.width,c=l/r.height;r.x=n.x-(n.x-r.x)*d,r.y=n.y-(n.y-r.y)*c,r.width=a,r.height=l,this._viewBox=r}_zoomIn(){const e=this.shadowRoot.querySelector("svg")?.getBoundingClientRect();e&&this._zoomAt(e.left+e.width/2,e.top+e.height/2,.8)}_zoomOut(){const e=this.shadowRoot.querySelector("svg")?.getBoundingClientRect();e&&this._zoomAt(e.left+e.width/2,e.top+e.height/2,1.25)}_adaptViewBox(e){const t=this.shadowRoot?.querySelector(".canvas-container");if(!t||!t.clientWidth||!t.clientHeight)return{...e};const i=t.clientWidth/t.clientHeight,s=e.x+e.width/2,o=e.y+e.height/2,n=e.width*e.height,r=Math.sqrt(n*i),a=r/i;return{x:s-r/2,y:o-a/2,width:r,height:a}}_fitAll(){const e=Object.values(this.nodePositions);if(!e.length)return;const t=e.map(e=>e.x),i=e.map(e=>e.y),s=Math.min(...t)-80,o=Math.min(...i)-80,n=Math.max(...t)-Math.min(...t)+160,r=Math.max(...i)-Math.min(...i)+160,a=this.shadowRoot?.querySelector(".canvas-container");if(a&&a.clientWidth&&a.clientHeight){const e=a.clientWidth/a.clientHeight;let t=n,i=r;n/r<e?t=r*e:i=n/e,this._viewBox={x:s-(t-n)/2,y:o-(i-r)/2,width:t,height:i}}else this._viewBox={x:s,y:o,width:n,height:r}}_clientToSvg(e,t){const i=this.shadowRoot.querySelector("svg");if(!i)return null;const s=i.createSVGPoint();return s.x=e,s.y=t,s.matrixTransform(i.getScreenCTM().inverse())}_onTouchStart(e){if(2===e.touches.length){e.preventDefault();const t=e.touches[0].clientX-e.touches[1].clientX,i=e.touches[0].clientY-e.touches[1].clientY;return this._pinchPrevDist=Math.sqrt(t*t+i*i),this._pinchActive=!0,this._pinchAnchor0=this._clientToSvg(e.touches[0].clientX,e.touches[0].clientY),this._pinchAnchor1=this._clientToSvg(e.touches[1].clientX,e.touches[1].clientY),this._isPanning=!1,void(this._panStart=null)}if(1===e.touches.length){if(this.linkMode&&!e.target.closest("g[transform]"))return this.linkMode=!1,this._linkSource=null,void(this._mousePos=null);const t=e.touches[0];this._isPanning=!0,this._panStart={x:t.clientX,y:t.clientY,vbX:this._viewBox.x,vbY:this._viewBox.y}}}_onTouchMove(e){if(2===e.touches.length&&this._pinchActive){if(e.preventDefault(),!this._pinchAnchor0||!this._pinchAnchor1)return;const t=e.touches[0].clientX-e.touches[1].clientX,i=e.touches[0].clientY-e.touches[1].clientY,s=Math.sqrt(t*t+i*i);if(!this._pinchPrevDist||0===s)return void(this._pinchPrevDist=s);const o=this._pinchPrevDist/s,n=(this._pinchAnchor0.x+this._pinchAnchor1.x)/2,r=(this._pinchAnchor0.y+this._pinchAnchor1.y)/2,a=this._viewBox,l=Math.max(300,Math.min(2700,a.width*o)),d=l/a.width,c=Math.max(167,Math.min(1500,a.height*d));let p=n-(n-a.x)*d,u=r-(r-a.y)*(c/a.height);const h=this.shadowRoot.querySelector("svg");if(h){const t=h.getBoundingClientRect();if(t.width>0&&t.height>0){const i=(e.touches[0].clientX+e.touches[1].clientX)/2,s=(e.touches[0].clientY+e.touches[1].clientY)/2;p=n-(i-t.left)*(l/t.width),u=r-(s-t.top)*(c/t.height)}}if(this._viewBox={x:p,y:u,width:l,height:c},h){const t=h.getBoundingClientRect();if(t.width>0&&t.height>0){const i=e=>p+(e-t.left)*(l/t.width),s=e=>u+(e-t.top)*(c/t.height);this._pinchAnchor0={x:i(e.touches[0].clientX),y:s(e.touches[0].clientY)},this._pinchAnchor1={x:i(e.touches[1].clientX),y:s(e.touches[1].clientY)}}}return void(this._pinchPrevDist=s)}if(1===e.touches.length&&this._dragging){e.preventDefault();const t=e.touches[0],i=this._clientToSvg(t.clientX,t.clientY);if(!i)return;return void(this.nodePositions={...this.nodePositions,[this._dragging]:{x:i.x-this._dragOffset.x,y:i.y-this._dragOffset.y}})}if(1===e.touches.length&&this._isPanning&&this._panStart){const t=e.touches[0],i=this.shadowRoot.querySelector("svg");if(!i)return;const s=i.getScreenCTM(),o=(t.clientX-this._panStart.x)/s.a,n=(t.clientY-this._panStart.y)/s.d;this._viewBox={...this._viewBox,x:this._panStart.vbX-o,y:this._panStart.vbY-n}}}_onTouchEnd(e){if(e.touches.length<2&&(this._pinchActive=!1,this._pinchPrevDist=0,this._pinchAnchor0=null,this._pinchAnchor1=null,1===e.touches.length&&!this._dragging)){const t=e.touches[0];this._isPanning=!0,this._panStart={x:t.clientX,y:t.clientY,vbX:this._viewBox.x,vbY:this._viewBox.y}}0===e.touches.length&&(this._dragging&&this._markDirty(),this._dragging=null,this._isPanning=!1,this._panStart=null)}_onTouchNodeStart(e,t){if(1!==e.touches.length)return;e.stopPropagation(),this._isPanning=!1;const i=e.touches[0],s=this._clientToSvg(i.clientX,i.clientY);if(!s)return;const o=this.nodePositions[t]||{x:0,y:0};this._dragOffset={x:s.x-o.x,y:s.y-o.y},this._dragging=t}_onMouseUp(){this._dragging&&this._markDirty(),this._dragging=null,this._isMousePanning=!1}async _setAsDefault(){if(!this.selectedLayout)return;for(const[e,t]of Object.entries(this.layouts))t.isDefault&&(t.isDefault=!1,await Ce(t));const e=this.layouts[this.selectedLayout];e&&(e.isDefault=!0,await Ce(e)),await this._loadLayouts(),this._layoutsLoaded=!0}async _deleteCurrentLayout(){if(!this.selectedLayout)return;const e=this.layouts[this.selectedLayout]?.name||this.selectedLayout,t=this.shadowRoot.querySelector("themed-dialog");await t.show({type:"confirm",title:"Delete Layout",message:`Delete "${e}"? This cannot be undone.`,confirmLabel:"Delete",confirmDanger:!0})&&(await De(this.selectedLayout),this.selectedLayout="",this.nodePositions={},this.manualEdges=[],this.hideAutoEdges=!1,this._dirty=!1,await this._loadLayouts(),this._autoLayout())}}customElements.define("topology-view",an);const ln={online:"#04d65c",offline:"#ef5350",warning:"#ffb74d",critical:"#ef5350",unknown:"#666"};class dn extends le{static properties={device:{type:Object},deviceId:{type:String}};static styles=[ce,n`
     :host {
       display: block;
       background: rgba(255,255,255,0.05);
@@ -1821,29 +1874,29 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     @media (max-width: 480px) {
       .attrs { grid-template-columns: 1fr; }
     }
-  `];render(){if(!this.device)return B``;const t=this.device,e=oe[t.status]||oe.unknown,s=Object.entries(t.attributes||{}),i=t.hidden_attributes||[],o=t.card_attributes||[];let n;n=o.length>0?o.map(t=>s.find(([e])=>e===t)).filter(Boolean):s.filter(([t])=>!i.includes(t)).slice(0,4);const r=t.attribute_transforms||{},a=[...t.tags||[],...t.server_tags||[]],d=t.device_name||this.deviceId;return this.style.setProperty("--status-color",e),this.setAttribute("role","button"),this.setAttribute("tabindex","0"),this.setAttribute("aria-label",`${d}, ${t.status||"unknown"}`),B`
+  `];render(){if(!this.device)return B``;const e=this.device,t=ln[e.status]||ln.unknown,i=Object.entries(e.attributes||{}),s=e.hidden_attributes||[],o=e.card_attributes||[];let n;n=o.length>0?o.map(e=>i.find(([t])=>t===e)).filter(Boolean):i.filter(([e])=>!s.includes(e)).slice(0,4);const r=e.attribute_transforms||{},a=[...e.tags||[],...e.server_tags||[]],l=e.device_name||this.deviceId;return this.style.setProperty("--status-color",t),this.setAttribute("role","button"),this.setAttribute("tabindex","0"),this.setAttribute("aria-label",`${l}, ${e.status||"unknown"}`),B`
       <div class="header">
-        <span class="name">${d}</span>
-        <span class="status" style="background: ${e}20; color: ${e}">
-          ${"online"===t.status||"offline"===t.status?"● ":(t.status,"⚠ ")}${t.status}
+        <span class="name">${l}</span>
+        <span class="status" style="background: ${t}20; color: ${t}">
+          ${"online"===e.status||"offline"===e.status?"● ":(e.status,"⚠ ")}${e.status}
         </span>
       </div>
-      <div class="type">${t.device_type||"unknown"}</div>
+      <div class="type">${e.device_type||"unknown"}</div>
       ${n.length>0?B`
         <div class="attrs">
-          ${n.map(([t,e])=>{const s=r[t],i=s?ht(e.value,s):`${e.value}${e.unit||""}`;return B`
+          ${n.map(([e,t])=>{const i=r[e],s=i?ue(t.value,i):`${t.value}${t.unit||""}`;return B`
               <div class="attr">
-                ${t.replace(/_/g," ")}: <span class="attr-value ${this._isWarning(t,e)?"warning":""}">${i}</span>
+                ${e.replace(/_/g," ")}: <span class="attr-value ${this._isWarning(e,t)?"warning":""}">${s}</span>
               </div>
             `})}
         </div>
       `:""}
       ${a.length>0?B`
         <div class="tags">
-          ${a.map((t,e)=>B`${e>0?B`<span class="tag-sep">·</span>`:""}<span class="tag">${t}</span>`)}
+          ${a.map((e,t)=>B`${t>0?B`<span class="tag-sep">·</span>`:""}<span class="tag">${e}</span>`)}
         </div>
       `:""}
-    `}_isWarning(t,e){const s={cpu_usage:90,memory_usage:90,disk_usage:95,cpu_temp:80};return s[t]&&e.value>s[t]}}customElements.define("device-card",ne);class re extends dt{static properties={devices:{type:Object},filter:{type:String},selectedTags:{type:Array},viewMode:{type:String},_groups:{type:Object,state:!0},_collapsedGroups:{type:Object,state:!0},_selectedUngrouped:{type:Array,state:!0},_selectedGrouped:{type:Object,state:!0}};static styles=[ct,n`
+    `}_isWarning(e,t){const i={cpu_usage:90,memory_usage:90,disk_usage:95,cpu_temp:80};return i[e]&&t.value>i[e]}}customElements.define("device-card",dn);class cn extends le{static properties={devices:{type:Object},filter:{type:String},selectedTags:{type:Array},viewMode:{type:String},_groups:{type:Object,state:!0},_collapsedGroups:{type:Object,state:!0},_selectedUngrouped:{type:Array,state:!0},_selectedGrouped:{type:Object,state:!0}};static styles=[ce,n`
     :host { display: block; padding: 20px; max-width: 1400px; margin: 0 auto; }
 
     .filter-bar {
@@ -1955,17 +2008,17 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       .filter-bar { gap: 6px; }
       .grid { grid-template-columns: 1fr; }
     }
-  `];constructor(){super(),this.devices={},this.filter="all",this.selectedTags=[],this.viewMode="all",this._groups={},this._collapsedGroups={},this._selectedUngrouped=[],this._selectedGrouped={},this._wsUnsub=null,this._lastFetchTime=0}connectedCallback(){super.connectedCallback(),this._loadDevices(),this._loadGroups(),this._wsUnsub=pt.onMessage(t=>{"device_update"===t.type&&(this.devices={...this.devices,[t.device_id]:t.device},this.requestUpdate())})}disconnectedCallback(){super.disconnectedCallback(),this._wsUnsub&&this._wsUnsub()}async _loadDevices(){try{const t=await vt(this._lastFetchTime);t&&Object.keys(t).length>0?this.devices={...this.devices,...t}:0===this._lastFetchTime&&(this.devices=t||{}),this._lastFetchTime=Date.now()/1e3}catch(t){console.error("Failed to load devices:",t)}}async _loadGroups(){try{this._groups=await At()}catch(t){console.error("Failed to load groups:",t)}}get _filteredDevices(){let t=Object.entries(this.devices);return"all"!==this.filter&&(t="warning"===this.filter?t.filter(([,t])=>"warning"===t.status||"critical"===t.status):t.filter(([,t])=>t.status===this.filter)),this.selectedTags.length>0&&(t=t.filter(([,t])=>{const e=[...t.tags||[],...t.server_tags||[]];return this.selectedTags.some(t=>e.includes(t))})),t}get _counts(){const t=Object.values(this.devices);return{all:t.length,online:t.filter(t=>"online"===t.status).length,offline:t.filter(t=>"offline"===t.status).length,warning:t.filter(t=>"warning"===t.status||"critical"===t.status).length}}_onTagAdd(t){const e=t.detail.tag;this.selectedTags.includes(e)||(this.selectedTags=[...this.selectedTags,e])}_onTagRemove(t){this.selectedTags=this.selectedTags.filter(e=>e!==t.detail.tag)}render(){const t=this._counts;return B`
+  `];constructor(){super(),this.devices={},this.filter="all",this.selectedTags=[],this.viewMode="all",this._groups={},this._collapsedGroups={},this._selectedUngrouped=[],this._selectedGrouped={},this._wsUnsub=null,this._lastFetchTime=0}connectedCallback(){super.connectedCallback(),this._loadDevices(),this._loadGroups(),this._wsUnsub=pe.onMessage(e=>{"device_update"===e.type&&(this.devices={...this.devices,[e.device_id]:e.device},this.requestUpdate())})}disconnectedCallback(){super.disconnectedCallback(),this._wsUnsub&&this._wsUnsub()}async _loadDevices(){try{const e=await ve(this._lastFetchTime);e&&Object.keys(e).length>0?this.devices={...this.devices,...e}:0===this._lastFetchTime&&(this.devices=e||{}),this._lastFetchTime=Date.now()/1e3}catch(e){console.error("Failed to load devices:",e)}}async _loadGroups(){try{this._groups=await Ae()}catch(e){console.error("Failed to load groups:",e)}}get _filteredDevices(){let e=Object.entries(this.devices);return"all"!==this.filter&&(e="warning"===this.filter?e.filter(([,e])=>"warning"===e.status||"critical"===e.status):e.filter(([,e])=>e.status===this.filter)),this.selectedTags.length>0&&(e=e.filter(([,e])=>{const t=[...e.tags||[],...e.server_tags||[]];return this.selectedTags.some(e=>t.includes(e))})),e}get _counts(){const e=Object.values(this.devices);return{all:e.length,online:e.filter(e=>"online"===e.status).length,offline:e.filter(e=>"offline"===e.status).length,warning:e.filter(e=>"warning"===e.status||"critical"===e.status).length}}_onTagAdd(e){const t=e.detail.tag;this.selectedTags.includes(t)||(this.selectedTags=[...this.selectedTags,t])}_onTagRemove(e){this.selectedTags=this.selectedTags.filter(t=>t!==e.detail.tag)}render(){const e=this._counts;return B`
       <div class="filter-bar">
         <div class="status-filters">
           <button class="filter-btn ${"all"===this.filter?"active":""}"
-            @click=${()=>this.filter="all"}>All (${t.all})</button>
+            @click=${()=>this.filter="all"}>All (${e.all})</button>
           <button class="filter-btn ${"online"===this.filter?"active":""}"
-            @click=${()=>this.filter="online"}>Online (${t.online})</button>
+            @click=${()=>this.filter="online"}>Online (${e.online})</button>
           <button class="filter-btn ${"offline"===this.filter?"active":""}"
-            @click=${()=>this.filter="offline"}>Offline (${t.offline})</button>
+            @click=${()=>this.filter="offline"}>Offline (${e.offline})</button>
           <button class="filter-btn ${"warning"===this.filter?"active":""}"
-            @click=${()=>this.filter="warning"}>Warning (${t.warning})</button>
+            @click=${()=>this.filter="warning"}>Warning (${e.warning})</button>
         </div>
 
         <tag-picker
@@ -1985,10 +2038,10 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
 
       ${this.selectedTags.length>0?B`
         <div class="active-tags">
-          ${this.selectedTags.map(t=>B`
+          ${this.selectedTags.map(e=>B`
             <span class="active-tag">
-              #${t}
-              <span class="remove" @click=${()=>this.selectedTags=this.selectedTags.filter(e=>e!==t)}>&times;</span>
+              #${e}
+              <span class="remove" @click=${()=>this.selectedTags=this.selectedTags.filter(t=>t!==e)}>&times;</span>
             </span>
           `)}
           <button class="clear-all" @click=${()=>{this.selectedTags=[],this.filter="all"}}>Clear all</button>
@@ -1996,18 +2049,18 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       `:""}
 
       ${"group"===this.viewMode?this._renderByGroup():this._renderAll()}
-    `}_renderAll(){const t=this._filteredDevices;return 0===t.length?B`<div class="empty">No devices found</div>`:B`
+    `}_renderAll(){const e=this._filteredDevices;return 0===e.length?B`<div class="empty">No devices found</div>`:B`
       <div class="grid">
-        ${t.map(([t,e])=>B`
+        ${e.map(([e,t])=>B`
           <device-card
-            .device=${e}
-            .deviceId=${t}
-            @click=${()=>this._selectDevice(t)}
+            .device=${t}
+            .deviceId=${e}
+            @click=${()=>this._selectDevice(e)}
           ></device-card>
         `)}
       </div>
-    `}_renderByGroup(){const t=this._filteredDevices,e=Object.values(this._groups),s={},i=new Set;e.forEach(e=>{const o=t.filter(([t])=>(e.device_ids||[]).includes(t));s[e.id]=o,o.forEach(([t])=>i.add(t))});const o=t.filter(([t])=>!i.has(t));return B`
-      ${e.map(t=>this._renderGroupSection(t,s[t.id]||[]))}
+    `}_renderByGroup(){const e=this._filteredDevices,t=Object.values(this._groups),i={},s=new Set;t.forEach(t=>{const o=e.filter(([e])=>(t.device_ids||[]).includes(e));i[t.id]=o,o.forEach(([e])=>s.add(e))});const o=e.filter(([e])=>!s.has(e));return B`
+      ${t.map(e=>this._renderGroupSection(e,i[e.id]||[]))}
       ${o.length>0?B`
         <div class="group-section">
           <div class="ungrouped-header">Ungrouped (${o.length})</div>
@@ -2016,7 +2069,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             <div class="select-toolbar">
               <span>${this._selectedUngrouped.length} selected</span>
               <select id="group-assign-select">
-                ${e.map(t=>B`<option value=${t.id}>${t.name}</option>`)}
+                ${t.map(e=>B`<option value=${e.id}>${e.name}</option>`)}
               </select>
               <button @click=${this._addSelectedToGroup}>Add to Group</button>
               <button @click=${this._createNewGroupFromSelected}
@@ -2026,54 +2079,54 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             </div>
           `:""}
           <div class="grid">
-            ${o.map(([t,e])=>B`
-              <device-card .device=${e} .deviceId=${t}
-                class="${this._selectedUngrouped.includes(t)?"selected":""}"
-                @click=${e=>{e.ctrlKey||e.metaKey?(e.preventDefault(),this._toggleUngroupedSelection(t)):this._selectDevice(t)}}></device-card>
+            ${o.map(([e,t])=>B`
+              <device-card .device=${t} .deviceId=${e}
+                class="${this._selectedUngrouped.includes(e)?"selected":""}"
+                @click=${t=>{t.ctrlKey||t.metaKey?(t.preventDefault(),this._toggleUngroupedSelection(e)):this._selectDevice(e)}}></device-card>
             `)}
           </div>
         </div>
       `:""}
-      ${0===t.length?B`<div class="empty">No devices found</div>`:""}
-    `}_renderGroupSection(t,e){const s=!!this._collapsedGroups[t.id],i=Object.entries(this.devices).filter(([e])=>(t.device_ids||[]).includes(e)).map(([,t])=>t),o=i.filter(t=>"online"===t.status).length,n=i.length;return B`
+      ${0===e.length?B`<div class="empty">No devices found</div>`:""}
+    `}_renderGroupSection(e,t){const i=!!this._collapsedGroups[e.id],s=Object.entries(this.devices).filter(([t])=>(e.device_ids||[]).includes(t)).map(([,e])=>e),o=s.filter(e=>"online"===e.status).length,n=s.length;return B`
       <div class="group-section">
         <div class="group-section-header"
-          @click=${()=>this._toggleGroupCollapse(t.id)}>
-          <span class="group-chevron ${s?"":"open"}">&#9658;</span>
-          <span class="group-section-name">${t.name}</span>
-          <span class="group-device-count">${e.length} device${1!==e.length?"s":""}</span>
+          @click=${()=>this._toggleGroupCollapse(e.id)}>
+          <span class="group-chevron ${i?"":"open"}">&#9658;</span>
+          <span class="group-section-name">${e.name}</span>
+          <span class="group-device-count">${t.length} device${1!==t.length?"s":""}</span>
           <div class="group-health">
             <span class="health-dot" style="color: #04d65c">
               ${o}/${n} online
             </span>
           </div>
-          <button class="edit-policy-btn" @click=${e=>{e.stopPropagation(),this._editGroupPolicy(t.id)}}>Edit Policy</button>
+          <button class="edit-policy-btn" @click=${t=>{t.stopPropagation(),this._editGroupPolicy(e.id)}}>Edit Policy</button>
           <button class="edit-policy-btn" style="background: rgba(239,83,80,0.1); border-color: rgba(239,83,80,0.2); color: #ef5350;"
-            @click=${e=>{e.stopPropagation(),this._deleteGroup(t.id,t.name)}}>Delete</button>
+            @click=${t=>{t.stopPropagation(),this._deleteGroup(e.id,e.name)}}>Delete</button>
         </div>
-        ${s?"":B`
+        ${i?"":B`
           <div class="group-body">
-            ${this._selectedGrouped[t.id]?.length>0?B`
+            ${this._selectedGrouped[e.id]?.length>0?B`
               <div class="select-toolbar">
-                <span>${this._selectedGrouped[t.id].length} selected</span>
-                <button @click=${()=>this._removeSelectedFromGroup(t.id)}>Remove from Group</button>
+                <span>${this._selectedGrouped[e.id].length} selected</span>
+                <button @click=${()=>this._removeSelectedFromGroup(e.id)}>Remove from Group</button>
                 <button style="background: rgba(255,255,255,0.1); color: #fff;"
-                  @click=${()=>{this._selectedGrouped={...this._selectedGrouped,[t.id]:[]}}}>Cancel</button>
+                  @click=${()=>{this._selectedGrouped={...this._selectedGrouped,[e.id]:[]}}}>Cancel</button>
               </div>
             `:""}
-            ${0===e.length?B`<div style="color: #fff; font-size: 13px; padding: 8px 4px;">No devices match current filters</div>`:B`
+            ${0===t.length?B`<div style="color: #fff; font-size: 13px; padding: 8px 4px;">No devices match current filters</div>`:B`
                 <div class="grid">
-                  ${e.map(([e,s])=>B`
-                    <device-card .device=${s} .deviceId=${e}
-                      class="${(this._selectedGrouped[t.id]||[]).includes(e)?"selected":""}"
-                      @click=${s=>{s.ctrlKey||s.metaKey?(s.preventDefault(),this._toggleGroupedSelection(t.id,e)):this._selectDevice(e)}}></device-card>
+                  ${t.map(([t,i])=>B`
+                    <device-card .device=${i} .deviceId=${t}
+                      class="${(this._selectedGrouped[e.id]||[]).includes(t)?"selected":""}"
+                      @click=${i=>{i.ctrlKey||i.metaKey?(i.preventDefault(),this._toggleGroupedSelection(e.id,t)):this._selectDevice(t)}}></device-card>
                   `)}
                 </div>
               `}
           </div>
         `}
       </div>
-    `}_toggleGroupCollapse(t){this._collapsedGroups={...this._collapsedGroups,[t]:!this._collapsedGroups[t]}}_selectDevice(t){this.dispatchEvent(new CustomEvent("device-select",{detail:{deviceId:t},bubbles:!0,composed:!0}))}_editGroupPolicy(t){this.dispatchEvent(new CustomEvent("group-edit",{detail:{groupId:t},bubbles:!0,composed:!0}))}_toggleUngroupedSelection(t){this._selectedUngrouped.includes(t)?this._selectedUngrouped=this._selectedUngrouped.filter(e=>e!==t):this._selectedUngrouped=[...this._selectedUngrouped,t]}async _createNewGroupFromSelected(){const t=prompt("Enter group name:");if(!t)return;const e=t.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");try{await zt(e,t,this._selectedUngrouped),this._selectedUngrouped=[],this._loadGroups()}catch(t){console.error("Failed to create group:",t)}}async _deleteGroup(t,e){if(confirm(`Delete group "${e}"? Devices will be ungrouped.`))try{await Nt(t),this._loadGroups()}catch(t){console.error("Failed to delete group:",t)}}_toggleGroupedSelection(t,e){const s=this._selectedGrouped[t]||[],i=s.includes(e)?s.filter(t=>t!==e):[...s,e];this._selectedGrouped={...this._selectedGrouped,[t]:i}}async _removeSelectedFromGroup(t){const e=this._groups[t];if(!e)return;const s=this._selectedGrouped[t]||[],i=(e.device_ids||[]).filter(t=>!s.includes(t));try{await Ft(t,{...e,device_ids:i}),this._selectedGrouped={...this._selectedGrouped,[t]:[]},this._loadGroups()}catch(t){console.error("Failed to remove devices from group:",t)}}async _addSelectedToGroup(){const t=this.shadowRoot.querySelector("#group-assign-select");if(!t)return;const e=t.value,s=this._groups[e];if(!s)return;const i=[...new Set([...s.device_ids||[],...this._selectedUngrouped])];try{await Ft(e,{...s,device_ids:i}),this._selectedUngrouped=[],this._loadGroups()}catch(t){console.error("Failed to add devices to group:",t)}}}customElements.define("dashboard-view",re);class ae extends dt{static properties={_tags:{type:Array,state:!0},_loading:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_renamingTag:{type:String,state:!0},_renameValue:{type:String,state:!0},_selectedTags:{type:Object,state:!0}};static styles=[ct,n`
+    `}_toggleGroupCollapse(e){this._collapsedGroups={...this._collapsedGroups,[e]:!this._collapsedGroups[e]}}_selectDevice(e){this.dispatchEvent(new CustomEvent("device-select",{detail:{deviceId:e},bubbles:!0,composed:!0}))}_editGroupPolicy(e){this.dispatchEvent(new CustomEvent("group-edit",{detail:{groupId:e},bubbles:!0,composed:!0}))}_toggleUngroupedSelection(e){this._selectedUngrouped.includes(e)?this._selectedUngrouped=this._selectedUngrouped.filter(t=>t!==e):this._selectedUngrouped=[...this._selectedUngrouped,e]}async _createNewGroupFromSelected(){const e=prompt("Enter group name:");if(!e)return;const t=e.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");try{await ze(t,e,this._selectedUngrouped),this._selectedUngrouped=[],this._loadGroups()}catch(e){console.error("Failed to create group:",e)}}async _deleteGroup(e,t){if(confirm(`Delete group "${t}"? Devices will be ungrouped.`))try{await Me(e),this._loadGroups()}catch(e){console.error("Failed to delete group:",e)}}_toggleGroupedSelection(e,t){const i=this._selectedGrouped[e]||[],s=i.includes(t)?i.filter(e=>e!==t):[...i,t];this._selectedGrouped={...this._selectedGrouped,[e]:s}}async _removeSelectedFromGroup(e){const t=this._groups[e];if(!t)return;const i=this._selectedGrouped[e]||[],s=(t.device_ids||[]).filter(e=>!i.includes(e));try{await Fe(e,{...t,device_ids:s}),this._selectedGrouped={...this._selectedGrouped,[e]:[]},this._loadGroups()}catch(e){console.error("Failed to remove devices from group:",e)}}async _addSelectedToGroup(){const e=this.shadowRoot.querySelector("#group-assign-select");if(!e)return;const t=e.value,i=this._groups[t];if(!i)return;const s=[...new Set([...i.device_ids||[],...this._selectedUngrouped])];try{await Fe(t,{...i,device_ids:s}),this._selectedUngrouped=[],this._loadGroups()}catch(e){console.error("Failed to add devices to group:",e)}}}customElements.define("dashboard-view",cn);class pn extends le{static properties={_tags:{type:Array,state:!0},_loading:{type:Boolean,state:!0},_newTagName:{type:String,state:!0},_renamingTag:{type:String,state:!0},_renameValue:{type:String,state:!0},_selectedTags:{type:Object,state:!0}};static styles=[ce,n`
     :host { display: block; }
 
     .section {
@@ -2141,16 +2194,16 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     @media (max-width: 768px) {
       .tag-grid { grid-template-columns: 1fr; }
     }
-  `];constructor(){super(),this._tags=[],this._loading=!0,this._newTagName="",this._renamingTag=null,this._renameValue="",this._selectedTags=new Set}connectedCallback(){super.connectedCallback(),this._loadTags()}async _loadTags(){this._loading=!0;try{const t=await Lt().catch(()=>[]);this._tags=Array.isArray(t)?t.map(t=>"string"==typeof t?{tag:t,count:0}:t).sort((t,e)=>t.tag.localeCompare(e.tag)):[]}finally{this._loading=!1}}render(){const t=this._selectedTags?this._selectedTags.size:0;return B`
+  `];constructor(){super(),this._tags=[],this._loading=!0,this._newTagName="",this._renamingTag=null,this._renameValue="",this._selectedTags=new Set}connectedCallback(){super.connectedCallback(),this._loadTags()}async _loadTags(){this._loading=!0;try{const e=await Oe().catch(()=>[]);this._tags=Array.isArray(e)?e.map(e=>"string"==typeof e?{tag:e,count:0}:e).sort((e,t)=>e.tag.localeCompare(t.tag)):[]}finally{this._loading=!1}}render(){const e=this._selectedTags?this._selectedTags.size:0;return B`
       <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div class="section-title" style="margin-bottom: 0;">Tag Registry</div>
           <span style="font-size: 10px; color: #fff;">Server-managed tags only</span>
         </div>
 
-        ${t>0?B`
+        ${e>0?B`
           <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px;">
-            <span style="font-size: 12px; color: rgba(255,255,255,0.8);">${t} selected</span>
+            <span style="font-size: 12px; color: rgba(255,255,255,0.8);">${e} selected</span>
             <button class="small-btn cancel" style="font-size: 11px; padding: 3px 10px;"
               @click=${this._deleteSelectedTags}>Delete Selected</button>
             <button class="small-btn cancel" style="font-size: 11px; padding: 3px 10px;"
@@ -2160,7 +2213,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
 
         ${this._tags.length>0?B`
           <div class="tag-grid">
-            ${this._tags.map(t=>this._renderTagCard(t))}
+            ${this._tags.map(e=>this._renderTagCard(e))}
           </div>
         `:B`<div style="color: #fff; font-size: 13px; margin-bottom: 12px;">No tags created yet</div>`}
 
@@ -2169,8 +2222,8 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             <div style="font-size: 11px; color: #fff; margin-bottom: 6px;">Rename "${this._renamingTag}"</div>
             <div class="sensor-form-grid" style="grid-template-columns: 1fr;">
               <input type="text" .value=${this._renameValue}
-                @input=${t=>this._renameValue=t.target.value}
-                @keydown=${t=>{"Enter"===t.key&&this._saveRename(this._renamingTag),"Escape"===t.key&&this._cancelRename()}}>
+                @input=${e=>this._renameValue=e.target.value}
+                @keydown=${e=>{"Enter"===e.key&&this._saveRename(this._renamingTag),"Escape"===e.key&&this._cancelRename()}}>
             </div>
             <div class="sensor-form-actions">
               <button class="form-btn save" @click=${()=>this._saveRename(this._renamingTag)}>Rename</button>
@@ -2182,31 +2235,31 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
         <div class="add-row" style="margin-top: 12px;">
           <input class="small-input" type="text" placeholder="New tag name..."
             .value=${this._newTagName}
-            @input=${t=>this._newTagName=t.target.value}
-            @keydown=${t=>"Enter"===t.key&&this._createTag()}>
+            @input=${e=>this._newTagName=e.target.value}
+            @keydown=${e=>"Enter"===e.key&&this._createTag()}>
           <button class="small-btn" @click=${this._createTag}>Create Tag</button>
         </div>
       </div>
-    `}_renderTagCard(t){const e=this._selectedTags&&this._selectedTags.has(t.tag),s=t.device_count||t.count||0;return B`
-      <div class="tag-card ${e?"selected":""}"
+    `}_renderTagCard(e){const t=this._selectedTags&&this._selectedTags.has(e.tag),i=e.device_count||e.count||0;return B`
+      <div class="tag-card ${t?"selected":""}"
         role="checkbox"
-        aria-checked=${e?"true":"false"}
-        aria-label="Tag: ${t.tag}, used by ${s} device${1!==s?"s":""}"
+        aria-checked=${t?"true":"false"}
+        aria-label="Tag: ${e.tag}, used by ${i} device${1!==i?"s":""}"
         tabindex="0"
-        @click=${()=>this._toggleTagSelection(t.tag)}
-        @keydown=${e=>("Enter"===e.key||" "===e.key)&&this._toggleTagSelection(t.tag)}>
+        @click=${()=>this._toggleTagSelection(e.tag)}
+        @keydown=${t=>("Enter"===t.key||" "===t.key)&&this._toggleTagSelection(e.tag)}>
         <div class="tag-card-top">
-          <span class="tag-card-name">${t.tag}</span>
+          <span class="tag-card-name">${e.tag}</span>
         </div>
-        <div class="tag-card-count">${s} device${1!==s?"s":""}</div>
+        <div class="tag-card-count">${i} device${1!==i?"s":""}</div>
         <div class="tag-card-actions">
-          <button class="sensor-btn edit" aria-label="Rename tag ${t.tag}"
-            @click=${e=>{e.stopPropagation(),this._startRename(t.tag)}}>Rename</button>
-          <button class="sensor-btn remove" aria-label="Delete tag ${t.tag}"
-            @click=${e=>{e.stopPropagation(),this._deleteTag(t.tag)}}>Delete</button>
+          <button class="sensor-btn edit" aria-label="Rename tag ${e.tag}"
+            @click=${t=>{t.stopPropagation(),this._startRename(e.tag)}}>Rename</button>
+          <button class="sensor-btn remove" aria-label="Delete tag ${e.tag}"
+            @click=${t=>{t.stopPropagation(),this._deleteTag(e.tag)}}>Delete</button>
         </div>
       </div>
-    `}_toggleTagSelection(t){const e=new Set(this._selectedTags);e.has(t)?e.delete(t):e.add(t),this._selectedTags=e}async _deleteSelectedTags(){const t=[...this._selectedTags];if(confirm(`Delete ${t.length} tag${1!==t.length?"s":""}?`)){for(const e of t)try{await It(e)}catch(t){console.error(t)}this._selectedTags=new Set,await this._loadTags()}}_startRename(t){this._renamingTag=t,this._renameValue=t}_cancelRename(){this._renamingTag=null,this._renameValue=""}async _saveRename(t){const e=this._renameValue.trim();if(e&&e!==t){try{await Gt(t,e),await this._loadTags()}catch(t){console.error("Failed to rename tag:",t)}this._cancelRename()}else this._cancelRename()}async _createTag(){const t=this._newTagName.trim();if(t)try{await Ot(t),this._newTagName="",await this._loadTags()}catch(t){console.error("Failed to create tag:",t)}}async _deleteTag(t){const e=this._tags.find(e=>e.tag===t);if(!(e&&e.count>0)||confirm(`"${t}" is used by ${e.count} device(s). Delete anyway?`))try{await It(t),await this._loadTags()}catch(t){console.error("Failed to delete tag:",t)}}}customElements.define("tag-registry-settings",ae);const de={attr:"",value:""},le={name:"",expression:""};class ce extends dt{static properties={_settings:{type:Object,state:!0},_loading:{type:Boolean,state:!0},_savingSettings:{type:Boolean,state:!0},_settingsSaved:{type:Boolean,state:!0},_editingTransformIndex:{type:Number,state:!0},_transformError:{type:String,state:!0},_importStatus:{type:String,state:!0}};static styles=[ct,n`
+    `}_toggleTagSelection(e){const t=new Set(this._selectedTags);t.has(e)?t.delete(e):t.add(e),this._selectedTags=t}async _deleteSelectedTags(){const e=[...this._selectedTags];if(confirm(`Delete ${e.length} tag${1!==e.length?"s":""}?`)){for(const t of e)try{await Ge(t)}catch(e){console.error(e)}this._selectedTags=new Set,await this._loadTags()}}_startRename(e){this._renamingTag=e,this._renameValue=e}_cancelRename(){this._renamingTag=null,this._renameValue=""}async _saveRename(e){const t=this._renameValue.trim();if(t&&t!==e){try{await Ie(e,t),await this._loadTags()}catch(e){console.error("Failed to rename tag:",e)}this._cancelRename()}else this._cancelRename()}async _createTag(){const e=this._newTagName.trim();if(e)try{await Le(e),this._newTagName="",await this._loadTags()}catch(e){console.error("Failed to create tag:",e)}}async _deleteTag(e){const t=this._tags.find(t=>t.tag===e);if(!(t&&t.count>0)||confirm(`"${e}" is used by ${t.count} device(s). Delete anyway?`))try{await Ge(e),await this._loadTags()}catch(e){console.error("Failed to delete tag:",e)}}}customElements.define("tag-registry-settings",pn);const un={attr:"",value:""},hn={name:"",expression:""};class gn extends le{static properties={_settings:{type:Object,state:!0},_loading:{type:Boolean,state:!0},_savingSettings:{type:Boolean,state:!0},_settingsSaved:{type:Boolean,state:!0},_editingTransformIndex:{type:Number,state:!0},_transformError:{type:String,state:!0},_importStatus:{type:String,state:!0}};static styles=[ce,n`
     :host { display: block; padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     h2 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 16px; margin-top: 0; }
@@ -2254,72 +2307,72 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
     @media (max-width: 768px) {
       :host { padding: 12px; }
     }
-  `];constructor(){super(),this._settings=null,this._loading=!0,this._savingSettings=!1,this._settingsSaved=!1,this._transformError="",this._editingTransformIndex=-1}connectedCallback(){super.connectedCallback(),this._loadSettings()}async _loadSettings(){this._loading=!0;try{this._settings=await Ut().catch(()=>({}))}finally{this._loading=!1}}render(){return this._loading?B`<div class="loading">Loading settings...</div>`:B`
+  `];constructor(){super(),this._settings=null,this._loading=!0,this._savingSettings=!1,this._settingsSaved=!1,this._transformError="",this._editingTransformIndex=-1}connectedCallback(){super.connectedCallback(),this._loadSettings()}async _loadSettings(){this._loading=!0;try{this._settings=await Ue().catch(()=>({}))}finally{this._loading=!1}}render(){return this._loading?B`<div class="loading">Loading settings...</div>`:B`
       <h2>Settings</h2>
       <tag-registry-settings></tag-registry-settings>
       ${this._renderCustomTransforms()}
       ${this._renderGlobalDefaults()}
       ${this._renderDeviceManagement()}
       ${this._renderExportImport()}
-    `}_renderCustomTransforms(){const t=(this._settings||{}).custom_transforms||[],e=le;return B`
+    `}_renderCustomTransforms(){const e=(this._settings||{}).custom_transforms||[],t=hn;return B`
       <div class="section">
         <div class="section-title">Custom Transforms</div>
         <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 12px;">
           Define JS expressions to transform attribute values. Use <code style="color: #00D4FF;">value</code> as the input variable.
         </div>
 
-        ${t.map((t,e)=>B`
+        ${e.map((e,t)=>B`
           <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 12px; color: rgba(255,255,255,0.8); min-width: 120px;">${t.name}</span>
-            <code style="font-size: 11px; color: rgba(255,255,255,0.5); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.expression}</code>
+            <span style="font-size: 12px; color: rgba(255,255,255,0.8); min-width: 120px;">${e.name}</span>
+            <code style="font-size: 11px; color: rgba(255,255,255,0.5); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${e.expression}</code>
             <button class="icon-btn" style="color: #00D4FF;"
-              @click=${()=>this._editCustomTransform(e)}>Edit</button>
+              @click=${()=>this._editCustomTransform(t)}>Edit</button>
             <button class="icon-btn delete"
-              @click=${()=>this._removeCustomTransform(e)}>Remove</button>
+              @click=${()=>this._removeCustomTransform(t)}>Remove</button>
           </div>
         `)}
 
         <div style="display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap;">
           <input class="small-input" type="text" placeholder="Name (e.g. C to F)"
             style="width: 150px;"
-            .value=${e.name}
-            @input=${t=>{le.name=t.target.value,this.requestUpdate()}}>
+            .value=${t.name}
+            @input=${e=>{hn.name=e.target.value,this.requestUpdate()}}>
           <input class="small-input" type="text" placeholder="Expression (e.g. value * 1.8 + 32)"
             style="flex: 1; min-width: 200px;"
-            .value=${e.expression}
-            @input=${t=>{le.expression=t.target.value,this.requestUpdate()}}>
+            .value=${t.expression}
+            @input=${e=>{hn.expression=e.target.value,this.requestUpdate()}}>
           <button class="small-btn" @click=${this._addCustomTransform.bind(this)}>${this._editingTransformIndex>=0?"Save":"Add"}</button>
           ${this._editingTransformIndex>=0?B`<button class="small-btn" style="background: rgba(255,255,255,0.1); color: #fff;" @click=${()=>this._cancelEditTransform()}>Cancel</button>`:""}
         </div>
 
         ${this._transformError?B`<div style="font-size: 11px; color: #ef5350; margin-top: 6px;">${this._transformError}</div>`:""}
       </div>
-    `}_editCustomTransform(t){const e=((this._settings||{}).custom_transforms||[])[t];e&&(le.name=e.name,le.expression=e.expression,this._editingTransformIndex=t,this._transformError="",this.requestUpdate())}_cancelEditTransform(){le.name="",le.expression="",this._editingTransformIndex=-1,this._transformError="",this.requestUpdate()}_addCustomTransform(){const t=(le.name||"").trim(),e=(le.expression||"").trim();if(this._transformError="",!t||!e)return void(this._transformError="Name and expression are required.");try{new Function("value","return ("+e+")")}catch(t){return void(this._transformError=`Invalid expression: ${t.message}`)}const s=this._settings||{},i=[...s.custom_transforms||[]];if(this._editingTransformIndex>=0)i[this._editingTransformIndex]={...i[this._editingTransformIndex],name:t,expression:e},this._editingTransformIndex=-1;else{const s="custom:"+t.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");if(i.some(t=>t.id===s))return void(this._transformError="A transform with this name already exists.");i.push({id:s,name:t,expression:e})}this._settings={...s,custom_transforms:i},le.name="",le.expression="",this.requestUpdate(),this._saveSettings()}_removeCustomTransform(t){const e=this._settings||{},s=[...e.custom_transforms||[]];s.splice(t,1),this._settings={...e,custom_transforms:s},this._saveSettings()}_renderGlobalDefaults(){const t=(this._settings||{}).default_thresholds||{},e=de;return B`
+    `}_editCustomTransform(e){const t=((this._settings||{}).custom_transforms||[])[e];t&&(hn.name=t.name,hn.expression=t.expression,this._editingTransformIndex=e,this._transformError="",this.requestUpdate())}_cancelEditTransform(){hn.name="",hn.expression="",this._editingTransformIndex=-1,this._transformError="",this.requestUpdate()}_addCustomTransform(){const e=(hn.name||"").trim(),t=(hn.expression||"").trim();if(this._transformError="",!e||!t)return void(this._transformError="Name and expression are required.");try{new Function("value","return ("+t+")")}catch(e){return void(this._transformError=`Invalid expression: ${e.message}`)}const i=this._settings||{},s=[...i.custom_transforms||[]];if(this._editingTransformIndex>=0)s[this._editingTransformIndex]={...s[this._editingTransformIndex],name:e,expression:t},this._editingTransformIndex=-1;else{const i="custom:"+e.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");if(s.some(e=>e.id===i))return void(this._transformError="A transform with this name already exists.");s.push({id:i,name:e,expression:t})}this._settings={...i,custom_transforms:s},hn.name="",hn.expression="",this.requestUpdate(),this._saveSettings()}_removeCustomTransform(e){const t=this._settings||{},i=[...t.custom_transforms||[]];i.splice(e,1),this._settings={...t,custom_transforms:i},this._saveSettings()}_renderGlobalDefaults(){const e=(this._settings||{}).default_thresholds||{},t=un;return B`
       <div class="section">
         <div class="section-title">Global Defaults</div>
 
         <div style="font-size: 11px; color: #fff; margin-bottom: 10px;">Default Warning Thresholds</div>
 
-        ${Object.keys(t).filter(e=>null!=t[e]).map(e=>B`
+        ${Object.keys(e).filter(t=>null!=e[t]).map(t=>B`
           <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 12px; color: rgba(255,255,255,0.8); min-width: 140px;">${e}</span>
+            <span style="font-size: 12px; color: rgba(255,255,255,0.8); min-width: 140px;">${t}</span>
             <input class="settings-input" type="number" style="width: 90px;"
-              .value=${String(t[e])}
-              @input=${t=>this._updateDefaultThreshold(e,t.target.value)}>
+              .value=${String(e[t])}
+              @input=${e=>this._updateDefaultThreshold(t,e.target.value)}>
             <button class="icon-btn delete"
-              @click=${()=>this._removeDefaultThreshold(e)}>Remove</button>
+              @click=${()=>this._removeDefaultThreshold(t)}>Remove</button>
           </div>
         `)}
 
         <div style="display: flex; gap: 6px; align-items: center; margin-top: 8px; margin-bottom: 16px; flex-wrap: wrap;">
           <input class="small-input" type="text" placeholder="Attribute name..."
             style="width: 150px;"
-            .value=${e.attr}
-            @input=${t=>{de.attr=t.target.value,this.requestUpdate()}}>
+            .value=${t.attr}
+            @input=${e=>{un.attr=e.target.value,this.requestUpdate()}}>
           <input class="small-input" type="number" placeholder="Value..."
             style="width: 90px;"
-            .value=${e.value}
-            @input=${t=>{de.value=t.target.value,this.requestUpdate()}}>
+            .value=${t.value}
+            @input=${e=>{un.value=e.target.value,this.requestUpdate()}}>
           <button class="small-btn" @click=${this._addDefaultThreshold.bind(this)}>Add threshold</button>
         </div>
 
@@ -2331,7 +2384,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           ${this._settingsSaved?B`<span class="saved-msg">Saved!</span>`:""}
         </div>
       </div>
-    `}_updateDefaultThreshold(t,e){const s=this._settings||{};this._settings={...s,default_thresholds:{...s.default_thresholds||{},[t]:""===e?null:Number(e)}}}_removeDefaultThreshold(t){const e=this._settings||{},s={...e.default_thresholds||{}};delete s[t],this._settings={...e,default_thresholds:s}}_addDefaultThreshold(){const t=(de.attr||"").trim(),e=(de.value||"").trim();t&&""!==e&&(this._updateDefaultThreshold(t,e),de.attr="",de.value="",this.requestUpdate())}_renderDeviceManagement(){const t=this._settings||{},e=t.device_cleanup_days??0,s=t.alert_cooldown_minutes??30;return B`
+    `}_updateDefaultThreshold(e,t){const i=this._settings||{};this._settings={...i,default_thresholds:{...i.default_thresholds||{},[e]:""===t?null:Number(t)}}}_removeDefaultThreshold(e){const t=this._settings||{},i={...t.default_thresholds||{}};delete i[e],this._settings={...t,default_thresholds:i}}_addDefaultThreshold(){const e=(un.attr||"").trim(),t=(un.value||"").trim();e&&""!==t&&(this._updateDefaultThreshold(e,t),un.attr="",un.value="",this.requestUpdate())}_renderDeviceManagement(){const e=this._settings||{},t=e.device_cleanup_days??0,i=e.alert_cooldown_minutes??30;return B`
       <div class="section">
         <div class="section-title">Device Management</div>
 
@@ -2340,8 +2393,8 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             <div style="font-size: 11px; color: #fff; margin-bottom: 6px;">Auto-Cleanup Offline Devices</div>
             <div style="display: flex; gap: 6px; align-items: center;">
               <select class="small-input" style="width: 140px;"
-                .value=${String(e)}
-                @change=${t=>{this._settings={...this._settings,device_cleanup_days:Number(t.target.value)},this._saveSettings()}}>
+                .value=${String(t)}
+                @change=${e=>{this._settings={...this._settings,device_cleanup_days:Number(e.target.value)},this._saveSettings()}}>
                 <option value="0">Disabled</option>
                 <option value="1">After 1 day</option>
                 <option value="3">After 3 days</option>
@@ -2359,8 +2412,8 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
             <div style="font-size: 11px; color: #fff; margin-bottom: 6px;">Alert Cooldown</div>
             <div style="display: flex; gap: 6px; align-items: center;">
               <select class="small-input" style="width: 140px;"
-                .value=${String(s)}
-                @change=${t=>{this._settings={...this._settings,alert_cooldown_minutes:Number(t.target.value)},this._saveSettings()}}>
+                .value=${String(i)}
+                @change=${e=>{this._settings={...this._settings,alert_cooldown_minutes:Number(e.target.value)},this._saveSettings()}}>
                 <option value="0">Disabled</option>
                 <option value="5">5 minutes</option>
                 <option value="15">15 minutes</option>
@@ -2391,7 +2444,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
           ${this._importStatus?B`<span style="font-size: 12px; color: ${this._importStatus.startsWith("Error")?"#ef5350":"#04d65c"};">${this._importStatus}</span>`:""}
         </div>
       </div>
-    `}async _exportSettings(){try{const t=await jt(),e=new Blob([JSON.stringify(t,null,2)],{type:"application/json"}),s=URL.createObjectURL(e),i=document.createElement("a");i.href=s,i.download=`mqtt-monitor-settings-${(new Date).toISOString().slice(0,10)}.json`,i.click(),URL.revokeObjectURL(s)}catch(t){console.error("Export failed:",t)}}async _importFile(t){const e=t.target.files[0];if(e){this._importStatus="";try{const t=await e.text(),s=JSON.parse(t);if(!s.version)return void(this._importStatus="Error: Invalid export file.");await Bt(s),this._importStatus="Imported successfully!",this._loadSettings(),setTimeout(()=>{this._importStatus=""},3e3)}catch(t){this._importStatus=`Error: ${t.message}`}t.target.value=""}}async _saveSettings(){this._savingSettings=!0,this._settingsSaved=!1;try{await Rt(this._settings),gt(this._settings.custom_transforms||[]),this._settingsSaved=!0,setTimeout(()=>{this._settingsSaved=!1},2e3)}catch(t){console.error("Failed to save settings:",t)}finally{this._savingSettings=!1}}}customElements.define("settings-view",ce);class pe extends dt{static properties={currentView:{type:String},selectedDevice:{type:String},selectedGroup:{type:String}};static styles=[ct,n`
+    `}async _exportSettings(){try{const e=await je(),t=new Blob([JSON.stringify(e,null,2)],{type:"application/json"}),i=URL.createObjectURL(t),s=document.createElement("a");s.href=i,s.download=`mqtt-monitor-settings-${(new Date).toISOString().slice(0,10)}.json`,s.click(),URL.revokeObjectURL(i)}catch(e){console.error("Export failed:",e)}}async _importFile(e){const t=e.target.files[0];if(t){this._importStatus="";try{const e=await t.text(),i=JSON.parse(e);if(!i.version)return void(this._importStatus="Error: Invalid export file.");await Be(i),this._importStatus="Imported successfully!",this._loadSettings(),setTimeout(()=>{this._importStatus=""},3e3)}catch(e){this._importStatus=`Error: ${e.message}`}e.target.value=""}}async _saveSettings(){this._savingSettings=!0,this._settingsSaved=!1;try{await Re(this._settings),ge(this._settings.custom_transforms||[]),this._settingsSaved=!0,setTimeout(()=>{this._settingsSaved=!1},2e3)}catch(e){console.error("Failed to save settings:",e)}finally{this._savingSettings=!1}}}customElements.define("settings-view",gn);class fn extends le{static properties={currentView:{type:String},selectedDevice:{type:String},selectedGroup:{type:String}};static styles=[ce,n`
     :host {
       display: block;
       min-height: 100vh;
@@ -2420,7 +2473,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     }
-  `];constructor(){super(),this.currentView="dashboard",this.selectedDevice=null,this.selectedGroup=null}connectedCallback(){super.connectedCallback(),pt.connect(),Ut().then(t=>{t?.custom_transforms&&gt(t.custom_transforms)}).catch(()=>{})}disconnectedCallback(){super.disconnectedCallback(),pt.disconnect()}render(){return B`
+  `];constructor(){super(),this.currentView="dashboard",this.selectedDevice=null,this.selectedGroup=null}connectedCallback(){super.connectedCallback(),pe.connect(),Ue().then(e=>{e?.custom_transforms&&ge(e.custom_transforms)}).catch(()=>{})}disconnectedCallback(){super.disconnectedCallback(),pe.disconnect()}render(){return B`
       <nav-bar
         .currentView=${this.currentView}
         @view-change=${this._onViewChange}
@@ -2429,7 +2482,7 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
       ${this.selectedDevice||this.selectedGroup?this._renderOverlay():""}
     `}_renderView(){switch(this.currentView){case"topology":return B`<topology-view @device-select=${this._onDeviceSelect}></topology-view>`;case"settings":return B`<settings-view></settings-view>`;default:return B`<dashboard-view @device-select=${this._onDeviceSelect} @group-edit=${this._onGroupEdit}></dashboard-view>`}}_renderOverlay(){return B`
       <div class="overlay" @click=${this._onOverlayClick}>
-        <div class="overlay-content" @click=${t=>t.stopPropagation()}>
+        <div class="overlay-content" @click=${e=>e.stopPropagation()}>
           ${this.selectedGroup?B`<device-detail
                 .groupId=${this.selectedGroup}
                 @back=${()=>this.selectedGroup=null}
@@ -2439,5 +2492,5 @@ const $=globalThis,w=t=>t,k=$.trustedTypes,S=k?k.createPolicy("lit-html",{create
               ></device-detail>`}
         </div>
       </div>
-    `}_onOverlayClick(){this.selectedDevice=null,this.selectedGroup=null}_onViewChange(t){this.currentView=t.detail.view,this.selectedDevice=null,this.selectedGroup=null}_onDeviceSelect(t){this.selectedDevice=t.detail.deviceId}_onGroupEdit(t){this.selectedGroup=t.detail.groupId}}customElements.define("network-monitor-app",pe);
+    `}_onOverlayClick(){this.selectedDevice=null,this.selectedGroup=null}_onViewChange(e){this.currentView=e.detail.view,this.selectedDevice=null,this.selectedGroup=null}_onDeviceSelect(e){this.selectedDevice=e.detail.deviceId}_onGroupEdit(e){this.selectedGroup=e.detail.groupId}}customElements.define("network-monitor-app",fn);
 //# sourceMappingURL=bundle.js.map

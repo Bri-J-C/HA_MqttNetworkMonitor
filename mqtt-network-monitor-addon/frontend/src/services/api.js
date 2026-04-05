@@ -263,3 +263,7 @@ export async function setDeviceInterval(deviceId, interval) {
     body: JSON.stringify({ interval }),
   });
 }
+
+export async function fetchAttributeHistory(deviceId, attrName, hours = 24) {
+  return apiCall(`${BASE}/api/devices/${encodeURIComponent(deviceId)}/history/${encodeURIComponent(attrName)}?hours=${hours}`);
+}
