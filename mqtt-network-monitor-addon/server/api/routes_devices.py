@@ -351,8 +351,9 @@ def get_attribute_history(device_id: str, attr_name: str, hours: int = Query(def
         hours = 24
 
     entity_id = f"sensor.network_monitor_{device_id}_{attr_name}"
-    start = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
-    url = f"http://supervisor/core/api/history/period/{start}?filter_entity_id={entity_id}&minimal_response"
+    start = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    from urllib.parse import quote
+    url = f"http://supervisor/core/api/history/period/{quote(start, safe='')}?filter_entity_id={entity_id}&minimal_response&no_attributes"
 
     try:
         req = urllib.request.Request(url, headers={
