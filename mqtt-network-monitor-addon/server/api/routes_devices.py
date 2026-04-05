@@ -350,7 +350,10 @@ def get_attribute_history(device_id: str, attr_name: str, hours: int = Query(def
     if hours not in (1, 6, 24, 168):
         hours = 24
 
-    entity_id = f"sensor.network_monitor_{device_id}_{attr_name}"
+    # HA sanitizes entity IDs — replace hyphens and spaces with underscores
+    safe_id = device_id.replace("-", "_").replace(" ", "_").lower()
+    safe_attr = attr_name.replace("-", "_").replace(" ", "_").lower()
+    entity_id = f"sensor.network_monitor_{safe_id}_{safe_attr}"
     start = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
     url = f"http://supervisor/core/api/history/period/{start}?filter_entity_id={entity_id}&minimal_response&no_attributes"
 
