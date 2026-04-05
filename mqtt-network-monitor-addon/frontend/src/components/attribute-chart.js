@@ -27,6 +27,7 @@ class AttributeChart extends LitElement {
       width: 100%;
       max-width: 700px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
     }
     .chart-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -57,7 +58,7 @@ class AttributeChart extends LitElement {
     }
     .range-btn:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
     .range-btn.active { background: rgba(0,212,255,0.15); color: #00D4FF; border-color: rgba(0,212,255,0.3); }
-    .chart-wrap { width: 100%; height: 200px; position: relative; }
+    .chart-wrap { width: 100%; height: 200px; position: relative; overflow: hidden; }
     .loading, .error, .no-data {
       display: flex; align-items: center; justify-content: center;
       height: 200px; font-size: 12px; color: rgba(255,255,255,0.4);
@@ -106,6 +107,13 @@ class AttributeChart extends LitElement {
   _renderChart() {
     if (!this._data || this._data.length === 0) return;
 
+    // Wait for layout to settle before measuring container width
+    requestAnimationFrame(() => this._doRenderChart());
+  }
+
+  _doRenderChart() {
+    if (!this._data || this._data.length === 0) return;
+
     const container = this.shadowRoot.querySelector('.chart-wrap');
     if (!container) return;
 
@@ -130,7 +138,7 @@ class AttributeChart extends LitElement {
 
     if (timestamps.length === 0) return;
 
-    const width = container.clientWidth || 300;
+    const width = container.clientWidth || 660;
     const opts = {
       width,
       height: 200,
