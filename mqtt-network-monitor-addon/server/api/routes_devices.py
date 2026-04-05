@@ -328,3 +328,42 @@ def remove_device_tag(device_id: str, tag: str):
         raise HTTPException(status_code=404, detail="Device not found")
     state.registry.remove_server_tag(device_id, tag)
     return {"tags": state.registry.get_device(device_id).get("server_tags", [])}
+
+
+@router.get("/{device_id}/history/{attr_name}")
+def get_attribute_history(device_id: str, attr_name: str, hours: int = Query(default=24)):
+    """Proxy HA history API for a device attribute."""
+    import os
+    import urllib.request
+    import json as _json
+    from datetime import datetime, timedelta, timezone
+
+    device = state.registry.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    token = os.environ.get("SUPERVISOR_TOKEN")
+    if not token:
+        raise HTTPException(status_code=503, detail="No Supervisor token available")
+
+    # Clamp hours
+    if hours not in (1, 6, 24, 168):
+        hours = 24
+
+    entity_id = f"sensor.network_monitor_{device_id}_{attr_name}"
+    start = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+    url = f"http://supervisor/core/api/history/period/{start}?filter_entity_id={entity_id}&minimal_response"
+
+    try:
+        req = urllib.request.Request(url, headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        })
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = _json.loads(resp.read())
+            # HA returns [[{state, last_changed, ...}, ...]] — array of arrays
+            if data and isinstance(data, list) and len(data) > 0:
+                return data[0]
+            return []
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch history: {e}")
