@@ -350,9 +350,9 @@ def get_attribute_history(device_id: str, attr_name: str, hours: int = Query(def
     if hours not in (1, 6, 24, 168):
         hours = 24
 
-    # Look up actual entity_id from HA entity registry using our unique_id
+    # Look up actual entity_id from HA states using our unique_id
     unique_id = f"network_monitor_{device_id}_{attr_name}"
-    entity_id = _resolve_entity_id(token, unique_id)
+    entity_id = _resolve_entity_id(token, unique_id, device_id, attr_name)
     if not entity_id:
         raise HTTPException(status_code=404, detail=f"HA entity not found for {unique_id}")
 
@@ -379,48 +379,26 @@ _entity_id_cache: dict[str, str] = {}
 _entity_cache_time: float = 0
 
 
-def _resolve_entity_id(token: str, unique_id: str) -> str | None:
-    """Look up the actual HA entity_id from the entity registry by unique_id.
+def _resolve_entity_id(token: str, unique_id: str, device_id: str, attr_name: str) -> str | None:
+    """Look up the actual HA entity_id by querying all states and matching
+    by the state topic pattern or friendly name pattern we set during discovery.
 
-    HA can rename entity IDs freely, so we query the entity registry
-    which maps our unique_id to whatever entity_id HA assigned.
+    We set the MQTT state_topic to: network_monitor/{device_id}/ha/{attr_name}
+    And the friendly name to: {device_name} {Attr Name Title}
     """
     import time
     import urllib.request
     import json as _json
+    import logging
 
+    logger = logging.getLogger(__name__)
     global _entity_id_cache, _entity_cache_time
 
-    # Use cache if fresh (refresh every 60s)
+    # Use cache if fresh (refresh every 5 min)
     now = time.time()
-    if unique_id in _entity_id_cache and now - _entity_cache_time < 60:
+    if unique_id in _entity_id_cache and now - _entity_cache_time < 300:
         return _entity_id_cache[unique_id]
 
-    # Fetch entity registry via HA REST API
-    try:
-        # First try the entity registry endpoint
-        url = "http://supervisor/core/api/config/entity_registry"
-        req = urllib.request.Request(url, headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        })
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            entities = _json.loads(resp.read())
-
-        # Build cache: unique_id → entity_id
-        _entity_id_cache.clear()
-        for entity in entities:
-            uid = entity.get("unique_id", "")
-            eid = entity.get("entity_id", "")
-            if uid and eid:
-                _entity_id_cache[uid] = eid
-        _entity_cache_time = now
-
-        return _entity_id_cache.get(unique_id)
-    except Exception:
-        pass
-
-    # Fallback: fetch all states and try to match by attributes
     try:
         url = "http://supervisor/core/api/states"
         req = urllib.request.Request(url, headers={
@@ -430,14 +408,40 @@ def _resolve_entity_id(token: str, unique_id: str) -> str | None:
         with urllib.request.urlopen(req, timeout=10) as resp:
             states = _json.loads(resp.read())
 
-        for state in states:
-            attrs = state.get("attributes", {})
-            if attrs.get("unique_id") == unique_id:
-                eid = state.get("entity_id", "")
+        # Rebuild entire cache
+        _entity_id_cache.clear()
+        for s in states:
+            eid = s.get("entity_id", "")
+            attrs = s.get("attributes", {})
+            # Match by friendly_name containing the attr pattern
+            # or by entity_id containing our unique_id pattern (sanitized)
+            fn = attrs.get("friendly_name", "")
+            uid_sanitized = unique_id.replace("-", "_").lower()
+
+            # Store all sensor entities for potential matching
+            if eid.startswith("sensor."):
+                # Try matching by the sanitized unique_id in the entity_id
+                eid_clean = eid.replace("sensor.", "")
+                if uid_sanitized == eid_clean:
+                    _entity_id_cache[unique_id] = eid
+
+        _entity_cache_time = now
+
+        if unique_id in _entity_id_cache:
+            return _entity_id_cache[unique_id]
+
+        # Broader search: look for entity_id containing both device_id and attr_name
+        device_clean = device_id.replace("-", "_").lower()
+        attr_clean = attr_name.replace("-", "_").lower()
+        for s in states:
+            eid = s.get("entity_id", "")
+            if eid.startswith("sensor.") and device_clean in eid and attr_clean in eid:
                 _entity_id_cache[unique_id] = eid
-                _entity_cache_time = now
+                logger.info(f"Resolved entity: {unique_id} → {eid}")
                 return eid
 
+        logger.warning(f"Could not resolve entity for {unique_id}")
         return None
-    except Exception:
+    except Exception as e:
+        logger.error(f"Entity resolution failed: {e}")
         return None
