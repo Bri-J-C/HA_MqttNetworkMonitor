@@ -11,30 +11,56 @@ class AttributeChart extends LitElement {
   };
 
   static styles = css`
-    :host { display: block; margin-top: 8px; }
-    .chart-container {
-      background: rgba(0,0,0,0.2);
-      border-radius: 6px;
-      padding: 8px;
+    :host { display: block; }
+    .overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      display: flex; justify-content: center; align-items: center;
+      padding: 20px;
     }
+    .chart-container {
+      background: #0d0d1f;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 20px;
+      width: 100%;
+      max-width: 700px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .chart-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .chart-title {
+      font-size: 16px; font-weight: 600; color: #fff;
+    }
+    .chart-subtitle {
+      font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px;
+    }
+    .close-btn {
+      background: none; border: none; color: rgba(255,255,255,0.4);
+      font-size: 20px; cursor: pointer; padding: 4px 8px;
+    }
+    .close-btn:hover { color: #fff; }
     .time-range {
-      display: flex; gap: 4px; margin-bottom: 6px;
+      display: flex; gap: 6px; margin-bottom: 12px;
     }
     .range-btn {
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.1);
       color: rgba(255,255,255,0.5);
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 10px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 11px;
       cursor: pointer;
     }
     .range-btn:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
     .range-btn.active { background: rgba(0,212,255,0.15); color: #00D4FF; border-color: rgba(0,212,255,0.3); }
-    .chart-wrap { width: 100%; height: 120px; position: relative; }
+    .chart-wrap { width: 100%; height: 200px; position: relative; }
     .loading, .error, .no-data {
       display: flex; align-items: center; justify-content: center;
-      height: 120px; font-size: 11px; color: rgba(255,255,255,0.4);
+      height: 200px; font-size: 12px; color: rgba(255,255,255,0.4);
     }
     .error { color: #ef5350; }
   `;
@@ -107,7 +133,7 @@ class AttributeChart extends LitElement {
     const width = container.clientWidth || 300;
     const opts = {
       width,
-      height: 120,
+      height: 200,
       cursor: { show: true },
       select: { show: false },
       legend: { show: false },
@@ -148,22 +174,35 @@ class AttributeChart extends LitElement {
     this._fetchData();
   }
 
+  _close() {
+    this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+  }
+
   render() {
     return html`
-      <div class="chart-container">
-        <div class="time-range">
-          ${[1, 6, 24, 168].map(h => html`
-            <button class="range-btn ${this.hours === h ? 'active' : ''}"
-              @click=${() => this._setHours(h)}>
-              ${h <= 24 ? `${h}h` : '7d'}
-            </button>
-          `)}
+      <div class="overlay" @click=${(e) => { if (e.target === e.currentTarget) this._close(); }}>
+        <div class="chart-container">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">${this.attrName.replace(/_/g, ' ')}</div>
+              <div class="chart-subtitle">${this.deviceId}</div>
+            </div>
+            <button class="close-btn" @click=${this._close}>✕</button>
+          </div>
+          <div class="time-range">
+            ${[1, 6, 24, 168].map(h => html`
+              <button class="range-btn ${this.hours === h ? 'active' : ''}"
+                @click=${() => this._setHours(h)}>
+                ${h <= 24 ? `${h}h` : '7d'}
+              </button>
+            `)}
+          </div>
+          ${this._loading ? html`<div class="loading">Loading...</div>`
+            : this._error ? html`<div class="error">${this._error}</div>`
+            : (!this._data || this._data.length === 0) && !this._loading ? html`<div class="no-data">No history data</div>`
+            : html`<div class="chart-wrap"></div>`
+          }
         </div>
-        ${this._loading ? html`<div class="loading">Loading...</div>`
-          : this._error ? html`<div class="error">${this._error}</div>`
-          : (!this._data || this._data.length === 0) && !this._loading ? html`<div class="no-data">No history data</div>`
-          : html`<div class="chart-wrap"></div>`
-        }
       </div>
     `;
   }

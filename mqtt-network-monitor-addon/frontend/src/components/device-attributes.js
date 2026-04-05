@@ -411,6 +411,7 @@ class DeviceAttributes extends LitElement {
             <attribute-chart
               .deviceId=${this.device?.device_id || ''}
               .attrName=${name}
+              @close=${() => { this._expandedChart = null; }}
             ></attribute-chart>
           ` : ''}
         ` : ''}
