@@ -380,7 +380,11 @@ _entity_cache_time: float = 0
 
 
 def _resolve_entity_id(token: str, unique_id: str) -> str | None:
-    """Look up the actual HA entity_id from the entity registry by unique_id."""
+    """Look up the actual HA entity_id from the entity registry by unique_id.
+
+    HA can rename entity IDs freely, so we query the entity registry
+    which maps our unique_id to whatever entity_id HA assigned.
+    """
     import time
     import urllib.request
     import json as _json
@@ -392,7 +396,31 @@ def _resolve_entity_id(token: str, unique_id: str) -> str | None:
     if unique_id in _entity_id_cache and now - _entity_cache_time < 60:
         return _entity_id_cache[unique_id]
 
-    # Fetch full entity registry
+    # Fetch entity registry via HA REST API
+    try:
+        # First try the entity registry endpoint
+        url = "http://supervisor/core/api/config/entity_registry"
+        req = urllib.request.Request(url, headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        })
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            entities = _json.loads(resp.read())
+
+        # Build cache: unique_id → entity_id
+        _entity_id_cache.clear()
+        for entity in entities:
+            uid = entity.get("unique_id", "")
+            eid = entity.get("entity_id", "")
+            if uid and eid:
+                _entity_id_cache[uid] = eid
+        _entity_cache_time = now
+
+        return _entity_id_cache.get(unique_id)
+    except Exception:
+        pass
+
+    # Fallback: fetch all states and try to match by attributes
     try:
         url = "http://supervisor/core/api/states"
         req = urllib.request.Request(url, headers={
@@ -402,26 +430,13 @@ def _resolve_entity_id(token: str, unique_id: str) -> str | None:
         with urllib.request.urlopen(req, timeout=10) as resp:
             states = _json.loads(resp.read())
 
-        # Build cache from states — match by checking if entity_id contains our unique_id pattern
-        _entity_id_cache.clear()
         for state in states:
-            eid = state.get("entity_id", "")
-            if "network_monitor" in eid:
-                # Extract what would be the unique_id from the entity_id
-                # entity_id format: sensor.network_monitor_deviceid_attrname
-                # unique_id format: network_monitor_deviceid_attrname
-                uid_guess = eid.replace("sensor.", "", 1)
-                _entity_id_cache[uid_guess] = eid
-        _entity_cache_time = now
-
-        # Try exact match first
-        if unique_id in _entity_id_cache:
-            return _entity_id_cache[unique_id]
-
-        # Try with hyphens replaced (HA sanitizes)
-        sanitized = unique_id.replace("-", "_")
-        if sanitized in _entity_id_cache:
-            return _entity_id_cache[sanitized]
+            attrs = state.get("attributes", {})
+            if attrs.get("unique_id") == unique_id:
+                eid = state.get("entity_id", "")
+                _entity_id_cache[unique_id] = eid
+                _entity_cache_time = now
+                return eid
 
         return None
     except Exception:
