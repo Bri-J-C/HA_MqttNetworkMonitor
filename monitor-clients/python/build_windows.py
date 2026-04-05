@@ -79,6 +79,7 @@ def main():
     run([
         sys.executable, "-m", "PyInstaller",
         "--onefile",
+        "--noconsole",
         "--uac-admin",
         "--name", setup_name,
         "--add-data", f"{monitor_exe};bundled",
