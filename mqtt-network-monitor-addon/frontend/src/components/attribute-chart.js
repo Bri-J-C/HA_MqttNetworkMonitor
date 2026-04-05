@@ -12,6 +12,22 @@ class AttributeChart extends LitElement {
 
   static styles = css`
     :host { display: block; }
+
+    /* uPlot CSS — must be in shadow DOM for proper layout */
+    .uplot, .uplot *, .uplot *::before, .uplot *::after { box-sizing: border-box; }
+    .uplot { font-family: system-ui, sans-serif; line-height: 1.5; width: min-content; }
+    .u-wrap { position: relative; user-select: none; }
+    .u-over, .u-under { position: absolute; }
+    .u-under { overflow: hidden; }
+    .uplot canvas { display: block; position: relative; width: 100%; height: 100%; }
+    .u-axis { position: absolute; }
+    .u-legend { display: none; }
+    .u-select { background: rgba(0,212,255,0.1); position: absolute; pointer-events: none; }
+    .u-cursor-x, .u-cursor-y { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform; }
+    .u-hz .u-cursor-x { height: 100%; border-right: 1px dashed rgba(255,255,255,0.3); }
+    .u-hz .u-cursor-y { width: 100%; border-bottom: 1px dashed rgba(255,255,255,0.3); }
+    .u-cursor-pt { position: absolute; top: 0; left: 0; border-radius: 50%; border: 0 solid; pointer-events: none; will-change: transform; background-clip: padding-box !important; }
+    .u-axis.u-off, .u-select.u-off, .u-cursor-x.u-off, .u-cursor-y.u-off, .u-cursor-pt.u-off { display: none; }
     .overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0, 0, 0, 0.6);
