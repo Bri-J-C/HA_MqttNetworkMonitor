@@ -266,49 +266,53 @@ class DeviceRegistry:
         return dict(self._groups)
 
     def create_group(self, group_id: str, name: str, device_ids: list[str] | None = None) -> dict:
-        members = device_ids or []
-        self._groups[group_id] = {
-            "id": group_id,
-            "name": name,
-            "device_ids": members,
-            "thresholds": {},
-            "ha_exposed_attributes": [],
-            "custom_sensors": {},
-            "custom_commands": {},
-            "interval": None,
-        }
-        # Set group_policy on initial members
-        devices_changed = False
-        for did in members:
-            device = self._devices.get(did)
-            if device is not None:
-                device["group_policy"] = group_id
-                devices_changed = True
-        if devices_changed:
-            self._save_devices()
-        self._save_groups()
-        return self._groups[group_id]
+        with self._lock:
+            members = device_ids or []
+            self._groups[group_id] = {
+                "id": group_id,
+                "name": name,
+                "device_ids": members,
+                "thresholds": {},
+                "ha_exposed_attributes": [],
+                "custom_sensors": {},
+                "custom_commands": {},
+                "interval": None,
+            }
+            # Set group_policy on initial members
+            devices_changed = False
+            for did in members:
+                device = self._devices.get(did)
+                if device is not None:
+                    device["group_policy"] = group_id
+                    devices_changed = True
+            if devices_changed:
+                self._save_devices()
+            self._save_groups()
+            return self._groups[group_id]
 
     def add_server_tags(self, device_id: str, tags: list[str]) -> None:
-        device = self._devices.get(device_id)
-        if device:
-            existing = set(device.get("server_tags", []))
-            existing.update(tags)
-            device["server_tags"] = sorted(existing)
-            self._save_devices()
+        with self._lock:
+            device = self._devices.get(device_id)
+            if device:
+                existing = set(device.get("server_tags", []))
+                existing.update(tags)
+                device["server_tags"] = sorted(existing)
+                self._save_devices()
 
     def remove_server_tag(self, device_id: str, tag: str) -> None:
-        device = self._devices.get(device_id)
-        if device:
-            tags = device.get("server_tags", [])
-            device["server_tags"] = [t for t in tags if t != tag]
-            self._save_devices()
+        with self._lock:
+            device = self._devices.get(device_id)
+            if device:
+                tags = device.get("server_tags", [])
+                device["server_tags"] = [t for t in tags if t != tag]
+                self._save_devices()
 
     def set_server_tags(self, device_id: str, tags: list[str]) -> None:
-        device = self._devices.get(device_id)
-        if device:
-            device["server_tags"] = sorted(set(tags))
-            self._save_devices()
+        with self._lock:
+            device = self._devices.get(device_id)
+            if device:
+                device["server_tags"] = sorted(set(tags))
+                self._save_devices()
 
     def update_group(self, group_id: str, fields: dict) -> dict | None:
         with self._lock:
@@ -338,58 +342,62 @@ class DeviceRegistry:
             return dict(group)
 
     def delete_group(self, group_id: str) -> bool:
-        if group_id not in self._groups:
-            return False
-        # Clear group_policy from all member devices
-        group = self._groups[group_id]
-        for did in group.get("device_ids", []):
-            device = self._devices.get(did)
-            if device and device.get("group_policy") == group_id:
-                device["group_policy"] = None
-        self._save_devices()
-        del self._groups[group_id]
-        self._save_groups()
-        return True
+        with self._lock:
+            if group_id not in self._groups:
+                return False
+            # Clear group_policy from all member devices
+            group = self._groups[group_id]
+            for did in group.get("device_ids", []):
+                device = self._devices.get(did)
+                if device and device.get("group_policy") == group_id:
+                    device["group_policy"] = None
+            self._save_devices()
+            del self._groups[group_id]
+            self._save_groups()
+            return True
 
     def delete_attribute(self, device_id: str, attr_name: str) -> bool:
-        device = self._devices.get(device_id)
-        if not device:
+        with self._lock:
+            device = self._devices.get(device_id)
+            if not device:
+                return False
+            attrs = device.get("attributes", {})
+            if attr_name in attrs:
+                del attrs[attr_name]
+                self._save_devices()
+                return True
             return False
-        attrs = device.get("attributes", {})
-        if attr_name in attrs:
-            del attrs[attr_name]
-            self._save_devices()
-            return True
-        return False
 
     def delete_device(self, device_id: str) -> bool:
-        if device_id not in self._devices:
-            return False
-        # Remove from all groups
-        for group in self._groups.values():
-            if device_id in group.get("device_ids", []):
-                group["device_ids"].remove(device_id)
-        self._save_groups()
-        del self._devices[device_id]
-        self._save_devices()
-        return True
+        with self._lock:
+            if device_id not in self._devices:
+                return False
+            # Remove from all groups
+            for group in self._groups.values():
+                if device_id in group.get("device_ids", []):
+                    group["device_ids"].remove(device_id)
+            self._save_groups()
+            del self._devices[device_id]
+            self._save_devices()
+            return True
 
     def set_warning_thresholds(self, thresholds: dict[str, float]) -> None:
         self._warning_thresholds.update(thresholds)
 
     def add_command_response(self, device_id: str, response: dict) -> None:
         """Store a command response in the device's command_history (last 20 kept)."""
-        device = self._devices.get(device_id)
-        if device:
-            if "command_history" not in device:
-                device["command_history"] = []
-            device["command_history"].append({
-                **response,
-                "received_at": time.time(),
-            })
-            # Keep only the last 20 responses
-            device["command_history"] = device["command_history"][-20:]
-            self._save_devices()
+        with self._lock:
+            device = self._devices.get(device_id)
+            if device:
+                if "command_history" not in device:
+                    device["command_history"] = []
+                device["command_history"].append({
+                    **response,
+                    "received_at": time.time(),
+                })
+                # Keep only the last 20 responses
+                device["command_history"] = device["command_history"][-20:]
+                self._save_devices()
 
     def check_stale_devices(self, timeout_seconds: int = 300) -> None:
         """Mark devices as offline if they haven't been seen within timeout."""
