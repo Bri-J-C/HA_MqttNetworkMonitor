@@ -36,9 +36,13 @@ _broadcast_lock = threading.Lock()
 def _device_hash(device: dict) -> tuple:
     """Quick hash to detect changes."""
     attrs = device.get("attributes", {})
-    return (device.get("status"), tuple(sorted(
-        (k, v.get("value") if isinstance(v, dict) else v) for k, v in attrs.items()
-    )))
+    return (
+        device.get("status"),
+        tuple(sorted((k, v.get("value")) for k, v in attrs.items() if isinstance(v, dict))),
+        tuple(sorted(device.get("hidden_attributes", []))),
+        tuple(sorted(device.get("card_attributes", []))),
+        tuple(sorted(device.get("attribute_transforms", {}).items())),
+    )
 
 
 @asynccontextmanager
@@ -187,12 +191,11 @@ def create_app():
                 value = attr_data.get("value")
                 try:
                     value = float(value)
-                    threshold_val = float(threshold_val)
                 except (TypeError, ValueError):
                     continue
 
                 alert_key = f"{device_id}/{attr_name}"
-                if value >= threshold_val:
+                if DeviceRegistry._check_threshold(value, threshold_val):
                     last_alert = _alert_active.get(alert_key, 0)
                     if now - last_alert >= cooldown:
                         device_name = device.get("device_name", device_id)
@@ -291,8 +294,12 @@ def main():
     async def app(scope, receive, send):
         try:
             await inner_app(scope, receive, send)
-        except AssertionError:
-            pass  # Silently ignore StaticFiles WebSocket assertion
+        except AssertionError as e:
+            if scope.get("type") == "websocket":
+                pass  # StaticFiles raises on WebSocket probes
+            else:
+                logger.error(f"Unexpected AssertionError: {e}", exc_info=True)
+                raise
 
     # Only show HTTP access logs at DEBUG level
     access_log = log_level == "DEBUG"

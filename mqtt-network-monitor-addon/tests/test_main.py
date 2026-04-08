@@ -1,6 +1,31 @@
 import pytest
 from pathlib import Path
 
+from server.main import _device_hash
+
+
+class TestDeviceHash:
+    def test_hash_includes_hidden_attributes(self):
+        d1 = {"status": "online", "attributes": {"cpu": {"value": 50}},
+              "hidden_attributes": [], "card_attributes": [], "attribute_transforms": {}}
+        d2 = {"status": "online", "attributes": {"cpu": {"value": 50}},
+              "hidden_attributes": ["cpu"], "card_attributes": [], "attribute_transforms": {}}
+        assert _device_hash(d1) != _device_hash(d2)
+
+    def test_hash_includes_card_attributes(self):
+        d1 = {"status": "online", "attributes": {"cpu": {"value": 50}},
+              "hidden_attributes": [], "card_attributes": [], "attribute_transforms": {}}
+        d2 = {"status": "online", "attributes": {"cpu": {"value": 50}},
+              "hidden_attributes": [], "card_attributes": ["cpu"], "attribute_transforms": {}}
+        assert _device_hash(d1) != _device_hash(d2)
+
+    def test_hash_includes_transforms(self):
+        d1 = {"status": "online", "attributes": {"cpu": {"value": 50}},
+              "hidden_attributes": [], "card_attributes": [], "attribute_transforms": {}}
+        d2 = {"status": "online", "attributes": {"cpu": {"value": 50}},
+              "hidden_attributes": [], "card_attributes": [], "attribute_transforms": {"cpu": "v * 2"}}
+        assert _device_hash(d1) != _device_hash(d2)
+
 
 class TestStaticFileServing:
     def test_path_traversal_blocked(self, tmp_path):
