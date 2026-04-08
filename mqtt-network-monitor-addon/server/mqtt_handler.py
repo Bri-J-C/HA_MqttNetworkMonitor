@@ -9,6 +9,7 @@ from server.device_registry import DeviceRegistry
 logger = logging.getLogger(__name__)
 
 TOPIC_PREFIX = "network_monitor"
+MAX_PAYLOAD_SIZE = 64 * 1024  # 64KB
 
 
 class MQTTHandler:
@@ -70,6 +71,9 @@ class MQTTHandler:
         client.subscribe(f"{TOPIC_PREFIX}/+/config/response")
 
     def _on_message(self, client, userdata, msg):
+        if len(msg.payload) > MAX_PAYLOAD_SIZE:
+            logger.warning(f"Dropping oversized MQTT payload ({len(msg.payload)} bytes) from {msg.topic}")
+            return
         topic_parts = msg.topic.split("/")
         if len(topic_parts) < 3:
             return
