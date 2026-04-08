@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 import threading
 import time
@@ -101,3 +103,27 @@ class TestDeviceRegistryThreadSafety:
         t2.join()
 
         assert len(errors) == 0, f"Errors during concurrent ops: {errors}"
+
+
+class TestDeviceRegistryIsolation:
+    def test_get_all_devices_returns_deep_copy(self, registry):
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50, "unit": "%"}}})
+        devices = registry.get_all_devices()
+        devices["dev1"]["attributes"]["cpu"]["value"] = 999
+        original = registry.get_device("dev1")
+        assert original["attributes"]["cpu"]["value"] == 50
+
+    def test_get_device_returns_deep_copy(self, registry):
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50, "unit": "%"}}})
+        device = registry.get_device("dev1")
+        device["attributes"]["cpu"]["value"] = 999
+        original = registry.get_device("dev1")
+        assert original["attributes"]["cpu"]["value"] == 50
+
+    def test_get_groups_returns_deep_copy(self, registry):
+        registry.update_device("dev1", {"cpu": {"value": 50}})
+        registry.create_group("grp1", "Group 1", ["dev1"])
+        groups = registry.get_groups()
+        groups["grp1"]["device_ids"].append("fake_device")
+        original = registry.get_groups()
+        assert "fake_device" not in original["grp1"]["device_ids"]

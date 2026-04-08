@@ -1,5 +1,6 @@
 """Tracks all known devices, their current state, tags, and groups."""
 
+import copy
 import logging
 import threading
 import time
@@ -56,7 +57,9 @@ class DeviceRegistry:
         with self._devices_save_lock:
             self._devices_save_timer = None
             if self._devices_dirty:
-                self._storage.save(DEVICES_FILE, self._devices)
+                with self._lock:
+                    snapshot = copy.deepcopy(self._devices)
+                self._storage.save(DEVICES_FILE, snapshot)
                 self._devices_dirty = False
 
     def _save_devices(self):
@@ -77,7 +80,9 @@ class DeviceRegistry:
         with self._groups_save_lock:
             self._groups_save_timer = None
             if self._groups_dirty:
-                self._storage.save(GROUPS_FILE, self._groups)
+                with self._lock:
+                    snapshot = copy.deepcopy(self._groups)
+                self._storage.save(GROUPS_FILE, snapshot)
                 self._groups_dirty = False
 
     def _save_groups(self):
@@ -257,13 +262,17 @@ class DeviceRegistry:
         return None
 
     def get_device(self, device_id: str) -> dict | None:
-        return self._devices.get(device_id)
+        with self._lock:
+            dev = self._devices.get(device_id)
+            return copy.deepcopy(dev) if dev else None
 
     def get_all_devices(self) -> dict[str, dict]:
-        return dict(self._devices)
+        with self._lock:
+            return copy.deepcopy(self._devices)
 
-    def get_groups(self) -> dict:
-        return dict(self._groups)
+    def get_groups(self) -> dict[str, dict]:
+        with self._lock:
+            return copy.deepcopy(self._groups)
 
     def create_group(self, group_id: str, name: str, device_ids: list[str] | None = None) -> dict:
         with self._lock:
