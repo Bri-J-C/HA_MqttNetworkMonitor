@@ -127,3 +127,37 @@ class TestDeviceRegistryIsolation:
         groups["grp1"]["device_ids"].append("fake_device")
         original = registry.get_groups()
         assert "fake_device" not in original["grp1"]["device_ids"]
+
+
+class TestDeviceSettings:
+    def test_set_device_settings_allowed_commands(self, registry):
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50}}})
+        registry.set_device_settings("dev1", {"allowed_commands": ["reboot", "status"]})
+        dev = registry.get_device("dev1")
+        assert dev["allowed_commands"] == ["reboot", "status"]
+
+    def test_set_device_settings_attributes(self, registry):
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50}}})
+        registry.set_device_settings("dev1", {"attributes": {"cpu": {"value": 99}}})
+        dev = registry.get_device("dev1")
+        assert dev["attributes"] == {"cpu": {"value": 99}}
+
+    def test_set_device_settings_rejects_unknown_keys(self, registry):
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50}}})
+        registry.set_device_settings("dev1", {"evil_key": "bad_value"})
+        dev = registry.get_device("dev1")
+        assert "evil_key" not in dev
+
+    def test_group_create_persists_immediately(self, registry, storage):
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50}}})
+        registry.create_group("grp1", "Group 1", ["dev1"])
+        on_disk = storage.load("groups.json")
+        assert "grp1" in on_disk
+
+    def test_group_delete_persists_immediately(self, registry, storage):
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50}}})
+        registry.create_group("grp1", "Group 1", ["dev1"])
+        registry.flush()
+        registry.delete_group("grp1")
+        on_disk = storage.load("groups.json")
+        assert "grp1" not in on_disk

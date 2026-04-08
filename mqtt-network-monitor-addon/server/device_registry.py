@@ -89,6 +89,16 @@ class DeviceRegistry:
         """Debounced save — marks dirty and schedules a flush within 5 seconds."""
         self._mark_groups_dirty()
 
+    def _flush_groups_immediate(self):
+        """Persist groups to disk immediately (bypasses debounce)."""
+        with self._lock:
+            snapshot = copy.deepcopy(self._groups)
+        self._storage.save(GROUPS_FILE, snapshot)
+        self._groups_dirty = False
+        if self._groups_save_timer:
+            self._groups_save_timer.cancel()
+            self._groups_save_timer = None
+
     def flush(self):
         """Force immediate save of both devices and groups. Call on shutdown."""
         self._flush_devices()
@@ -296,7 +306,7 @@ class DeviceRegistry:
                     devices_changed = True
             if devices_changed:
                 self._save_devices()
-            self._save_groups()
+            self._flush_groups_immediate()
             return self._groups[group_id]
 
     def add_server_tags(self, device_id: str, tags: list[str]) -> None:
@@ -347,7 +357,7 @@ class DeviceRegistry:
 
             # Merge all fields into group
             group.update(fields)
-            self._save_groups()
+            self._flush_groups_immediate()
             return dict(group)
 
     def delete_group(self, group_id: str) -> bool:
@@ -362,7 +372,7 @@ class DeviceRegistry:
                     device["group_policy"] = None
             self._save_devices()
             del self._groups[group_id]
-            self._save_groups()
+            self._flush_groups_immediate()
             return True
 
     def delete_attribute(self, device_id: str, attr_name: str) -> bool:
@@ -472,7 +482,8 @@ class DeviceRegistry:
             allowed_keys = {"group_policy", "ha_exposure_overrides", "threshold_overrides",
                             "crit_threshold_overrides", "server_commands", "remote_config",
                             "hidden_attributes", "hidden_commands", "card_attributes",
-                            "server_sensors", "config_interval", "attribute_transforms"}
+                            "server_sensors", "config_interval", "attribute_transforms",
+                            "allowed_commands", "attributes"}
             changed_keys = [key for key in allowed_keys if key in settings]
             for key in changed_keys:
                 device[key] = settings[key]
