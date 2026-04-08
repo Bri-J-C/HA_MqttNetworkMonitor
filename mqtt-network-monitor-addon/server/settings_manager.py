@@ -23,6 +23,12 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "alert_cooldown_minutes": 30,
 }
 
+ALLOWED_SETTINGS_KEYS = {
+    "default_thresholds", "crit_thresholds", "ha_exposure",
+    "cleanup_days", "alert_cooldown_minutes", "hidden_attributes",
+    "hidden_commands", "card_attributes", "attribute_transforms",
+}
+
 
 class SettingsManager:
     def __init__(self, storage: Storage):
@@ -59,12 +65,13 @@ class SettingsManager:
         self._storage.save(SETTINGS_FILE, self._settings)
 
     def get_settings(self) -> dict[str, Any]:
-        """Return a copy of the current global settings."""
-        return dict(self._settings)
+        """Return a deep copy of the current global settings."""
+        return copy.deepcopy(self._settings)
 
     def update_settings(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Apply *data* on top of current settings. Returns updated settings."""
-        self._deep_update(self._settings, data)
+        """Apply *data* on top of current settings (allowed keys only). Returns updated settings."""
+        filtered = {k: v for k, v in data.items() if k in ALLOWED_SETTINGS_KEYS}
+        self._deep_update(self._settings, filtered)
         self._save()
-        logger.debug(f"Global settings updated: {list(data.keys())}")
+        logger.debug(f"Global settings updated: {list(filtered.keys())}")
         return self.get_settings()
