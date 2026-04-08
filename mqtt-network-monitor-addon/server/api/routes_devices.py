@@ -1,9 +1,28 @@
 """Device-related REST API endpoints."""
 
+import re
 from fastapi import APIRouter, HTTPException, Query
 from typing import Any
 from server.api import state
 from server.config_assembler import assemble_and_push
+
+_DANGEROUS_PATTERNS = re.compile(
+    r'`[^`]*`'          # backtick command substitution
+    r'|\$\([^)]*\)'     # $() command substitution
+    r'|\$\{[^}]*\}'     # ${} variable expansion
+    r'|;\s*rm\s'         # rm after semicolon
+    r'|&&\s*rm\s'        # rm after &&
+    r'|\|\s*nc\s'        # piping to netcat
+    r'|\|\s*curl\s'      # piping to curl
+    r'|\|\s*wget\s'      # piping to wget
+    r'|>\s*/etc/'        # writing to /etc
+    r'|>\s*/dev/'        # writing to /dev
+)
+
+
+def _validate_shell_command(cmd: str) -> bool:
+    """Returns True if command passes basic safety checks."""
+    return not _DANGEROUS_PATTERNS.search(cmd)
 
 router = APIRouter(prefix="/api/devices", tags=["devices"])
 
@@ -211,6 +230,8 @@ def add_server_command(device_id: str, body: dict[str, Any]):
     shell = body.get("shell")
     if not name or not shell:
         raise HTTPException(status_code=400, detail="Missing 'name' or 'shell'")
+    if not _validate_shell_command(shell):
+        raise HTTPException(status_code=400, detail="Command contains potentially dangerous patterns")
     cmds = dict(device.get("server_commands") or {})
     cmds[name] = shell
     state.registry.set_device_settings(device_id, {"server_commands": cmds})
@@ -243,6 +264,8 @@ def add_server_sensor(device_id: str, body: dict[str, Any]):
     command = body.get("command")
     if not name or not command:
         raise HTTPException(status_code=400, detail="Missing 'name' or 'command'")
+    if not _validate_shell_command(command):
+        raise HTTPException(status_code=400, detail="Sensor command contains potentially dangerous patterns")
     sensor = {"command": command, "unit": body.get("unit", "")}
     if "interval" in body:
         sensor["interval"] = body["interval"]
