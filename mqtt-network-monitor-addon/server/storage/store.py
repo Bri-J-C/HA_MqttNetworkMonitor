@@ -14,10 +14,11 @@ class Storage:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
     def load(self, filename: str) -> Any:
-        assert '/' not in filename and '..' not in filename, f"Invalid filename: {filename}"
+        if '/' in filename or '..' in filename:
+            raise ValueError(f"Invalid filename: {filename}")
         path = self.data_dir / filename
         if not path.exists():
-            return None
+            return {}
         try:
             return json.loads(path.read_text())
         except (json.JSONDecodeError, OSError) as e:
@@ -25,7 +26,8 @@ class Storage:
             return None
 
     def save(self, filename: str, data: Any) -> None:
-        assert '/' not in filename and '..' not in filename, f"Invalid filename: {filename}"
+        if '/' in filename or '..' in filename:
+            raise ValueError(f"Invalid filename: {filename}")
         path = self.data_dir / filename
         tmp_path = path.with_suffix(".tmp")
         try:
