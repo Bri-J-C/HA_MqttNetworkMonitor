@@ -12,26 +12,31 @@ logger = logging.getLogger(__name__)
 class ConnectionManager:
     def __init__(self):
         self._connections: list[WebSocket] = []
+        self._lock = asyncio.Lock()
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
-        self._connections.append(websocket)
-        logger.debug(f"WebSocket client connected ({len(self._connections)} total)")
+        async with self._lock:
+            self._connections.append(websocket)
+        logger.info(f"WebSocket connected ({self.connection_count} total)")
 
-    def disconnect(self, websocket: WebSocket):
-        self._connections.remove(websocket)
-        logger.debug(f"WebSocket client disconnected ({len(self._connections)} total)")
+    async def disconnect(self, websocket: WebSocket):
+        async with self._lock:
+            if websocket in self._connections:
+                self._connections.remove(websocket)
+        logger.info(f"WebSocket disconnected ({self.connection_count} total)")
 
-    async def broadcast(self, message: dict[str, Any]):
-        data = json.dumps(message)
-        disconnected = []
-        for ws in self._connections:
-            try:
-                await ws.send_text(data)
-            except Exception:
-                disconnected.append(ws)
-        for ws in disconnected:
-            self._connections.remove(ws)
+    async def broadcast(self, data: dict[str, Any]):
+        message = json.dumps(data)
+        async with self._lock:
+            stale = []
+            for ws in self._connections:
+                try:
+                    await ws.send_text(message)
+                except Exception:
+                    stale.append(ws)
+            for ws in stale:
+                self._connections.remove(ws)
 
     @property
     def connection_count(self) -> int:
