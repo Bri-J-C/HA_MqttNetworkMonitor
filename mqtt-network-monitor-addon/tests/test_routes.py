@@ -35,7 +35,7 @@ class TestImportEndpoint:
                 }
             },
         }
-        resp = client.post("/api/settings/import", json=payload)
+        resp = client.post("/api/settings/import", json=payload, headers={"X-Ingress-Path": "/api/hassio_ingress/test"})
         assert resp.status_code == 200, f"Import failed: {resp.text}"
 
         groups = registry.get_groups()
@@ -49,7 +49,7 @@ class TestImportEndpoint:
         payload = {
             "settings": {"default_thresholds": {"cpu_usage": 80}},
         }
-        resp = client.post("/api/settings/import", json=payload)
+        resp = client.post("/api/settings/import", json=payload, headers={"X-Ingress-Path": "/api/hassio_ingress/test"})
         assert resp.status_code == 200
 
     def test_import_updates_existing_group(self, registry):
@@ -69,7 +69,7 @@ class TestImportEndpoint:
                 }
             },
         }
-        resp = client.post("/api/settings/import", json=payload)
+        resp = client.post("/api/settings/import", json=payload, headers={"X-Ingress-Path": "/api/hassio_ingress/test"})
         assert resp.status_code == 200
 
         groups = registry.get_groups()

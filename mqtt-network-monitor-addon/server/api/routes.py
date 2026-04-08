@@ -9,6 +9,7 @@ from fastapi import FastAPI
 
 from server.api import state
 from server.api.routes_devices import router as devices_router
+from server.auth import require_ingress
 from server.api.routes_groups import router as groups_router
 from server.api.routes_tags import router as tags_router
 from server.api.routes_topology import router as topology_router
@@ -27,6 +28,7 @@ async def _lifespan_wrapper(app):
         yield
 
 app = FastAPI(title="MQTT Network Monitor", lifespan=_lifespan_wrapper)
+app.middleware("http")(require_ingress)
 
 app.include_router(devices_router)
 app.include_router(groups_router)
