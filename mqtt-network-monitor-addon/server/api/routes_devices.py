@@ -59,6 +59,9 @@ def delete_all_devices():
             for topic_suffix in ["status", "system_resources", "network_info", "custom_command", "telemetry", "system"]:
                 state.mqtt_handler.get_client().publish(f"network_monitor/{device_id}/{topic_suffix}", "", retain=True)
         state.registry.delete_device(device_id)
+    from server.main import _last_broadcast_hash, _broadcast_lock
+    with _broadcast_lock:
+        _last_broadcast_hash.clear()
     return {"status": "deleted", "count": len(all_devices)}
 
 
@@ -75,6 +78,9 @@ def delete_device(device_id: str):
         for topic_suffix in ["status", "system_resources", "network_info", "custom_command", "telemetry", "system"]:
             state.mqtt_handler.get_client().publish(f"network_monitor/{device_id}/{topic_suffix}", "", retain=True)
     state.registry.delete_device(device_id)
+    from server.main import _last_broadcast_hash, _broadcast_lock
+    with _broadcast_lock:
+        _last_broadcast_hash.pop(device_id, None)
     return {"status": "deleted"}
 
 

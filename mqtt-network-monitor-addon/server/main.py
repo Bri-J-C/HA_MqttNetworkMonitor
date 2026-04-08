@@ -8,7 +8,7 @@ import sys
 import threading
 import time
 from contextlib import asynccontextmanager
-from pathlib import Path, Path as _Path
+from pathlib import Path
 
 import uvicorn
 from fastapi import WebSocket, WebSocketDisconnect
@@ -265,7 +265,7 @@ def create_app():
     # Serve frontend SPA via catch-all GET route instead of app.mount().
     # Starlette's StaticFiles mount at "/" intercepts WebSocket upgrade
     # requests and throws AssertionError. A GET route only matches HTTP.
-    frontend_dist = _Path(__file__).parent.parent / "frontend" / "dist"
+    frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
     if frontend_dist.exists():
         from fastapi.responses import FileResponse
 
