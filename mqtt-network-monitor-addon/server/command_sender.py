@@ -1,6 +1,5 @@
 """Manages sending commands to devices and tracking responses."""
 
-import asyncio
 import logging
 import time
 from typing import Any
@@ -15,8 +14,16 @@ class CommandSender:
         self._mqtt = mqtt_handler
         self._timeout = timeout
         self._pending: dict[str, dict[str, Any]] = {}
+        self._last_cleanup = time.time()
+
+    def _maybe_cleanup(self):
+        now = time.time()
+        if now - self._last_cleanup > 60:
+            self._last_cleanup = now
+            self._cleanup_timed_out()
 
     def send(self, device_id: str, command: str, params: dict | None = None) -> str:
+        self._maybe_cleanup()
         request_id = self._mqtt.send_command(device_id, command, params)
         self._pending[request_id] = {
             "device_id": device_id,
