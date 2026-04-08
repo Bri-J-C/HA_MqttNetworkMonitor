@@ -36,35 +36,13 @@ def import_settings(body: dict[str, Any]):
     if "groups" in body:
         for group_id, group_data in body["groups"].items():
             existing = state.registry.get_groups()
-            if group_id in existing:
-                state.registry.update_group(
-                    group_id,
-                    name=group_data.get("name"),
-                    device_ids=group_data.get("device_ids"),
-                    custom_commands=group_data.get("custom_commands"),
-                    custom_sensors=group_data.get("custom_sensors"),
-                    thresholds=group_data.get("thresholds"),
-                    crit_thresholds=group_data.get("crit_thresholds"),
-                    hidden_commands=group_data.get("hidden_commands"),
-                    interval=group_data.get("interval"),
-                    attribute_transforms=group_data.get("attribute_transforms"),
-                )
-            else:
+            if group_id not in existing:
                 state.registry.create_group(
                     group_id,
                     group_data.get("name", group_id),
                     group_data.get("device_ids", []),
                 )
-                state.registry.update_group(
-                    group_id,
-                    custom_commands=group_data.get("custom_commands"),
-                    custom_sensors=group_data.get("custom_sensors"),
-                    thresholds=group_data.get("thresholds"),
-                    crit_thresholds=group_data.get("crit_thresholds"),
-                    hidden_commands=group_data.get("hidden_commands"),
-                    interval=group_data.get("interval"),
-                    attribute_transforms=group_data.get("attribute_transforms"),
-                )
+            state.registry.update_group(group_id, group_data)
     if "layouts" in body:
         for layout_id, layout_data in body["layouts"].items():
             layout_data["id"] = layout_id
