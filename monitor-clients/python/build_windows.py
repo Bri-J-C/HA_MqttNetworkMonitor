@@ -13,6 +13,7 @@ Produces: dist/mqtt-network-monitor-setup.exe (single file, everything included)
 import subprocess
 import sys
 import shutil
+import re
 from pathlib import Path
 
 def run(cmd):
@@ -67,9 +68,9 @@ def main():
     # Read version
     version = "dev"
     try:
-        spec = {}
-        exec(Path("mqtt_monitor/version.py").read_text(), spec)
-        version = spec.get("__version__", "dev")
+        version_text = Path("mqtt_monitor/version.py").read_text()
+        match = re.search(r'__version__\s*=\s*["\'](.+?)["\']', version_text)
+        version = match.group(1) if match else "0.0.0"
     except Exception:
         pass
 
