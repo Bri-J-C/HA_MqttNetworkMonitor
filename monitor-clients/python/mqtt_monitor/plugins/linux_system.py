@@ -160,7 +160,7 @@ def _load_15m():
 @collector("swap_usage")
 def _swap_usage():
     try:
-        total = used = 0
+        total = used = free = 0
         with open("/proc/meminfo") as f:
             for line in f:
                 if line.startswith("SwapTotal:"):

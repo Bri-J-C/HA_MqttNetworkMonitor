@@ -8,7 +8,7 @@ class BasePlugin(ABC):
     name: str
     default_interval: int
     send_once: bool = False  # Collect once on connect, not on interval
-    static_attributes: set[str] = set()  # Attributes that rarely change — only sent on connect or when value changes
+    static_attributes: frozenset[str] = frozenset()  # Attributes that rarely change — only sent on connect or when value changes
 
     def __init__(self, config: dict[str, Any]):
         self.config = config

@@ -36,14 +36,6 @@ class NetworkInfoPlugin(BasePlugin):
         io_counters = psutil.net_io_counters(pernic=True)
 
         interfaces = self.interfaces
-        # If no interfaces configured, or none have a real IP,
-        # auto-detect active interfaces.
-        def _has_real_ip(iface):
-            for a in addrs.get(iface, []):
-                if a.family == socket.AF_INET and not a.address.startswith("169.254."):
-                    return True
-            return False
-
         # Always report all active interfaces with real IPs.
         # Configured interfaces get priority ordering, but we include
         # any additional active interfaces the user didn't configure.

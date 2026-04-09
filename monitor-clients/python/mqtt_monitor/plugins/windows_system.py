@@ -2,6 +2,7 @@
 
 import datetime
 import platform
+import re
 import subprocess
 
 import psutil
@@ -82,7 +83,7 @@ def _disk_info():
         # Skip removable/network drives — only fixed disks
         if "fixed" not in partition.opts.lower() and "rw" not in partition.opts.lower():
             # On some Windows versions opts may differ; include if we can read usage
-            pass
+            continue
         try:
             usage = psutil.disk_usage(partition.mountpoint)
             total_gb = round(usage.total / (1024 ** 3), 1)
@@ -169,7 +170,7 @@ class WindowsSystemPlugin(BasePlugin):
     _STATIC_ATTRIBUTES = frozenset([
         "os_version", "os_build", "cpu_model", "installed_ram", "gpu_info",
     ])
-    static_attributes = {"os_version", "os_build", "cpu_model", "installed_ram", "gpu_info"}
+    static_attributes = frozenset(_STATIC_ATTRIBUTES)
 
     def __init__(self, config):
         super().__init__(config)
@@ -205,6 +206,8 @@ class WindowsSystemPlugin(BasePlugin):
     @staticmethod
     def _check_service(service_name):
         """Check if a Windows service is running."""
+        if not re.match(r'^[a-zA-Z0-9_.\-]+$', service_name):
+            return {"value": "invalid_name", "unit": ""}
         try:
             output = _run(
                 f'powershell -Command "(Get-Service -Name \'{service_name}\').Status"',
