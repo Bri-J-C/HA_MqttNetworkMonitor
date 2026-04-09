@@ -18,6 +18,8 @@ from mqtt_monitor.plugins.registry import PluginRegistry
 
 logger = logging.getLogger(__name__)
 
+MIN_INTERVAL = 5  # seconds — prevents tight loops from misconfigured remotes
+
 
 class MQTTMonitorClient:
     def __init__(self, config: Config, config_dir: Path | None = None):
@@ -69,6 +71,9 @@ class MQTTMonitorClient:
         self._mqtt.connect(self.config.mqtt.broker, self.config.mqtt.port)
 
     def _on_connect(self, client, userdata, flags, rc, *args):
+        if rc != 0:
+            logger.error(f"MQTT connection failed (rc={rc})")
+            return
         logger.info(f"Connected to MQTT broker (rc={rc})")
         self._force_full_publish = True  # Send all attributes on reconnect
         self._last_published.clear()
@@ -126,7 +131,7 @@ class MQTTMonitorClient:
     def _apply_config_update(self, remote_config: dict):
         """Apply remote config changes to running plugins."""
         if "interval" in remote_config:
-            new_interval = remote_config["interval"]
+            new_interval = max(remote_config["interval"], MIN_INTERVAL)
             for plugin in self._plugins:
                 plugin.interval = new_interval
                 logger.info(f"Updated {plugin.name} interval to {new_interval}s")
@@ -150,12 +155,12 @@ class MQTTMonitorClient:
                 # Replace commands entirely — this handles removals
                 existing.commands = dict(cc_commands)
                 if "interval" in cc_config:
-                    existing.interval = cc_config["interval"]
+                    existing.interval = max(cc_config["interval"], MIN_INTERVAL)
                 logger.info(f"Set custom_command sensors: {list(cc_commands.keys()) if cc_commands else '(none)'}")
             elif cc_commands:
                 new_plugin = CustomCommandPlugin({
                     "commands": cc_commands,
-                    "interval": cc_config.get("interval", remote_config.get("interval", 30)),
+                    "interval": max(cc_config.get("interval", remote_config.get("interval", 30)), MIN_INTERVAL),
                 })
                 self._plugins.append(new_plugin)
                 if self._running:
@@ -221,7 +226,6 @@ class MQTTMonitorClient:
             if plugin.name not in self._last_published:
                 self._last_published[plugin.name] = {}
             self._last_published[plugin.name].update(attributes)
-            self._force_full_publish = False
 
             message = self._message_builder.build_attribute_message(
                 plugin.name, attributes, network
@@ -255,6 +259,7 @@ class MQTTMonitorClient:
         self._publish_metadata()
         for plugin in self._plugins:
             self._schedule_plugin(plugin)
+        self._force_full_publish = False  # Clear after ALL plugins get their initial publish
 
     def run(self):
         self.connect()
