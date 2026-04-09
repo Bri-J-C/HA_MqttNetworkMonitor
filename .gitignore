@@ -28,6 +28,7 @@ docs/superpowers/
 
 # Tests (not for public repo)
 tests/
+!monitor-clients/esp32/tests/
 monitor-clients/python/tests/
 mqtt-network-monitor-addon/tests/
 
