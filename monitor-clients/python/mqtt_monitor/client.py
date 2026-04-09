@@ -62,6 +62,12 @@ class MQTTMonitorClient:
                 self.config.mqtt.password,
             )
 
+        if self.config.mqtt.tls:
+            if self.config.mqtt.ca_cert:
+                self._mqtt.tls_set(ca_certs=self.config.mqtt.ca_cert)
+            else:
+                self._mqtt.tls_set()  # Uses system CA store
+
         self._mqtt.will_set(
             self._message_builder.status_topic,
             payload="offline",

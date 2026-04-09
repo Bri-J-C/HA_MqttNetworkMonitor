@@ -17,6 +17,8 @@ class MQTTConfig:
     port: int = 1883
     username: str | None = None
     password: str | None = None
+    tls: bool = False
+    ca_cert: str | None = None
 
 
 @dataclass
@@ -66,6 +68,8 @@ class ConfigLoader:
             port=mqtt_raw.get("port", 1883),
             username=mqtt_raw.get("username"),
             password=mqtt_raw.get("password"),
+            tls=mqtt_raw.get("tls", False),
+            ca_cert=mqtt_raw.get("ca_cert"),
         )
 
         device_config = DeviceConfig(

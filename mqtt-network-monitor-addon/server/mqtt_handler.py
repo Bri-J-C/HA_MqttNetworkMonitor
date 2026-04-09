@@ -2,6 +2,8 @@
 
 import json
 import logging
+import os
+import ssl
 import paho.mqtt.client as mqtt
 
 from server.device_registry import DeviceRegistry
@@ -23,6 +25,13 @@ class MQTTHandler:
 
         if username:
             self._client.username_pw_set(username, password)
+
+        if os.environ.get("MQTT_TLS", "false").lower() == "true":
+            ca_cert = os.environ.get("MQTT_CA_CERT", "")
+            if ca_cert:
+                self._client.tls_set(ca_certs=ca_cert)
+            else:
+                self._client.tls_set()  # Uses system CA store
 
         self._client.on_connect = self._on_connect
         self._client.on_message = self._on_message

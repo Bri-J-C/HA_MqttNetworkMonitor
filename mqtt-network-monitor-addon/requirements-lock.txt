@@ -1,0 +1,7 @@
+# Pinned transitive dependencies for reproducible builds.
+# Generated from pip freeze on 2026-04-07.
+# Update by running: pip freeze | grep -iE "fastapi|uvicorn|paho|starlette"
+fastapi==0.135.3
+paho-mqtt==2.1.0
+starlette==0.52.1
+uvicorn==0.40.0
