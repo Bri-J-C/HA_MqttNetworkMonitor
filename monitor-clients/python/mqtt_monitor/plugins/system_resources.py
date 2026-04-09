@@ -6,15 +6,10 @@ import time
 import psutil
 
 from mqtt_monitor.plugins.base import BasePlugin
+from mqtt_monitor.plugins.utils import make_collector
 
 COLLECTORS = {}
-
-
-def collector(attr_name):
-    def decorator(func):
-        COLLECTORS[attr_name] = func
-        return func
-    return decorator
+collector = make_collector(COLLECTORS)
 
 
 class SystemResourcesPlugin(BasePlugin):

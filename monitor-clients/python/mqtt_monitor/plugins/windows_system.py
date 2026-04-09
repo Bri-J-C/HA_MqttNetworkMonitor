@@ -3,36 +3,19 @@
 import datetime
 import platform
 import re
-import subprocess
 
 import psutil
 
 from mqtt_monitor.plugins.base import BasePlugin
+from mqtt_monitor.plugins.utils import make_collector, run_command
 
 COLLECTORS = {}
-
-
-def collector(attr_name):
-    def decorator(func):
-        COLLECTORS[attr_name] = func
-        return func
-    return decorator
-
-
-def _run(cmd, timeout=10):
-    """Run a shell command safely, return stripped stdout or None."""
-    try:
-        proc = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=timeout
-        )
-        return proc.stdout.strip() if proc.returncode == 0 else None
-    except Exception:
-        return None
+collector = make_collector(COLLECTORS)
 
 
 def _wmic(alias, field, timeout=10):
     """Query a single field via wmic (available on most Windows versions)."""
-    output = _run(f"wmic {alias} get {field} /value", timeout=timeout)
+    output = run_command(f"wmic {alias} get {field} /value", timeout=timeout)
     if output is None:
         return None
     for line in output.splitlines():
@@ -128,7 +111,7 @@ def _network_adapters():
 
 @collector("firewall_status")
 def _firewall_status():
-    output = _run(
+    output = run_command(
         'powershell -Command "'
         "Get-NetFirewallProfile | Select-Object -Property Name,Enabled "
         '| Format-Table -HideTableHeaders"',
@@ -149,7 +132,7 @@ def _firewall_status():
 @collector("windows_services_running")
 def _windows_services_running():
     """Count of running Windows services via psutil (cross-platform safe)."""
-    output = _run(
+    output = run_command(
         'powershell -Command "(Get-Service | Where-Object {$_.Status -eq \'Running\'}).Count"',
         timeout=15,
     )
@@ -209,7 +192,7 @@ class WindowsSystemPlugin(BasePlugin):
         if not re.match(r'^[a-zA-Z0-9_.\-]+$', service_name):
             return {"value": "invalid_name", "unit": ""}
         try:
-            output = _run(
+            output = run_command(
                 f'powershell -Command "(Get-Service -Name \'{service_name}\').Status"',
                 timeout=10,
             )
