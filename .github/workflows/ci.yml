@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: [master]
+
+jobs:
+  server-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install server dependencies
+        run: |
+          cd mqtt-network-monitor-addon
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-mock
+      - name: Run server tests
+        run: |
+          cd mqtt-network-monitor-addon
+          python -m pytest tests/ -v
+
+  client-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install client dependencies
+        run: |
+          cd monitor-clients/python
+          pip install paho-mqtt psutil PyYAML pytest
+      - name: Run client tests
+        run: |
+          cd monitor-clients/python
+          python -m pytest tests/ -v
+
+  esp32-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run ESP32 host tests
+        run: |
+          cd monitor-clients/esp32/tests
+          make test
