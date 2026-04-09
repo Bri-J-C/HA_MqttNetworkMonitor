@@ -1,3 +1,142 @@
+/**
+ * Safe expression evaluator -- only allows math operations on `value`.
+ * Supports: +, -, *, /, %, >, <, >=, <=, ==, !=, ternary, parens,
+ * Math.round/floor/ceil/abs/min/max/pow, .toFixed(n), number/string literals.
+ */
+export function safeEval(expression, value) {
+  const tokens = tokenize(expression);
+  let pos = 0;
+
+  function peek() { return tokens[pos]; }
+  function consume(expected) {
+    const t = tokens[pos++];
+    if (expected && t !== expected) throw new Error(`Expected ${expected}, got ${t}`);
+    return t;
+  }
+
+  function parseTernary() {
+    let result = parseComparison();
+    if (peek() === '?') {
+      consume('?');
+      const trueVal = parseTernary();
+      consume(':');
+      const falseVal = parseTernary();
+      return result ? trueVal : falseVal;
+    }
+    return result;
+  }
+
+  function parseComparison() {
+    let left = parseAddSub();
+    const op = peek();
+    if (['>', '<', '>=', '<=', '==', '!='].includes(op)) {
+      consume();
+      const right = parseAddSub();
+      switch (op) {
+        case '>': return left > right;
+        case '<': return left < right;
+        case '>=': return left >= right;
+        case '<=': return left <= right;
+        case '==': return left == right;
+        case '!=': return left != right;
+      }
+    }
+    return left;
+  }
+
+  function parseAddSub() {
+    let left = parseMulDiv();
+    while (peek() === '+' || peek() === '-') {
+      const op = consume();
+      const right = parseMulDiv();
+      left = op === '+' ? left + right : left - right;
+    }
+    return left;
+  }
+
+  function parseMulDiv() {
+    let left = parseUnary();
+    while (peek() === '*' || peek() === '/' || peek() === '%') {
+      const op = consume();
+      const right = parseUnary();
+      if (op === '*') left = left * right;
+      else if (op === '/') left = right !== 0 ? left / right : 0;
+      else left = left % right;
+    }
+    return left;
+  }
+
+  function parseUnary() {
+    if (peek() === '-') { consume(); return -parsePostfix(); }
+    if (peek() === '+') { consume(); return +parsePostfix(); }
+    return parsePostfix();
+  }
+
+  function parsePostfix() {
+    let val = parsePrimary();
+    while (peek() === '.') {
+      consume('.');
+      const method = consume();
+      if (method === 'toFixed') {
+        consume('(');
+        const digits = parseTernary();
+        consume(')');
+        val = Number(val).toFixed(digits);
+      } else {
+        throw new Error(`Unknown method: ${method}`);
+      }
+    }
+    return val;
+  }
+
+  function parsePrimary() {
+    const t = peek();
+    if (t === '(') {
+      consume('(');
+      const val = parseTernary();
+      consume(')');
+      return val;
+    }
+    if (t === 'value') { consume(); return value; }
+    if (t === 'Math') {
+      consume();
+      consume('.');
+      const fn = consume();
+      const allowed = { round: Math.round, floor: Math.floor, ceil: Math.ceil,
+                        abs: Math.abs, min: Math.min, max: Math.max, pow: Math.pow };
+      if (!allowed[fn]) throw new Error(`Unknown Math function: ${fn}`);
+      consume('(');
+      const args = [parseTernary()];
+      while (peek() === ',') { consume(); args.push(parseTernary()); }
+      consume(')');
+      return allowed[fn](...args);
+    }
+    // String literal
+    if (typeof t === 'string' && (t.startsWith("'") || t.startsWith('"'))) {
+      consume();
+      return t.slice(1, -1);
+    }
+    // Number literal
+    const num = Number(t);
+    if (!isNaN(num) && t !== undefined) { consume(); return num; }
+    throw new Error(`Unexpected token: ${t}`);
+  }
+
+  function tokenize(expr) {
+    const re = /\s*(>=|<=|==|!=|[+\-*/%().,?:><]|Math|value|toFixed|\d+\.?\d*|'[^']*'|"[^"]*"|[a-zA-Z_]\w*)\s*/g;
+    const result = [];
+    let m;
+    while ((m = re.exec(expr)) !== null) {
+      result.push(m[1]);
+    }
+    return result;
+  }
+
+  const result = parseTernary();
+  if (pos < tokens.length) throw new Error(`Unexpected token: ${tokens[pos]}`);
+  return result;
+}
+
 export function applyTransform(value, transform) {
   if (value == null || !transform) return value;
 
@@ -51,7 +190,7 @@ export function applyTransform(value, transform) {
     const ct = _customTransforms.find(t => t.id === transform);
     if (ct) {
       try {
-        return new Function('value', 'return (' + ct.expression + ')')(value);
+        return safeEval(ct.expression, value);
       } catch {
         return value;
       }

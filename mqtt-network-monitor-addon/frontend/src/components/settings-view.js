@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import { fetchSettings, updateSettings, exportSettings, importSettings } from '../services/api.js';
-import { setCustomTransforms } from '../utils/transforms.js';
+import { setCustomTransforms, safeEval } from '../utils/transforms.js';
 import './tag-registry-settings.js';
 
 
@@ -180,7 +180,7 @@ class SettingsView extends LitElement {
 
     // Validate expression
     try {
-      new Function('value', 'return (' + expression + ')');
+      safeEval(expression, 0);
     } catch (e) {
       this._transformError = `Invalid expression: ${e.message}`;
       return;
