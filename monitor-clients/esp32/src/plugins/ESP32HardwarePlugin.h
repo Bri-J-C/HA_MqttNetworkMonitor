@@ -30,18 +30,25 @@ public:
         int n = 0;
         n += snprintf(buf + n, maxLen - n,
             "\"cpu_freq\":{\"value\":%u,\"unit\":\"MHz\"}", ESP.getCpuFreqMHz());
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"cpu_cores\":{\"value\":%d,\"unit\":\"\"}", chip.cores);
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"flash_size\":{\"value\":%u,\"unit\":\"bytes\"}", flash_size);
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"sketch_size\":{\"value\":%u,\"unit\":\"bytes\"}", ESP.getSketchSize());
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"sketch_free\":{\"value\":%u,\"unit\":\"bytes\"}", ESP.getFreeSketchSpace());
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"chip_revision\":{\"value\":%d,\"unit\":\"\"}", chip.revision);
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"sdk_version\":{\"value\":\"%s\",\"unit\":\"\"}", sdk);
+        if (n >= maxLen) n = maxLen - 1;
         return n;
     }
 };

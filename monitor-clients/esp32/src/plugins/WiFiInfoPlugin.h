@@ -19,12 +19,15 @@ public:
         n += snprintf(buf + n, maxLen - n,
             "\"wifi_rssi\":{\"value\":%d,\"unit\":\"dBm\"}",
             WiFi.RSSI());
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"wifi_channel\":{\"value\":%d,\"unit\":\"\"}",
             WiFi.channel());
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"ip_address\":{\"value\":\"%s\",\"unit\":\"\"}",
             WiFi.localIP().toString().c_str());
+        if (n >= maxLen) n = maxLen - 1;
         return n;
     }
 

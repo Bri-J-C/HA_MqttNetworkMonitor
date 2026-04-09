@@ -17,17 +17,21 @@ public:
         n += snprintf(buf + n, maxLen - n,
             "\"free_heap\":{\"value\":%u,\"unit\":\"bytes\"}",
             ESP.getFreeHeap());
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"uptime\":{\"value\":%lu,\"unit\":\"seconds\"}",
             (unsigned long)(millis() / 1000));
+        if (n >= maxLen) n = maxLen - 1;
         #ifdef ESP32
         n += snprintf(buf + n, maxLen - n,
             ",\"chip_temp\":{\"value\":%.1f,\"unit\":\"\\u00b0C\"}",
             temperatureRead());
+        if (n >= maxLen) n = maxLen - 1;
         #endif
         n += snprintf(buf + n, maxLen - n,
             ",\"min_free_heap\":{\"value\":%u,\"unit\":\"bytes\"}",
             ESP.getMinFreeHeap());
+        if (n >= maxLen) n = maxLen - 1;
         return n;
     }
 };

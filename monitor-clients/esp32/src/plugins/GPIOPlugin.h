@@ -53,6 +53,7 @@ public:
                     "\"%s\":{\"value\":%d,\"unit\":\"\"}",
                     key, digitalRead(_pins[i].pin));
             }
+            if (n >= maxLen) n = maxLen - 1;
         }
         return n;
     }

@@ -71,6 +71,8 @@ public:
     }
 
     void begin() {
+        if (_begun) return;
+        _begun = true;
         if (strlen(_deviceId) > 64) {
             Serial.println("[MQTTMonitor] ERROR: device_id too long (max 64 chars)");
             return;
@@ -231,8 +233,12 @@ private:
     unsigned long _lastReconnect = 0;
     int _reconnectFailures = 0;
 
+    bool _begun = false;
     bool _forceMetadata = false;
     bool _wasConnected = false;  // Track connection transitions
+
+    // Class-level payload buffer — avoids ~512 bytes of stack pressure per collect cycle.
+    char _payload[MQTT_MONITOR_BUF_SIZE];
 
     const char* _localCommands[8];
     int _localCmdCount = 0;
@@ -333,73 +339,83 @@ private:
         for (int i = 0; i < _tagCount; i++) {
             if (i > 0 && tn < (int)sizeof(tagsBuf) - 1) tagsBuf[tn++] = ',';
             tn += snprintf(tagsBuf + tn, sizeof(tagsBuf) - tn, "\"%s\"", _tags[i]);
+            if (tn >= (int)sizeof(tagsBuf)) tn = (int)sizeof(tagsBuf) - 1;
         }
         tagsBuf[tn] = '\0';
 
-        // Build full payload into shared MQTT buffer.
+        // Build full payload into class member buffer to reduce stack pressure.
         // Timestamp is seconds since boot (no RTC/NTP on most ESP32 setups).
         // The server uses its own clock for time-based operations.
-        char payload[MQTT_MONITOR_BUF_SIZE];
-        int pn = snprintf(payload, sizeof(payload),
+        int pn = snprintf(_payload, sizeof(_payload),
             "{\"device_id\":\"%s\",\"device_name\":\"%s\",\"device_type\":\"%s\","
             "\"timestamp\":%lu,\"tags\":[%s],\"attributes\":{%s}",
             _deviceId, _deviceName, _deviceType,
             (unsigned long)(millis() / 1000), tagsBuf, attrsBuf);
+        if (pn >= (int)sizeof(_payload)) pn = (int)sizeof(_payload) - 1;
 
-        if (networkLen > 0 && pn < (int)sizeof(payload) - 2) {
-            pn += snprintf(payload + pn, sizeof(payload) - pn,
+        if (networkLen > 0 && pn < (int)sizeof(_payload) - 2) {
+            pn += snprintf(_payload + pn, sizeof(_payload) - pn,
                            ",\"network\":{%s}", networkBuf);
+            if (pn >= (int)sizeof(_payload)) pn = (int)sizeof(_payload) - 1;
         }
 
-        if (pn < (int)sizeof(payload) - 1) {
-            payload[pn++] = '}';
+        if (pn < (int)sizeof(_payload) - 1) {
+            _payload[pn++] = '}';
         }
-        payload[pn] = '\0';
+        _payload[pn] = '\0';
 
         snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/%s",
                  MQTT_MONITOR_TOPIC_PREFIX, _deviceId, plugin->name());
-        _mqttClient->publish(_topicBuf, payload);
+        _mqttClient->publish(_topicBuf, _payload);
     }
 
     void _publishMetadata() {
         if (!_mqttClient->connected()) return;
 
-        char payload[MQTT_MONITOR_BUF_SIZE];
-        int pn = snprintf(payload, sizeof(payload),
+        char metaBuf[MQTT_MONITOR_BUF_SIZE];
+        int pn = snprintf(metaBuf, sizeof(metaBuf),
             "{\"device_id\":\"%s\",\"device_name\":\"%s\",\"device_type\":\"%s\","
             "\"timestamp\":%lu",
             _deviceId, _deviceName, _deviceType,
             (unsigned long)(millis() / 1000));
+        if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1;
 
         // allowed_commands
-        pn += snprintf(payload + pn, sizeof(payload) - pn, ",\"allowed_commands\":[");
+        pn += snprintf(metaBuf + pn, sizeof(metaBuf) - pn, ",\"allowed_commands\":[");
+        if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1;
         for (int i = 0; i < _allowedCmdCount; i++) {
-            if (i > 0) pn += snprintf(payload + pn, sizeof(payload) - pn, ",");
-            pn += snprintf(payload + pn, sizeof(payload) - pn, "\"%s\"", _allowedCommands[i]);
+            if (i > 0) { pn += snprintf(metaBuf + pn, sizeof(metaBuf) - pn, ","); if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1; }
+            pn += snprintf(metaBuf + pn, sizeof(metaBuf) - pn, "\"%s\"", _allowedCommands[i]);
+            if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1;
         }
-        pn += snprintf(payload + pn, sizeof(payload) - pn, "]");
+        pn += snprintf(metaBuf + pn, sizeof(metaBuf) - pn, "]");
+        if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1;
 
         // active_plugins
-        pn += snprintf(payload + pn, sizeof(payload) - pn, ",\"active_plugins\":[");
+        pn += snprintf(metaBuf + pn, sizeof(metaBuf) - pn, ",\"active_plugins\":[");
+        if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1;
         for (int i = 0; i < _pluginCount; i++) {
-            if (i > 0) pn += snprintf(payload + pn, sizeof(payload) - pn, ",");
-            pn += snprintf(payload + pn, sizeof(payload) - pn, "\"%s\"", _plugins[i]->name());
+            if (i > 0) { pn += snprintf(metaBuf + pn, sizeof(metaBuf) - pn, ","); if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1; }
+            pn += snprintf(metaBuf + pn, sizeof(metaBuf) - pn, "\"%s\"", _plugins[i]->name());
+            if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1;
         }
-        pn += snprintf(payload + pn, sizeof(payload) - pn, "]");
+        pn += snprintf(metaBuf + pn, sizeof(metaBuf) - pn, "]");
+        if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1;
 
         // collection_interval
         if (_pluginCount > 0) {
-            pn += snprintf(payload + pn, sizeof(payload) - pn,
+            pn += snprintf(metaBuf + pn, sizeof(metaBuf) - pn,
                 ",\"collection_interval\":%lu",
                 _plugins[0]->getInterval() / 1000);
+            if (pn >= (int)sizeof(metaBuf)) pn = (int)sizeof(metaBuf) - 1;
         }
 
-        if (pn < (int)sizeof(payload) - 1) payload[pn++] = '}';
-        payload[pn] = '\0';
+        if (pn < (int)sizeof(metaBuf) - 1) metaBuf[pn++] = '}';
+        metaBuf[pn] = '\0';
 
         snprintf(_topicBuf, sizeof(_topicBuf), "%s/%s/metadata",
                  MQTT_MONITOR_TOPIC_PREFIX, _deviceId);
-        _mqttClient->publish(_topicBuf, payload);
+        _mqttClient->publish(_topicBuf, metaBuf);
         _forceMetadata = false;
         Serial.println("[MQTTMonitor] Published metadata");
     }
@@ -427,14 +443,16 @@ private:
             return;
         }
 
-        // Apply interval change
+        // Apply interval change (floor: 5 seconds to prevent thrashing)
         int newInterval;
         if (JsonParser::getInt(msg, "interval", &newInterval)) {
             if (newInterval > 0) {
+                unsigned long ms = (unsigned long)newInterval * 1000;
+                if (ms < 5000) ms = 5000;
                 for (int i = 0; i < _pluginCount; i++) {
-                    _plugins[i]->setInterval((unsigned long)newInterval * 1000);
+                    _plugins[i]->setInterval(ms);
                 }
-                Serial.printf("[MQTTMonitor] Config: interval set to %ds\n", newInterval);
+                Serial.printf("[MQTTMonitor] Config: interval set to %lums\n", ms);
             }
         }
 

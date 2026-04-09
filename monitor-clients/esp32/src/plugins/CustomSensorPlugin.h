@@ -55,6 +55,7 @@ public:
                     "\"%s\":{\"value\":\"%s\",\"unit\":\"%s\"}",
                     s.name, s.strFn(), s.unit);
             }
+            if (n >= maxLen) n = maxLen - 1;
         }
         return n;
     }

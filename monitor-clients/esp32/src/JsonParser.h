@@ -27,6 +27,15 @@ inline const char* findValue(const char* json, const char* key) {
 
     const char* p = json;
     while ((p = strstr(p, pattern)) != nullptr) {
+        // Verify this is a full key, not a suffix of another key.
+        // The char before the opening quote must be start-of-string, '{', ',', or whitespace.
+        if (p != json) {
+            char before = *(p - 1);
+            if (before != '{' && before != ',' && before != ' ' && before != '\t' && before != '\n') {
+                p += strlen(pattern);
+                continue;
+            }
+        }
         p += strlen(pattern);
         // skip whitespace after closing quote of key
         while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;

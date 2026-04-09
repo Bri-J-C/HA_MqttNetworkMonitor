@@ -34,8 +34,10 @@ public:
         int n = 0;
         n += snprintf(buf + n, maxLen - n,
             "\"wifi_tx_power\":{\"value\":%.2f,\"unit\":\"dBm\"}", tx_power * 0.25f);
+        if (n >= maxLen) n = maxLen - 1;
         n += snprintf(buf + n, maxLen - n,
             ",\"reset_reason\":{\"value\":\"%s\",\"unit\":\"\"}", reason_str);
+        if (n >= maxLen) n = maxLen - 1;
         return n;
     }
 };
