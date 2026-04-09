@@ -49,6 +49,12 @@ function deviceIcon(type) {
   return DEVICE_ICONS[type] || DEVICE_ICONS.default;
 }
 
+function escHtml(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 // ── Attribute formatting helpers ─────────────────────────────────────────
 function formatValue(value, unit) {
   if (value === null || value === undefined) return '\u2014';
@@ -150,8 +156,10 @@ function evalThreshold(value, threshold) {
 let _cachedIngressUrl = null;
 let _discoveryPromise = null;
 let _sessionRefreshInterval = null;
+let _hassRef = null;
 
 async function getIngressUrl(hass) {
+  _hassRef = hass;
   if (_cachedIngressUrl) return _cachedIngressUrl;
   if (_discoveryPromise) return _discoveryPromise;
 
@@ -178,7 +186,9 @@ async function getIngressUrl(hass) {
 
     await createIngressSession(hass);
     if (!_sessionRefreshInterval) {
-      _sessionRefreshInterval = setInterval(() => createIngressSession(hass), 60000);
+      _sessionRefreshInterval = setInterval(() => {
+        if (_hassRef) createIngressSession(_hassRef);
+      }, 60000);
     }
 
     return _cachedIngressUrl;
@@ -302,7 +312,7 @@ class MQTTDeviceStatusCard extends HTMLElement {
     if (!this._device) {
       const msg = !_cachedIngressUrl
         ? 'Add-on not reachable. Is it installed and running?'
-        : `Device "${this._config.device_id}" not found.`;
+        : `Device "${escHtml(this._config.device_id)}" not found.`;
       root.innerHTML = `
         <ha-card>
           <style>${this._baseStyles()}</style>
@@ -371,12 +381,12 @@ class MQTTDeviceStatusCard extends HTMLElement {
         <style>${this._baseStyles()}${this._cardStyles()}</style>
         <div class="card-wrap" style="border-left: 3px solid ${color}">
           <div class="header">
-            <span class="name">${this._escHtml(d.device_name || this._config.device_id)}</span>
+            <span class="name">${escHtml(d.device_name || this._config.device_id)}</span>
             <span class="status-badge" style="background:${color}20;color:${color}">
-              ${statusDot} ${d.status || 'unknown'}
+              ${statusDot} ${escHtml(d.status || 'unknown')}
             </span>
           </div>
-          <div class="type">${this._escHtml(d.device_type || 'unknown')}</div>
+          <div class="type">${escHtml(d.device_type || 'unknown')}</div>
           ${displayAttrs.length > 0 ? `
             <div class="attrs">
               ${displayAttrs.map(([name, data]) => {
@@ -391,7 +401,7 @@ class MQTTDeviceStatusCard extends HTMLElement {
                 const unit = transform ? '' : (data.unit || '');
                 return `
                   <div class="attr">
-                    ${this._escHtml(name.replace(/_/g, ' '))}: <span class="attr-value ${valClass}">${this._escHtml(String(val))}${unit}</span>
+                    ${escHtml(name.replace(/_/g, ' '))}: <span class="attr-value ${valClass}">${escHtml(String(val))}${escHtml(unit)}</span>
                   </div>
                 `;
               }).join('')}
@@ -399,7 +409,7 @@ class MQTTDeviceStatusCard extends HTMLElement {
           ` : ''}
           ${tags.length > 0 ? `
             <div class="tags">
-              ${tags.map(t => `<span class="tag">${this._escHtml(t)}</span>`).join('')}
+              ${tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}
             </div>
           ` : ''}
         </div>
@@ -417,9 +427,11 @@ class MQTTDeviceStatusCard extends HTMLElement {
     return Math.floor(diff / 86400) + 'd ago';
   }
 
-  _escHtml(s) {
-    if (!s) return '';
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  disconnectedCallback() {
+    if (this._pollInterval) {
+      clearInterval(this._pollInterval);
+      this._pollInterval = null;
+    }
   }
 
   _baseStyles() {
@@ -674,8 +686,8 @@ class MQTTTopologyCard extends HTMLElement {
       const pos = positions[n.id];
       if (!pos) return '';
       const col = STATUS_COLORS[n.status] || STATUS_COLORS.unknown;
-      const label = this._escHtml((n.name || n.id).substring(0, 14));
-      const statusLabel = this._escHtml(n.status);
+      const label = escHtml((n.name || n.id).substring(0, 14));
+      const statusLabel = escHtml(n.status);
       const isGw = n.type === 'gateway';
 
       if (isGw) {
@@ -710,7 +722,7 @@ class MQTTTopologyCard extends HTMLElement {
       if (perpY > 0) { perpX = -perpX; perpY = -perpY; }
       const bgH = labelFontSz + 4;
       const renderLabel = (x, y, text, color) => {
-        const escaped = this._escHtml(text);
+        const escaped = escHtml(text);
         const tw = text.length * labelFontSz * 0.55 + 8;
         return `<rect x="${x-tw/2}" y="${y-bgH+2}" width="${tw}" height="${bgH}" rx="3" fill="#0a0a1a" opacity="0.9"/>` +
                `<text x="${x}" y="${y}" text-anchor="middle" fill="${color}" font-size="${labelFontSz}" font-family="-apple-system,sans-serif">${escaped}</text>`;
@@ -768,8 +780,8 @@ class MQTTTopologyCard extends HTMLElement {
         <div class="card-content">
           <div class="header">
             <div>
-              <div class="title">${this._config.title || 'Network'}</div>
-              <div class="subtitle">${layoutName}</div>
+              <div class="title">${escHtml(this._config.title || 'Network')}</div>
+              <div class="subtitle">${escHtml(layoutName)}</div>
             </div>
             <div class="counts">
               <span class="count">
@@ -937,11 +949,6 @@ class MQTTTopologyCard extends HTMLElement {
     }
   }
 
-  _escHtml(s) {
-    if (!s) return '';
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
   getCardSize() {
     return 6;
   }
@@ -1081,18 +1088,18 @@ class MQTTDeviceStatusEditor extends HTMLElement {
               <option value="">Select a device...</option>
               ${this._devices.map(d => {
                 const statusIcon = d.status === 'online' ? '\u25CF' : '\u25CB';
-                return `<option value="${d.id}" ${d.id === currentId ? 'selected' : ''}>${statusIcon} ${d.name} (${d.id})</option>`;
+                return `<option value="${escHtml(d.id)}" ${d.id === currentId ? 'selected' : ''}>${statusIcon} ${escHtml(d.name)} (${escHtml(d.id)})</option>`;
               }).join('')}
             </select>
           ` : `
-            <input id="device-input" type="text" value="${currentId}" placeholder="e.g., pi-garage">
+            <input id="device-input" type="text" value="${escHtml(currentId)}" placeholder="e.g., pi-garage">
             <div class="hint">Device ID from your client config. Devices will appear once the add-on connects.</div>
           `}
           ${selectedDevice ? `
             <div class="device-preview">
               <svg width="14" height="14" viewBox="0 0 16 16">${deviceIcon(selectedDevice.type)}</svg>
-              ${selectedDevice.name} &middot; ${selectedDevice.type} &middot;
-              <span style="color:${STATUS_COLORS[selectedDevice.status] || COLORS.unknown}">${selectedDevice.status}</span>
+              ${escHtml(selectedDevice.name)} &middot; ${escHtml(selectedDevice.type)} &middot;
+              <span style="color:${STATUS_COLORS[selectedDevice.status] || COLORS.unknown}">${escHtml(selectedDevice.status)}</span>
             </div>
           ` : ''}
         </div>
@@ -1100,15 +1107,15 @@ class MQTTDeviceStatusEditor extends HTMLElement {
         <div class="field">
           <label>Attributes to display</label>
           <input id="attrs-input" type="text"
-            value="${currentAttrs.join(', ')}"
+            value="${escHtml(currentAttrs.join(', '))}"
             placeholder="Leave empty for pinned/default attributes">
           <div class="hint">Comma-separated. Empty = use device's pinned attributes or first 4.</div>
           ${this._selectedDeviceAttrs.length > 0 ? `
             <div class="section-title">Available attributes (click to toggle)</div>
             <div class="attr-chips">
               ${this._selectedDeviceAttrs.map(a => `
-                <span class="attr-chip ${currentAttrs.includes(a) ? 'selected' : ''}" data-attr="${a}">
-                  ${friendlyName(a)}
+                <span class="attr-chip ${currentAttrs.includes(a) ? 'selected' : ''}" data-attr="${escHtml(a)}">
+                  ${escHtml(friendlyName(a))}
                 </span>
               `).join('')}
             </div>
@@ -1118,7 +1125,7 @@ class MQTTDeviceStatusEditor extends HTMLElement {
         <div class="field">
           <label>Poll interval (seconds)</label>
           <input id="poll-input" type="number" min="5" max="300"
-            value="${this._config.poll_interval || 10}"
+            value="${escHtml(this._config.poll_interval || 10)}"
             placeholder="10">
           <div class="hint">How often to refresh data from the add-on (default: 10s)</div>
         </div>
@@ -1235,7 +1242,7 @@ class MQTTTopologyEditor extends HTMLElement {
         <div class="field">
           <label>Card Title</label>
           <input id="title-input" type="text"
-            value="${this._config.title || ''}"
+            value="${escHtml(this._config.title || '')}"
             placeholder="e.g., Home Network">
         </div>
         <div class="field">
@@ -1244,12 +1251,12 @@ class MQTTTopologyEditor extends HTMLElement {
             <select id="layout-select">
               <option value="" ${!currentLayout ? 'selected' : ''}>Default (auto-discovery)</option>
               ${this._layouts.map(l =>
-                `<option value="${l.id}" ${l.id === currentLayout ? 'selected' : ''}>${l.name}${l.isDefault ? ' (default)' : ''}</option>`
+                `<option value="${escHtml(l.id)}" ${l.id === currentLayout ? 'selected' : ''}>${escHtml(l.name)}${l.isDefault ? ' (default)' : ''}</option>`
               ).join('')}
             </select>
             <div class="hint">Layouts are created in the add-on's Topology page</div>
           ` : `
-            <input id="layout-input" type="text" value="${currentLayout}" placeholder="Layout ID (optional)">
+            <input id="layout-input" type="text" value="${escHtml(currentLayout)}" placeholder="Layout ID (optional)">
             <div class="hint">Create and arrange layouts in the add-on's Topology page</div>
           `}
         </div>
