@@ -5,9 +5,11 @@ export class WebSocketService {
     this._reconnectDelay = 1000;
     this._reconnectAttempts = 0;
     this._maxReconnectAttempts = 50;
+    this._shouldReconnect = true;
   }
 
   connect() {
+    this._shouldReconnect = true;
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const match = location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/);
     const basePath = match ? match[1] : '';
@@ -24,6 +26,7 @@ export class WebSocketService {
     };
 
     this._ws.onclose = () => {
+      if (!this._shouldReconnect) return;
       if (this._reconnectAttempts >= this._maxReconnectAttempts) {
         console.error('WebSocket: max reconnect attempts reached');
         return;
@@ -48,6 +51,7 @@ export class WebSocketService {
   }
 
   disconnect() {
+    this._shouldReconnect = false;
     if (this._ws) this._ws.close();
   }
 }

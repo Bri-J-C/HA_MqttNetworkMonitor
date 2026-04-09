@@ -5,10 +5,6 @@ import { setCustomTransforms, safeEval } from '../utils/transforms.js';
 import './tag-registry-settings.js';
 
 
-// Global threshold add form (module-level ephemeral state)
-const _globalThresholdForm = { attr: '', value: '' };
-const _customTransformForm = { name: '', expression: '' };
-
 class SettingsView extends LitElement {
   static properties = {
     _settings: { type: Object, state: true },
@@ -18,6 +14,8 @@ class SettingsView extends LitElement {
     _editingTransformIndex: { type: Number, state: true },
     _transformError: { type: String, state: true },
     _importStatus: { type: String, state: true },
+    _globalThresholdForm: { type: Object, state: true },
+    _customTransformForm: { type: Object, state: true },
   };
 
   static styles = [sharedStyles, css`
@@ -78,6 +76,8 @@ class SettingsView extends LitElement {
     this._settingsSaved = false;
     this._transformError = '';
     this._editingTransformIndex = -1;
+    this._globalThresholdForm = { attr: '', value: '' };
+    this._customTransformForm = { name: '', expression: '' };
   }
 
   connectedCallback() {
@@ -111,7 +111,7 @@ class SettingsView extends LitElement {
 
   _renderCustomTransforms() {
     const transforms = (this._settings || {}).custom_transforms || [];
-    const form = _customTransformForm;
+    const form = this._customTransformForm;
 
     return html`
       <div class="section">
@@ -135,11 +135,11 @@ class SettingsView extends LitElement {
           <input class="small-input" type="text" placeholder="Name (e.g. C to F)"
             style="width: 150px;"
             .value=${form.name}
-            @input=${(e) => { _customTransformForm.name = e.target.value; this.requestUpdate(); }}>
+            @input=${(e) => { this._customTransformForm.name = e.target.value; this.requestUpdate(); }}>
           <input class="small-input" type="text" placeholder="Expression (e.g. value * 1.8 + 32)"
             style="flex: 1; min-width: 200px;"
             .value=${form.expression}
-            @input=${(e) => { _customTransformForm.expression = e.target.value; this.requestUpdate(); }}>
+            @input=${(e) => { this._customTransformForm.expression = e.target.value; this.requestUpdate(); }}>
           <button class="small-btn" @click=${this._addCustomTransform.bind(this)}>${this._editingTransformIndex >= 0 ? 'Save' : 'Add'}</button>
           ${this._editingTransformIndex >= 0 ? html`<button class="small-btn" style="background: rgba(255,255,255,0.1); color: #fff;" @click=${() => this._cancelEditTransform()}>Cancel</button>` : ''}
         </div>
@@ -153,24 +153,24 @@ class SettingsView extends LitElement {
     const transforms = (this._settings || {}).custom_transforms || [];
     const t = transforms[index];
     if (!t) return;
-    _customTransformForm.name = t.name;
-    _customTransformForm.expression = t.expression;
+    this._customTransformForm.name = t.name;
+    this._customTransformForm.expression = t.expression;
     this._editingTransformIndex = index;
     this._transformError = '';
     this.requestUpdate();
   }
 
   _cancelEditTransform() {
-    _customTransformForm.name = '';
-    _customTransformForm.expression = '';
+    this._customTransformForm.name = '';
+    this._customTransformForm.expression = '';
     this._editingTransformIndex = -1;
     this._transformError = '';
     this.requestUpdate();
   }
 
   _addCustomTransform() {
-    const name = (_customTransformForm.name || '').trim();
-    const expression = (_customTransformForm.expression || '').trim();
+    const name = (this._customTransformForm.name || '').trim();
+    const expression = (this._customTransformForm.expression || '').trim();
     this._transformError = '';
 
     if (!name || !expression) {
@@ -205,8 +205,8 @@ class SettingsView extends LitElement {
 
     this._settings = { ...s, custom_transforms: existing };
 
-    _customTransformForm.name = '';
-    _customTransformForm.expression = '';
+    this._customTransformForm.name = '';
+    this._customTransformForm.expression = '';
     this.requestUpdate();
     this._saveSettings();
   }
@@ -224,7 +224,7 @@ class SettingsView extends LitElement {
   _renderGlobalDefaults() {
     const s = this._settings || {};
     const t = s.default_thresholds || {};
-    const form = _globalThresholdForm;
+    const form = this._globalThresholdForm;
 
     return html`
       <div class="section">
@@ -247,11 +247,11 @@ class SettingsView extends LitElement {
           <input class="small-input" type="text" placeholder="Attribute name..."
             style="width: 150px;"
             .value=${form.attr}
-            @input=${(e) => { _globalThresholdForm.attr = e.target.value; this.requestUpdate(); }}>
+            @input=${(e) => { this._globalThresholdForm.attr = e.target.value; this.requestUpdate(); }}>
           <input class="small-input" type="number" placeholder="Value..."
             style="width: 90px;"
             .value=${form.value}
-            @input=${(e) => { _globalThresholdForm.value = e.target.value; this.requestUpdate(); }}>
+            @input=${(e) => { this._globalThresholdForm.value = e.target.value; this.requestUpdate(); }}>
           <button class="small-btn" @click=${this._addDefaultThreshold.bind(this)}>Add threshold</button>
         </div>
 
@@ -285,12 +285,12 @@ class SettingsView extends LitElement {
   }
 
   _addDefaultThreshold() {
-    const attr = (_globalThresholdForm.attr || '').trim();
-    const value = (_globalThresholdForm.value || '').trim();
+    const attr = (this._globalThresholdForm.attr || '').trim();
+    const value = (this._globalThresholdForm.value || '').trim();
     if (!attr || value === '') return;
     this._updateDefaultThreshold(attr, value);
-    _globalThresholdForm.attr = '';
-    _globalThresholdForm.value = '';
+    this._globalThresholdForm.attr = '';
+    this._globalThresholdForm.value = '';
     this.requestUpdate();
   }
 

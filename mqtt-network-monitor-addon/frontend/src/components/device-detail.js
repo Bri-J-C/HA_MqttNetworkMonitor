@@ -10,6 +10,7 @@ import './tag-picker.js';
 import './device-attributes.js';
 import './device-commands.js';
 import './device-config.js';
+import './themed-dialog.js';
 
 class DeviceDetail extends LitElement {
   static properties = {
@@ -133,6 +134,7 @@ class DeviceDetail extends LitElement {
     this._showGroupDialog   = false;
     this._newGroupName      = '';
     this._serverCommands    = {};
+    this._loading           = false;
   }
 
   get _isGroupMode() { return !!this.groupId && !this.deviceId; }
@@ -174,11 +176,13 @@ class DeviceDetail extends LitElement {
 
   _updateDeviceData(device) {
     if (!device) return;
-    // Only trigger re-render if data actually changed — prevents flickering
+    if (this._loading) return; // Skip WS updates while loading to avoid race condition
     const merged = { ...(this.device || {}), ...device };
-    const oldJson = JSON.stringify(this.device);
-    const newJson = JSON.stringify(merged);
-    if (oldJson !== newJson) {
+    // Shallow comparison on key fields instead of full JSON.stringify
+    const old = this.device;
+    if (!old || old.status !== merged.status ||
+        old.last_seen !== merged.last_seen ||
+        Object.keys(merged.attributes || {}).length !== Object.keys(old.attributes || {}).length) {
       this.device = merged;
     }
   }
@@ -279,6 +283,7 @@ class DeviceDetail extends LitElement {
   }
 
   async _loadDevice() {
+    this._loading = true;
     try {
       this.device          = await fetchDevice(this.deviceId);
       this._haOverrides    = { ...(this.device.ha_exposure_overrides || {}) };
@@ -292,6 +297,8 @@ class DeviceDetail extends LitElement {
       } catch (_) {}
     } catch (e) {
       console.error('Failed to load device:', e);
+    } finally {
+      this._loading = false;
     }
   }
 
@@ -393,6 +400,7 @@ class DeviceDetail extends LitElement {
       ></device-config>
 
       ${this._showGroupDialog ? this._renderGroupDialog() : ''}
+      <themed-dialog></themed-dialog>
     `;
   }
 
@@ -553,7 +561,15 @@ class DeviceDetail extends LitElement {
       await this._saveGroupUpdate({ hidden_attributes: hidden });
       return;
     }
-    if (!confirm(`Hide attribute "${name}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`)) return;
+    const dialog = this.shadowRoot.querySelector('themed-dialog');
+    const ok = await dialog.show({
+      type: 'confirm',
+      title: 'Hide Attribute',
+      message: `Hide attribute "${name}"? Custom sensors will be removed from the client. Built-in attributes will be hidden.`,
+      confirmLabel: 'Hide',
+      confirmDanger: true,
+    });
+    if (!ok) return;
     try {
       await deleteAttribute(this.deviceId, name);
       const cardAttrs = this.device?.card_attributes || [];
@@ -665,7 +681,15 @@ class DeviceDetail extends LitElement {
   // ── Group mode save helpers ─────────────────────────────────────────────
 
   async _forceApplyGroup() {
-    if (!confirm('This will clear all device-level overrides for every member and enforce the group policy. Devices can still be customized afterwards.\n\nContinue?')) return;
+    const dialog = this.shadowRoot.querySelector('themed-dialog');
+    const ok = await dialog.show({
+      type: 'confirm',
+      title: 'Force Apply Group Policy',
+      message: 'This will clear all device-level overrides for every member and enforce the group policy. Devices can still be customized afterwards.',
+      confirmLabel: 'Force Apply',
+      confirmDanger: true,
+    });
+    if (!ok) return;
     try {
       await forceApplyGroup(this.groupId);
       // Reload to reflect changes
@@ -899,7 +923,15 @@ class DeviceDetail extends LitElement {
   // ── Device delete ──────────────────────────────────────────────────────────
 
   async _deleteDevice() {
-    if (!confirm(`Delete device "${this.device?.device_name || this.deviceId}"? This removes it from the registry. It will reappear if the client agent is still running.`)) return;
+    const dialog = this.shadowRoot.querySelector('themed-dialog');
+    const ok = await dialog.show({
+      type: 'confirm',
+      title: 'Delete Device',
+      message: `Delete device "${this.device?.device_name || this.deviceId}"? This removes it from the registry. It will reappear if the client agent is still running.`,
+      confirmLabel: 'Delete',
+      confirmDanger: true,
+    });
+    if (!ok) return;
     try {
       await deleteDevice(this.deviceId);
       this.dispatchEvent(new CustomEvent('back'));

@@ -16,6 +16,12 @@ class DeviceCard extends LitElement {
     deviceId: { type: String },
   };
 
+  connectedCallback() {
+    super.connectedCallback();
+    this.setAttribute('role', 'button');
+    this.setAttribute('tabindex', '0');
+  }
+
   static styles = [sharedStyles, css`
     :host {
       display: block;
@@ -101,8 +107,6 @@ class DeviceCard extends LitElement {
     const displayName = d.device_name || this.deviceId;
 
     this.style.setProperty('--status-color', color);
-    this.setAttribute('role', 'button');
-    this.setAttribute('tabindex', '0');
     this.setAttribute('aria-label', `${displayName}, ${d.status || 'unknown'}`);
 
     return html`

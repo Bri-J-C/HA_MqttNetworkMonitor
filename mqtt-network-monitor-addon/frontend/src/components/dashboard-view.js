@@ -4,6 +4,7 @@ import { fetchDevices, fetchGroups, updateGroup, createGroup, deleteGroup } from
 import { wsService } from '../services/websocket.js';
 import './device-card.js';
 import './tag-picker.js';
+import './themed-dialog.js';
 
 class DashboardView extends LitElement {
   static properties = {
@@ -268,6 +269,7 @@ class DashboardView extends LitElement {
       ` : ''}
 
       ${this.viewMode === 'group' ? this._renderByGroup() : this._renderAll()}
+      <themed-dialog></themed-dialog>
     `;
   }
 
@@ -431,7 +433,14 @@ class DashboardView extends LitElement {
   }
 
   async _createNewGroupFromSelected() {
-    const name = prompt("Enter group name:");
+    const dialog = this.shadowRoot.querySelector('themed-dialog');
+    const name = await dialog.show({
+      type: 'prompt',
+      title: 'Create Group',
+      message: 'Enter group name:',
+      placeholder: 'e.g. Infrastructure, IoT Sensors',
+      confirmLabel: 'Create',
+    });
     if (!name) return;
     const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
     try {
@@ -444,7 +453,15 @@ class DashboardView extends LitElement {
   }
 
   async _deleteGroup(groupId, groupName) {
-    if (!confirm(`Delete group "${groupName}"? Devices will be ungrouped.`)) return;
+    const dialog = this.shadowRoot.querySelector('themed-dialog');
+    const ok = await dialog.show({
+      type: 'confirm',
+      title: 'Delete Group',
+      message: `Delete group "${groupName}"? Devices will be ungrouped.`,
+      confirmLabel: 'Delete',
+      confirmDanger: true,
+    });
+    if (!ok) return;
     try {
       await deleteGroup(groupId);
       this._loadGroups();
