@@ -2,12 +2,36 @@
 
 import json
 import logging
+import re
 import shlex
 import subprocess
 
 logger = logging.getLogger(__name__)
 
 COMMAND_TIMEOUT = 30
+
+# Matches dangerous format string patterns that could leak internal state
+_DANGEROUS_TEMPLATE_RE = re.compile(
+    r'\{[0-9]'           # numbered args like {0}, {0.__class__}
+    r'|\{\w+\.\w+'       # attribute access like {x.y}
+    r'|\{\w+\[.*\]'      # item access like {x[0]}
+    r'|\{\w+![sra]'      # conversion flags like {x!s}
+    r'|\{\w+:'            # format specs like {x:>10}
+)
+
+
+def _validate_template(template: str):
+    """Validate that a command template only uses simple {name} placeholders.
+
+    Rejects patterns that could enable format string injection such as
+    attribute access ({0.__class__}), item access ({x[0]}), conversion
+    flags ({x!s}), and format specs ({x:>10}).
+    """
+    if _DANGEROUS_TEMPLATE_RE.search(template):
+        raise ValueError(
+            f"Invalid command template: contains dangerous format patterns"
+        )
+
 
 DEFAULT_TEMPLATES = {
     "reboot": "reboot",
@@ -22,6 +46,7 @@ class CommandHandler:
         self._templates = dict(DEFAULT_TEMPLATES)
 
     def add_command(self, name: str, shell_cmd: str):
+        _validate_template(shell_cmd)
         self._templates[name] = shell_cmd
         self.allowed_commands.add(name)
 
