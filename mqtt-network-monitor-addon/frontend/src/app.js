@@ -8,6 +8,7 @@ import './components/topology-view.js';
 import './components/dashboard-view.js';
 import './components/device-detail.js';
 import './components/settings-view.js';
+import './components/toast-notification.js';
 
 class NetworkMonitorApp extends LitElement {
   static properties = {
@@ -75,6 +76,7 @@ class NetworkMonitorApp extends LitElement {
       ></nav-bar>
       ${this._renderView()}
       ${this.selectedDevice || this.selectedGroup ? this._renderOverlay() : ''}
+      <toast-notification></toast-notification>
     `;
   }
 
