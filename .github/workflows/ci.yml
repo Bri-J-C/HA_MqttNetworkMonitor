@@ -18,7 +18,7 @@ jobs:
         run: |
           cd mqtt-network-monitor-addon
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-mock
+          pip install pytest pytest-asyncio pytest-mock httpx
       - name: Run server tests
         run: |
           cd mqtt-network-monitor-addon
