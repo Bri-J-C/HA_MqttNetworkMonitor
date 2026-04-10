@@ -71,11 +71,34 @@ jobs:
         run: |
           cd monitor-clients/python
           New-Item -ItemType Directory -Force -Path nssm
-          $url = "https://nssm.cc/release/nssm-2.24.zip"
-          Invoke-WebRequest -Uri $url -OutFile nssm.zip
-          Expand-Archive -Path nssm.zip -DestinationPath nssm-extract
-          Copy-Item nssm-extract/nssm-2.24/win64/nssm.exe nssm/nssm.exe
-          Remove-Item nssm.zip, nssm-extract -Recurse -Force
+          # Try multiple sources for NSSM
+          $urls = @(
+            "https://nssm.cc/release/nssm-2.24.zip",
+            "https://nssm.cc/ci/nssm-2.24-101-g897c7ad.zip",
+            "https://github.com/nicehash/nssm/releases/download/v2.24/nssm-2.24.zip"
+          )
+          $downloaded = $false
+          foreach ($url in $urls) {
+            try {
+              Write-Host "Trying: $url"
+              Invoke-WebRequest -Uri $url -OutFile nssm.zip -TimeoutSec 15
+              $downloaded = $true
+              break
+            } catch {
+              Write-Host "Failed: $_"
+            }
+          }
+          if (-not $downloaded) {
+            # Fallback: download standalone nssm.exe from a known mirror
+            Invoke-WebRequest -Uri "https://github.com/nicehash/nssm/raw/master/bin/win64/nssm.exe" -OutFile nssm/nssm.exe
+          } else {
+            Expand-Archive -Path nssm.zip -DestinationPath nssm-extract -Force
+            $exe = Get-ChildItem -Path nssm-extract -Recurse -Filter "nssm.exe" | Where-Object { $_.Directory.Name -eq "win64" } | Select-Object -First 1
+            if ($exe) { Copy-Item $exe.FullName nssm/nssm.exe }
+            else { Copy-Item (Get-ChildItem -Path nssm-extract -Recurse -Filter "nssm.exe" | Select-Object -First 1).FullName nssm/nssm.exe }
+            Remove-Item nssm.zip, nssm-extract -Recurse -Force
+          }
+          if (-not (Test-Path nssm/nssm.exe)) { throw "Failed to obtain nssm.exe" }
 
       - name: Build installer
         run: |
