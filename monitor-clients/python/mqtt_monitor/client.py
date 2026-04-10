@@ -53,6 +53,7 @@ class MQTTMonitorClient:
         self._sync_active_plugins()
 
         self._mqtt.on_connect = self._on_connect
+        self._mqtt.on_disconnect = self._on_disconnect
         self._mqtt.on_message = self._on_message
 
     def connect(self):
@@ -74,13 +75,27 @@ class MQTTMonitorClient:
             retain=True,
         )
 
+        # Reconnect automatically with backoff: 1s initial, 30s max
+        self._mqtt.reconnect_delay_set(min_delay=1, max_delay=30)
+
         self._mqtt.connect(self.config.mqtt.broker, self.config.mqtt.port)
+
+    def _on_disconnect(self, client, userdata, *args):
+        logger.warning("Disconnected from MQTT broker, will reconnect automatically")
+        # Cancel all plugin timers -- _on_connect will restart them
+        for timer in self._plugin_timers.values():
+            timer.cancel()
+        self._plugin_timers.clear()
 
     def _on_connect(self, client, userdata, flags, rc, *args):
         if rc != 0:
             logger.error(f"MQTT connection failed (rc={rc})")
             return
         logger.info(f"Connected to MQTT broker (rc={rc})")
+        # Cancel any leftover timers from previous connection
+        for timer in self._plugin_timers.values():
+            timer.cancel()
+        self._plugin_timers.clear()
         self._force_full_publish = True  # Send all attributes on reconnect
         self._last_published.clear()
 
