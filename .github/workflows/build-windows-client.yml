@@ -1,4 +1,4 @@
-name: Build Windows Client
+name: Build & Release
 
 on:
   push:
@@ -10,9 +10,53 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    runs-on: windows-latest
+  # Run all tests before building
+  server-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          cd mqtt-network-monitor-addon
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-mock httpx
+      - name: Run server tests
+        run: |
+          cd mqtt-network-monitor-addon
+          python -m pytest tests/ -v
 
+  client-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          cd monitor-clients/python
+          pip install paho-mqtt psutil PyYAML pytest
+      - name: Run client tests
+        run: |
+          cd monitor-clients/python
+          python -m pytest tests/ -v
+
+  esp32-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run ESP32 host tests
+        run: |
+          cd monitor-clients/esp32/tests
+          make test
+
+  # Build Windows installer after tests pass
+  build:
+    needs: [server-tests, client-tests, esp32-tests]
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +78,36 @@ jobs:
           Set-Content -Path "mqtt_monitor/version.py" -Value $content
           Write-Host "Version: $version"
         shell: pwsh
+
+      - name: Download NSSM
+        working-directory: monitor-clients/python
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path nssm
+          $urls = @(
+            "https://nssm.cc/release/nssm-2.24.zip",
+            "https://nssm.cc/ci/nssm-2.24-101-g897c7ad.zip"
+          )
+          $downloaded = $false
+          foreach ($url in $urls) {
+            try {
+              Write-Host "Trying: $url"
+              Invoke-WebRequest -Uri $url -OutFile nssm.zip -TimeoutSec 15
+              $downloaded = $true
+              break
+            } catch {
+              Write-Host "Failed: $_"
+            }
+          }
+          if ($downloaded) {
+            Expand-Archive -Path nssm.zip -DestinationPath nssm-extract -Force
+            $exe = Get-ChildItem -Path nssm-extract -Recurse -Filter "nssm.exe" | Where-Object { $_.Directory.Name -eq "win64" } | Select-Object -First 1
+            if ($exe) { Copy-Item $exe.FullName nssm/nssm.exe }
+            Remove-Item nssm.zip, nssm-extract -Recurse -Force
+          } else {
+            Invoke-WebRequest -Uri "https://github.com/nicehash/nssm/raw/master/bin/win64/nssm.exe" -OutFile nssm/nssm.exe
+          }
+          if (-not (Test-Path nssm/nssm.exe)) { throw "Failed to obtain nssm.exe" }
 
       - name: Build installer
         working-directory: monitor-clients/python
