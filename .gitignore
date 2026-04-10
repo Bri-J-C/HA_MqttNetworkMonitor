@@ -25,6 +25,9 @@ CLAUDE.md
 deploy.sh
 .claude/
 docs/superpowers/
+**/ha_token
+**/*token*
+**/*secret*
 
 # Tests (not for public repo)
 tests/

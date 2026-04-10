@@ -1,0 +1,127 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # Run all tests first
+  server-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install server dependencies
+        run: |
+          cd mqtt-network-monitor-addon
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-mock
+      - name: Run server tests
+        run: |
+          cd mqtt-network-monitor-addon
+          python -m pytest tests/ -v
+
+  client-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install client dependencies
+        run: |
+          cd monitor-clients/python
+          pip install paho-mqtt psutil PyYAML pytest
+      - name: Run client tests
+        run: |
+          cd monitor-clients/python
+          python -m pytest tests/ -v
+
+  esp32-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run ESP32 host tests
+        run: |
+          cd monitor-clients/esp32/tests
+          make test
+
+  # Build Windows installer after tests pass
+  build-windows:
+    needs: [server-tests, client-tests, esp32-tests]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller paho-mqtt psutil pyyaml
+
+      - name: Download NSSM
+        shell: pwsh
+        run: |
+          cd monitor-clients/python
+          New-Item -ItemType Directory -Force -Path nssm
+          $url = "https://nssm.cc/release/nssm-2.24.zip"
+          Invoke-WebRequest -Uri $url -OutFile nssm.zip
+          Expand-Archive -Path nssm.zip -DestinationPath nssm-extract
+          Copy-Item nssm-extract/nssm-2.24/win64/nssm.exe nssm/nssm.exe
+          Remove-Item nssm.zip, nssm-extract -Recurse -Force
+
+      - name: Build installer
+        run: |
+          cd monitor-clients/python
+          python build_windows.py
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: monitor-clients/python/dist/*.exe
+
+  # Create GitHub release with assets
+  release:
+    needs: [build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: dist/
+
+      - name: Extract release notes from tag
+        id: notes
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "## MQTT Network Monitor $TAG" > notes.md
+          echo "" >> notes.md
+          echo "### Downloads" >> notes.md
+          echo "- **Windows Installer**: Download the \`.exe\` below and run it. Includes everything needed." >> notes.md
+          echo "- **Python Client (Linux/Mac)**: Clone the repo and run \`pip install -e monitor-clients/python/\`" >> notes.md
+          echo "- **ESP32 Library**: Copy \`monitor-clients/esp32/src/\` to your Arduino libraries folder" >> notes.md
+          echo "- **HA Add-on**: Add this repo as a local add-on in Home Assistant" >> notes.md
+          echo "" >> notes.md
+          echo "### Changes since last release" >> notes.md
+          git log $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo HEAD~30)..HEAD --oneline --no-decorate >> notes.md 2>/dev/null || echo "Initial release" >> notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.notes.outputs.tag }}
+          body_path: notes.md
+          files: dist/*.exe
+          draft: false
+          prerelease: false
