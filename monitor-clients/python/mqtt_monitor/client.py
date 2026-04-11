@@ -312,8 +312,11 @@ class MQTTMonitorClient:
             self._mqtt.disconnect()
             sys.exit(0)
 
-        signal.signal(signal.SIGINT, shutdown)
-        signal.signal(signal.SIGTERM, shutdown)
+        # Signal handlers only work in the main thread (not when running as a Windows service)
+        import threading
+        if threading.current_thread() is threading.main_thread():
+            signal.signal(signal.SIGINT, shutdown)
+            signal.signal(signal.SIGTERM, shutdown)
 
         self._mqtt.loop_forever()
 

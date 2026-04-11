@@ -42,8 +42,12 @@ def _get_config_path():
     return Path("config.yaml")
 
 
-def _run_monitor():
-    """Run the monitor client (blocking). Called by the service."""
+def _create_and_run_monitor(service_instance=None):
+    """Create and run the monitor client (blocking). Called by the service.
+
+    If service_instance is provided, stores the client reference on it
+    so SvcStop can call client.stop().
+    """
     from mqtt_monitor.config import ConfigLoader
     from mqtt_monitor.client import MQTTMonitorClient
 
@@ -65,8 +69,13 @@ def _run_monitor():
     config = ConfigLoader.load_with_remote(config_path, remote_path)
     logger.info(f"Starting monitor for device: {config.device.id}")
 
-    client = MQTTMonitorClient(config, config_dir=config_path.parent)
-    client.run()
+    try:
+        client = MQTTMonitorClient(config, config_dir=config_path.parent)
+        if service_instance is not None:
+            service_instance._client = client
+        client.run()
+    except Exception as e:
+        logger.error(f"Monitor crashed: {e}", exc_info=True)
 
 
 if HAS_WIN32:
@@ -96,7 +105,9 @@ if HAS_WIN32:
             try:
                 # Run monitor in a thread so SvcDoRun can wait on the stop event
                 import threading
-                monitor_thread = threading.Thread(target=_run_monitor, daemon=True)
+                monitor_thread = threading.Thread(
+                    target=_create_and_run_monitor, args=(self,), daemon=True
+                )
                 monitor_thread.start()
 
                 # Wait for stop signal
