@@ -79,35 +79,12 @@ jobs:
           Write-Host "Version: $version"
         shell: pwsh
 
-      - name: Download NSSM
+      - name: Verify NSSM
         working-directory: monitor-clients/python
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path nssm
-          $urls = @(
-            "https://nssm.cc/release/nssm-2.24.zip",
-            "https://nssm.cc/ci/nssm-2.24-101-g897c7ad.zip"
-          )
-          $downloaded = $false
-          foreach ($url in $urls) {
-            try {
-              Write-Host "Trying: $url"
-              Invoke-WebRequest -Uri $url -OutFile nssm.zip -TimeoutSec 15
-              $downloaded = $true
-              break
-            } catch {
-              Write-Host "Failed: $_"
-            }
-          }
-          if ($downloaded) {
-            Expand-Archive -Path nssm.zip -DestinationPath nssm-extract -Force
-            $exe = Get-ChildItem -Path nssm-extract -Recurse -Filter "nssm.exe" | Where-Object { $_.Directory.Name -eq "win64" } | Select-Object -First 1
-            if ($exe) { Copy-Item $exe.FullName nssm/nssm.exe }
-            Remove-Item nssm.zip, nssm-extract -Recurse -Force
-          } else {
-            Invoke-WebRequest -Uri "https://github.com/nicehash/nssm/raw/master/bin/win64/nssm.exe" -OutFile nssm/nssm.exe
-          }
-          if (-not (Test-Path nssm/nssm.exe)) { throw "Failed to obtain nssm.exe" }
+          if (-not (Test-Path nssm/nssm.exe)) { throw "nssm/nssm.exe not found in repo" }
+          Write-Host "NSSM found: $(Get-Item nssm/nssm.exe | Select-Object -ExpandProperty Length) bytes"
 
       - name: Build installer
         working-directory: monitor-clients/python
