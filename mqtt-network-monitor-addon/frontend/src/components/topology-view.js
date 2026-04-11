@@ -869,18 +869,18 @@ class TopologyView extends LitElement {
     e.stopPropagation();
     if (this.linkMode) {
       this._handleLinkClick(nodeId);
-    } else {
-      this._selectNode(nodeId);
-      // Navigate to device detail if not in edit mode
-      if (!this.editMode) {
-        const node = this.topology?.nodes?.find(n => n.id === nodeId);
-        if (node && node.type !== 'gateway') {
-          this.dispatchEvent(new CustomEvent('device-select', {
-            detail: { deviceId: nodeId },
-            bubbles: true, composed: true,
-          }));
-        }
+    } else if (!this.editMode) {
+      // Not in edit mode — open device detail overlay (not inline)
+      const node = this.topology?.nodes?.find(n => n.id === nodeId);
+      if (node && node.type !== 'gateway') {
+        this.dispatchEvent(new CustomEvent('device-select', {
+          detail: { deviceId: nodeId },
+          bubbles: true, composed: true,
+        }));
       }
+    } else {
+      // Edit mode — show inline detail panel
+      this._selectNode(nodeId);
     }
   }
 
