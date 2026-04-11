@@ -707,6 +707,13 @@ class InstallerWizard:
             # Stop existing service first (handles both NSSM and native)
             subprocess.run(['sc', 'stop', SERVICE_NAME], capture_output=True)
             time.sleep(2)
+            # Force kill if still running (service may be stuck in STOP_PENDING)
+            subprocess.run(['taskkill', '/F', '/IM', 'mqtt-network-monitor.exe'],
+                          capture_output=True)
+            time.sleep(1)
+            # Remove old service registration so we can reinstall cleanly
+            subprocess.run(['sc', 'delete', SERVICE_NAME], capture_output=True)
+            time.sleep(1)
 
             monitor_src = _get_bundled_path("mqtt-network-monitor.exe")
 
