@@ -28,5 +28,7 @@ export const sharedStyles = css`
     --shadow-dropdown: 0 8px 24px rgba(0,0,0,0.6);
     --shadow-modal: 0 20px 60px rgba(0,0,0,0.5);
     --transition: 0.2s ease;
+    --font-display: 'Outfit', sans-serif;
+    --font-data: 'JetBrains Mono', monospace;
   }
 `;
