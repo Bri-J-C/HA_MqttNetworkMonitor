@@ -56,15 +56,37 @@ class MQTTHandler:
         self._client.loop_stop()
         self._client.disconnect()
 
+    def _sign_payload(self, data: dict, device_id: str) -> dict:
+        """Add HMAC signature if a shared secret is configured for the device."""
+        secret = self._get_device_secret(device_id)
+        if not secret:
+            return data
+        import hmac as hmac_mod
+        import hashlib
+        payload_str = json.dumps(data, sort_keys=True, separators=(',', ':'))
+        sig = hmac_mod.new(secret.encode(), payload_str.encode(), hashlib.sha256).hexdigest()
+        data["_hmac"] = sig
+        return data
+
+    def _get_device_secret(self, device_id: str) -> str | None:
+        """Get shared secret for a device. Checks device settings, then global."""
+        device = self._registry.get_device(device_id)
+        if device and device.get("shared_secret"):
+            return device["shared_secret"]
+        # Could also check global settings -- for now return None (no signing)
+        return None
+
     def send_command(self, device_id: str, command: str, params: dict | None = None,
                      request_id: str | None = None) -> str:
         import uuid
         request_id = request_id or str(uuid.uuid4())
-        payload = json.dumps({
+        data = {
             "command": command,
             "params": params or {},
             "request_id": request_id,
-        })
+        }
+        data = self._sign_payload(data, device_id)
+        payload = json.dumps(data)
         topic = f"{TOPIC_PREFIX}/{device_id}/command"
         self._client.publish(topic, payload)
         logger.info(f"Sent command '{command}' to {device_id} (req: {request_id})")
@@ -72,7 +94,9 @@ class MQTTHandler:
 
     def push_config(self, device_id: str, config: dict) -> None:
         """Publish a config update to a device via MQTT."""
-        payload = json.dumps({"type": "config_update", **config})
+        data = {"type": "config_update", **config}
+        data = self._sign_payload(data, device_id)
+        payload = json.dumps(data)
         topic = f"{TOPIC_PREFIX}/{device_id}/config"
         self._client.publish(topic, payload)
         logger.info(f"Pushed config to {device_id}")

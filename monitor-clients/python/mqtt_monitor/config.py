@@ -36,6 +36,7 @@ class Config:
     plugins: dict[str, dict[str, Any]] = field(default_factory=dict)
     allowed_commands: list[str] = field(default_factory=list)
     allow_remote_exec: bool = False
+    shared_secret: str | None = None
 
 
 class ConfigLoader:
@@ -85,6 +86,7 @@ class ConfigLoader:
             plugins=raw.get("plugins", {}),
             allowed_commands=raw.get("allowed_commands", []),
             allow_remote_exec=raw.get("allow_remote_exec", False),
+            shared_secret=raw.get("shared_secret"),
         )
 
     @staticmethod
@@ -112,4 +114,5 @@ class ConfigLoader:
             plugins=merged.get("plugins", config.plugins),
             allowed_commands=config.allowed_commands,
             allow_remote_exec=config.allow_remote_exec,
+            shared_secret=config.shared_secret,
         )

@@ -45,6 +45,8 @@ class MQTTMonitorClient:
         self._config_handler = ConfigHandler(
             _config_dir,
             on_config_applied=self._apply_config_update,
+            allow_remote_exec=self._remote_exec_enabled,
+            shared_secret=getattr(config, 'shared_secret', None),
         )
 
         registry = PluginRegistry()
@@ -110,12 +112,46 @@ class MQTTMonitorClient:
 
         self._start_collection()
 
+    def _verify_hmac(self, data: dict) -> bool:
+        """Verify HMAC on a command message. Returns True if valid or no secret."""
+        secret = getattr(self.config, 'shared_secret', None)
+        if not secret:
+            return True
+        import hmac as hmac_mod
+        import hashlib
+        sig = data.pop("_hmac", None)
+        if not sig:
+            logger.warning("Command missing HMAC signature — rejected")
+            return False
+        payload = json.dumps(data, sort_keys=True, separators=(',', ':'))
+        expected = hmac_mod.new(
+            secret.encode(), payload.encode(), hashlib.sha256
+        ).hexdigest()
+        if not hmac_mod.compare_digest(sig, expected):
+            logger.warning("Command has invalid HMAC — rejected")
+            return False
+        return True
+
     def _on_message(self, client, userdata, msg):
         if msg.topic == self._message_builder.command_topic:
             payload_str = msg.payload.decode()
             logger.info(f"Received command: {payload_str}")
 
-            result = self._command_handler.handle(payload_str)
+            # Verify HMAC if shared_secret is configured
+            try:
+                data = json.loads(payload_str)
+            except json.JSONDecodeError:
+                return
+            if not self._verify_hmac(data):
+                client.publish(
+                    self._message_builder.command_response_topic,
+                    payload=json.dumps({"request_id": data.get("request_id", ""),
+                                        "status": "rejected",
+                                        "output": "Authentication failed"}),
+                )
+                return
+
+            result = self._command_handler.handle(json.dumps(data))
             response_json = json.dumps(result)
 
             client.publish(
