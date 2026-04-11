@@ -79,12 +79,9 @@ jobs:
           Write-Host "Version: $version"
         shell: pwsh
 
-      - name: Verify NSSM
-        working-directory: monitor-clients/python
-        shell: pwsh
+      - name: Install pywin32
         run: |
-          if (-not (Test-Path nssm/nssm.exe)) { throw "nssm/nssm.exe not found in repo" }
-          Write-Host "NSSM found: $(Get-Item nssm/nssm.exe | Select-Object -ExpandProperty Length) bytes"
+          pip install pywin32
 
       - name: Build installer
         working-directory: monitor-clients/python

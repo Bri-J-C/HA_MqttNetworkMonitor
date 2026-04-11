@@ -28,13 +28,7 @@ def main():
         if d.exists():
             shutil.rmtree(d)
 
-    # Verify nssm.exe exists
-    nssm = Path("nssm/nssm.exe")
-    if not nssm.exists():
-        print(f"ERROR: {nssm} not found. Download NSSM and place nssm.exe in nssm/")
-        sys.exit(1)
-
-    # Stage 1: Build the monitor exe
+    # Stage 1: Build the monitor exe (with pywin32 for native Windows service support)
     print("Stage 1: Building monitor exe...")
     run([
         sys.executable, "-m", "PyInstaller",
@@ -49,6 +43,12 @@ def main():
         "--hidden-import", "mqtt_monitor.config_handler",
         "--hidden-import", "mqtt_monitor.command_handler",
         "--hidden-import", "mqtt_monitor.message",
+        "--hidden-import", "mqtt_monitor.win_service",
+        "--hidden-import", "win32serviceutil",
+        "--hidden-import", "win32service",
+        "--hidden-import", "win32event",
+        "--hidden-import", "win32api",
+        "--hidden-import", "servicemanager",
         "monitor_entry.py",
     ])
 
@@ -84,7 +84,6 @@ def main():
         "--uac-admin",
         "--name", setup_name,
         "--add-data", f"{monitor_exe};bundled",
-        "--add-data", f"{nssm};bundled",
         "--hidden-import", "mqtt_monitor.installer_gui",
         "setup_entry.py",
     ])

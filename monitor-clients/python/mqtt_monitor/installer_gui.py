@@ -703,15 +703,12 @@ class InstallerWizard:
             ui(lambda: self._mark_step(0, True))
             time.sleep(0.3)
 
-            # Step 1: Copy files from bundled data
-            # Stop existing service first
-            nssm_dst = INSTALL_DIR / "nssm.exe"
-            if nssm_dst.exists():
-                subprocess.run([str(nssm_dst), "stop", SERVICE_NAME], capture_output=True)
-                time.sleep(1)
+            # Step 1: Copy monitor exe
+            # Stop existing service first (handles both NSSM and native)
+            subprocess.run(['sc', 'stop', SERVICE_NAME], capture_output=True)
+            time.sleep(2)
 
             monitor_src = _get_bundled_path("mqtt-network-monitor.exe")
-            nssm_src = _get_bundled_path("nssm.exe")
 
             if not monitor_src.exists():
                 ui(lambda: self._mark_step(1, False))
@@ -721,60 +718,57 @@ class InstallerWizard:
                 ui(lambda: self.close_btn.pack(pady=(16, 0)))
                 return
 
-            if not nssm_src.exists():
-                ui(lambda: self._mark_step(1, False))
-                ui(lambda: self.status_label.configure(
-                    text=f"Bundled nssm.exe not found at: {nssm_src}",
-                    style="Error.TLabel"))
-                ui(lambda: self.close_btn.pack(pady=(16, 0)))
-                return
-
             shutil.copy2(monitor_src, INSTALL_DIR / "mqtt-network-monitor.exe")
-            shutil.copy2(nssm_src, INSTALL_DIR / "nssm.exe")
+            # Clean up old NSSM if present (migration from previous versions)
+            nssm_old = INSTALL_DIR / "nssm.exe"
+            if nssm_old.exists():
+                subprocess.run([str(nssm_old), "remove", SERVICE_NAME, "confirm"], capture_output=True)
+                time.sleep(1)
+                nssm_old.unlink(missing_ok=True)
             ui(lambda: self._mark_step(1, True))
             time.sleep(0.3)
 
             # Step 2: Write configuration
-            # On upgrade, wizard is pre-filled with existing values,
-            # so writing is safe — user's changes are intentional
             config_yaml = _build_config_yaml(self.data)
             config_path = INSTALL_DIR / CONFIG_NAME
             config_path.write_text(config_yaml, encoding="utf-8")
             ui(lambda: self._mark_step(2, True))
             time.sleep(0.3)
 
-            # Step 3: Register Windows service via NSSM
-            nssm = str(INSTALL_DIR / "nssm.exe")
+            # Step 3: Register Windows service (native, no wrapper needed)
             monitor = str(INSTALL_DIR / "mqtt-network-monitor.exe")
 
             # Remove old service if exists
-            subprocess.run([nssm, "remove", SERVICE_NAME, "confirm"], capture_output=True)
-            time.sleep(0.5)
+            subprocess.run(['sc', 'delete', SERVICE_NAME], capture_output=True)
+            time.sleep(1)
 
-            # Install
-            result = subprocess.run([nssm, "install", SERVICE_NAME, monitor],
-                                    capture_output=True, text=True)
+            # Install via sc create (the exe handles service callbacks via pywin32)
+            result = subprocess.run(
+                ['sc', 'create', SERVICE_NAME,
+                 f'binPath={monitor}',
+                 f'DisplayName={SERVICE_DISPLAY}',
+                 'start=auto'],
+                capture_output=True, text=True)
             reg_ok = result.returncode == 0
 
             if reg_ok:
-                subprocess.run([nssm, "set", SERVICE_NAME, "DisplayName", SERVICE_DISPLAY], capture_output=True)
-                subprocess.run([nssm, "set", SERVICE_NAME, "Description", SERVICE_DESC], capture_output=True)
-                subprocess.run([nssm, "set", SERVICE_NAME, "AppDirectory", str(INSTALL_DIR)], capture_output=True)
-                subprocess.run([nssm, "set", SERVICE_NAME, "Start", "SERVICE_AUTO_START"], capture_output=True)
-                subprocess.run([nssm, "set", SERVICE_NAME, "AppExit", "Default", "Restart"], capture_output=True)
-                subprocess.run([nssm, "set", SERVICE_NAME, "AppRestartDelay", "10000"], capture_output=True)
-                log_path = str(INSTALL_DIR / "monitor.log")
-                subprocess.run([nssm, "set", SERVICE_NAME, "AppStdout", log_path], capture_output=True)
-                subprocess.run([nssm, "set", SERVICE_NAME, "AppStderr", log_path], capture_output=True)
-                subprocess.run([nssm, "set", SERVICE_NAME, "AppStdoutCreationDisposition", "4"], capture_output=True)
-                subprocess.run([nssm, "set", SERVICE_NAME, "AppStderrCreationDisposition", "4"], capture_output=True)
+                # Set description
+                subprocess.run(
+                    ['sc', 'description', SERVICE_NAME, SERVICE_DESC],
+                    capture_output=True)
+                # Configure restart on failure: 10s, 30s, 60s delays, reset after 1 hour
+                subprocess.run(
+                    ['sc', 'failure', SERVICE_NAME,
+                     'reset=', '3600',
+                     'actions=', 'restart/10000/restart/30000/restart/60000'],
+                    capture_output=True)
 
             ui(lambda: self._mark_step(3, reg_ok))
             time.sleep(0.3)
 
             # Step 4: Start the service
             if reg_ok:
-                result = subprocess.run([nssm, "start", SERVICE_NAME],
+                result = subprocess.run(['sc', 'start', SERVICE_NAME],
                                         capture_output=True, text=True)
                 start_ok = result.returncode == 0
             else:
@@ -853,14 +847,13 @@ class InstallerWizard:
 
         try:
             # Step 0: Stop service
-            nssm = str(INSTALL_DIR / "nssm.exe")
-            subprocess.run([nssm, "stop", SERVICE_NAME], capture_output=True)
-            time.sleep(1)
+            subprocess.run(['sc', 'stop', SERVICE_NAME], capture_output=True)
+            time.sleep(2)
             ui(lambda: self._mark_step(0, True))
             time.sleep(0.3)
 
             # Step 1: Remove service
-            result = subprocess.run([nssm, "remove", SERVICE_NAME, "confirm"],
+            result = subprocess.run(['sc', 'delete', SERVICE_NAME],
                                     capture_output=True, text=True)
             ui(lambda: self._mark_step(1, result.returncode == 0))
             time.sleep(0.3)
