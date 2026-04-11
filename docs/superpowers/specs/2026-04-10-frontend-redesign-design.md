@@ -129,7 +129,12 @@
 - Cog icon (bottom-right of value row)
 - Border color (reflects threshold status)
 
-**TODO (future):** Group policy badge — visual tag on cards controlled by group policy. Purple color TBD.
+**Group policy badge:**
+- Devices controlled by a group policy show a small badge/tag on the card (e.g., "LinuxWorkStations")
+- Badge color: `#b388ff` (soft purple) with background `rgba(179,136,255,0.12)` — matches the vibe of the amber/blue/green type badges
+- Shown on dashboard cards and in the device detail view
+- Badge text is the group name
+- Clicking the badge could navigate to group settings (future enhancement)
 
 ---
 
