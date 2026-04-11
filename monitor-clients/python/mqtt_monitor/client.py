@@ -283,7 +283,19 @@ class MQTTMonitorClient:
         self._force_full_publish = False  # Clear after ALL plugins get their initial publish
 
     def run(self):
-        self.connect()
+        # Retry initial connection with backoff — on Windows the service
+        # may start before the network is ready after a reboot.
+        delay = 1
+        max_delay = 30
+        while True:
+            try:
+                self.connect()
+                break
+            except Exception as e:
+                logger.warning(f"Initial MQTT connection failed: {e} — retrying in {delay}s")
+                time.sleep(delay)
+                delay = min(delay * 2, max_delay)
+
         self._running = True
 
         def shutdown(sig, frame):

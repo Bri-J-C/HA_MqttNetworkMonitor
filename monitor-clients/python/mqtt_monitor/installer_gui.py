@@ -120,6 +120,9 @@ def _build_config_yaml(data: dict) -> str:
     if data["allowed_commands"]:
         cfg["allowed_commands"] = list(data["allowed_commands"])
 
+    if data.get("allow_remote_exec"):
+        cfg["allow_remote_exec"] = True
+
     return yaml.dump(cfg, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
 
@@ -591,6 +594,21 @@ class InstallerWizard:
         ttk.Button(add_frame, text="Add", command=self._cmd_add).pack(side="left", padx=(6, 0))
         ttk.Button(add_frame, text="Remove", command=self._cmd_remove).pack(side="left", padx=(6, 0))
 
+        # Allow remote execution toggle
+        self.allow_remote_exec_var = tk.BooleanVar(
+            value=self._ec("allow_remote_exec", default=True)
+        )
+        ttk.Checkbutton(
+            f,
+            text="Allow remote command execution from HA addon",
+            variable=self.allow_remote_exec_var,
+        ).pack(anchor="w", pady=(4, 0))
+        ttk.Label(
+            f,
+            text="When enabled, the HA addon can push and execute commands on this PC.",
+            style="Small.TLabel",
+        ).pack(anchor="w", pady=(0, 8))
+
         # Nav
         nav = ttk.Frame(f)
         nav.pack(side="bottom", fill="x", pady=(4, 0))
@@ -612,11 +630,13 @@ class InstallerWizard:
 
     def _cmd_next(self):
         self.data["allowed_commands"] = list(self.cmd_listbox.get(0, "end"))
+        self.data["allow_remote_exec"] = self.allow_remote_exec_var.get()
         self._next()
         self._run_install()
 
     def _cmd_skip(self):
         self.data["allowed_commands"] = []
+        self.data["allow_remote_exec"] = False
         self._next()
         self._run_install()
 
