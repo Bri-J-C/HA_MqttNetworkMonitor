@@ -45,24 +45,25 @@ class AttributePopover extends LitElement {
     :host {
       position: absolute;
       top: calc(100% + 8px);
-      left: 0;
+      right: 0;
       z-index: 100;
       font-family: var(--font-display);
     }
     .popover {
       width: 240px;
+      max-width: 90vw;
       background: #161630;
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 8px;
       padding: 12px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     }
-    /* Arrow pointing up-left */
+    /* Arrow pointing up-right */
     .popover::before {
       content: '';
       position: absolute;
       top: -6px;
-      left: 12px;
+      right: 12px;
       width: 10px; height: 10px;
       background: #161630;
       border-left: 1px solid rgba(255,255,255,0.1);
@@ -207,6 +208,24 @@ class AttributePopover extends LitElement {
     }
     .view-history:hover {
       text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      :host {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
+      }
+      .popover {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 12px 12px 0 0;
+        padding: 16px;
+      }
+      .popover::before { display: none; }
     }
   `];
 

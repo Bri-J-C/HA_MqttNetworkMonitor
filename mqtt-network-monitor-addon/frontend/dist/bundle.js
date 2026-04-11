@@ -316,13 +316,13 @@ const w=globalThis,$=e=>e,k=w.trustedTypes,S=k?k.createPolicy("lit-html",{create
             @click=${()=>this._navigate("settings")}
           >Settings</button>
         </div>
-        <span class="version">v0.2.1 build ${"4/10 21:10"}</span>
+        <span class="version">v0.2.1 build ${"4/11 7:50"}</span>
       </nav>
 
       <!-- Mobile simple header -->
       <div class="mobile-header" aria-hidden="true">
         <span class="logo">Network Monitor</span>
-        <span class="version">build ${"4/10 21:10"}</span>
+        <span class="version">build ${"4/11 7:50"}</span>
       </div>
 
       <!-- Mobile bottom tab bar -->
@@ -557,24 +557,25 @@ const w=globalThis,$=e=>e,k=w.trustedTypes,S=k?k.createPolicy("lit-html",{create
     :host {
       position: absolute;
       top: calc(100% + 8px);
-      left: 0;
+      right: 0;
       z-index: 100;
       font-family: var(--font-display);
     }
     .popover {
       width: 240px;
+      max-width: 90vw;
       background: #161630;
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 8px;
       padding: 12px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     }
-    /* Arrow pointing up-left */
+    /* Arrow pointing up-right */
     .popover::before {
       content: '';
       position: absolute;
       top: -6px;
-      left: 12px;
+      right: 12px;
       width: 10px; height: 10px;
       background: #161630;
       border-left: 1px solid rgba(255,255,255,0.1);
@@ -720,6 +721,24 @@ const w=globalThis,$=e=>e,k=w.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .view-history:hover {
       text-decoration: underline;
     }
+
+    @media (max-width: 768px) {
+      :host {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
+      }
+      .popover {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 12px 12px 0 0;
+        padding: 16px;
+      }
+      .popover::before { display: none; }
+    }
   `];constructor(){super(),this.attrName="",this.warnOp=">",this.warnValue="",this.critOp=">",this.critValue="",this.transform="",this.transforms=[],this.haExposed=!1,this.pinned=!1,this.thresholdSource=""}render(){const e=this.attrName.replace(/_/g," ");return B`
       <div class="popover" @click=${e=>e.stopPropagation()}>
         <div class="popover-title">
@@ -833,11 +852,12 @@ const w=globalThis,$=e=>e,k=w.trustedTypes,S=k?k.createPolicy("lit-html",{create
     }
     .attr-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
+      gap: 12px; align-items: start;
     }
     .attr-tile {
       background: #0d0d1f; border-radius: 8px; padding: 12px;
       position: relative; transition: opacity 0.2s;
+      overflow: hidden;
     }
     .attr-tile.ok { border: 1px solid #04d65c; }
     .attr-tile.exceeded { border: 1px solid #ffb74d; }
@@ -863,6 +883,8 @@ const w=globalThis,$=e=>e,k=w.trustedTypes,S=k?k.createPolicy("lit-html",{create
     .attr-val {
       font-size: 18px; font-weight: 700; color: #00D4FF;
       font-family: var(--font-data); transition: color 0.2s;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: calc(100% - 24px);
     }
     .attr-val.exceeded-val { color: #ffb74d; }
     .attr-val.critical-val { color: #ef5350; }

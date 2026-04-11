@@ -51,11 +51,12 @@ class DeviceAttributes extends LitElement {
     }
     .attr-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
+      gap: 12px; align-items: start;
     }
     .attr-tile {
       background: #0d0d1f; border-radius: 8px; padding: 12px;
       position: relative; transition: opacity 0.2s;
+      overflow: hidden;
     }
     .attr-tile.ok { border: 1px solid #04d65c; }
     .attr-tile.exceeded { border: 1px solid #ffb74d; }
@@ -81,6 +82,8 @@ class DeviceAttributes extends LitElement {
     .attr-val {
       font-size: 18px; font-weight: 700; color: #00D4FF;
       font-family: var(--font-data); transition: color 0.2s;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: calc(100% - 24px);
     }
     .attr-val.exceeded-val { color: #ffb74d; }
     .attr-val.critical-val { color: #ef5350; }

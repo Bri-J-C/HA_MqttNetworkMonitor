@@ -1,6 +1,6 @@
 name: "MQTT Network Monitor"
 description: "Network monitoring dashboard with MQTT client agents"
-version: "0.2.1"
+version: 0.3.3
 slug: "mqtt_network_monitor"
 url: "https://github.com/user/mqtt-network-monitor"
 arch:
@@ -22,20 +22,13 @@ options:
   mqtt_user: ""
   mqtt_password: ""
   log_level: "info"
+  mqtt_tls: false
+  mqtt_ca_cert: ""
 schema:
   mqtt_host: str
   mqtt_port: int
   mqtt_user: str
   mqtt_password: password
   log_level: list(debug|info|warning|error)
-  mqtt_tls:
-    name: MQTT TLS
-    description: Enable TLS for MQTT connection
-    required: false
-    default: false
-    type: bool
-  mqtt_ca_cert:
-    name: MQTT CA Certificate Path
-    description: Path to CA certificate file for TLS verification
-    required: false
-    type: str
+  mqtt_tls: bool?
+  mqtt_ca_cert: str?
