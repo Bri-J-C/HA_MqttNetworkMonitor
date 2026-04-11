@@ -57,8 +57,11 @@ def _create_and_run_monitor(service_instance=None):
         return
 
     # Set up file logging since we're a service (no console)
+    from logging.handlers import RotatingFileHandler
     log_path = config_path.parent / "monitor.log"
-    file_handler = logging.FileHandler(str(log_path), encoding="utf-8")
+    file_handler = RotatingFileHandler(
+        str(log_path), maxBytes=5*1024*1024, backupCount=3, encoding="utf-8"
+    )
     file_handler.setFormatter(logging.Formatter(
         "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     ))

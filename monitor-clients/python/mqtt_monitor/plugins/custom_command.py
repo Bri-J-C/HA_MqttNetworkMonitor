@@ -23,7 +23,10 @@ class CustomCommandPlugin(BasePlugin):
     def collect(self) -> dict:
         result = {}
         for attr_name, cmd_config in self.commands.items():
-            command = cmd_config["command"]
+            command = cmd_config.get("command") if isinstance(cmd_config, dict) else None
+            if not command:
+                logger.warning(f"Skipping custom command {attr_name}: no 'command' defined")
+                continue
             unit = cmd_config.get("unit", "")
             value = self._run_command(command)
             result[attr_name] = {"value": value, "unit": unit}

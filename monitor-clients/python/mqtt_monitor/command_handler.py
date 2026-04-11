@@ -5,6 +5,7 @@ import logging
 import re
 import shlex
 import subprocess
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,10 @@ class CommandHandler:
     def _execute(self, command: str, params: dict, request_id: str) -> dict:
         template = self._templates.get(command, command)
         logger.warning(f"Executing remote command: {command} (template: {template})")
-        safe_params = {k: shlex.quote(str(v)) for k, v in params.items()}
+        if sys.platform == "win32":
+            safe_params = {k: str(v).replace('"', '\\"').replace('&', '^&').replace('|', '^|') for k, v in params.items()}
+        else:
+            safe_params = {k: shlex.quote(str(v)) for k, v in params.items()}
         try:
             shell_cmd = template.format(**safe_params)
         except KeyError as e:
@@ -108,9 +112,10 @@ class CommandHandler:
             }
 
         # On Windows, PowerShell cmdlets (Verb-Noun pattern) must run through powershell
-        import sys
         if sys.platform == "win32" and self._is_powershell_command(shell_cmd):
-            shell_cmd = f'powershell -Command "{shell_cmd}"'
+            import base64
+            encoded = base64.b64encode(shell_cmd.encode("utf-16-le")).decode("ascii")
+            shell_cmd = f"powershell -NoProfile -EncodedCommand {encoded}"
 
         try:
             proc = subprocess.run(

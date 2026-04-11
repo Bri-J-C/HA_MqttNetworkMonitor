@@ -46,18 +46,20 @@ class ConfigHandler:
             return True  # No secret = no verification (backward compatible)
         import hmac as hmac_mod
         import hashlib
-        sig = data.pop("_hmac", None)
+        sig = data.get("_hmac")
         if not sig:
             logger.warning("Message missing HMAC signature — rejected")
             return False
-        # Compute HMAC over the remaining payload
-        payload = json.dumps(data, sort_keys=True, separators=(',', ':'))
+        # Compute HMAC over the payload without _hmac key
+        check_data = {k: v for k, v in data.items() if k != "_hmac"}
+        payload = json.dumps(check_data, sort_keys=True, separators=(',', ':'))
         expected = hmac_mod.new(
             self._shared_secret.encode(), payload.encode(), hashlib.sha256
         ).hexdigest()
         if not hmac_mod.compare_digest(sig, expected):
             logger.warning("Invalid HMAC signature — rejected")
             return False
+        data.pop("_hmac", None)
         return True
 
     # Keys that are NEVER accepted from remote config pushes
@@ -111,7 +113,7 @@ class ConfigHandler:
                     continue
             filtered[k] = v
 
-        self._remote_config = filtered
+        self._remote_config.update(filtered)
         if self._on_config_applied:
             self._on_config_applied(self._remote_config)
 

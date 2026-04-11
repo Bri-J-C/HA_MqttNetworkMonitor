@@ -37,6 +37,7 @@ class MQTTMonitorClient:
         self._remote_exec_enabled = getattr(config, 'allow_remote_exec', True)
         self._plugins = []
         self._plugin_timers: dict[str, threading.Timer] = {}
+        self._timer_lock = threading.Lock()
         self._running = False
         self._last_published: dict[str, dict] = {}  # plugin_name -> {attr: value}
         self._force_full_publish = True  # Send everything on first connect
@@ -80,14 +81,15 @@ class MQTTMonitorClient:
         # Reconnect automatically with backoff: 1s initial, 30s max
         self._mqtt.reconnect_delay_set(min_delay=1, max_delay=30)
 
-        self._mqtt.connect(self.config.mqtt.broker, self.config.mqtt.port)
+        self._mqtt.connect(self.config.mqtt.broker, self.config.mqtt.port, keepalive=60)
 
     def _on_disconnect(self, client, userdata, *args):
         logger.warning("Disconnected from MQTT broker, will reconnect automatically")
         # Cancel all plugin timers -- _on_connect will restart them
-        for timer in self._plugin_timers.values():
-            timer.cancel()
-        self._plugin_timers.clear()
+        with self._timer_lock:
+            for timer in self._plugin_timers.values():
+                timer.cancel()
+            self._plugin_timers.clear()
 
     def _on_connect(self, client, userdata, flags, rc, *args):
         if rc != 0:
@@ -95,9 +97,10 @@ class MQTTMonitorClient:
             return
         logger.info(f"Connected to MQTT broker (rc={rc})")
         # Cancel any leftover timers from previous connection
-        for timer in self._plugin_timers.values():
-            timer.cancel()
-        self._plugin_timers.clear()
+        with self._timer_lock:
+            for timer in self._plugin_timers.values():
+                timer.cancel()
+            self._plugin_timers.clear()
         self._force_full_publish = True  # Send all attributes on reconnect
         self._last_published.clear()
 
@@ -119,23 +122,30 @@ class MQTTMonitorClient:
             return True
         import hmac as hmac_mod
         import hashlib
-        sig = data.pop("_hmac", None)
+        sig = data.get("_hmac")
         if not sig:
             logger.warning("Command missing HMAC signature — rejected")
             return False
-        payload = json.dumps(data, sort_keys=True, separators=(',', ':'))
+        check_data = {k: v for k, v in data.items() if k != "_hmac"}
+        payload = json.dumps(check_data, sort_keys=True, separators=(',', ':'))
         expected = hmac_mod.new(
             secret.encode(), payload.encode(), hashlib.sha256
         ).hexdigest()
         if not hmac_mod.compare_digest(sig, expected):
             logger.warning("Command has invalid HMAC — rejected")
             return False
+        data.pop("_hmac", None)
         return True
 
     def _on_message(self, client, userdata, msg):
         if msg.topic == self._message_builder.command_topic:
-            payload_str = msg.payload.decode()
-            logger.info(f"Received command: {payload_str}")
+            try:
+                payload_str = msg.payload.decode()
+            except UnicodeDecodeError:
+                logger.warning(f"Non-UTF8 payload on {msg.topic}, ignoring")
+                return
+            logger.info(f"Received command: {json.loads(payload_str).get('command', '?') if payload_str.startswith('{') else '?'}")
+            logger.debug(f"Command payload: {payload_str}")
 
             # Verify HMAC if shared_secret is configured
             try:
@@ -160,8 +170,13 @@ class MQTTMonitorClient:
             )
 
         elif msg.topic == self._message_builder.config_topic:
-            payload_str = msg.payload.decode()
-            logger.info(f"Received config update: {payload_str}")
+            try:
+                payload_str = msg.payload.decode()
+            except UnicodeDecodeError:
+                logger.warning(f"Non-UTF8 payload on {msg.topic}, ignoring")
+                return
+            logger.info("Received config update")
+            logger.debug(f"Config payload: {payload_str}")
 
             result = self._config_handler.handle_config_message(payload_str)
             response_json = json.dumps(result)
@@ -188,10 +203,15 @@ class MQTTMonitorClient:
     def _apply_config_update(self, remote_config: dict):
         """Apply remote config changes to running plugins."""
         if "interval" in remote_config:
-            new_interval = max(remote_config["interval"], MIN_INTERVAL)
-            for plugin in self._plugins:
-                plugin.interval = new_interval
-                logger.info(f"Updated {plugin.name} interval to {new_interval}s")
+            try:
+                new_interval = max(int(remote_config["interval"]), MIN_INTERVAL)
+            except (ValueError, TypeError):
+                logger.warning(f"Invalid interval value: {remote_config['interval']}")
+                new_interval = None
+            if new_interval:
+                for plugin in self._plugins:
+                    plugin.interval = new_interval
+                    logger.info(f"Updated {plugin.name} interval to {new_interval}s")
 
         # Handle custom_command plugin — create, update, or remove sensors
         plugins_config = remote_config.get("plugins", {})
@@ -219,7 +239,7 @@ class MQTTMonitorClient:
                     "commands": cc_commands,
                     "interval": max(cc_config.get("interval", remote_config.get("interval", 30)), MIN_INTERVAL),
                 })
-                self._plugins.append(new_plugin)
+                self._plugins = [*self._plugins, new_plugin]
                 if self._running:
                     self._schedule_plugin(new_plugin)
                 logger.info(f"Created custom_command plugin with: {list(cc_commands.keys())}")
@@ -252,9 +272,10 @@ class MQTTMonitorClient:
 
     def _reschedule_all_plugins(self):
         """Cancel all plugin timers and reschedule immediately."""
-        for timer in self._plugin_timers.values():
-            timer.cancel()
-        self._plugin_timers.clear()
+        with self._timer_lock:
+            for timer in self._plugin_timers.values():
+                timer.cancel()
+            self._plugin_timers.clear()
         for plugin in self._plugins:
             self._schedule_plugin(plugin)
         logger.info("Rescheduled all plugins after config update")
@@ -262,7 +283,10 @@ class MQTTMonitorClient:
     def _collect_and_publish(self, plugin):
         try:
             attributes = plugin.collect()
-            network = plugin.get_network_info()
+            try:
+                network = plugin.get_network_info()
+            except Exception:
+                network = None
 
             # Filter out unchanged static attributes (unless first publish)
             if plugin.static_attributes and not self._force_full_publish:
@@ -302,13 +326,14 @@ class MQTTMonitorClient:
         if plugin.send_once:
             return  # Don't schedule recurring timer for send_once plugins
         # Cancel existing timer for this plugin before creating a new one
-        old_timer = self._plugin_timers.get(plugin.name)
-        if old_timer:
-            old_timer.cancel()
-        timer = threading.Timer(plugin.interval, self._schedule_plugin, [plugin])
-        timer.daemon = True
-        timer.start()
-        self._plugin_timers[plugin.name] = timer
+        with self._timer_lock:
+            old_timer = self._plugin_timers.get(plugin.name)
+            if old_timer:
+                old_timer.cancel()
+            timer = threading.Timer(plugin.interval, self._schedule_plugin, [plugin])
+            timer.daemon = True
+            timer.start()
+            self._plugin_timers[plugin.name] = timer
 
     def _start_collection(self):
         self._running = True
@@ -337,9 +362,10 @@ class MQTTMonitorClient:
         def shutdown(sig, frame):
             logger.info("Shutting down...")
             self._running = False
-            for timer in self._plugin_timers.values():
-                timer.cancel()
-            self._plugin_timers.clear()
+            with self._timer_lock:
+                for timer in self._plugin_timers.values():
+                    timer.cancel()
+                self._plugin_timers.clear()
             self._mqtt.publish(
                 self._message_builder.status_topic,
                 payload="offline",
@@ -349,18 +375,39 @@ class MQTTMonitorClient:
             sys.exit(0)
 
         # Signal handlers only work in the main thread (not when running as a Windows service)
-        import threading
         if threading.current_thread() is threading.main_thread():
             signal.signal(signal.SIGINT, shutdown)
             signal.signal(signal.SIGTERM, shutdown)
 
-        self._mqtt.loop_forever()
+        while self._running:
+            try:
+                self._mqtt.loop_forever()
+            except Exception as e:
+                if self._running:
+                    logger.error(f"MQTT loop crashed: {e}, reconnecting in 5s")
+                    time.sleep(5)
+                    try:
+                        self.connect()
+                    except Exception:
+                        pass
+                else:
+                    break
 
     def stop(self):
         self._running = False
-        for timer in self._plugin_timers.values():
-            timer.cancel()
-        self._plugin_timers.clear()
+        with self._timer_lock:
+            for timer in self._plugin_timers.values():
+                timer.cancel()
+            self._plugin_timers.clear()
+        try:
+            self._mqtt.publish(
+                self._message_builder.status_topic,
+                payload="offline",
+                retain=True,
+            )
+            time.sleep(0.5)
+        except Exception:
+            pass
         self._mqtt.disconnect()
 
 
