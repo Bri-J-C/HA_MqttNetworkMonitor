@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import { applyTransform, getAllTransforms } from '../utils/transforms.js';
 import './attribute-chart.js';
+import './attribute-popover.js';
 
 /**
  * device-attributes — attributes grid with HA exposure toggles, threshold editing, hide/unhide.
@@ -34,10 +35,12 @@ class DeviceAttributes extends LitElement {
     groupTransforms: { type: Object },
     _showHidden:       { type: Boolean, state: true },
     _expandedChart:    { type: String, state: true },
+    _openPopover:      { type: String, state: true },
   };
 
   static styles = [sharedStyles, css`
-    /* Attributes + HA exposure */
+    :host { font-family: var(--font-display); }
+    /* Attributes section */
     .section {
       background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px;
       margin-bottom: 16px;
@@ -54,103 +57,41 @@ class DeviceAttributes extends LitElement {
       background: #0d0d1f; border-radius: 8px; padding: 12px;
       position: relative; transition: opacity 0.2s;
     }
-    /* dimmed class no longer reduces opacity — toggle is sufficient */
-    .attr-tile-top {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      margin-bottom: 6px;
-    }
+    .attr-tile.ok { border: 1px solid #04d65c; }
+    .attr-tile.exceeded { border: 1px solid #ffb74d; }
+    .attr-tile.critical { border: 1px solid #ef5350; }
     .attr-label {
       font-size: 10px; color: #fff; text-transform: uppercase;
       letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;
     }
-    .attr-delete {
-      font-size: 14px; color: #fff; cursor: pointer; line-height: 1;
-    }
-    .attr-delete:hover { color: #ef5350; }
-    .attr-val {
-      font-size: 18px; font-weight: 700; margin-top: 4px; color: #00D4FF;
-      transition: color 0.2s;
-    }
-    /* dimmed-val no longer changes color — toggle is sufficient */
-    .attr-unit { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 400; }
-    .attr-tile.exceeded { border: 1px solid #ffb74d; }
-    .attr-tile.critical { border: 1px solid #ef5350; }
-    .attr-val.exceeded-val { color: #ffb74d; }
-    .attr-val.critical-val { color: #ef5350; }
-    .attr-thresholds {
-      margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.05);
-      display: flex; flex-direction: column; gap: 4px;
-    }
-    .attr-threshold-row {
-      display: flex; align-items: center; gap: 4px;
-    }
-    .threshold-label {
-      font-size: 11px; text-transform: uppercase;
-      letter-spacing: 0.5px; width: 36px; flex-shrink: 0; font-weight: 600;
-    }
-    .threshold-label.warn { color: rgba(255,183,77,0.7); }
-    .threshold-label.crit { color: rgba(239,83,80,0.7); }
-    .threshold-op {
-      background: #0d0d1f; border: none; border-radius: 3px;
-      color: rgba(255,255,255,0.5); padding: 2px 4px; font-size: 11px; cursor: pointer;
-      appearance: none; -webkit-appearance: none; -moz-appearance: none;
-    }
-    .threshold-op option { background: #0d0d1f; color: #fff; }
-    .threshold-op:hover, .threshold-op:focus { outline: none; color: #00D4FF; }
-    .threshold-inline {
-      width: 44px; background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.5); padding: 2px 2px; font-size: 11px;
-      text-align: center;
-    }
-    .threshold-inline:focus { outline: none; border-bottom-color: #00D4FF; color: #fff; }
-    .threshold-inline::placeholder { color: rgba(255,255,255,0.15); }
-    .threshold-source {
-      font-size: 8px; color: rgba(255,255,255,0.2); margin-left: auto;
-    }
-
-    /* Transform select */
-    .attr-transform {
-      margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.05);
-      display: flex; align-items: center; gap: 4px;
-    }
-    .transform-select {
-      flex: 1; min-width: 0; background: #0d0d1f; border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 4px; color: rgba(255,255,255,0.5); padding: 2px 4px;
-      font-size: 10px; cursor: pointer;
-      appearance: none; -webkit-appearance: none; -moz-appearance: none;
-    }
-    .transform-select option { background: #0d0d1f; color: #fff; }
-    .transform-select:hover, .transform-select:focus { outline: none; border-color: #00D4FF; color: #fff; }
-    .transform-label {
-      font-size: 8px; color: rgba(255,255,255,0.3); text-transform: uppercase;
-      letter-spacing: 0.3px; white-space: nowrap;
-    }
-    .transform-source {
-      font-size: 8px; color: rgba(255,255,255,0.25); font-style: italic; white-space: nowrap;
-    }
-
-    /* Pin icon */
     .attr-pin {
       font-size: 10px; cursor: pointer; opacity: 0.3;
       transition: opacity 0.15s; line-height: 1; user-select: none;
     }
     .attr-pin:hover { opacity: 0.7; }
     .attr-pin.pinned { opacity: 1; }
-
-    /* Toggle switch */
-    .toggle-wrap { cursor: pointer; flex-shrink: 0; }
-    .toggle {
-      width: 32px; height: 18px; border-radius: 9px; position: relative;
-      transition: background 0.2s;
+    .attr-delete {
+      position: absolute; top: 6px; right: 8px;
+      font-size: 14px; color: #fff; cursor: pointer; line-height: 1;
     }
-    .toggle.on  { background: #00D4FF; }
-    .toggle.off { background: #444; }
-    .toggle-knob {
-      width: 14px; height: 14px; border-radius: 50%; background: #fff;
-      position: absolute; top: 2px; transition: left 0.2s;
+    .attr-delete:hover { color: #ef5350; }
+    .val-row {
+      display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;
     }
-    .toggle.on  .toggle-knob { left: 16px; }
-    .toggle.off .toggle-knob { left: 2px; }
+    .attr-val {
+      font-size: 18px; font-weight: 700; color: #00D4FF;
+      font-family: var(--font-data); transition: color 0.2s;
+    }
+    .attr-val.exceeded-val { color: #ffb74d; }
+    .attr-val.critical-val { color: #ef5350; }
+    .attr-unit { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 400; }
+    .attr-cog {
+      font-size: 14px; color: rgba(255,255,255,0.55); cursor: pointer;
+      transition: color 0.2s; user-select: none;
+    }
+    .attr-cog:hover { color: #00D4FF; }
+    .attr-cog.active { color: #00D4FF; }
+    .popover-anchor { position: relative; }
 
     @media (max-width: 768px) {
       .attr-grid { grid-template-columns: 1fr; }
@@ -168,6 +109,8 @@ class DeviceAttributes extends LitElement {
     this.groupTransforms = {};
     this._showHidden       = false;
     this._expandedChart    = null;
+    this._openPopover      = null;
+    this._onDocClick       = this._onDocClick.bind(this);
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -313,110 +256,81 @@ class DeviceAttributes extends LitElement {
     const critEffective    = critOverrides[name] != null ? critOverrides[name] : null;
     const critical         = this._checkThreshold(currentVal, critEffective);
 
-    // Critical takes priority over warning for styling
-    const tileClass = critical ? 'critical' : (exceeded ? 'exceeded' : '');
+    // Determine tile border class: critical > warning > ok (thresholds set but fine) > none
+    const hasAnyThreshold = effectiveThreshold != null || critEffective != null;
+    const tileClass = critical ? 'critical' : (exceeded ? 'exceeded' : (hasAnyThreshold ? 'ok' : ''));
     const valClass  = critical ? 'critical-val' : (exceeded ? 'exceeded-val' : '');
 
+    const popoverOpen = this._openPopover === name;
+
+    // Threshold source for popover
+    const thresholdSource = threshold && threshold.source !== 'device' && localThreshold == null
+      ? threshold.source : '';
+
     return html`
-      <div class="attr-tile ${exposed ? '' : 'dimmed'} ${tileClass}">
-        <div class="attr-tile-top">
-          <span class="attr-label">${name.replace(/_/g, ' ')}
-            <span class="attr-pin ${isPinned ? 'pinned' : ''}"
-              title="${isPinned ? 'Unpin from card' : 'Pin to card'}"
-              @click=${(e) => { e.stopPropagation(); this._togglePin(name); }}>&#x1F4CC;</span>
-            <span class="attr-delete" title="Remove attribute"
-              @click=${() => this._onDelete(name)}>&times;</span>
-          </span>
-          <span class="toggle-wrap"
-            role="switch"
-            aria-checked=${exposed ? 'true' : 'false'}
-            aria-label="Expose ${name.replace(/_/g, ' ')} to Home Assistant"
-            tabindex="0"
-            @click=${() => this._onToggleExposure(name)}
-            @keydown=${(e) => (e.key === 'Enter' || e.key === ' ') && this._onToggleExposure(name)}>
-            <div class="toggle ${exposed ? 'on' : 'off'}">
-              <div class="toggle-knob"></div>
-            </div>
-          </span>
-        </div>
-        <div class="attr-val ${exposed ? '' : 'dimmed-val'} ${valClass}">
-          ${this._formatValue(currentVal, data.unit, transform)}
-        </div>
-        <div class="attr-thresholds">
-          <div class="attr-threshold-row">
-            ${exceeded ? html`<span style="color: #ffb74d; font-size: 11px;">\u26A0</span>` : ''}
-            <span class="threshold-label warn">warn</span>
-            <select class="threshold-op"
-              aria-label="Warning threshold operator for ${name.replace(/_/g, ' ')}"
-              .value=${currentOp}
-              @change=${(e) => this._onThresholdChange(name, currentThreshVal, e.target.value)}>
-              <option value=">">&gt;</option>
-              <option value="<">&lt;</option>
-              <option value=">=">&gt;=</option>
-              <option value="<=">&lt;=</option>
-              <option value="==">==</option>
-              <option value="!=">!=</option>
-            </select>
-            <input class="threshold-inline" type="number"
-              aria-label="Warning threshold value for ${name.replace(/_/g, ' ')}"
-              placeholder="\u2014"
-              .value=${currentThreshVal != null ? String(currentThreshVal) : ''}
-              @change=${(e) => this._onThresholdChange(name, e.target.value, currentOp)}>
-            ${threshold && threshold.source !== 'device' && localThreshold == null ? html`
-              <span class="threshold-source">${threshold.source}</span>
+      <div class="attr-tile ${tileClass}">
+        <span class="attr-label">${name.replace(/_/g, ' ')}
+          <span class="attr-pin ${isPinned ? 'pinned' : ''}"
+            title="${isPinned ? 'Unpin from card' : 'Pin to card'}"
+            @click=${(e) => { e.stopPropagation(); this._togglePin(name); }}>&#x1F4CC;</span>
+        </span>
+        <span class="attr-delete" title="Remove attribute"
+          @click=${() => this._onDelete(name)}>&times;</span>
+        <div class="val-row">
+          <div class="attr-val ${valClass}">
+            ${this._formatValue(currentVal, data.unit, transform)}
+          </div>
+          <div class="popover-anchor">
+            <span class="attr-cog ${popoverOpen ? 'active' : ''}"
+              title="Settings"
+              @click=${(e) => { e.stopPropagation(); this._togglePopover(name); }}>&#x2699;</span>
+            ${popoverOpen ? html`
+              <attribute-popover
+                .attrName=${name}
+                .warnOp=${currentOp}
+                .warnValue=${currentThreshVal != null ? String(currentThreshVal) : ''}
+                .critOp=${critOp}
+                .critValue=${critThreshVal != null ? String(critThreshVal) : ''}
+                .transform=${transform}
+                .transforms=${getAllTransforms()}
+                .haExposed=${exposed}
+                .pinned=${isPinned}
+                .thresholdSource=${thresholdSource}
+                @view-history=${(e) => { e.stopPropagation(); this._expandedChart = name; this._openPopover = null; }}
+                @close-popover=${() => { this._openPopover = null; }}
+              ></attribute-popover>
             ` : ''}
           </div>
-          <div class="attr-threshold-row">
-            ${critical ? html`<span style="color: #ef5350; font-size: 11px;">\u26A0</span>` : ''}
-            <span class="threshold-label crit">crit</span>
-            <select class="threshold-op"
-              aria-label="Critical threshold operator for ${name.replace(/_/g, ' ')}"
-              .value=${critOp}
-              @change=${(e) => this._onCritThresholdChange(name, critThreshVal, e.target.value)}>
-              <option value=">">&gt;</option>
-              <option value="<">&lt;</option>
-              <option value=">=">&gt;=</option>
-              <option value="<=">&lt;=</option>
-              <option value="==">==</option>
-              <option value="!=">!=</option>
-            </select>
-            <input class="threshold-inline" type="number"
-              aria-label="Critical threshold value for ${name.replace(/_/g, ' ')}"
-              placeholder="\u2014"
-              .value=${critThreshVal != null ? String(critThreshVal) : ''}
-              @change=${(e) => this._onCritThresholdChange(name, e.target.value, critOp)}>
-          </div>
         </div>
-        <div class="attr-transform">
-          <div class="transform-label">Transform</div>
-          <select class="transform-select"
-            aria-label="Value transform for ${name.replace(/_/g, ' ')}"
-            .value=${transform}
-            @change=${(e) => this._onTransformChange(name, e.target.value)}>
-            ${getAllTransforms().map(t => html`
-              <option value=${t.value} ?selected=${t.value === transform}>${t.label}</option>
-            `)}
-          </select>
-          ${(this.groupTransforms || {})[name] && !(this.device?.attribute_transforms || {})[name]
-            ? html`<span class="transform-source">Group Policy</span>` : ''}
-        </div>
-        ${this._isExposed(name) ? html`
-          <div style="margin-top: 4px;">
-            <button style="background: none; border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; color: ${this._expandedChart === name ? '#00D4FF' : 'rgba(255,255,255,0.25)'}; cursor: pointer; padding: 2px 6px; font-size: 10px; transition: all 0.15s;"
-              @click=${(e) => { e.stopPropagation(); this._expandedChart = this._expandedChart === name ? null : name; }}>
-              ${this._expandedChart === name ? '▾ History' : '▸ History'}
-            </button>
-          </div>
-          ${this._expandedChart === name ? html`
-            <attribute-chart
-              .deviceId=${this.device?.device_id || ''}
-              .attrName=${name}
-              @close=${() => { this._expandedChart = null; }}
-            ></attribute-chart>
-          ` : ''}
+        ${this._expandedChart === name ? html`
+          <attribute-chart
+            .deviceId=${this.device?.device_id || ''}
+            .attrName=${name}
+            @close=${() => { this._expandedChart = null; }}
+          ></attribute-chart>
         ` : ''}
       </div>
     `;
+  }
+
+  // ── Popover management ─────────────────────────────────────────────────────
+
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('click', this._onDocClick);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    document.removeEventListener('click', this._onDocClick);
+  }
+
+  _onDocClick() {
+    if (this._openPopover) this._openPopover = null;
+  }
+
+  _togglePopover(name) {
+    this._openPopover = this._openPopover === name ? null : name;
   }
 
   // ── Event dispatchers ──────────────────────────────────────────────────────
