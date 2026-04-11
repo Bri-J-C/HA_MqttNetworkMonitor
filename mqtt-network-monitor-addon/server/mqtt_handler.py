@@ -22,6 +22,7 @@ class MQTTHandler:
         self._port = port
         self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
         self._on_device_update_callbacks = []
+        self._on_command_response_callbacks = []
 
         if username:
             self._client.username_pw_set(username, password)
@@ -42,6 +43,9 @@ class MQTTHandler:
 
     def on_device_update(self, callback):
         self._on_device_update_callbacks.append(callback)
+
+    def on_command_response(self, callback):
+        self._on_command_response_callbacks.append(callback)
 
     def connect(self):
         self._client.connect(self._broker, self._port)
@@ -107,8 +111,11 @@ class MQTTHandler:
         elif subtopic == "command/response":
             try:
                 response = json.loads(msg.payload.decode())
-                logger.debug(f"Command response from {device_id}: {response}")
+                logger.info(f"Command response from {device_id}: status={response.get('status')}, output={response.get('output', '')[:100]}")
                 self._registry.add_command_response(device_id, response)
+                # Notify command sender so pending status updates
+                for cb in self._on_command_response_callbacks:
+                    cb(response)
             except json.JSONDecodeError:
                 logger.warning(f"Invalid command response JSON from {device_id}")
 

@@ -93,6 +93,7 @@ def create_app():
     mqtt_handler = MQTTHandler(registry, mqtt_broker, mqtt_port, mqtt_user, mqtt_pass)
     ha_entities = HAEntityManager(mqtt_handler.get_client())
     command_sender = CommandSender(mqtt_handler)
+    mqtt_handler.on_command_response(command_sender.handle_response)
     tag_reg = TagRegistry(storage)
     settings_mgr = SettingsManager(storage)
 
