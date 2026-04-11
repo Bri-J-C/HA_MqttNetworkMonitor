@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import { applyTransform } from '../utils/transforms.js';
+import { getDeviceIcon, getDeviceColor, getTypeBadgeClass } from '../utils/device-icons.js';
 
 const STATUS_COLORS = {
   online: '#04d65c',
@@ -31,6 +32,7 @@ class DeviceCard extends LitElement {
       cursor: pointer;
       transition: all 0.2s;
       border-left: 3px solid var(--status-color, #666);
+      font-family: var(--font-display);
     }
     :host(:hover) {
       background: rgba(255,255,255,0.08);
@@ -57,6 +59,20 @@ class DeviceCard extends LitElement {
       color: rgba(255,255,255,0.5);
       margin-bottom: 8px;
     }
+    .name-row { display: flex; align-items: center; gap: 8px; }
+    .type-icon { display: flex; align-items: center; }
+    .type-badge {
+      font-size: 9px; padding: 2px 7px; border-radius: 3px;
+      text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500;
+      font-family: var(--font-data);
+      display: inline-block; margin-bottom: 6px;
+    }
+    .type-badge.badge-linux { background: rgba(255,183,77,0.15); color: #ffb74d; }
+    .type-badge.badge-windows { background: rgba(79,195,247,0.15); color: #4fc3f7; }
+    .type-badge.badge-laptop { background: rgba(79,195,247,0.15); color: #4fc3f7; }
+    .type-badge.badge-esp32 { background: rgba(4,214,92,0.15); color: #04d65c; }
+    .type-badge.badge-server { background: rgba(179,136,255,0.15); color: #b388ff; }
+    .type-badge.badge-generic { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); }
     .attrs {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -66,7 +82,7 @@ class DeviceCard extends LitElement {
       font-size: 11px;
       color: #fff;
     }
-    .attr-value { color: #00D4FF; font-weight: 500; }
+    .attr-value { color: #00D4FF; font-weight: 500; font-family: var(--font-data); }
     .attr-value.warning { color: #ffb74d; }
     .tags {
       display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; align-items: center;
@@ -111,12 +127,15 @@ class DeviceCard extends LitElement {
 
     return html`
       <div class="header">
-        <span class="name">${displayName}</span>
+        <div class="name-row">
+          <span class="name">${displayName}</span>
+          <span class="type-icon" style="color: ${getDeviceColor(d.device_type)}">${getDeviceIcon(d.device_type)}</span>
+        </div>
         <span class="status" style="background: ${color}20; color: ${color}">
           ${d.status === 'online' ? '● ' : d.status === 'offline' ? '● ' : d.status === 'critical' ? '⚠ ' : '⚠ '}${d.status}
         </span>
       </div>
-      <div class="type">${d.device_type || 'unknown'}</div>
+      <div class="type"><span class="type-badge ${getTypeBadgeClass(d.device_type)}">${d.device_type || 'unknown'}</span></div>
       ${attrs.length > 0 ? html`
         <div class="attrs">
           ${attrs.map(([name, data]) => {
