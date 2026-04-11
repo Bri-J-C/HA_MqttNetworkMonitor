@@ -2,6 +2,7 @@ import { LitElement, html, svg, css } from 'lit';
 import { sharedStyles } from '../styles/shared.js';
 import { fetchTopology, fetchLayouts, saveLayout, deleteLayout } from '../services/api.js';
 import { wsService } from '../services/websocket.js';
+import { getDeviceIconLarge, getDeviceColor, getDeviceBadge } from '../utils/device-icons.js';
 import './device-detail.js';
 import './themed-dialog.js';
 
@@ -133,6 +134,10 @@ class TopologyView extends LitElement {
     }
     svg { width: 100%; height: calc(100vh - 200px); display: block; touch-action: none; cursor: grab; }
     svg.panning { cursor: grabbing; }
+    svg text, svg foreignObject {
+      user-select: none;
+      -webkit-user-select: none;
+    }
     .zoom-controls {
       position: absolute; bottom: 12px; right: 12px;
       display: flex; flex-direction: column; gap: 4px; z-index: 10;
@@ -592,19 +597,28 @@ class TopologyView extends LitElement {
       `;
     }
 
+    const iconColor = getDeviceColor(node.type);
+    const badge = getDeviceBadge(node.type);
+
     return svg`
       <g transform="translate(${pos.x}, ${pos.y})"
         @click=${(e) => this._onNodeClick(e, node.id)}
         @mousedown=${(e) => this.editMode && !this.linkMode && this._onMouseDown(e, node.id)}
         @touchstart=${(e) => this.editMode && !this.linkMode && this._onTouchNodeStart(e, node.id)}
         style="cursor:pointer">
-        <rect x="-45" y="-18" width="90" height="36" rx="6"
+        <rect x="-45" y="-28" width="90" height="56" rx="6"
           fill="#1a1a2e" stroke="${glowColor}" stroke-width="${strokeWidth}"
           stroke-dasharray="${strokeDash}"/>
-        <text text-anchor="middle" dy="-3" fill="${glowColor}" font-size="10">
+        <foreignObject x="-12" y="-26" width="24" height="24" style="color:${iconColor}; pointer-events:none;">
+          ${getDeviceIconLarge(node.type)}
+        </foreignObject>
+        <text text-anchor="middle" dy="8" fill="${glowColor}" font-size="10">
           ${(node.name || node.id).substring(0, 12)}
         </text>
-        <text text-anchor="middle" dy="10" fill="#666" font-size="8">${node.status}</text>
+        <text text-anchor="middle" dy="20" fill="#666" font-size="8">${node.status}</text>
+        ${badge ? svg`
+          <text x="40" y="-18" text-anchor="end" fill="${iconColor}" font-size="7" font-weight="600" opacity="0.8">${badge}</text>
+        ` : ''}
       </g>
     `;
   }
@@ -625,7 +639,7 @@ class TopologyView extends LitElement {
     let perpY = ux;
     if (perpY > 0) { perpX = -perpX; perpY = -perpY; }
 
-    // Source label: placed along the line, outside the node box (half-width=45, half-height=18)
+    // Source label: placed along the line, outside the node box (half-width=45, half-height=28)
     // Find the edge of the box in the direction of the line
     const boxExitDist = this._boxExitDistance(ux, uy);
     const labelGap = 8; // gap between box edge and label
@@ -637,10 +651,10 @@ class TopologyView extends LitElement {
   }
 
   _boxExitDistance(ux, uy) {
-    // Node box is 90x36 (half: 45x18). Find where a ray from center
+    // Node box is 90x56 (half: 45x28). Find where a ray from center
     // in direction (ux,uy) exits the box.
     const hw = 48; // slightly larger than half-width for padding
-    const hh = 22; // slightly larger than half-height for padding
+    const hh = 32; // slightly larger than half-height for padding
     if (Math.abs(ux) < 0.001) return hh;
     if (Math.abs(uy) < 0.001) return hw;
     const tx = hw / Math.abs(ux);
@@ -857,6 +871,16 @@ class TopologyView extends LitElement {
       this._handleLinkClick(nodeId);
     } else {
       this._selectNode(nodeId);
+      // Navigate to device detail if not in edit mode
+      if (!this.editMode) {
+        const node = this.topology?.nodes?.find(n => n.id === nodeId);
+        if (node && node.type !== 'gateway') {
+          this.dispatchEvent(new CustomEvent('device-select', {
+            detail: { deviceId: nodeId },
+            bubbles: true, composed: true,
+          }));
+        }
+      }
     }
   }
 
