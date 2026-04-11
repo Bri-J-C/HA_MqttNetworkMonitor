@@ -85,6 +85,15 @@ class CommandHandler:
 
         return self._execute(command, params, request_id)
 
+    @staticmethod
+    def _is_powershell_command(cmd: str) -> bool:
+        """Detect PowerShell cmdlets (Verb-Noun pattern) and known PS commands."""
+        # PowerShell cmdlets follow Verb-Noun pattern like Restart-Computer, Get-Process
+        first_word = cmd.split()[0] if cmd.split() else ""
+        if "-" in first_word and first_word[0].isupper():
+            return True
+        return False
+
     def _execute(self, command: str, params: dict, request_id: str) -> dict:
         template = self._templates.get(command, command)
         logger.warning(f"Executing remote command: {command} (template: {template})")
@@ -97,6 +106,11 @@ class CommandHandler:
                 "status": "error",
                 "output": f"Missing parameter: {e}",
             }
+
+        # On Windows, PowerShell cmdlets (Verb-Noun pattern) must run through powershell
+        import sys
+        if sys.platform == "win32" and self._is_powershell_command(shell_cmd):
+            shell_cmd = f'powershell -Command "{shell_cmd}"'
 
         try:
             proc = subprocess.run(
