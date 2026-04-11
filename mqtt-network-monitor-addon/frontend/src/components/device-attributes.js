@@ -210,9 +210,19 @@ class DeviceAttributes extends LitElement {
 
     if (allAttrs.length === 0) return html``;
 
+    const groupId = this.device.group_policy;
+    const groupName = groupId ? groupId.replace(/_/g, ' ') : '';
+
     return html`
       <div class="section">
         <div class="section-title">Attributes</div>
+        ${groupId ? html`
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; padding:8px 12px; background:rgba(179,136,255,0.08); border:1px solid rgba(179,136,255,0.2); border-radius:6px; font-size:11px;">
+            <span style="color:#b388ff; font-weight:600;">⚡ Group Policy Active</span>
+            <span style="color:rgba(255,255,255,0.5);">Thresholds and settings inherited from</span>
+            <span style="color:#b388ff; font-family:var(--font-data);">${groupName}</span>
+          </div>
+        ` : ''}
         <div class="attr-grid">
           ${visibleAttrs.map(([name, data]) => this._renderAttrTile(name, data))}
         </div>

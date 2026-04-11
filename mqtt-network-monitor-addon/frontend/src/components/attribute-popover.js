@@ -43,10 +43,8 @@ class AttributePopover extends LitElement {
 
   static styles = [sharedStyles, css`
     :host {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      z-index: 100;
+      position: fixed;
+      z-index: 600;
       font-family: var(--font-display);
     }
     .popover {
@@ -212,18 +210,19 @@ class AttributePopover extends LitElement {
 
     @media (max-width: 768px) {
       :host {
-        position: fixed;
-        top: auto;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 200;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        transform: none !important;
       }
       .popover {
         width: 100%;
         max-width: 100%;
         border-radius: 12px 12px 0 0;
-        padding: 16px;
+        padding: 16px 20px;
+        box-sizing: border-box;
       }
       .popover::before { display: none; }
     }
@@ -241,6 +240,35 @@ class AttributePopover extends LitElement {
     this.haExposed       = false;
     this.pinned          = false;
     this.thresholdSource = '';
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    // Position relative to the cog icon that triggered this popover
+    requestAnimationFrame(() => this._positionPopover());
+  }
+
+  _positionPopover() {
+    // On mobile, the CSS handles positioning as a bottom sheet
+    if (window.innerWidth <= 768) return;
+
+    // Find the cog that opened us (our parent's .attr-cog)
+    const anchor = this.parentElement;
+    if (!anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    // Position below and to the right of the cog
+    this.style.top = `${rect.bottom + 8}px`;
+    this.style.left = `${Math.max(8, rect.left - 200)}px`;
+    // Make sure it doesn't go off the right edge
+    const popWidth = 240;
+    if (rect.left - 200 + popWidth > window.innerWidth) {
+      this.style.left = `${window.innerWidth - popWidth - 16}px`;
+    }
+    // Make sure it doesn't go off the bottom
+    if (rect.bottom + 350 > window.innerHeight) {
+      this.style.top = `${rect.top - 8}px`;
+      this.style.transform = 'translateY(-100%)';
+    }
   }
 
   render() {
@@ -341,10 +369,10 @@ class AttributePopover extends LitElement {
           </span>
         </div>
 
-        <div class="divider"></div>
-
-        <!-- View History -->
-        <span class="view-history" @click=${this._onViewHistory}>View History</span>
+        ${this.haExposed ? html`
+          <div class="divider"></div>
+          <span class="view-history" @click=${this._onViewHistory}>View History</span>
+        ` : ''}
       </div>
     `;
   }
