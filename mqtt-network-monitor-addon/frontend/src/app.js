@@ -60,6 +60,8 @@ class NetworkMonitorApp extends LitElement {
     wsService.connect();
     fetchSettings().then(s => {
       if (s?.custom_transforms) setCustomTransforms(s.custom_transforms);
+      if (s?.display_font) this.style.setProperty('--font-display', s.display_font);
+      if (s?.data_font) this.style.setProperty('--font-data', s.data_font);
     }).catch(() => {});
   }
 

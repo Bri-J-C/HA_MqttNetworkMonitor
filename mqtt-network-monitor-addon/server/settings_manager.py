@@ -27,6 +27,7 @@ ALLOWED_SETTINGS_KEYS = {
     "default_thresholds", "crit_thresholds", "ha_exposure",
     "cleanup_days", "alert_cooldown_minutes", "hidden_attributes",
     "hidden_commands", "card_attributes", "attribute_transforms",
+    "display_font", "data_font",
 }
 
 

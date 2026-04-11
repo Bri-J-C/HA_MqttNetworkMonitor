@@ -93,6 +93,16 @@ class DeviceCard extends LitElement {
     .tag-sep {
       font-size: 9px; color: rgba(255,255,255,0.1);
     }
+    .group-badge {
+      font-size: 9px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: rgba(179,136,255,0.12);
+      color: #b388ff;
+      font-family: var(--font-data);
+      letter-spacing: 0.04em;
+      display: inline-block;
+    }
 
     @media (max-width: 480px) {
       .attrs { grid-template-columns: 1fr; }
@@ -135,7 +145,7 @@ class DeviceCard extends LitElement {
           ${d.status === 'online' ? '● ' : d.status === 'offline' ? '● ' : d.status === 'critical' ? '⚠ ' : '⚠ '}${d.status}
         </span>
       </div>
-      <div class="type"><span class="type-badge ${getTypeBadgeClass(d.device_type)}">${d.device_type || 'unknown'}</span></div>
+      <div class="type"><span class="type-badge ${getTypeBadgeClass(d.device_type)}">${d.device_type || 'unknown'}</span> ${d.group_policy ? html`<span class="group-badge">${d.group_policy.replace(/_/g, ' ')}</span>` : ''}</div>
       ${attrs.length > 0 ? html`
         <div class="attrs">
           ${attrs.map(([name, data]) => {

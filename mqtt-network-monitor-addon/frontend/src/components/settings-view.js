@@ -99,12 +99,61 @@ class SettingsView extends LitElement {
 
     return html`
       <h2>Settings</h2>
+      ${this._renderThemeSection()}
       <tag-registry-settings></tag-registry-settings>
       ${this._renderCustomTransforms()}
       ${this._renderGlobalDefaults()}
       ${this._renderDeviceManagement()}
       ${this._renderExportImport()}
     `;
+  }
+
+  // ── Theme ─────────────────────────────────────────────────────────────────
+
+  _renderThemeSection() {
+    const fontOptions = [
+      { value: "'Outfit', sans-serif", label: 'Outfit' },
+      { value: "'IBM Plex Sans', sans-serif", label: 'IBM Plex Sans' },
+      { value: "'DM Sans', sans-serif", label: 'DM Sans' },
+      { value: "'Nunito Sans', sans-serif", label: 'Nunito Sans' },
+      { value: 'system-ui, sans-serif', label: 'System Default' },
+    ];
+    const monoOptions = [
+      { value: "'JetBrains Mono', monospace", label: 'JetBrains Mono' },
+      { value: "'IBM Plex Mono', monospace", label: 'IBM Plex Mono' },
+      { value: "'Fira Code', monospace", label: 'Fira Code' },
+      { value: "'Source Code Pro', monospace", label: 'Source Code Pro' },
+      { value: 'monospace', label: 'System Default' },
+    ];
+
+    return html`
+      <div class="section">
+        <div class="section-title">Theme</div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:200px;">
+            <label style="font-size:11px; color:rgba(255,255,255,0.5); display:block; margin-bottom:4px;">Display Font</label>
+            <select style="width:100%; background:#0d0d1f; border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:#fff; padding:6px 8px; font-size:12px;"
+              @change=${(e) => this._updateFont('display_font', e.target.value)}>
+              ${fontOptions.map(f => html`<option value="${f.value}" ?selected=${this._settings?.display_font === f.value}>${f.label}</option>`)}
+            </select>
+          </div>
+          <div style="flex:1; min-width:200px;">
+            <label style="font-size:11px; color:rgba(255,255,255,0.5); display:block; margin-bottom:4px;">Data Font</label>
+            <select style="width:100%; background:#0d0d1f; border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:#fff; padding:6px 8px; font-size:12px;"
+              @change=${(e) => this._updateFont('data_font', e.target.value)}>
+              ${monoOptions.map(f => html`<option value="${f.value}" ?selected=${this._settings?.data_font === f.value}>${f.label}</option>`)}
+            </select>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async _updateFont(key, value) {
+    await updateSettings({ [key]: value });
+    const root = document.querySelector('network-monitor-app');
+    if (key === 'display_font') root?.style.setProperty('--font-display', value);
+    if (key === 'data_font') root?.style.setProperty('--font-data', value);
   }
 
   // ── Custom Transforms ─────────────────────────────────────────────────────
